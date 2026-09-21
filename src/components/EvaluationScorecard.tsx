@@ -37,18 +37,16 @@ function confoundsOf(variant: RuntimeExperimentVariant) {
   ];
 }
 
-/**
- * Deterministic delivery is the primary outcome: the full verification manifest passing
- * on the exact final candidate revision. `unknown` samples stay out of the denominator,
- * so the cell reports coverage rather than implying a failure the evidence cannot support.
- */
 function delivered(variant: RuntimeExperimentVariant) {
+  if (variant.trialOutcomes) {
+    const outcomes = variant.trialOutcomes;
+    const samples = variant.deliverySamples ?? 0;
+    const rate = Math.round((variant.acceptedDeliveryRate ?? 0) * 100);
+    return `${outcomes.accepted}/${samples} (${rate}%) · ${outcomes.pending} pending · ${outcomes.invalid} invalid · ${outcomes.cancelled} cancelled · ${outcomes.ungraded} ungraded`;
+  }
   const outcomes = outcomesOf(variant);
   const samples = variant.deterministicEvidenceSamples ?? 0;
-  if (!samples) return "No evidence";
-  const rate = Math.round((variant.deterministicDeliveryRate ?? 0) * 100);
-  const suffix = outcomes.unknown ? ` · ${outcomes.unknown} unmeasured` : "";
-  return `${outcomes.passed}/${samples} (${rate}%)${suffix}`;
+  return samples ? `${outcomes.passed}/${samples} manifest passes (legacy)` : "No evidence";
 }
 
 function quality(variant: RuntimeExperimentVariant) {
@@ -76,7 +74,7 @@ export function EvaluationScorecard({ summary }: { summary: RuntimeEvaluationSum
         <div className="evaluation-table__header">
           <span>Variant</span>
           <span>Samples</span>
-          <span>Delivered</span>
+          <span>Independently accepted</span>
           <span>Gates first pass</span>
           <span>Repairs</span>
           <span>Quality</span>

@@ -1,4 +1,16 @@
 import { createHash } from "node:crypto";
+import { normalizeEvaluationLimits } from "./evaluation-allowance.mjs";
+import {
+  candidateBinding,
+  finalCandidateVerification,
+  matchesCandidate,
+  normalizeEvaluationContract,
+  normalizeFrozenManifest,
+  normalizeTrialReceipt,
+  policyDivergences,
+  trialOutcome,
+  trialResources,
+} from "./evaluation-outcomes.mjs";
 import {
   buildExperimentDecisions,
   classifyTaskBudget,
@@ -9,11 +21,6 @@ import {
 
 const GATE_STAGES = ["dev-review", "test", "final-review"];
 
-/**
- * Only a whole-manifest execution is admissible as a delivery outcome. A focused run
- * declares a subset, so its `passed` says nothing about the commands it never selected.
- */
-const FULL_MANIFEST_EXECUTION = "full-manifest";
 const TERMINAL_STATUSES = new Set([
   "awaiting-human-approval",
   "merged-to-target",
@@ -40,80 +47,8 @@ function passesGate(artifact) {
   return artifact?.gateResult?.verdict === "PASS";
 }
 
-/**
- * Deterministic delivery on the exact final candidate revision.
- *
- * Model-run gate verdicts cannot rank model policies against each other, because
- * `dev-review` and `final-review` are themselves model stages: a laxer reviewer model
- * produces *more* PASSes, so a policy comparison scored on gate verdicts rewards the
- * wrong thing. The repository verification manifest has no such property, so it is the
- * primary outcome a controlled comparison reports, and the model gates become a
- * separate measure of reviewer strictness.
- *
- * States are kept distinct rather than collapsed into pass/fail: `incomplete` means the
- * manifest stopped before every declared command ran, and `unknown` means no admissible
- * evidence exists. Neither is a pass, and neither is evidence of a defect.
- */
-function finalCandidateVerification(task) {
-  const candidate = (task.candidates ?? []).at(-1);
-  if (!candidate) return { status: "unknown", reason: "no-candidate" };
-  const admissible = (candidate.verificationRuns ?? []).filter(
-    (run) =>
-      run?.executionKind === FULL_MANIFEST_EXECUTION &&
-      run?.headRevision != null &&
-      run.headRevision === candidate.headRevision,
-  );
-  const newest = admissible.at(-1);
-  if (!newest) {
-    return {
-      status: "unknown",
-      reason: "no-full-manifest-execution-at-the-final-candidate-revision",
-      candidateId: candidate.id ?? null,
-      candidateRevision: candidate.revisionNumber ?? null,
-    };
-  }
-  const declared = newest.declaredCommandIds ?? [];
-  const executed = new Set(newest.executedCommandIds ?? []);
-  const unexecuted = declared.filter((id) => !executed.has(id));
-  const status = newest.status === "passed" ? (unexecuted.length ? "incomplete" : "passed") : "failed";
-  return {
-    status,
-    reason: null,
-    candidateId: candidate.id ?? null,
-    candidateRevision: candidate.revisionNumber ?? null,
-    headRevision: candidate.headRevision ?? null,
-    declaredCommandCount: declared.length,
-    executedCommandCount: executed.size,
-    unexecutedCommandIds: unexecuted,
-  };
-}
-
-/**
- * Any run whose effective policy diverged from the selected one. The experiment record
- * snapshots the *selected* matrix, so an escalation is invisible there: without this an
- * escalated repair silently changes an arm and the scorecard still reports the arm's
- * nominal policy.
- */
-function policyDivergences(task) {
-  const divergences = [];
-  for (const run of task.runs ?? []) {
-    const escalated =
-      run?.policyEscalationReason != null ||
-      (run?.selectedModel != null &&
-        run?.effectiveModel != null &&
-        (run.selectedModel !== run.effectiveModel || run.selectedReasoning !== run.effectiveReasoning));
-    if (!escalated) continue;
-    divergences.push({
-      role: run.policyRole ?? run.role ?? run.stage ?? null,
-      selected: `${run.selectedModel ?? "unknown"}:${run.selectedReasoning ?? "unknown"}`,
-      effective: `${run.effectiveModel ?? run.model ?? "unknown"}:${run.effectiveReasoning ?? run.reasoning ?? "unknown"}`,
-      reason: run.policyEscalationReason ?? "selected and effective policy differ with no recorded reason",
-    });
-  }
-  return divergences;
-}
-
-function qualityScore(evaluation, kind) {
+function qualityScore(evaluation, kind, task) {
+  if (task?.experiment && !matchesCandidate(evaluation?.scores?.[kind], task)) return null;
   if (evaluation?.scores?.[kind]?.score) return evaluation.scores[kind].score;
   return kind === "human" ? (evaluation?.score ?? null) : null;
 }
@@ -173,6 +108,16 @@ export function normalizeExperimentInput(input, { taskBriefHash, policyMatrix, f
   if (!acceptanceCriteria.length || !verificationCommands.length) {
     throw new Error("Controlled experiments require acceptance criteria and verification commands.");
   }
+  const verificationManifest = normalizeFrozenManifest(input.verificationManifest, verificationCommands);
+  const evaluationContract = normalizeEvaluationContract(input.evaluationContract);
+  const evaluationLimits = normalizeEvaluationLimits(input.evaluationLimits, budget);
+  if (
+    decisionMetric === "autonomous-accepted-delivery-rate" &&
+    (!verificationManifest || !evaluationContract || !evaluationLimits)
+  )
+    throw new Error(
+      "Accepted-delivery experiments require frozen verification, grading and enforced limits.",
+    );
   return {
     groupId,
     variantId,
@@ -181,6 +126,9 @@ export function normalizeExperimentInput(input, { taskBriefHash, policyMatrix, f
     policyMatrix: structuredClone(policyMatrix),
     acceptanceCriteria,
     verificationCommands,
+    verificationManifest,
+    evaluationContract,
+    evaluationLimits,
     decisionMetric,
     budget,
     createdAt: new Date().toISOString(),
@@ -199,13 +147,26 @@ function cleanStringList(value, label) {
     .filter(Boolean);
 }
 
-export function normalizeEvaluationInput(input, previous = null) {
+export function normalizeEvaluationInput(input, previous = null, task = null) {
+  if (input.trial != null)
+    return {
+      ...previous,
+      trialHistory: previous?.trial ? [...(previous.trialHistory ?? []), previous.trial] : [],
+      trial: normalizeTrialReceipt(input.trial, task),
+    };
+  if (
+    task &&
+    (input.candidateId != null || input.candidateRevision != null || input.headRevision != null) &&
+    !matchesCandidate(input, task)
+  )
+    throw new Error("Quality score identifies a stale or different candidate.");
   const score = Number(input.score);
   if (!Number.isInteger(score) || score < 1 || score > 5)
     throw new Error("Evaluation score must be an integer from 1 to 5.");
   const kind = input.kind === "blind" ? "blind" : "human";
   const rubric = normalizeRubric(input.rubric, score);
   const entry = {
+    ...candidateBinding(task ?? {}),
     score,
     outcome: ["accepted", "rejected", "mixed"].includes(input.outcome) ? input.outcome : "mixed",
     rubric,
@@ -284,7 +245,7 @@ function observationalSummary(tasks) {
         if (artifact.gateResult?.verdict === "PASS") group.gatePasses += 1;
         if (artifact.gateResult?.verdict === "REPAIR") group.gateRepairs += 1;
       }
-      const humanScore = qualityScore(task.evaluation, "human");
+      const humanScore = qualityScore(task.evaluation, "human", task);
       if (humanScore) group.humanScores.push(humanScore);
       groups.set(key, group);
     }
@@ -309,13 +270,6 @@ function observationalSummary(tasks) {
         : null,
     }))
     .sort((left, right) => left.role.localeCompare(right.role) || right.runs - left.runs);
-}
-
-function totalTokensOf(usage = {}) {
-  if (usage.totalTokens != null) return Number(usage.totalTokens) || 0;
-  const input = Number(usage.inputTokens ?? 0) || 0;
-  const output = Number(usage.outputTokens ?? 0) || 0;
-  return input + output ? input + output : null;
 }
 
 function experimentTaskMetrics(task) {
@@ -348,7 +302,11 @@ function experimentTaskMetrics(task) {
       sum + (candidate.revisions ?? []).filter((revision) => revision.reason === "repair").length,
     0,
   );
-  const end = task.completedAt ?? (TERMINAL_STATUSES.has(task.status) ? task.updatedAt : null);
+  const end =
+    task.evaluation?.trial?.deliveryEndedAt ??
+    task.evaluation?.trial?.completedAt ??
+    task.completedAt ??
+    (TERMINAL_STATUSES.has(task.status) ? task.updatedAt : null);
   return {
     gateResults,
     repairCount,
@@ -359,8 +317,8 @@ function experimentTaskMetrics(task) {
     estimatedContextTokens,
     deterministicVerification: finalCandidateVerification(task),
     policyDivergences: policyDivergences(task),
-    humanScore: qualityScore(task.evaluation, "human"),
-    blindScore: qualityScore(task.evaluation, "blind"),
+    humanScore: qualityScore(task.evaluation, "human", task),
+    blindScore: qualityScore(task.evaluation, "blind", task),
   };
 }
 
@@ -368,7 +326,7 @@ function experimentBudgetStatus(group) {
   if (group.budgetExceededTaskIds.length) return "exceeded";
   const declared = [...group.budgets.values()].some((budget) => budget != null);
   if (!declared) return "not-declared";
-  return group.budgetMeasuredSamples ? "within" : "unmeasured";
+  return group.budgetMeasuredSamples === group.taskIds.length ? "within" : "unmeasured";
 }
 
 /**
@@ -396,6 +354,8 @@ function comparabilityOf(group) {
     reasons.push(
       `${group.verificationDefinitions.size} distinct verification definitions are pooled under one variant`,
     );
+  if (group.evaluationContracts.size > 1)
+    reasons.push("Evaluation, harness, environment or execution versions differ inside the variant");
   if (group.policyDivergences.length)
     reasons.push(
       `${group.policyDivergences.length} run${group.policyDivergences.length === 1 ? "" : "s"} executed a policy other than the selected one`,
@@ -425,6 +385,14 @@ function controlledSummary(tasks) {
       policyMatrices: new Map(),
       acceptanceDefinitions: new Set(),
       verificationDefinitions: new Set(),
+      evaluationContracts: new Set(),
+      trialOutcomes: { accepted: 0, failed: 0, pending: 0, invalid: 0, cancelled: 0, ungraded: 0 },
+      trialResults: [],
+      deliverySamples: 0,
+      deliveryPasses: 0,
+      knownCost: 0,
+      pricedAttempts: 0,
+      usageAttempts: 0,
       decisionMetrics: new Set(),
       budgets: new Map(),
       budgetExceededTaskIds: [],
@@ -461,13 +429,39 @@ function controlledSummary(tasks) {
       group.policyDivergences.push({ taskId: task.id, ...divergence });
     group.policyMatrices.set(JSON.stringify(experiment.policyMatrix), experiment.policyMatrix);
     group.acceptanceDefinitions.add(JSON.stringify(experiment.acceptanceCriteria));
-    group.verificationDefinitions.add(JSON.stringify(experiment.verificationCommands));
+    group.verificationDefinitions.add(
+      JSON.stringify(experiment.verificationManifest ?? experiment.verificationCommands),
+    );
+    group.evaluationContracts.add(
+      JSON.stringify({
+        contract: experiment.evaluationContract ?? null,
+        limits: experiment.evaluationLimits ?? null,
+      }),
+    );
     group.decisionMetrics.add(experiment.decisionMetric ?? DEFAULT_DECISION_METRIC);
     group.budgets.set(JSON.stringify(experiment.budget ?? null), experiment.budget ?? null);
+    const resources = trialResources(task);
     const taskBudget = classifyTaskBudget(experiment.budget ?? null, {
       wallTimeMs: metrics.wallTimeMs,
-      totalTokens: totalTokensOf(task.usage),
+      totalTokens: resources.totalTokens,
     });
+    const outcome = trialOutcome(task, metrics.deterministicVerification, taskBudget);
+    group.trialOutcomes[outcome] += 1;
+    group.trialResults.push({
+      taskId: task.id,
+      outcome,
+      verification: metrics.deterministicVerification,
+      budget: taskBudget,
+      resources,
+    });
+    if (["accepted", "failed", "ungraded"].includes(outcome)) {
+      group.deliverySamples += 1;
+      if (metrics.deterministicVerification.status === "passed" && !taskBudget.exceeded)
+        group.deliveryPasses += 1;
+    }
+    group.knownCost += resources.knownCost;
+    group.pricedAttempts += resources.pricedAttempts;
+    group.usageAttempts += resources.attempts;
     if (taskBudget.exceeded) group.budgetExceededTaskIds.push(task.id);
     if (taskBudget.status === "within" || taskBudget.status === "exceeded") group.budgetMeasuredSamples += 1;
     group.gateAttempts += metrics.gateResults.length;
@@ -485,7 +479,7 @@ function controlledSummary(tasks) {
     group.estimatedContextTokens += metrics.estimatedContextTokens;
     if (metrics.humanScore) group.humanScores.push(metrics.humanScore);
     if (metrics.blindScore) group.blindScores.push(metrics.blindScore);
-    addUsage(group, task.usage);
+    addUsage(group, resources);
     groups.set(key, group);
   }
   return [...groups.values()]
@@ -500,6 +494,7 @@ function controlledSummary(tasks) {
       policyMatrices: [...group.policyMatrices.values()],
       acceptanceDefinitions: [...group.acceptanceDefinitions].map(JSON.parse),
       verificationDefinitions: [...group.verificationDefinitions].map(JSON.parse),
+      evaluationContracts: [...group.evaluationContracts].map(JSON.parse),
       decisionMetric: group.decisionMetrics.size === 1 ? [...group.decisionMetrics][0] : null,
       decisionMetricDrift: group.decisionMetrics.size > 1,
       budget: group.budgets.size === 1 ? [...group.budgets.values()][0] : null,
@@ -510,7 +505,19 @@ function controlledSummary(tasks) {
       policyDivergences: group.policyDivergences,
       deterministicOutcomes: { ...group.deterministicOutcomes },
       deterministicEvidenceSamples: evidenceSamples(group.deterministicOutcomes),
-      deterministicDeliveryRate: deterministicRate(group.deterministicOutcomes),
+      deterministicDeliveryRate: group.deliverySamples ? group.deliveryPasses / group.deliverySamples : null,
+      deliverySamples: group.deliverySamples,
+      deliveryPasses: group.deliveryPasses,
+      trialOutcomes: { ...group.trialOutcomes },
+      trialResults: group.trialResults,
+      acceptedDeliveryRate: group.deliverySamples
+        ? group.trialOutcomes.accepted / group.deliverySamples
+        : null,
+      operationalAcceptanceRate: group.taskIds.length
+        ? group.trialOutcomes.accepted / group.taskIds.length
+        : null,
+      apiEstimateKnownSubtotal: round(group.knownCost),
+      costCoverage: { pricedAttempts: group.pricedAttempts, totalAttempts: group.usageAttempts },
       gateAttempts: group.gateAttempts,
       firstPassGateSuccesses: group.firstPassGateSuccesses,
       firstPassGateSuccessRate: group.gateAttempts ? group.firstPassGateSuccesses / group.gateAttempts : null,
@@ -525,8 +532,12 @@ function controlledSummary(tasks) {
       cachedInputTokens: group.cachedInputTokens,
       outputTokens: group.outputTokens,
       cacheRate: group.inputTokens ? group.cachedInputTokens / group.inputTokens : null,
-      credits: group.creditSamples ? round(group.credits) : null,
-      apiEstimate: group.apiEstimateSamples ? round(group.apiEstimate) : null,
+      credits: group.creditSamples === group.taskIds.length ? round(group.credits) : null,
+      apiEstimate: group.apiEstimateSamples === group.taskIds.length ? round(group.apiEstimate) : null,
+      apiEstimatePerAcceptance:
+        group.trialOutcomes.accepted && group.apiEstimateSamples === group.taskIds.length
+          ? round(group.apiEstimate / group.trialOutcomes.accepted)
+          : null,
       contextCharacters: group.contextCharacters,
       estimatedContextTokens: group.estimatedContextTokens,
       averageHumanScore: group.humanScores.length
@@ -543,16 +554,10 @@ function controlledSummary(tasks) {
 }
 
 /**
- * Samples carrying admissible manifest evidence. `unknown` stays out of the denominator
- * instead of being counted as a failure: no evidence is not a defect.
+ * Coverage diagnostic only. Delivery denominators include finalized failures without evidence.
  */
 function evidenceSamples(outcomes) {
   return outcomes.passed + outcomes.failed + outcomes.incomplete;
-}
-
-function deterministicRate(outcomes) {
-  const samples = evidenceSamples(outcomes);
-  return samples ? outcomes.passed / samples : null;
 }
 
 export function buildEvaluationSummary(tasks) {
@@ -572,12 +577,12 @@ export function buildEvaluationSummary(tasks) {
     },
     experiments: {
       methodology:
-        "Controlled task variants grouped by explicit experiment and variant IDs with frozen briefs, bases, policies, acceptance criteria, and verification commands. Deterministic delivery — the full verification manifest passing on the exact final candidate revision — is the primary outcome; model gate verdicts measure reviewer strictness and cannot rank reviewer policies against each other. Variants whose pooled samples do not share one brief, base, policy and acceptance definition are labelled mixed-identity and are not a result.",
+        "Controlled task variants grouped by explicit experiment and variant IDs with frozen briefs, bases, policies, acceptance criteria, and verification commands. Independent candidate acceptance is the delivery outcome. Full frozen-manifest verification is a diagnostic; model gate verdicts measure reviewer strictness and cannot rank reviewer policies against each other. Variants whose pooled samples do not share one brief, base, policy and acceptance definition are labelled mixed-identity and are not a result.",
       taskCount: tasks.filter((task) => task.experiment).length,
       variants: experiments,
       decisions: buildExperimentDecisions(experiments),
       decisionMethodology:
-        "Each group is ranked on the single decision metric declared before the run. Remaining metrics are diagnostics. A leader is named only when every arm shares the same brief, base, acceptance criteria, verification commands and budget, and no arm exceeded it.",
+        "Each group is ranked on the single decision metric declared before the run. Remaining metrics are diagnostics. A leader is named only when every arm shares the same brief, base, acceptance criteria, verification commands and budget, with complete trial accounting. Over-budget arms remain visible and ineligible.",
     },
   };
 }

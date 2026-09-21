@@ -51,7 +51,12 @@ test("snapshots controlled experiment inputs and reports measured outcomes separ
       draft.completedAt = "2026-08-03T00:10:00.000Z";
       draft.status = "awaiting-human-approval";
       draft.attemptsByStage["dev-review"] = 2;
-      draft.candidates.push({ revisions: [{ reason: "assembly" }, { reason: "repair" }] });
+      draft.candidates.push({
+        id: "C1",
+        revisionNumber: 2,
+        headRevision: baseSha,
+        revisions: [{ reason: "assembly" }, { reason: "repair" }],
+      });
       draft.usage = {
         inputTokens: 100,
         cachedInputTokens: 40,

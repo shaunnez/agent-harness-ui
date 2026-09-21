@@ -347,7 +347,7 @@ export function createTaskLifecycleRoutes({
       }
       const input = await readJson(request);
       const task = await store.update(id, (draft) => {
-        draft.evaluation = normalizeEvaluationInput(input, draft.evaluation);
+        draft.evaluation = normalizeEvaluationInput(input, draft.evaluation, draft);
       });
       send(response, 200, { task });
       return true;

@@ -20,21 +20,19 @@ function round(value, places = 6) {
  * and "higher pass rate" cannot share a comparator.
  */
 export const DECISION_METRICS = {
+  "autonomous-accepted-delivery-rate": {
+    label: "Autonomous accepted delivery rate",
+    direction: "higher",
+    describe:
+      "Independently accepted candidates within allowance and without substantive human rescue, divided by all finalized valid delivery trials.",
+    value: (variant) => (variant.deliverySamples ? variant.acceptedDeliveryRate : null),
+  },
   "deterministic-delivery-rate": {
     label: "Deterministic delivery rate",
     direction: "higher",
     describe:
       "Share of samples whose full verification manifest passed on the exact final candidate revision.",
-    // The only metric here that no model produces. The other five are derived from gate
-    // verdicts or operator scores; three of the gate stages — dev-review, test and
-    // final-review — are themselves model runs, so an arm running a more permissive
-    // reviewer scores higher on them without delivering more. This one reads the
-    // verification manifest at the final candidate's head, so an arm can only move it by
-    // shipping code that passes provider-independent commands.
-    // `unknown` samples stay out of the denominator, so an arm with no admissible evidence
-    // scores `null` and is reported ineligible rather than ranked on a partial denominator.
-    value: (variant) =>
-      variant.deterministicEvidenceSamples ? (variant.deterministicDeliveryRate ?? null) : null,
+    value: (variant) => (variant.deliverySamples ? (variant.deterministicDeliveryRate ?? null) : null),
   },
   "first-pass-gate-success-rate": {
     label: "First-pass gate success rate",
@@ -119,14 +117,14 @@ export function normalizeExperimentBudget(value) {
 export function classifyTaskBudget(budget, { wallTimeMs, totalTokens }) {
   if (!budget) return { status: "not-declared", exceeded: false, reasons: [] };
   const reasons = [];
-  let measured = false;
+  let measured = true;
+  if (budget.maxWallTimeMs != null && wallTimeMs == null) measured = false;
+  if (budget.maxTotalTokens != null && totalTokens == null) measured = false;
   if (budget.maxWallTimeMs != null && wallTimeMs != null) {
-    measured = true;
     if (wallTimeMs > budget.maxWallTimeMs)
       reasons.push(`wall time ${wallTimeMs}ms exceeded the declared ${budget.maxWallTimeMs}ms ceiling`);
   }
   if (budget.maxTotalTokens != null && totalTokens != null) {
-    measured = true;
     if (totalTokens > budget.maxTotalTokens)
       reasons.push(`${totalTokens} tokens exceeded the declared ${budget.maxTotalTokens} token ceiling`);
   }
@@ -140,6 +138,12 @@ function distinct(values) {
 
 function comparabilityIssues(variants) {
   const issues = [];
+  if (variants.some((variant) => variant.comparability?.status === "mixed-identity"))
+    issues.push("A variant mixed frozen identity or executed a divergent policy.");
+  if (distinct(variants.flatMap((variant) => variant.evaluationContracts ?? [null])).length > 1)
+    issues.push("Variants used different evaluation, harness, environment or execution versions.");
+  if (variants.some((variant) => variant.trialOutcomes?.pending || variant.trialOutcomes?.cancelled))
+    issues.push("Pending or unadjudicated cancelled trials prevent a final comparison.");
   if (
     variants.some((variant) => variant.decisionMetricDrift) ||
     distinct(variants.map((variant) => variant.decisionMetric)).length > 1
@@ -190,13 +194,22 @@ export function buildExperimentDecisions(variants) {
       const scored = members.map((variant) => {
         const value = metric.value(variant);
         const ineligible =
-          variant.sampleCount === 0
-            ? "The variant has no recorded tasks."
-            : value == null
-              ? "The declared decision metric has no recorded value for this variant."
-              : variant.budgetStatus === "exceeded"
-                ? "The variant exceeded its declared budget."
-                : null;
+          variant.comparability?.status === "mixed-identity"
+            ? "The variant mixed frozen identity or executed a divergent policy."
+            : variant.trialOutcomes?.pending || variant.trialOutcomes?.cancelled
+              ? "The variant has unresolved trials."
+              : metricId === "autonomous-accepted-delivery-rate" &&
+                  (variant.trialOutcomes?.ungraded || variant.budgetStatus !== "within")
+                ? "Independent grading or complete budget evidence is missing."
+                : variant.budgetStatus === "unmeasured"
+                  ? "Declared budget measurements are incomplete."
+                  : variant.sampleCount === 0
+                    ? "The variant has no recorded tasks."
+                    : value == null
+                      ? "The declared decision metric has no recorded value for this variant."
+                      : variant.budgetStatus === "exceeded"
+                        ? "The variant exceeded its declared budget."
+                        : null;
         return {
           variantId: variant.variantId,
           sampleCount: variant.sampleCount,

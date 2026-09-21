@@ -1,0 +1,266 @@
+{
+  "version": 1,
+  "status": "case candidates; qualification required before dispatch",
+  "cases": [
+    {
+      "id": "H01",
+      "version": 1,
+      "repository": "harness",
+      "baseSha": "86c1f6c36c4ade6e889dc7020d7125479056b9b6",
+      "referenceSha": "5bb48275b51dfeb89aed42c3745844e79f3033db",
+      "difficulty": "small",
+      "risk": "low",
+      "split": "development",
+      "title": "Show configured but undiscovered models",
+      "brief": "Configured model IDs referenced by defaults, allowlists or stage policies disappear when runtime discovery does not return them. Keep each missing configured ID visible as unsupported and non-editable; do not make it eligible for new selections. Preserve discovered entries and avoid duplicates.",
+      "acceptanceCriteria": [
+        "Missing configured IDs remain visible",
+        "Unsupported entries cannot be newly selected",
+        "Discovered metadata and uniqueness are preserved"
+      ],
+      "qualification": "selected-not-qualified",
+      "referenceScope": "task changes in source commit; exclude historical documentation from agent inputs"
+    },
+    {
+      "id": "H02",
+      "version": 1,
+      "repository": "harness",
+      "baseSha": "4b303a8da4fafd7a78149ddad40cbf714411d08b",
+      "referenceSha": "a798c913988579149a77318db97faf7a850160bb",
+      "difficulty": "medium",
+      "risk": "medium",
+      "split": "development",
+      "title": "Make Grill manual by default with explicit automation opt-in",
+      "brief": "New tasks must pause when Grill finds material questions. Add a Settings choice between manual and automatically accepting recommendations. Persist the choice and snapshot it at task creation; changing Settings must not rewrite existing tasks. In manual mode retain answering one question and explicitly accepting remaining recommendations. In automatic mode orchestration accepts recommendations and records automation provenance, without impersonating an operator. Zero-question sessions may continue. Existing sessions with uncertain origins must retain their text and be labelled legacy-unverified. Operator answer/finish API calls must require explicit operator UI provenance.",
+      "acceptanceCriteria": [
+        "Default manual policy persists in SQLite",
+        "Settings UI saves and reloads both modes",
+        "New tasks snapshot policy; existing tasks are stable",
+        "Material questions pause under manual policy",
+        "Opt-in automation records accurate answer/completion provenance",
+        "Zero-question Grill continues without a decision",
+        "Operator endpoints reject missing interaction provenance",
+        "Legacy migration preserves evidence and marks uncertain origins"
+      ],
+      "qualification": "qualified-for-batch-a",
+      "referenceScope": "task changes in source commit; exclude historical documentation from agent inputs",
+      "publicContract": "evaluations/cases/h02-public-contract.md",
+      "qualificationEvidence": {
+        "baseRegressionTests": 371,
+        "referenceRegressionTests": 374,
+        "independentChecks": 9,
+        "baseExpectedFailures": 8,
+        "referencePasses": 9,
+        "snapshotMutantFailures": [
+          "task-snapshot",
+          "automatic-provenance"
+        ],
+        "rubricVersion": "delivery-rubric-v3",
+        "referenceRubric": "passed",
+        "snapshotMutantRubric": "rejected"
+      }
+    },
+    {
+      "id": "H03",
+      "version": 1,
+      "repository": "harness",
+      "baseSha": "82804f9929cdb0b444c14eeeec96a9e098d6bf77",
+      "referenceSha": "ea05775d44045fe061dfefb5e3bf665a548ca3ce",
+      "difficulty": "hard",
+      "risk": "high",
+      "split": "heldout",
+      "title": "Bind selected role policies to actual execution",
+      "brief": "Freeze effective provider, model and reasoning at run reservation and use that same policy for execution and provenance. Preserve explicit role overrides, profile-aware inheritance and provider constraints. Repair escalation must be explicitly configured, same-provider and eligible for the actual candidate defect; it must not override pinned roles. Expose recorded selected versus effective policy without rewriting old runs.",
+      "acceptanceCriteria": [
+        "Reservation, execution and provenance agree",
+        "Role pins and provider constraints are enforced",
+        "Repair eligibility is candidate-bound",
+        "Legacy and profile inheritance remain deterministic"
+      ],
+      "qualification": "selected-not-qualified",
+      "referenceScope": "task changes in source commit; exclude historical documentation from agent inputs"
+    },
+    {
+      "id": "H04",
+      "version": 1,
+      "repository": "harness",
+      "baseSha": "c1de41f9dff1a2692dae86e1deb810e9b19250c5",
+      "referenceSha": "4b303a8da4fafd7a78149ddad40cbf714411d08b",
+      "difficulty": "hard",
+      "risk": "high",
+      "split": "development",
+      "title": "Recover a candidate after the target branch moves",
+      "brief": "Provide an explicit candidate-refresh recovery flow when its repository target has moved. Refresh only through the recorded authority, preserve delivered work and prior evidence, represent conflicts/actionable failures, and invalidate downstream gates for the new revision. Add the eligible UI/API actions and retain same-candidate Test retry constraints. No implicit merge or publication.",
+      "acceptanceCriteria": [
+        "Refresh preserves candidate work and recorded authority",
+        "Conflicts retain a recoverable state",
+        "New revision invalidates downstream verdicts",
+        "Ineligible actions are refused server-side",
+        "Same-candidate Test retry remains bounded"
+      ],
+      "qualification": "selected-not-qualified",
+      "referenceScope": "task changes in source commit; exclude historical documentation from agent inputs"
+    },
+    {
+      "id": "P01",
+      "version": 1,
+      "repository": "plancheck",
+      "baseSha": "5d9df32eca2521230032b22b9b8fd7edfee833f7",
+      "referenceSha": "922cd411d177eb1718b9f92f472d3839411ca955",
+      "difficulty": "small",
+      "risk": "low",
+      "split": "heldout",
+      "title": "Show elapsed time for a running Processing stage",
+      "brief": "Processing rows show duration only once ended_at exists. Show elapsed duration for the currently running stage using its start time and the existing page refresh. Finished stages keep their fixed duration; invalid timestamps and unstarted stages stay truthful.",
+      "acceptanceCriteria": [
+        "Running elapsed time increases",
+        "Finished duration remains fixed",
+        "Invalid or absent start times do not fabricate duration"
+      ],
+      "qualification": "selected-not-qualified",
+      "referenceScope": "task changes in source commit; exclude historical documentation from agent inputs"
+    },
+    {
+      "id": "P02",
+      "version": 1,
+      "repository": "plancheck",
+      "baseSha": "9b43172d318b5882d2750221de91d6989e95a2d0",
+      "referenceSha": "bde8f036fb739e4f44bfe23a60a239e986292049",
+      "difficulty": "medium",
+      "risk": "medium",
+      "split": "heldout",
+      "title": "Keep edited construction drafts in estimate subtotals",
+      "brief": "After a user edits a draft construction worksheet, eligible draft contributions must remain in the estimate subtotal. Editing is not approval; keep draft status visible and preserve existing exclusion and shared-event rules. Verify aggregate calculations, persistence and the Review display with synthetic records.",
+      "acceptanceCriteria": [
+        "Eligible edited drafts remain in estimates",
+        "Draft status remains draft",
+        "Excluded contributions stay excluded",
+        "UI and stored aggregation agree"
+      ],
+      "qualification": "selected-not-qualified",
+      "referenceScope": "task changes in source commit; exclude historical documentation from agent inputs"
+    },
+    {
+      "id": "P03",
+      "version": 1,
+      "repository": "plancheck",
+      "baseSha": "21c20c8ffeeb2b8a4a19ccff6be286d23a2dbad3",
+      "referenceSha": "0acef6ba5f61eb1426424b5a7de29adf1d12723d",
+      "difficulty": "medium",
+      "risk": "medium",
+      "split": "development",
+      "title": "Preserve worksheet quantity and allowance provenance on edits",
+      "brief": "Review edits to construction worksheets must preserve the distinction between quantified items and allowance amounts. Do not invent quantities from an allowance or discard existing quantity/provenance when editing another field. Preserve user-entered numeric values and the visible editing semantics.",
+      "acceptanceCriteria": [
+        "Quantity and allowance remain distinct",
+        "Unrelated edits preserve provenance",
+        "Edited values round-trip correctly",
+        "Review controls display the correct editable fields"
+      ],
+      "qualification": "selected-not-qualified",
+      "referenceScope": "task changes in source commit; exclude historical documentation from agent inputs"
+    },
+    {
+      "id": "P04",
+      "version": 1,
+      "repository": "plancheck",
+      "baseSha": "a4da4771802abc024f844b60543c6561317659b2",
+      "referenceSha": "de86efed1f56d726be484d05a7361a5a3d0a1c61",
+      "difficulty": "hard",
+      "risk": "high",
+      "split": "development",
+      "title": "Settle the provider attempt actually started and respect job deadlines",
+      "brief": "A slow grouping provider response may return after its old attempt was marked uncertain and a successor started. Settle the exact started attempt, never the newest attempt. Re-settlement must be idempotent, preserve known usage and charge only the delta. Before every repair in proposals, assignments and worksheets, recheck the total job wall-clock allowance and refuse another provider call after its deadline.",
+      "acceptanceCriteria": [
+        "Late response cannot settle a successor attempt",
+        "Idempotent settlement preserves spend",
+        "Known usage cannot be erased by a later empty receipt",
+        "Every repair loop obeys the job deadline"
+      ],
+      "qualification": "selected-not-qualified",
+      "referenceScope": "task changes in source commit; exclude historical documentation from agent inputs"
+    },
+    {
+      "id": "M01",
+      "version": 1,
+      "repository": "mystrataassist",
+      "baseSha": "58cc69098fc99f2381b89b3449ab75a5a6b34ecf",
+      "referenceSha": "54f6ec80b08c7add19d22333235af2af3582ddd3",
+      "difficulty": "small",
+      "risk": "low",
+      "split": "development",
+      "title": "Keep overdue manager tasks on their own due dates",
+      "brief": "Calendar manager-created tasks must remain on their actual due-date cells even when overdue. Preserve the existing overdue-obligation sweep onto today and the separation between task and obligation overdue counts.",
+      "acceptanceCriteria": [
+        "Overdue task stays on its due date",
+        "Obligation sweep remains unchanged",
+        "Tasks do not enter the obligation overdue tally"
+      ],
+      "qualification": "selected-not-qualified",
+      "referenceScope": "task changes in source commit; exclude historical documentation from agent inputs"
+    },
+    {
+      "id": "M02",
+      "version": 1,
+      "repository": "mystrataassist",
+      "baseSha": "3d155859453dfbddc28ec53c0e12f2a4c33b83d0",
+      "referenceSha": "b9b0b17b6b9aa2436e546f5b7dfeebbceea44437",
+      "difficulty": "small",
+      "risk": "low",
+      "split": "heldout",
+      "title": "Show the missing attachment-attention bucket",
+      "brief": "The disclosure workspace Needs attention total includes attachments, but its breakdown omits them. Add the missing attachment-attention bucket for attachment state gap or needs_review and navigate it to the attachment category. Preserve the other buckets and make their total reconcile. Scope is disclosure UI only; assistant changes bundled into the source commit are excluded.",
+      "acceptanceCriteria": [
+        "Attachment-attention counts gap and needs_review",
+        "Breakdown reconciles with the header total",
+        "New bucket opens the attachment category"
+      ],
+      "qualification": "selected-not-qualified",
+      "referenceScope": "frontend/src/features/disclosure-pack and docs/i18n-audit/disclosure-pack.json only",
+      "referencePaths": [
+        "frontend/src/features/disclosure-pack/",
+        "docs/i18n-audit/disclosure-pack.json"
+      ]
+    },
+    {
+      "id": "M03",
+      "version": 1,
+      "repository": "mystrataassist",
+      "baseSha": "3b402267704fdc1af27691b2da3c0b1f6e7bbf78",
+      "referenceSha": "5588e7b386f55ca0495f4919cda9748ae6a0a8af",
+      "difficulty": "medium",
+      "risk": "high",
+      "split": "heldout",
+      "title": "Allow Administrator task assignment within the selected scheme",
+      "brief": "Manager-created tasks should allow eligible Managers and Administrators as assignees, including self-assignment. Keep disclosure signer eligibility Manager-only. Populate assignees once the scheme is selected and restrict the linked-obligation picker to that scheme. Enforce the existing access boundaries in persistence/API reads.",
+      "acceptanceCriteria": [
+        "Managers and Administrators can be task assignees",
+        "Disclosure signers remain Manager-only",
+        "Linked obligations are scoped to the selected scheme",
+        "Composer field order supports assignment after scheme selection"
+      ],
+      "qualification": "selected-not-qualified",
+      "referenceScope": "task changes in source commit; exclude historical documentation from agent inputs"
+    },
+    {
+      "id": "M04",
+      "version": 1,
+      "repository": "mystrataassist",
+      "baseSha": "5778ed23a3adee669bbd4a525139f83a8e060a7d",
+      "referenceSha": "dbd52aeaea33286a086dd82e26b70fccf87c7d00",
+      "difficulty": "hard",
+      "risk": "high",
+      "split": "heldout",
+      "title": "Restore scoped read-only Owner compliance journeys",
+      "brief": "Owners must reach their authorized compliance and ordinary-lot dashboards with a usable read-only obligation detail view. Preserve Manager behavior and all ownership/scheme restrictions. A read-only journey must not expose editing actions or authorize mutation routes; data outside the owner scope must remain inaccessible.",
+      "acceptanceCriteria": [
+        "Authorized Owner dashboards and details load",
+        "Owner views remain read-only",
+        "Cross-scope reads and writes are rejected",
+        "Manager journeys retain their behavior"
+      ],
+      "qualification": "selected-not-qualified",
+      "referenceScope": "task changes in source commit; exclude historical documentation from agent inputs"
+    }
+  ]
+}

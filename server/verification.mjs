@@ -401,6 +401,7 @@ export async function runRepositoryVerification({
     // human reader can see which commands were skipped after a failure stopped the run.
     executedCommandIds: rows.map((row) => row.id),
     declaredCommandIds: resolved.commands.map((command) => command.id),
+    declaredCommands: structuredClone(resolved.commands),
   };
 }
 

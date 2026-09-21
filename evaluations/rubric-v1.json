@@ -1,0 +1,17 @@
+{
+  "version": "delivery-rubric-v3",
+  "model": "gpt-5.6-sol",
+  "reasoning": "high",
+  "maxWallTimeMs": 300000,
+  "maxTotalTokens": 200000,
+  "maxProviderInvocations": 1,
+  "scope": "An independent read-only review of anonymized brief, base-to-candidate diff and candidate code. Do not disclose policy, model, trial order, other grades or reference solution. This is grading overhead, recorded separately from delivery consumption.",
+  "criteria": [
+    "Every explicit requirement is implemented without inventing unauthorized behavior.",
+    "Existing behavior remains compatible except the explicitly requested manual default and provenance boundary.",
+    "No material authorization, privacy or data-integrity defect is introduced.",
+    "Tests preserve meaningful coverage; no bypassed checks, blanket stubs, hidden errors or unrelated broad rewrites."
+  ],
+  "decision": "Pass only with no substantiated P0/P1 finding and no unmet explicit requirement. Trace a reachable public call path before alleging an authorization or validation bypass; internal storage/test-fixture inputs are not automatically public API inputs. Grade requirements literally: preserving evidence means retaining inspectable records, not inventing a new UI-display requirement for every stored field. P2/P3 suggestions alone do not fail a candidate. Provide file/line, reachable scenario and smallest correction for each finding. Independent executable checks are separately required; this model cannot overrule a failed check.",
+  "output": { "passed": "boolean", "findings": [{ "severity": "P0|P1|P2|P3", "file": "path", "line": "integer", "issue": "string", "scenario": "string", "correction": "string" }], "unmetRequirements": ["string"], "summary": "short string" }
+}

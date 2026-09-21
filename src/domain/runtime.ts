@@ -211,6 +211,7 @@ export interface RuntimeFocusedTestEvidence {
   executionKind?: "focused-package" | "full-manifest";
   executedCommandIds?: string[];
   declaredCommandIds?: string[];
+  declaredCommands?: RuntimeVerificationCommand[];
   retryDisposition?: "human-rerun-requested";
   retryRequestedAt?: string | null;
 }
@@ -861,6 +862,7 @@ export interface RuntimeAgentPolicy {
 }
 
 export type RuntimeExperimentDecisionMetric =
+  | "autonomous-accepted-delivery-rate"
   | "deterministic-delivery-rate"
   | "first-pass-gate-success-rate"
   | "eventual-gate-success-rate"
@@ -882,10 +884,68 @@ export interface RuntimeExperimentSnapshot {
   policyMatrix: Record<string, RuntimeAgentPolicy>;
   acceptanceCriteria: string[];
   verificationCommands: string[];
+  verificationManifest?: { version: 1; source: string; commands: RuntimeVerificationCommand[] } | null;
+  evaluationContract?: RuntimeEvaluationContract | null;
+  evaluationLimits?: { maxAgentRuns: number; maxProviderInvocations?: number } | null;
   /** The single metric that decides the group. Everything else is a diagnostic. */
   decisionMetric: RuntimeExperimentDecisionMetric;
   budget: RuntimeExperimentBudget | null;
   createdAt: string;
+}
+
+export interface RuntimeVerificationCommand {
+  id: string;
+  title: string;
+  command: string[];
+  timeoutMs: number;
+  report: { format: string; outputFile: string } | null;
+}
+
+export interface RuntimeEvaluationContract {
+  caseId: string;
+  caseVersion: string;
+  graderVersion: string;
+  rubricVersion: string;
+  harnessVersion: string;
+  environmentVersion: string;
+  executionVersion: string;
+  checkIds: string[];
+}
+
+export interface RuntimeTrialReceipt {
+  deliveryEndedAt?: string;
+  providerInvocations?: Array<{
+    id: string;
+    provider: string;
+    model: string;
+    usage: {
+      inputTokens: number | null;
+      cachedInputTokens: number | null;
+      cacheWriteTokens: number | null;
+      outputTokens: number | null;
+      totalTokens: number | null;
+      cost: number | null;
+      credits: number | null;
+    } | null;
+  }>;
+  status: "completed" | "invalid" | "cancelled";
+  reason: string;
+  evaluator: string;
+  evidence: string;
+  completedAt: string;
+  humanRescue: boolean;
+  failureClass?: "apparatus";
+  acceptance: null | {
+    candidateId: string;
+    candidateRevision: number;
+    headRevision: string;
+    caseVersion: string;
+    graderVersion: string;
+    rubricVersion: string;
+    outcome: "accepted" | "rejected";
+    rubricPassed: boolean;
+    checks: Array<{ id: string; passed: boolean }>;
+  };
 }
 
 export interface RuntimeQualityScore {
@@ -895,9 +955,14 @@ export interface RuntimeQualityScore {
   notes: string;
   evaluator: string | null;
   evaluatedAt: string;
+  candidateId?: string;
+  candidateRevision?: number;
+  headRevision?: string;
 }
 
 export interface RuntimeTaskEvaluation {
+  trial?: RuntimeTrialReceipt;
+  trialHistory?: RuntimeTrialReceipt[];
   score?: number;
   outcome?: "accepted" | "rejected" | "mixed";
   rubric?: Record<string, number>;
@@ -1068,9 +1133,25 @@ export interface RuntimeExperimentVariant {
   deterministicOutcomes?: RuntimeDeterministicOutcomes;
   deterministicEvidenceSamples?: number;
   deterministicDeliveryRate?: number | null;
+  deliverySamples?: number;
+  deliveryPasses?: number;
+  acceptedDeliveryRate?: number | null;
+  operationalAcceptanceRate?: number | null;
+  trialOutcomes?: {
+    accepted: number;
+    failed: number;
+    pending: number;
+    invalid: number;
+    cancelled: number;
+    ungraded: number;
+  };
+  apiEstimateKnownSubtotal?: number;
+  costCoverage?: { pricedAttempts: number; totalAttempts: number };
   policyMatrices: Array<Record<string, RuntimeAgentPolicy>>;
   acceptanceDefinitions: string[][];
-  verificationDefinitions: string[][];
+  verificationDefinitions: Array<
+    string[] | { version: 1; source: string; commands: RuntimeVerificationCommand[] }
+  >;
   /** `null` when the arm's tasks disagree; `*Drift` then reports the disagreement. */
   decisionMetric: RuntimeExperimentDecisionMetric | null;
   decisionMetricDrift: boolean;

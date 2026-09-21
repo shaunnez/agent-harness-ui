@@ -1,9 +1,7 @@
-> **Completed 22 September 2026:** Batch A found no accepted candidate in nine trials. Read [the current checkpoint](MODEL-EVALUATION-CHECKPOINT.md) and its linked results before continuing. No new policy was promoted.
-
 # Model baseline and repeatable delivery evaluation
 
 Date: 22 September 2026.
-Status: baseline remains a hypothesis; the user has authorized case selection and evaluation across Agent Harness, PlanCheck and MyStrataAssist, to continue after compaction. No production policy has changed. Isolated evaluation is underway; current receipts and campaign versions are in MODEL-EVALUATION-CHECKPOINT.md. Resume from [MODEL-EVALUATION-RUN.md](MODEL-EVALUATION-RUN.md).
+Status: baseline remains a hypothesis; the user has authorized case selection and evaluation across Agent Harness, PlanCheck and MyStrataAssist, to continue after compaction. No runtime policy has changed and no evaluation has been launched. Resume from [MODEL-EVALUATION-RUN.md](MODEL-EVALUATION-RUN.md).
 
 ## Decision
 

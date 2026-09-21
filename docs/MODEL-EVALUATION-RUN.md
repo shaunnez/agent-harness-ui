@@ -1,8 +1,6 @@
-> **Completed 22 September 2026:** Batch A found no accepted candidate in nine trials. Read [the current checkpoint](MODEL-EVALUATION-CHECKPOINT.md) and its linked results before continuing. No new policy was promoted.
-
 # Model evaluation execution brief
 
-Updated: 22 September 2026. Status: evaluation foundation implemented in the isolated worktree; see [MODEL-EVALUATION-CHECKPOINT.md](MODEL-EVALUATION-CHECKPOINT.md) for current campaign state. The first attempt was invalidated for an apparatus failure.
+Updated: 22 September 2026. Status: ready to resume preparation after compaction; no evaluation trials launched.
 
 ## User intent and authority
 

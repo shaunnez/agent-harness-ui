@@ -4,6 +4,7 @@ import path from "node:path";
 import { validatedAttachmentReadPaths } from "./attachment-storage.mjs";
 import { candidateGateCommandLimit } from "./candidate-gate-policy.mjs";
 import { effectivePolicyFromReservation } from "./effective-policy.mjs";
+import { evaluationAllowance } from "./evaluation-allowance.mjs";
 import { symlinkedDependencySourceRoots } from "./git-worktree.mjs";
 import { enrichUsage } from "./model-catalog.mjs";
 import {
@@ -255,6 +256,7 @@ export class RepairExecutionOrchestrator {
         : null;
     let runProvider = DEFAULT_EXECUTION_PROVIDER;
     let policy = reservedPolicy;
+    let evaluationDeadline = null;
     await this._store.update(task.id, (draft) => {
       const reservation = Object.values(draft.stageRunReservations ?? {}).find(
         (entry) => entry?.id === draft.activeRunReservationId,
@@ -276,6 +278,8 @@ export class RepairExecutionOrchestrator {
           : `${sandbox === "read-only" ? "Reading" : "Working in"} ${cwd}`;
       const packageRepairOfRunId = task.workPackages?.find((item) => item.id === workPackageId)
         ?.retainedContinuation?.packageRepairOfRunId;
+      const allowance = evaluationAllowance(draft);
+      if (allowance) evaluationDeadline = Date.now() + allowance.remainingMs;
       const run = beginAgentRun(draft, {
         id: runId,
         kind: runKind,
@@ -381,6 +385,8 @@ export class RepairExecutionOrchestrator {
         }
       }
       await this._assertProviderConfinement(runProvider, effectiveSandbox, false, cwd);
+      if (evaluationDeadline != null && evaluationDeadline <= Date.now())
+        throw new Error("Evaluation wall-time allowance exhausted before dispatch.");
       const result = await this._runAgent(runProvider, {
         cwd,
         prompt: agentRequest.prompt,
@@ -394,7 +400,10 @@ export class RepairExecutionOrchestrator {
         model: policy.model,
         reasoning: policy.reasoning,
         tempDirectory: runtimeTemp,
-        timeoutMs: stageTimeoutMs(stageId, effectiveSandbox, task),
+        timeoutMs: Math.min(
+          stageTimeoutMs(stageId, effectiveSandbox, task),
+          evaluationDeadline == null ? Infinity : Math.max(1, evaluationDeadline - Date.now()),
+        ),
         onEvent(event) {
           if (event.type === "activity") runtimeEvents.push(event);
           if (

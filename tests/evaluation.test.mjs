@@ -151,6 +151,9 @@ function manifestRun(status, headRevision = "head1") {
   return {
     executionKind: "full-manifest",
     headRevision,
+    candidateId: "C1",
+    candidateRevision: 1,
+    rows: [{ id: "test", command: "npm test", status, exitCode: status === "passed" ? 0 : 1 }],
     status,
     declaredCommandIds: ["lint", "test"],
     executedCommandIds: ["lint", "test"],
@@ -169,23 +172,23 @@ function makeDeliveryTask({ variantId, taskId, status, gates, decisionMetric }) 
   });
 }
 
-test("an undeclared experiment is decided on deterministic delivery, not gate passes", () => {
+test("a delivery-metric experiment is decided on deterministic delivery, not gate passes", () => {
   // The arm that delivers fails its gates; the arm that passes every gate delivers nothing.
-  // Defaulting to a gate rate would crown v2, which is the confound this default exists to avoid.
+  // A declared delivery metric cannot be replaced by the more flattering gate rate.
   const summary = buildEvaluationSummary([
     makeDeliveryTask({
       variantId: "v1",
       taskId: "AH-1",
       status: "passed",
       gates: ["REPAIR"],
-      decisionMetric: null,
+      decisionMetric: "deterministic-delivery-rate",
     }),
     makeDeliveryTask({
       variantId: "v2",
       taskId: "AH-2",
       status: "failed",
       gates: ["PASS"],
-      decisionMetric: null,
+      decisionMetric: "deterministic-delivery-rate",
     }),
   ]);
   const [decision] = summary.experiments.decisions;
@@ -193,27 +196,26 @@ test("an undeclared experiment is decided on deterministic delivery, not gate pa
   assert.deepEqual(decision.leader, { variantId: "v1", value: 1 });
 });
 
-test("an arm with no admissible delivery evidence is ineligible, not ranked at zero", () => {
+test("a finalized arm that never produces a candidate is a delivery failure", () => {
   const summary = buildEvaluationSummary([
     makeDeliveryTask({
       variantId: "v1",
       taskId: "AH-1",
       status: "passed",
       gates: ["PASS"],
-      decisionMetric: null,
+      decisionMetric: "deterministic-delivery-rate",
     }),
     makeDecisionTask({
       variantId: "v2",
       taskId: "AH-2",
       gates: ["PASS"],
-      experiment: { decisionMetric: null },
+      experiment: { decisionMetric: "deterministic-delivery-rate" },
     }),
   ]);
   const [decision] = summary.experiments.decisions;
   const unscored = decision.variants.find((variant) => variant.variantId === "v2");
-  assert.equal(unscored.value, null);
-  assert.equal(unscored.eligible, false);
-  assert.match(unscored.ineligibleReason, /no recorded value/);
+  assert.equal(unscored.value, 0);
+  assert.equal(unscored.eligible, true);
 });
 
 test("names the leader on the declared decision metric alone", () => {
@@ -304,6 +306,14 @@ function variantOf(summary, groupId = "g1", variantId = "v1") {
 }
 
 function candidateWith(verificationRuns, headRevision = "head1") {
+  verificationRuns = verificationRuns.map((run) => ({
+    candidateId: "C1",
+    candidateRevision: 1,
+    rows: [
+      { id: "test", command: "npm test", status: run.status, exitCode: run.status === "passed" ? 0 : 1 },
+    ],
+    ...run,
+  }));
   return { id: "C1", revisionNumber: 1, headRevision, verificationRuns };
 }
 
@@ -315,6 +325,9 @@ test("deterministic delivery counts a full-manifest pass on the exact final revi
         {
           executionKind: "full-manifest",
           headRevision: "head1",
+          candidateId: "C1",
+          candidateRevision: 1,
+          rows: [{ id: "test", command: "npm test", status: "passed", exitCode: 0 }],
           status: "passed",
           declaredCommandIds: ["lint", "test"],
           executedCommandIds: ["lint", "test"],
@@ -355,8 +368,8 @@ test("a manifest execution against a superseded revision is not delivery evidenc
   assert.equal(variant.deterministicOutcomes.unknown, 1);
   assert.equal(
     variant.deterministicDeliveryRate,
-    null,
-    "no admissible evidence leaves the rate unknown rather than zero",
+    0,
+    "a finished trial without admissible evidence did not deliver",
   );
 });
 
@@ -368,6 +381,9 @@ test("a focused execution is never admissible as deterministic delivery", () => 
         {
           executionKind: "focused",
           headRevision: "head1",
+          candidateId: "C1",
+          candidateRevision: 1,
+          rows: [{ id: "test", command: "npm test", status: "passed", exitCode: 0 }],
           status: "passed",
           declaredCommandIds: ["test"],
           executedCommandIds: ["test"],
@@ -388,6 +404,9 @@ test("a pass that skipped a declared command is incomplete, not delivered", () =
         {
           executionKind: "full-manifest",
           headRevision: "head1",
+          candidateId: "C1",
+          candidateRevision: 1,
+          rows: [{ id: "test", command: "npm test", status: "passed", exitCode: 0 }],
           status: "passed",
           declaredCommandIds: ["lint", "test", "build"],
           executedCommandIds: ["lint", "test"],

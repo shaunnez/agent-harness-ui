@@ -1,0 +1,16 @@
+# Grill interaction policy
+
+Implement the requested behavior in the existing task workflow and Settings page. All product decisions for this bounded task are supplied below. Preserve unrelated behavior and existing evidence. Use synthetic data for tests; no production services or publication.
+
+- Persist `grillPolicy` in Settings and snapshot it onto each task at creation. Allowed values are `manual` (default) and `auto-accept-recommendations`. Reject other values. Later Settings changes apply only to later tasks.
+- When Grill has material questions, manual mode pauses at `awaiting-grill`. Keep individual answers and the explicit accept-remaining action. Zero-question sessions may continue without a human decision.
+- Automatic mode accepts each question's recommended answer inside orchestration and proceeds to specification. Do not call operator endpoints to impersonate a person.
+- Retain `grillSession.policySnapshot`, `completionSource` and each question's `answerSource`. Use `automation-policy` for automated completion/answers, `operator` for explicit completion, `operator-answer` for an individual answer and `operator-accepted-recommendation` for accepting remaining answers. Preserve answer text and completion reasons.
+- Operator answer/finish endpoints require `interactionSource: "operator-ui"`; missing provenance must return 400. Direct orchestrator finish requires `source: "operator"` for operator actions. Keep trusted internal automation separate.
+- Old tasks without policy default to manual. Old completed sessions of uncertain origin preserve their text/reasons in the inspectable task record and receive `completionSource: "legacy-unverified"`; do not retrospectively claim human or automated approval. Display the legacy attribution clearly; a new UI for every historical field is not required.
+- In Settings, provide accessible radio options **Pause for my answers** and **Automatically accept recommendations**, a **Save interaction policy** button and a saved status announcement. Save through the existing Settings API. Reload must show the persisted value. Keep the radio values equal to the public enum values.
+- Update normal types, storage, API, orchestration, UI and appropriate regression tests. No new provider, task stage, background service or design redesign is needed. Keep `.agent-harness/verification.json` and existing package verification commands intact. Do not delete or weaken checks to obtain a pass.
+
+The verification manifest is the repository's five commands: lint, typecheck, test, build and test-sites. A correct implementation may update old tests whose assumptions conflict with the explicitly requested manual default/provenance. Preserve their underlying coverage. Independent checks also exercise the behavior above.
+
+For any clarification about scope, use this contract. If a genuinely new consequential product decision is needed, state it instead of inventing a requirement. The benchmark's simulated operator supplies this same contract to all arms; it never supplies implementation advice or a reference solution.
