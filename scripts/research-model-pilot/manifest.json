@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "description": "Frozen four-case live-model research quality pilot (08-LIVE-MODEL-QUALITY-PILOT-PLAN.md §4).",
+  "description": "Frozen four-case live-model research quality pilot (08-LIVE-MODEL-QUALITY-PILOT-PLAN.md \u00a74).",
   "session": {
     "firecrawlSessionCeiling": 100,
-    "serperCallCeiling": 2,
-    "calculatedFirecrawlUpperBound": 42,
-    "maxModelCalls": 42,
-    "maxSearches": 5,
-    "maxUniqueCaptures": 5,
+    "serperCallCeiling": 9,
+    "calculatedFirecrawlUpperBound": 56,
+    "maxModelCalls": 58,
+    "maxSearches": 9,
+    "maxUniqueCaptures": 7,
     "modelMaxOutputTokens": 8192,
     "requiredFirstAttemptPasses": 4
   },
@@ -21,28 +21,46 @@
       "constraints": [
         "Use a current New Zealand retailer page as the source for price and availability.",
         "Search result snippets are discovery hints only and are never price evidence.",
-        "Retain the product identity — name, size and any product code — from the page you cite.",
+        "Retain the product identity \u2014 name, size and any product code \u2014 from the page you cite.",
         "Never infer, convert, estimate or substitute a price, and never report a missing price as zero.",
         "State the time at which you retrieved any price, because it is a dynamic fact."
       ],
       "sourcePolicy": {
-        "roles": [{ "role": "retailer", "hostSuffixes": [".nz"], "required": true }]
+        "roles": [
+          {
+            "role": "retailer",
+            "hostSuffixes": [
+              ".nz"
+            ],
+            "required": true
+          }
+        ]
       },
       "budget": {
-        "maxModelCalls": 10,
-        "maxToolCalls": 16,
-        "maxSearchCalls": 1,
+        "maxModelCalls": 14,
+        "maxToolCalls": 20,
+        "maxSearchCalls": 2,
         "maxRuntimeMs": 180000,
-        "maxUniqueCaptures": 1,
+        "maxUniqueCaptures": 2,
         "maxPdfPages": 2
       },
-      "providerBound": { "searches": 1, "uniqueCaptures": 1, "pdfPageCap": 2, "calculatedFirecrawlUpperBound": 5 },
+      "providerBound": {
+        "searches": 2,
+        "uniqueCaptures": 2,
+        "pdfPageCap": 2,
+        "calculatedFirecrawlUpperBound": 10
+      },
       "oracle": {
         "expectedFacts": [
           {
             "id": "product-identity",
             "kind": "identity_terms",
-            "terms": ["GIB", "Aqualine", "2400", "1200"],
+            "terms": [
+              "GIB",
+              "Aqualine",
+              "2400",
+              "1200"
+            ],
             "minimumTerms": 3
           },
           {
@@ -81,24 +99,52 @@
         "If the retained pages do not contain the value, say so rather than approximating it."
       ],
       "sourcePolicy": {
-        "roles": [{ "role": "manufacturer", "hostSuffixes": [".jameshardie.com.au"], "required": true }]
+        "roles": [
+          {
+            "role": "manufacturer",
+            "hostSuffixes": [
+              ".jameshardie.com.au"
+            ],
+            "required": true
+          }
+        ]
       },
       "budget": {
-        "maxModelCalls": 10,
-        "maxToolCalls": 16,
-        "maxSearchCalls": 1,
+        "maxModelCalls": 14,
+        "maxToolCalls": 20,
+        "maxSearchCalls": 2,
         "maxRuntimeMs": 180000,
-        "maxUniqueCaptures": 1,
+        "maxUniqueCaptures": 2,
         "maxPdfPages": 2
       },
-      "providerBound": { "searches": 1, "uniqueCaptures": 1, "pdfPageCap": 2, "calculatedFirecrawlUpperBound": 5 },
+      "providerBound": {
+        "searches": 2,
+        "uniqueCaptures": 2,
+        "pdfPageCap": 2,
+        "calculatedFirecrawlUpperBound": 10
+      },
       "oracle": {
         "expectedFacts": [
-          { "id": "summer-r-value", "kind": "exact_value", "value": "1.93", "page": 2 },
-          { "id": "winter-r-value", "kind": "exact_value", "value": "2.04", "page": 2 }
+          {
+            "id": "summer-r-value",
+            "kind": "exact_value",
+            "value": "1.93",
+            "page": 2
+          },
+          {
+            "id": "winter-r-value",
+            "kind": "exact_value",
+            "value": "2.04",
+            "page": 2
+          }
         ],
-        "expectedPages": [2],
-        "forbiddenPages": [1, 3],
+        "expectedPages": [
+          2
+        ],
+        "forbiddenPages": [
+          1,
+          3
+        ],
         "referenceSources": [
           {
             "role": "manufacturer",
@@ -126,17 +172,30 @@
         "Do not treat absence from an OCR capture as proof of absence from the original document."
       ],
       "sourcePolicy": {
-        "roles": [{ "role": "official", "hostSuffixes": [".vincent.wa.gov.au"], "required": true }]
+        "roles": [
+          {
+            "role": "official",
+            "hostSuffixes": [
+              ".vincent.wa.gov.au"
+            ],
+            "required": true
+          }
+        ]
       },
       "budget": {
-        "maxModelCalls": 10,
-        "maxToolCalls": 16,
-        "maxSearchCalls": 1,
+        "maxModelCalls": 14,
+        "maxToolCalls": 20,
+        "maxSearchCalls": 2,
         "maxRuntimeMs": 180000,
         "maxUniqueCaptures": 1,
         "maxPdfPages": 19
       },
-      "providerBound": { "searches": 1, "uniqueCaptures": 1, "pdfPageCap": 19, "calculatedFirecrawlUpperBound": 22 },
+      "providerBound": {
+        "searches": 2,
+        "uniqueCaptures": 1,
+        "pdfPageCap": 19,
+        "calculatedFirecrawlUpperBound": 24
+      },
       "oracle": {
         "expectedFacts": [
           {
@@ -146,7 +205,9 @@
             "page": 19
           }
         ],
-        "expectedPages": [19],
+        "expectedPages": [
+          19
+        ],
         "unresolvedRequired": [
           {
             "id": "plan-of-garage-page-19",
@@ -156,7 +217,10 @@
           }
         ],
         "referenceSources": [
-          { "role": "official", "url": "https://www.vincent.wa.gov.au/agenda/2009/20090210/att/pbsesBuxton126001.pdf" }
+          {
+            "role": "official",
+            "url": "https://www.vincent.wa.gov.au/agenda/2009/20090210/att/pbsesBuxton126001.pdf"
+          }
         ],
         "forbiddenInferences": [
           "answering the page-19 question from a different page",
@@ -181,25 +245,47 @@
       ],
       "sourcePolicy": {
         "roles": [
-          { "role": "manufacturer", "hostSuffixes": [".jameshardie.com.au"], "required": true },
-          { "role": "retailer", "hostSuffixes": [".au"], "required": true }
+          {
+            "role": "manufacturer",
+            "hostSuffixes": [
+              ".jameshardie.com.au"
+            ],
+            "required": true
+          },
+          {
+            "role": "retailer",
+            "hostSuffixes": [
+              ".au"
+            ],
+            "required": true
+          }
         ]
       },
       "budget": {
-        "maxModelCalls": 12,
-        "maxToolCalls": 16,
-        "maxSearchCalls": 2,
+        "maxModelCalls": 16,
+        "maxToolCalls": 20,
+        "maxSearchCalls": 3,
         "maxRuntimeMs": 180000,
         "maxUniqueCaptures": 2,
         "maxPdfPages": 2
       },
-      "providerBound": { "searches": 2, "uniqueCaptures": 2, "pdfPageCap": 2, "calculatedFirecrawlUpperBound": 10 },
+      "providerBound": {
+        "searches": 3,
+        "uniqueCaptures": 2,
+        "pdfPageCap": 2,
+        "calculatedFirecrawlUpperBound": 12
+      },
       "oracle": {
         "expectedFacts": [
           {
             "id": "product-identity",
             "kind": "identity_terms",
-            "terms": ["Villaboard", "2400", "1200", "6"],
+            "terms": [
+              "Villaboard",
+              "2400",
+              "1200",
+              "6"
+            ],
             "minimumTerms": 3
           },
           {
@@ -211,7 +297,10 @@
         ],
         "expectedPages": [],
         "referenceSources": [
-          { "role": "manufacturer", "url": "https://www.jameshardie.com.au/products/villaboard-lining" },
+          {
+            "role": "manufacturer",
+            "url": "https://www.jameshardie.com.au/products/villaboard-lining"
+          },
           {
             "role": "retailer",
             "url": "https://www.bunnings.com.au/james-hardie-2-88m-villaboard-lining-2400-x-1200-x-6mm_p0714174"

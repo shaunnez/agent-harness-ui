@@ -94,6 +94,26 @@ test("malformed tool output is rejected at the tool boundary and the model recov
   );
 });
 
+test("a host-rejected finding reaches the model as feedback instead of killing the run", async () => {
+  await withDeepAgentsRuntime(
+    async ({ runtime }) => {
+      const request = testRequest("RSCH-DA-HOST-REJECT");
+      await runtime.start(request);
+      const terminal = await waitForTerminal(runtime, request.id);
+      // The host rejection used to escape the tool, escape the graph, and end the run as
+      // `model_or_tool_error` — discarding every source the run had already retained.
+      assert.equal(terminal.status, "completed", "a correctable host rejection does not end the run");
+      const result = await runtime.result(request.id);
+      assert.equal(
+        result.findings.length,
+        1,
+        "the model corrected the citation and submitted a real finding",
+      );
+    },
+    { envOverrides: { RESEARCH_MODEL_FAKE_MISBEHAVIOR: "host_rejected_finding" } },
+  );
+});
+
 test("the general-purpose subagent is rejected even with zero subagents configured", async () => {
   await withDeepAgentsRuntime(
     async ({ runtime }) => {

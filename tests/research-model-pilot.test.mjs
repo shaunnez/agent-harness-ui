@@ -69,11 +69,11 @@ function manifestJson() {
 test("the shipped manifest declares four cases whose parts calculate the frozen session bounds", () => {
   assert.equal(shippedManifest.cases.length, 4);
   const bounds = sessionBounds(shippedManifest);
-  assert.equal(bounds.maxModelCalls, 42);
-  assert.equal(bounds.calculatedFirecrawlUpperBound, 42);
+  assert.equal(bounds.maxModelCalls, 58);
+  assert.equal(bounds.calculatedFirecrawlUpperBound, 56);
   assert.equal(bounds.firecrawlSessionCeiling, 100);
-  assert.equal(bounds.serperCallCeiling, 2);
-  assert.equal(bounds.maxUniqueCaptures, 5);
+  assert.equal(bounds.serperCallCeiling, 9);
+  assert.equal(bounds.maxUniqueCaptures, 7);
   assert.equal(bounds.modelMaxOutputTokens, 8_192);
   for (const entry of shippedManifest.cases)
     assert.equal(
@@ -96,11 +96,11 @@ test("a manifest with an unexpected key, a duplicate id or broken arithmetic fai
   assert.throws(() => parsePilotManifest(brokenCase), /calculate/);
 
   const brokenSession = manifestJson();
-  brokenSession.session.maxModelCalls = 41;
+  brokenSession.session.maxModelCalls = 57;
   assert.throws(() => parsePilotManifest(brokenSession), /model-call ceiling/);
 
   const widerCapture = manifestJson();
-  widerCapture.cases[0].budget.maxUniqueCaptures = 2;
+  widerCapture.cases[0].budget.maxUniqueCaptures = 3;
   assert.throws(() => parsePilotManifest(widerCapture), /capture bound/);
 });
 
@@ -172,9 +172,9 @@ test("a case budget override only lowers ceilings and never widens the profile",
     maxConcurrentResearchers: 1,
     maxDepth: 1,
     maxRuntimeMs: 180_000,
-    maxModelCalls: 12,
-    maxToolCalls: 16,
-    maxSearchCalls: 2,
+    maxModelCalls: 16,
+    maxToolCalls: 20,
+    maxSearchCalls: 3,
   });
 });
 
@@ -505,10 +505,10 @@ test("a dry run reports the frozen bounds section 7 declares", async () => {
       sessionRoot: path.join(directory, "sessions"),
     });
     const preflight = JSON.parse(await readFile(path.join(session.directory, "preflight.json"), "utf8"));
-    assert.equal(preflight.bounds.maxModelCalls, 42);
-    assert.equal(preflight.bounds.calculatedFirecrawlUpperBound, 42);
+    assert.equal(preflight.bounds.maxModelCalls, 58);
+    assert.equal(preflight.bounds.calculatedFirecrawlUpperBound, 56);
     assert.equal(preflight.bounds.firecrawlSessionCeiling, 100);
-    assert.equal(preflight.bounds.serperCallCeiling, 2);
+    assert.equal(preflight.bounds.serperCallCeiling, 9);
     assert.equal(preflight.allowance, null);
   });
 });
@@ -525,8 +525,8 @@ test("live mode cannot be entered by credentials alone", async () => {
       RESEARCH_MODEL_API_KEY: "model-sentinel",
       RESEARCH_MODEL_MAX_OUTPUT_TOKENS: "8192",
       FIRECRAWL_API_KEY: "firecrawl-sentinel",
-      RESEARCH_MODEL_PILOT_FIRECRAWL_ALLOWANCE: "42",
-      RESEARCH_MODEL_PILOT_MODEL_CALL_ALLOWANCE: "42",
+      RESEARCH_MODEL_PILOT_FIRECRAWL_ALLOWANCE: "56",
+      RESEARCH_MODEL_PILOT_MODEL_CALL_ALLOWANCE: "58",
     };
     const guards = (environment, overrides = {}) =>
       assertLiveGuards({
@@ -617,12 +617,12 @@ test("a session allowance must be supplied for this session and admit the manife
   assert.deepEqual(
     resolveSessionAllowance(
       {
-        RESEARCH_MODEL_PILOT_FIRECRAWL_ALLOWANCE: "50",
-        RESEARCH_MODEL_PILOT_MODEL_CALL_ALLOWANCE: "42",
+        RESEARCH_MODEL_PILOT_FIRECRAWL_ALLOWANCE: "100",
+        RESEARCH_MODEL_PILOT_MODEL_CALL_ALLOWANCE: "58",
       },
       shippedManifest,
     ),
-    { firecrawlCredits: 50, modelCalls: 42 },
+    { firecrawlCredits: 100, modelCalls: 58 },
   );
 });
 
@@ -654,7 +654,7 @@ test("a preflight report names variables and selections, never environment conte
       },
       { live: true },
     ),
-    allowance: { firecrawlCredits: 42, modelCalls: 42 },
+    allowance: { firecrawlCredits: 56, modelCalls: 58 },
     git: { commit: "abc", dirty: false },
     runtime: { ok: true, checked: ["node:sqlite"], nodeVersion: "v22", moduleAbi: "127" },
     providerConfig: { searchProvider: "firecrawl" },
@@ -1127,7 +1127,7 @@ test("exceeding a frozen bound, or a provider charge contract, fails the case", 
     findings: [pdfFinding()],
     sources: [PDF_SOURCE],
     accounting: {
-      model: { modelCalls: 11, toolCalls: 7, searchCalls: 1 },
+      model: { modelCalls: 15, toolCalls: 7, searchCalls: 1 },
       budgetState: {},
       providers: {
         firecrawl: { caseCommitted: 6, contractViolation: true, attempts: [] },
