@@ -58,7 +58,7 @@ export function WorkPackages({
     return (
       <section className="workflow-card package-workbench">
         <div className="section-heading">
-          <h3>Work packages</h3>
+          <h3>{stage === "plan" ? "Plan overview" : "Work packages"}</h3>
         </div>
         <p className="quiet">No work packages are recorded for this stage.</p>
       </section>
@@ -70,36 +70,43 @@ export function WorkPackages({
         <div className="panel-heading">
           <span>
             <Graph size={18} />
-            <h3>Work packages</h3>
+            <h3>{stage === "plan" ? "Plan overview" : "Work packages"}</h3>
           </span>
           <small>
             {packages.length} {packages.length === 1 ? "package" : "packages"}
           </small>
         </div>
-        <fieldset className="package-status-summary">
-          <legend className="sr-only">Work package totals</legend>
-          <span>
-            <strong>{counts.running}</strong>
-            <small>Running</small>
-          </span>
-          <span>
-            <strong>{counts.ready}</strong>
-            <small>Ready to integrate</small>
-          </span>
-          <span>
-            <strong>{counts.integrated}</strong>
-            <small>Integrated</small>
-          </span>
-          <span>
-            <strong>{counts.waiting}</strong>
-            <small>{stage === "plan" ? "Planned" : "Waiting"}</small>
-          </span>
-        </fieldset>
+        {stage !== "plan" && (
+          <fieldset className="package-status-summary">
+            <legend className="sr-only">Work package totals</legend>
+            <span>
+              <strong>{counts.running}</strong>
+              <small>Running</small>
+            </span>
+            <span>
+              <strong>{counts.ready}</strong>
+              <small>Ready to integrate</small>
+            </span>
+            <span>
+              <strong>{counts.integrated}</strong>
+              <small>Integrated</small>
+            </span>
+            <span>
+              <strong>{counts.waiting}</strong>
+              <small>{stage === "plan" ? "Planned" : "Waiting"}</small>
+            </span>
+          </fieldset>
+        )}
         {stage === "implement" && counts.queued > 0 && (
           <p className="package-queued-total">{counts.queued} ready to start</p>
         )}
         {counts.failed > 0 && <p className="package-failed-total">{counts.failed} failed qualification</p>}
-        <PackageDiagram packages={packages} selectedId={selected?.id} onSelect={setSelectedId} />
+        <PackageDiagram
+          packages={packages}
+          selectedId={selected?.id}
+          onSelect={setSelectedId}
+          planning={stage === "plan"}
+        />
         <p className="package-plan-note">
           Connections show recorded dependencies. Qualified slices still require candidate review and tests.
         </p>
@@ -116,7 +123,11 @@ export function WorkPackages({
           <div className="package-detail-title">
             <div>
               <h3>{selected.title}</h3>
-              <span className={`package-state ${selected.status}`}>{packageState(selected, packages)}</span>
+              <span className={`package-state ${selected.status}`}>
+                {stage === "plan" && selected.status === "planned"
+                  ? "Planned"
+                  : packageState(selected, packages)}
+              </span>
             </div>
             <strong>{selected.id}</strong>
           </div>
@@ -172,38 +183,44 @@ export function WorkPackages({
                 </dd>
               </span>
             </div>
-            <div>
-              <GitCommit size={18} />
-              <span>
-                <dt>Slice commit</dt>
-                <dd>
-                  <code>{selected.headRevision ?? "Not recorded"}</code>
-                  <small className="package-record-note">
-                    Changed files: {selected.files.join(", ") || "Not recorded"}
-                  </small>
-                </dd>
-              </span>
-            </div>
-            <div>
-              <ShieldCheck size={18} />
-              <span>
-                <dt>Qualification</dt>
-                <dd>
-                  {selected.verificationRuns?.length
-                    ? selected.verificationRuns.map((item) => item.status).join(" · ")
-                    : "No result recorded yet"}
-                </dd>
-              </span>
-            </div>
-            <div>
-              <FolderOpen size={18} />
-              <span>
-                <dt>Retained worktree</dt>
-                <dd>
-                  <code>{selected.worktreePath ?? "Not recorded"}</code>
-                </dd>
-              </span>
-            </div>
+            {(stage !== "plan" || selected.headRevision || selected.files.length > 0) && (
+              <div>
+                <GitCommit size={18} />
+                <span>
+                  <dt>Slice commit</dt>
+                  <dd>
+                    <code>{selected.headRevision ?? "Not recorded"}</code>
+                    <small className="package-record-note">
+                      Changed files: {selected.files.join(", ") || "Not recorded"}
+                    </small>
+                  </dd>
+                </span>
+              </div>
+            )}
+            {(stage !== "plan" || (selected.verificationRuns?.length ?? 0) > 0) && (
+              <div>
+                <ShieldCheck size={18} />
+                <span>
+                  <dt>Qualification</dt>
+                  <dd>
+                    {selected.verificationRuns?.length
+                      ? selected.verificationRuns.map((item) => item.status).join(" · ")
+                      : "No result recorded yet"}
+                  </dd>
+                </span>
+              </div>
+            )}
+            {(stage !== "plan" || selected.worktreePath) && (
+              <div>
+                <FolderOpen size={18} />
+                <span>
+                  <dt>Retained worktree</dt>
+                  <dd>
+                    <code>{selected.worktreePath ?? "Not recorded"}</code>
+                  </dd>
+                </span>
+              </div>
+            )}
           </dl>
           {selected.verificationRuns?.map((verification) => (
             <p

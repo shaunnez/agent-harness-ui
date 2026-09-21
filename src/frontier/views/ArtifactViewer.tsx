@@ -1,18 +1,22 @@
+import { FileText } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { RuntimeArtifact } from "../../domain";
 import type { FrontierGateway } from "../runtime/contracts";
 import { modelLabel, reasoningLabel } from "../runtime/presentation";
+import { DocumentHeading } from "./DocumentHeading";
 
 export function ArtifactViewer({
   gateway,
   taskId,
   artifactId,
+  workspace = false,
 }: {
   gateway: FrontierGateway;
   taskId: string;
   artifactId: string;
+  workspace?: boolean;
 }) {
   const [artifact, setArtifact] = useState<RuntimeArtifact | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +40,7 @@ export function ArtifactViewer({
     };
   }, [gateway, taskId, artifactId, attempt]);
   return (
-    <div className="overlay-body artifact-body">
+    <div className={`overlay-body artifact-body ${workspace ? "workspace-document" : ""}`}>
       {error ? (
         <p role="alert" className="form-error">
           {error}
@@ -50,7 +54,10 @@ export function ArtifactViewer({
         <>
           <div className="artifact-toolbar">
             <div>
-              <strong>{artifact.name}</strong>
+              <strong>
+                {workspace && <FileText size={18} />}
+                {artifact.name}
+              </strong>
               <small>
                 {taskId} · {artifact.id}
               </small>
@@ -71,6 +78,16 @@ export function ArtifactViewer({
               <Markdown
                 remarkPlugins={[remarkGfm]}
                 components={{
+                  ...(workspace
+                    ? {
+                        h2: ({ children }: { children?: React.ReactNode }) => (
+                          <DocumentHeading level={2}>{children}</DocumentHeading>
+                        ),
+                        h3: ({ children }: { children?: React.ReactNode }) => (
+                          <DocumentHeading level={3}>{children}</DocumentHeading>
+                        ),
+                      }
+                    : {}),
                   a: ({ href, children }) =>
                     href && /^https?:\/\//i.test(href) ? (
                       <a href={href} target="_blank" rel="noreferrer">

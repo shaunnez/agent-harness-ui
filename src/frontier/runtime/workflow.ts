@@ -46,6 +46,20 @@ export function stageRecorded(evidence: TaskEvidence, stage: StageId) {
     (task.attemptsByStage[stage] ?? 0) > 0
   );
 }
+export function stageHasError(evidence: TaskEvidence, stage: StageId) {
+  const task = evidence.core;
+  if (stage === "implement" && task.workPackages.some((item) => item.status === "failed")) return true;
+  if (
+    stage === task.currentStage &&
+    ["failed", "repair-required", "review-retry-required"].includes(task.status)
+  )
+    return true;
+  if (gateStages.includes(stage as (typeof gateStages)[number])) {
+    const state = gateView(task, stage as (typeof gateStages)[number]).label;
+    if (state === "Rerun required" || state === "Execution failed") return true;
+  }
+  return false;
+}
 export function stageState(task: TaskCore, stage: StageId) {
   const gate =
     stage === "dev-review" || stage === "test" || stage === "final-review" ? gateView(task, stage) : null;

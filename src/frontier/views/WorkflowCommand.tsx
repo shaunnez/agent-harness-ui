@@ -1,5 +1,5 @@
 import { ArrowRight, Binoculars, Play, ShieldCheck } from "@phosphor-icons/react";
-import type { KeyboardEvent } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import type { RuntimeAvailableAction } from "../../domain";
 import { usePanelState } from "../app/panel-state";
@@ -36,6 +36,8 @@ export function WorkflowCommand({
   onContinue,
   onWatch,
   watchLabel,
+  hideGrillAction = false,
+  retainedArtifactAction,
 }: {
   task: TaskCore;
   gateway: FrontierGateway;
@@ -46,6 +48,8 @@ export function WorkflowCommand({
   onContinue(id: string): void;
   onWatch?: () => void;
   watchLabel?: string;
+  hideGrillAction?: boolean;
+  retainedArtifactAction?: ReactNode;
 }) {
   const [menu, setMenu] = useState<Review | null>(null);
   const [review, setReview] = usePanelState<Review | null>(`command-review:${task.id}`, null);
@@ -245,7 +249,7 @@ export function WorkflowCommand({
             {task.status === "failed" ? "Retry stage" : "Start task"}
           </button>
         )}
-        {task.status === "awaiting-grill" && (
+        {task.status === "awaiting-grill" && !hideGrillAction && (
           <button type="button" className="primary" onClick={onGrill}>
             Answer questions <ArrowRight size={17} />
           </button>
@@ -296,6 +300,7 @@ export function WorkflowCommand({
             <ArrowRight size={17} />
           </button>
         )}
+        {retainedArtifactAction}
         {!next?.action && onWatch && (
           <button type="button" className="primary" onClick={onWatch}>
             <Binoculars size={17} />

@@ -18,7 +18,7 @@
 .task-workspace-header {
   grid-column: 1 / -1;
   display: flex;
-  align-items: center;
+  align-items: start;
   justify-content: space-between;
   gap: 16px;
   min-height: 84px;
@@ -245,30 +245,12 @@
 
 .implementation-workshop {
   position: relative;
-  min-height: calc(clamp(135px, 18vw, 205px) + 64px);
+  min-height: 0;
   margin: 0;
   overflow: hidden;
   background: #102833;
   border: 1px solid #365561;
   border-radius: 7px;
-}
-.implementation-workshop > img {
-  display: block;
-  width: 100%;
-  height: clamp(135px, 18vw, 205px);
-  object-fit: cover;
-  object-position: 50% 48%;
-}
-.workshop-label {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  padding: 4px 7px;
-  color: #c3d4dc;
-  background: #071a23d9;
-  border: 1px solid #58727e;
-  border-radius: 4px;
-  font-size: 12px;
 }
 .workshop-caption {
   min-height: 64px;
@@ -877,9 +859,6 @@
   .task-layout-top > .task-brief-frame {
     margin: 12px;
   }
-  .implementation-workshop > img {
-    height: 128px;
-  }
   .workshop-caption em {
     display: none;
   }
@@ -1063,4 +1042,32 @@
   margin: 12px 14px 0;
   color: #a7bdc9;
   font-size: 12px;
+}
+
+/* Review correction: one connected stage rail with distinct selection and health. */
+.task-layout-top .stage-navigation button {
+  position: relative;
+  isolation: isolate;
+}
+.task-layout-top .stage-navigation button:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  height: 1px;
+  background: #385462;
+  top: 20px;
+  left: calc(50% + 17px);
+  width: calc(100% - 30px);
+  pointer-events: none;
+  z-index: -1;
+}
+.task-layout-top .stage-navigation button[data-error] .stage-number,
+.task-layout-top .stage-navigation button.selected[data-error] .stage-number {
+  color: #f2a293;
+  border-color: #bc675b;
+  background: #442925;
+}
+.task-layout-top .stage-navigation button.selected .stage-number {
+  color: #e1f0ff;
+  background: #205083;
+  border-color: #73b7ff;
 }

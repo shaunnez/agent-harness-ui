@@ -6,6 +6,7 @@ import type { FrontierGateway, TaskEvidence } from "../runtime/contracts";
 import { modelLabel, reasoningLabel, stageLabels } from "../runtime/presentation";
 import { artifactState } from "../runtime/workflow";
 import { ArtifactViewer } from "./ArtifactViewer";
+import { InvestigationEvidence } from "./InvestigationEvidence";
 
 export function StageEvidence({
   evidence,
@@ -53,7 +54,8 @@ export function StageEvidence({
   }, [artifactId, task.id, gateway]);
   const findings = detail?.gateResult?.findings ?? [];
   const finding = findings[selectedFinding] ?? findings[0];
-  const separateActivity = stage === "implement";
+  const earlyStage = ["triage", "scouts", "grill", "specification", "plan"].includes(stage);
+  const separateActivity = earlyStage || stage === "implement";
   const tab = separateActivity && savedTab === "output" ? "activity" : savedTab;
   const tabs = (
     <nav className="content-tabs" aria-label="Task evidence tabs">
@@ -143,39 +145,22 @@ export function StageEvidence({
       )}
     </>
   );
+  const artifactLinks = artifacts.map((artifact) => (
+    <button type="button" key={artifact.id} className="text-row" onClick={() => onArtifact(artifact.id)}>
+      <FileText size={20} />
+      <span>
+        <strong>{artifact.name}</strong>
+        <small>
+          {artifactState(artifact, task)} · {new Date(artifact.createdAt).toLocaleString()}
+        </small>
+      </span>
+      <ArrowRight size={17} />
+    </button>
+  ));
   return (
-    <section className="stage-evidence">
+    <section className={`stage-evidence ${earlyStage ? "workspace-early-evidence" : ""}`}>
       {(stage === "triage" || stage === "scouts") && (
-        <section className="workflow-card">
-          <h3>{stage === "triage" ? "Risk & scope" : "Repository scouts"}</h3>
-          <p>
-            {task.workflowProfile
-              ? `${task.workflowProfile.selected} · ${task.workflowProfile.reason}`
-              : "No risk profile is recorded yet."}
-          </p>
-          {task.scoutDispatch ? (
-            <>
-              <p>{task.scoutDispatch.rationale}</p>
-              <div className="scout-grid">
-                {task.scoutDispatch.selected.map((scout) => (
-                  <article key={scout.name}>
-                    <img src="/assets/mf.worker.standard.se.neutral.r1.png" alt="" />
-                    <div>
-                      <h3>{scout.name}</h3>
-                      <small>{scout.status}</small>
-                      <p>{scout.focus}</p>
-                      <p className="quiet">{scout.reason}</p>
-                      {scout.error && <p className="form-error">{scout.error}</p>}
-                    </div>
-                  </article>
-                ))}
-              </div>
-              <p className="quiet">Skipped: {task.scoutDispatch.skipped.join(", ") || "None recorded"}</p>
-            </>
-          ) : (
-            <p className="quiet">The selected and skipped scout set has not been recorded.</p>
-          )}
-        </section>
+        <InvestigationEvidence evidence={evidence} stage={stage} onWatch={onWatch} />
       )}
       {detail?.gateResult && (
         <section className="workflow-card">
@@ -241,31 +226,25 @@ export function StageEvidence({
               {error}
             </p>
           )}
-          {artifacts.map((artifact) => (
-            <button
-              type="button"
-              key={artifact.id}
-              className="text-row"
-              onClick={() => onArtifact(artifact.id)}
-            >
-              <FileText size={20} />
-              <span>
-                <strong>{artifact.name}</strong>
-                <small>
-                  {artifactState(artifact, task)} · {new Date(artifact.createdAt).toLocaleString()}
-                </small>
-              </span>
-              <ArrowRight size={17} />
-            </button>
-          ))}
+          {!earlyStage && artifactLinks}
           {!artifacts.length && (
-            <p className="quiet">
-              No retained output is loaded for {stageLabels[stage]}.{" "}
-              {task.stageDispositions?.[stage]?.reason ??
-                (task.artifactNextCursor
-                  ? "Earlier retained artifacts can be loaded below."
-                  : "Only retained records are shown.")}
-            </p>
+            <section className={earlyStage ? "workflow-card empty-stage-output" : undefined}>
+              {earlyStage && (
+                <header className="panel-heading">
+                  <span>
+                    <FileText size={18} />
+                    <h3>{stage === "scouts" ? "Synthesis brief" : "Retained output"}</h3>
+                  </span>
+                </header>
+              )}
+              <p className="quiet">
+                No retained output is loaded for {stageLabels[stage]}.{" "}
+                {task.stageDispositions?.[stage]?.reason ??
+                  (task.artifactNextCursor
+                    ? "Earlier retained artifacts can be loaded below."
+                    : "Only retained records are shown.")}
+              </p>
+            </section>
           )}
           {task.artifactNextCursor && (
             <button type="button" onClick={() => onMore("artifacts")}>
@@ -277,9 +256,26 @@ export function StageEvidence({
               stage,
             ) && (
               <div className="stage-document">
-                <ArtifactViewer key={latest.id} taskId={task.id} artifactId={latest.id} gateway={gateway} />
+                <ArtifactViewer
+                  key={latest.id}
+                  taskId={task.id}
+                  artifactId={latest.id}
+                  gateway={gateway}
+                  workspace={earlyStage}
+                />
               </div>
             )}
+          {earlyStage && artifacts.length > 0 && (
+            <section className="workflow-card retained-stage-artifacts">
+              <header className="panel-heading">
+                <span>
+                  <FileText size={18} />
+                  <h3>Retained artifacts</h3>
+                </span>
+              </header>
+              {artifactLinks}
+            </section>
+          )}
         </>
       )}
       {separateActivity ? (

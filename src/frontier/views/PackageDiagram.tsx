@@ -13,10 +13,12 @@ export function PackageDiagram({
   packages,
   selectedId,
   onSelect,
+  planning = false,
 }: {
   packages: RuntimeWorkPackage[];
   selectedId?: string;
   onSelect(id: string): void;
+  planning?: boolean;
 }) {
   const root = useRef<HTMLElement>(null);
   const arrow = useId().replaceAll(":", "");
@@ -162,7 +164,9 @@ export function PackageDiagram({
                     <span className="package-id">{item.id}</span>
                     <span>
                       <strong>{item.title}</strong>
-                      <small>{packageState(item, packages)}</small>
+                      <small>
+                        {planning && item.status === "planned" ? "Planned" : packageState(item, packages)}
+                      </small>
                     </span>
                   </button>
                   {item.status === "failed" && (

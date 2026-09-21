@@ -9,6 +9,7 @@ import { fixtureArtifact, fixtureProjects, fixtureTask, makeFixtureTasks } from 
 import { stationFixtures } from "./stations.ts";
 import { fixtureWorkflow, sampleEligibility } from "./workflow.ts";
 import { enrichWorkflowScenarios } from "./workflow-scenarios.ts";
+import { workspaceScenarios } from "./workspace-scenarios.ts";
 
 /** In-memory demonstrations have no import or call path to the live mutation gateway. */
 export function createFixtureGateway(
@@ -16,6 +17,7 @@ export function createFixtureGateway(
   workflowScenarios = false,
   stationReview = false,
   colonyStress = false,
+  workspaceReview = false,
 ): FrontierGateway & {
   setDisconnected(value: boolean): void;
   appendActivity(id: string, count: number): void;
@@ -35,8 +37,10 @@ export function createFixtureGateway(
           ? loadFixture(scale)
           : { projects: fixtureProjects, tasks: makeFixtureTasks() },
   );
-  const tasks = new Map<string, RuntimeTask>(initial.tasks.map((task) => [task.id, task]));
   if (workflowScenarios && !scale && !stationReview && !colonyStress) enrichWorkflowScenarios(initial.tasks);
+  if (workspaceReview && !scale && !stationReview && !colonyStress)
+    initial.tasks.push(...workspaceScenarios());
+  const tasks = new Map<string, RuntimeTask>(initial.tasks.map((task) => [task.id, task]));
   let version = 1;
   let disconnected = false;
   let managementChanged = () => {};
