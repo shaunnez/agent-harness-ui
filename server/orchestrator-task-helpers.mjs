@@ -123,7 +123,9 @@ export function retainedSliceCanBeRequalified(prior, revised) {
     !prior.branch ||
     !prior.baseRevision ||
     !Array.isArray(prior.files) ||
-    !/(?:repository manifest command id|did not qualify)/i.test(prior.error ?? "") ||
+    !/(?:repository manifest command id|did not qualify|repository baseline verification failed)/i.test(
+      prior.error ?? "",
+    ) ||
     !revised.verificationCommandIds?.length
   ) {
     return false;

@@ -80,7 +80,7 @@ function actionEligibilityFor(task, action) {
         task.currentStage === "implement" ||
         (task.workPackages?.length ?? 0) > 0 ||
         (task.artifacts ?? []).some((artifact) => artifact.stage === "plan"));
-    return task.blocker?.code === "stale-plan" || legacyPlan
+    return ["stale-plan", "repository-baseline-verification"].includes(task.blocker?.code) || legacyPlan
       ? allow()
       : deny("The retained plan is already bound to the current repository authority.");
   }
@@ -157,8 +157,7 @@ function actionEligibilityFor(task, action) {
       : deny("The task is not blocked by a candidate refresh conflict.");
   }
   if (action === "restart-implementation") {
-    return task.status === "blocked" &&
-      ["implementation-target-diverged", "repository-baseline-verification"].includes(task.blocker?.code)
+    return task.status === "blocked" && task.blocker?.code === "implementation-target-diverged"
       ? allow()
       : deny("The task is not blocked by target divergence during implementation.");
   }
@@ -169,6 +168,9 @@ function actionEligibilityFor(task, action) {
   }
   if (task.status === "blocked" && task.blocker?.code === "stale-plan") {
     return deny("Revalidate the retained plan against the current target revision.");
+  }
+  if (task.status === "blocked" && task.blocker?.code === "repository-baseline-verification") {
+    return deny("Revalidate the plan once the repository baseline command is fixed there.");
   }
   if (action === "grant-retry") {
     if (task.currentStage === "approval") return deny("Human Approval never accepts a stage retry grant.");

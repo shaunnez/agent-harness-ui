@@ -138,11 +138,11 @@ export function deriveNextAction(task: RuntimeTask | RuntimeTaskCore) {
     };
   if (task.status === "blocked" && task.blocker?.code === "repository-baseline-verification")
     return {
-      action: "restart-implementation" as const,
+      action: "revalidate-plan" as const,
       label: "Recheck repository baseline",
       title: "Repository baseline command failed",
       detail:
-        "Re-verify the repository's own command at its current revision. If it has moved past the failure, the retained package is replayed onto the new revision and requalified there instead of being blamed for it.",
+        "Retain the plan and the retained package, inspect the current repository revision, and produce a new revision-bound plan. If the retained package still qualifies, it requalifies there without another model implementation run.",
     };
   const targetDiverged =
     task.status === "blocked" &&

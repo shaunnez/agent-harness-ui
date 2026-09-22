@@ -475,7 +475,7 @@ test("offers recovery actions that match target drift, invalid plans, and retrya
         workPackageId: "S1",
       },
     });
-    assert.equal(nextAction(baselineFailure).action, "restart-implementation");
+    assert.equal(nextAction(baselineFailure).action, "revalidate-plan");
     assert.match(nextAction(baselineFailure).label, /Recheck repository baseline/);
 
     const invalidPlan = createTask({
