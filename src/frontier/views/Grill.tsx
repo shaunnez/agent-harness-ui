@@ -31,6 +31,7 @@ export function Grill({
 }: GrillProps & { embedded?: boolean; run?: RuntimeRun }) {
   const questions = task.grillSession?.questions ?? [];
   const question = questions.find((item) => !item.answer);
+  const policy = task.grillSession?.policySnapshot ?? task.grillPolicy ?? "manual";
   const draftKey = `${task.id}:${question?.id ?? ""}`;
   const value = answers[draftKey] ?? "";
   return (
@@ -40,11 +41,15 @@ export function Grill({
           <header className="grill-title panel-heading">
             <Question size={34} />
             <div>
-              <small>{task.id} · Grill</small>
+              <small>
+                {task.id} · Grill · {policy === "manual" ? "Manual policy" : "Automatic policy"}
+              </small>
               <h2>
                 {question
                   ? `Question ${questions.indexOf(question) + 1} of ${questions.length}`
-                  : "Decisions recorded"}
+                  : questions.length
+                    ? "Decisions recorded"
+                    : "No material questions"}
               </h2>
             </div>
             <span>
@@ -127,7 +132,15 @@ export function Grill({
               )}
             </>
           ) : (
-            <p>All questions have answers. Continue to turn the recorded decisions into a specification.</p>
+            <>
+              <p>
+                {task.grillSession?.completionReason ??
+                  (task.grillSession?.status === "completed"
+                    ? "Grill is complete. The recorded answers are retained below."
+                    : "All questions have answers. Create the specification when you are ready.")}
+              </p>
+              {questions.length > 0 && <GrillDecisions task={task} />}
+            </>
           )}
           {error && (
             <p role="alert" className="form-error">
@@ -135,7 +148,7 @@ export function Grill({
             </p>
           )}
         </section>
-        {!embedded && <GrillDecisions task={task} />}
+        {!embedded && question && <GrillDecisions task={task} />}
       </div>
       {!embedded && (
         <GrillActions
@@ -154,8 +167,13 @@ export function Grill({
 export function GrillDecisions({ task }: { task: TaskCore }) {
   const questions = task.grillSession?.questions ?? [];
   return (
-    <aside className="decisions-panel">
-      <h3>Decisions so far</h3>
+    <aside className="decisions-panel" aria-label="Recorded Grill questions and answers">
+      <h3>
+        {task.grillSession?.status === "completed" ? "Recorded questions and answers" : "Decisions so far"}
+      </h3>
+      {task.grillSession?.completionSource === "legacy-unverified" && (
+        <p>Legacy record: who supplied these answers was not recorded.</p>
+      )}
       {questions.map((item, index) => (
         <section key={item.id}>
           <div>
@@ -164,7 +182,19 @@ export function GrillDecisions({ task }: { task: TaskCore }) {
           </div>
           <strong>{item.question}</strong>
           <p>{item.answer ?? "Awaiting your answer"}</p>
-          {item.answerSource && <small>Source: {item.answerSource.replaceAll("-", " ")}</small>}
+          {item.answer && (
+            <small>
+              {task.grillSession?.completionSource === "legacy-unverified"
+                ? "Source unverified"
+                : item.answerSource === "automation-policy"
+                  ? "Accepted automatically"
+                  : item.answerSource === "operator-answer"
+                    ? "Answered by operator"
+                    : item.answerSource === "operator-accepted-recommendation"
+                      ? "Recommendation accepted by operator"
+                      : "Source unverified"}
+            </small>
+          )}
         </section>
       ))}
     </aside>

@@ -181,9 +181,11 @@ test("automatically accepts Grill recommendations only for a task that snapshott
     });
     assert.equal((await store.get(task.id)).grillPolicy, "auto-accept-recommendations");
 
+    let specificationPrompt;
     const orchestrator = new TaskOrchestrator(store, {
       getStatus: async () => ({ available: true, authenticated: true, authMethod: "ChatGPT" }),
       runCodex: async ({ prompt, onEvent }) => {
+        if (prompt.startsWith("You are the Task specification agent")) specificationPrompt = prompt;
         onEvent?.({ type: "activity", tone: "success", title: "Repository inspected", detail: "mock" });
         return {
           finalText: /<scout-report>/.test(prompt)
@@ -199,6 +201,13 @@ test("automatically accepts Grill recommendations only for a task that snapshott
     assert.equal(await orchestrator.start(task.id), true);
     const finished = await waitForStatus(store, task.id, "awaiting-spec-approval");
     assert.equal(finished.grillSession.status, "completed");
+    assert.match(specificationPrompt, /Preserve it \[source: automation-policy\]/);
+    assert.doesNotMatch(specificationPrompt, /Recorded human decisions/);
+    const specification = finished.artifacts.find((artifact) => artifact.stage === "specification");
+    assert.equal(
+      specification.contextManifest.sources.find((source) => source.kind === "decisions").label,
+      "1 recorded decision",
+    );
     assert.equal(finished.grillSession.policySnapshot, "auto-accept-recommendations");
     assert.equal(finished.grillSession.completionSource, "automation-policy");
     assert.equal(finished.grillSession.acceptedRecommendationCount, 1);

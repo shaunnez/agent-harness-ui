@@ -316,3 +316,44 @@ test("Scouts present repository and individual outputs while skipped taxonomy re
     assert.match(markup, /not used/);
     assert.doesNotMatch(markup, /Selected:|Skipped:/);
   }));
+
+test("completed automatic Grill shows questions, answers and attribution in the main stage panel", async () =>
+  views(async ({ Grill }) => {
+    const gateway = createFixtureGateway(undefined, true, false, false, true);
+    const task = await gateway.core("PC-153");
+    task.status = "awaiting-spec-approval";
+    task.currentStage = "specification";
+    task.grillSession.status = "completed";
+    task.grillSession.policySnapshot = "auto-accept-recommendations";
+    task.grillSession.completionSource = "automation-policy";
+    for (const question of task.grillSession.questions) {
+      question.answer = question.answer ?? question.options.find((option) => option.recommended).label;
+      question.answerSource = "automation-policy";
+    }
+    const props = {
+      task,
+      busy: false,
+      connected: true,
+      error: null,
+      answers: {},
+      onDraft() {},
+      onAnswer() {},
+      onFinish() {},
+      onArtifact() {},
+      embedded: true,
+    };
+    const markup = renderToStaticMarkup(React.createElement(Grill, props));
+    for (const question of task.grillSession.questions) {
+      assert.ok(markup.includes(question.question));
+      assert.ok(markup.includes(question.answer));
+    }
+    assert.match(markup, /Automatic policy/);
+    assert.match(markup, /Accepted automatically/);
+    assert.doesNotMatch(markup, /Continue to turn|type="radio"|<textarea|Record answer/);
+    task.grillSession.questions = [];
+    task.grillSession.policySnapshot = "manual";
+    task.grillSession.completionSource = "no-questions";
+    const empty = renderToStaticMarkup(React.createElement(Grill, props));
+    assert.match(empty, /No material questions/);
+    assert.doesNotMatch(empty, /Accepted automatically|Automatic policy|Continue to turn/);
+  }));

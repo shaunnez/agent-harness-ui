@@ -462,7 +462,9 @@ export function TaskPanel({
             </p>
           ))}
         </section>
-        {viewedStage === "grill" && <GrillDecisions task={task} />}
+        {viewedStage === "grill" && task.grillSession?.questions.some((question) => !question.answer) && (
+          <GrillDecisions task={task} />
+        )}
         {task.decisions.length > 0 && (
           <section className="inspector-decisions">
             <h3>

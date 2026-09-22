@@ -1,4 +1,5 @@
 import { candidateGateCommandInstruction } from "./candidate-gate-policy.mjs";
+import { decisionContext } from "./prompt-decisions.mjs";
 
 export const TASK_TITLE_LIMIT = 300;
 export const TASK_DESCRIPTION_LIMIT = 6_000;
@@ -699,7 +700,7 @@ function makeContextManifest(
   workPackage = null,
   taskContextLabel = "Task ID, title, description, workflow, and priority",
 ) {
-  const decisionText = formatDecisions(task);
+  const { text: decisionText, count: decisionCount } = decisionContext(task);
   const attachmentText = formatAttachments(task);
   const sources = [
     {
@@ -715,7 +716,7 @@ function makeContextManifest(
           {
             kind: "decisions",
             id: "recorded-decisions",
-            label: `${task.decisions.length} recorded human decision${task.decisions.length === 1 ? "" : "s"}`,
+            label: `${decisionCount} recorded decision${decisionCount === 1 ? "" : "s"}`,
             includedCharacters: decisionText.length,
             originalCharacters: decisionText.length,
             truncated: false,
@@ -813,10 +814,7 @@ export function suppliedTaskContext(task, options = {}) {
 }
 
 function formatDecisions(task) {
-  if (!task.decisions?.length) return "";
-  return `Recorded human decisions (authoritative):\n${task.decisions
-    .map((decision) => `- ${decision.question}: ${decision.answer}`)
-    .join("\n")}\n\n`;
+  return decisionContext(task).text;
 }
 
 function formatAttachments(task) {

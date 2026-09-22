@@ -492,3 +492,44 @@ test("scout manifests preserve priority, exclude workflow, and cap triage at 4,0
     },
   );
 });
+
+test("resolved Grill answers reach downstream context with their recorded source, even without decision rows", () => {
+  for (const source of [
+    "automation-policy",
+    "operator-answer",
+    "operator-accepted-recommendation",
+    "legacy-unverified",
+  ]) {
+    for (const hasDecision of [false, true]) {
+      const task = createTask({
+        decisions: hasDecision
+          ? [
+              {
+                id: "D1",
+                grillQuestionId: "Q1",
+                question: "Compatibility?",
+                answer: "Keep clients",
+                createdAt: "2026-09-22T00:00:00Z",
+              },
+            ]
+          : [],
+        artifacts: [],
+        grillSession: {
+          status: "completed",
+          completionSource: source === "legacy-unverified" ? source : "operator",
+          questions: [{ id: "Q1", question: "Compatibility?", answer: "Keep clients", answerSource: source }],
+        },
+      });
+      for (const stage of ["specification", "plan"]) {
+        const request = buildStageRequest(task, stage);
+        assert.match(request.prompt, /Compatibility\?: Keep clients/);
+        assert.match(request.prompt, new RegExp(`source: ${source}`));
+        assert.doesNotMatch(request.prompt, /Recorded human decisions/);
+        assert.equal((request.prompt.match(/Compatibility\?: Keep clients/g) ?? []).length, 1);
+        const manifest = request.contextManifest.sources.find((item) => item.kind === "decisions");
+        assert.equal(manifest.label, "1 recorded decision");
+        assert.equal(manifest.truncated, false);
+      }
+    }
+  }
+});
