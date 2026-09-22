@@ -11,9 +11,11 @@ export class PlanAuthorityOrchestrator {
   async revalidatePlan(id) {
     const task = await this._store.get(id);
     if (!task) throw new Error("Task not found.");
+    const recoveringBaselineFailure = task.blocker?.code === "repository-baseline-verification";
     if (
       !(
         task.blocker?.code === "stale-plan" ||
+        recoveringBaselineFailure ||
         this.legacyPlanNeedsRevalidation(task) ||
         (task.currentStage === "plan" && ["failed", "blocked"].includes(task.status))
       )
@@ -23,6 +25,17 @@ export class PlanAuthorityOrchestrator {
     const authority = await this._repositoryAuthority.capture(task.repositoryPath, {
       frozenRevision: task.experiment?.frozenBaseSha ?? null,
     });
+    if (
+      recoveringBaselineFailure &&
+      authority.selectedRevision === task.blocker?.baselineVerification?.revision
+    ) {
+      // The repository is the *reason* this blocked, so re-planning against the same
+      // broken revision would just reproduce the identical baseline failure once
+      // implementation resumes, after spending a real planning-agent run for nothing.
+      throw new Error(
+        `The repository baseline has not advanced past ${authority.selectedRevision.slice(0, 8)}; revalidate again once the baseline command is fixed there.`,
+      );
+    }
     const priorArtifactId = task.planResult?.artifactId ?? null;
     await this._store.transition(
       id,
@@ -30,6 +43,7 @@ export class PlanAuthorityOrchestrator {
         !draft.activeRunKind &&
         !draft.activeRunReservationId &&
         (draft.blocker?.code === "stale-plan" ||
+          recoveringBaselineFailure ||
           this.legacyPlanNeedsRevalidation(draft) ||
           (draft.currentStage === "plan" && ["failed", "blocked"].includes(draft.status))),
       (draft) => {

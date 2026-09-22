@@ -136,6 +136,14 @@ export function deriveNextAction(task: RuntimeTask | RuntimeTaskCore) {
       detail:
         "Keep prior artifacts for audit, restart the approved packages from the current target, and qualify them under bounded concurrency.",
     };
+  if (task.status === "blocked" && task.blocker?.code === "repository-baseline-verification")
+    return {
+      action: "revalidate-plan" as const,
+      label: "Recheck repository baseline",
+      title: "Repository baseline command failed",
+      detail:
+        "Retain the plan and the retained package, inspect the current repository revision, and produce a new revision-bound plan. If the retained package still qualifies, it requalifies there without another model implementation run.",
+    };
   const targetDiverged =
     task.status === "blocked" &&
     (task.blocker?.code === "target-diverged" ||

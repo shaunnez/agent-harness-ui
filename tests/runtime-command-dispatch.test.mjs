@@ -465,6 +465,19 @@ test("offers recovery actions that match target drift, invalid plans, and retrya
     assert.equal(nextAction(implementationDrift).action, "restart-implementation");
     assert.match(nextAction(implementationDrift).label, /Restart from latest target/);
 
+    const baselineFailure = createTask({
+      status: "blocked",
+      currentStage: "implement",
+      blocker: {
+        code: "repository-baseline-verification",
+        detail: "The same command fails before S1's changes.",
+        detectedAt: "2026-08-01T12:00:00.000Z",
+        workPackageId: "S1",
+      },
+    });
+    assert.equal(nextAction(baselineFailure).action, "revalidate-plan");
+    assert.match(nextAction(baselineFailure).label, /Recheck repository baseline/);
+
     const invalidPlan = createTask({
       status: "blocked",
       currentStage: "implement",
