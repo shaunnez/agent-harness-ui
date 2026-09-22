@@ -7,9 +7,9 @@
 - Work only in `/Users/shaun/.codex/worktrees/model-evaluation/agent-harness-ui`, branch `codex/model-evaluation-cross-project-prep`.
 - The closed branch `codex/model-evaluation-h02-v7` remains at `64272d3672a94065e38f31eaf2060fe01564c377`. Its candidate, receipts and reports were preserved. H02 repair remains parked; Final Review improvement remains deferred to [ENG-977](https://linear.app/eversor-ai/issue/ENG-977/harness-make-final-review-assess-acceptance-independently-of-earlier).
 - Preparation was rebased cleanly onto `146f18065f3505bfaf616480d418bdeabb566a58`, including PRs #123 and #124. All 26 replayed patches were unchanged under range comparison.
-- A subsequent fetch found `09737b70d646edf22c472d9f6422272f87ed8331`: retained requalification now checks the current plan base rather than the original package base. This is a separate correction from the missing failure event/repair admission Shaun reported. Do not mistake it for completion of that follow-up.
+- Preparation was then rebased cleanly onto latest main `09737b70d646edf22c472d9f6422272f87ed8331`; all 27 replayed patches remained equivalent. That commit makes retained requalification check the current plan base rather than the original package base. This is a separate correction from the missing failure event/repair admission Shaun reported. Do not mistake it for completion of that follow-up.
 - User project checkouts and services were left alone. The temporary MyStrata synthetic PostgreSQL container was stopped and removed; its recorded database URLs no longer refer to a running service.
-- All private receipts are under `/Users/shaun/.codex/model-evaluation/20260922/cross-project-prep-v1`. Start with `readiness.json`; preserve every failed diagnostic and original result.
+- All private receipts are under `/Users/shaun/.codex/model-evaluation/20260922/cross-project-prep-v1`. Start with `readiness-final.json`; preserve every failed diagnostic and original result.
 
 ## Case readiness
 
@@ -74,11 +74,11 @@ The zero-inference task-admission exercise created one queued AH-001 task and **
 
 The new runner/guard suite passed **47/47**, using fake provider CLIs only. Review tests cover both cases and consumption above the retired 200k cap; they do not demonstrate real model quality.
 
-Lint, formatting, types and manifest validation passed. The complete core suite passed **873/873 with test concurrency two** after the changes. Earlier in this preparation the default-concurrency suite hit one existing timing-sensitive research test: its 1.5-second fake run deadline expired before the fake search started. That same test passed alone, and the complete suite passed at concurrency two. No timeout or assertion was changed to conceal it.
+Lint, formatting, types and manifest validation passed. The complete core suite passed **874/874 with test concurrency two** on committed source `1c7fe09fdb48ed18d2e73432e331f2aec7ecd2c2` after the final rebase, including the new retained-base regression. Earlier in this preparation the default-concurrency suite hit one existing timing-sensitive research test: its 1.5-second fake run deadline expired before the fake search started. That same test passed alone, and the complete suite passed at concurrency two. No timeout or assertion was changed to conceal it.
 
 Before the final evaluation-only edits, Frontier tests **167/167**, Frontier API **18/18**, Sites **4/4**, production build and Frontier build passed. They were not repeated after those evaluation-only edits. The only unrelated source edit was formatting one assertion in `tests/orchestrator-planning-correction.test.mjs` that made merged main's format check fail.
 
-Private `harness-final/harness-checks.json`, `harness-bounded/` and `runner-integration-tests-v2.log` retain exact commands and results. Their source SHA describes the parent revision plus the then-uncommitted preparation patch; the next live campaign requires a new clean committed freeze.
+Private `harness-post-rebase/harness-checks.json` records the final committed-source core/static checks. Its initial focused command accidentally included a nonexistent extra filename; Node ran the 11 planning tests, and the subsequent complete 874-test run supplied the full core coverage. Earlier `harness-final/`, `harness-bounded/` and `runner-integration-tests-v2.log` retain their original commands/results against the parent revision plus the then-uncommitted preparation patch. The next live campaign still requires a new clean committed freeze after the pending fix.
 
 ## Resume in order
 
