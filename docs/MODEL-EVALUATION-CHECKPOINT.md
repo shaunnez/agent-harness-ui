@@ -1,5 +1,7 @@
 # Model evaluation checkpoint
 
+**Current resume entry:** [MODEL-EVALUATION-HANDOFF.md](MODEL-EVALUATION-HANDOFF.md). No evaluations or graders are active. The next bounded unit on explicit continuation is the single pending blind review; do not restart a completed slot.
+
 Updated: 22 September 2026. **Rebased onto merged main `3878a24`. The planning treatment assembled the first qualified candidate, then exposed a frozen-target runtime defect before Dev Review. Its original trial is invalid; the diagnostic continuation passed every gate and independent acceptance after one automatic repair. The fresh frozen trial also reached approval autonomously and passed corrected behavior checks; its external blind rubric is still ungraded. No further model calls are running. No model policy promoted. Batch B was not launched.** Inspect the private live brief before dispatch.
 
 ## Current continuation

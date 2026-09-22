@@ -1,6 +1,6 @@
 # Model evaluation execution brief
 
-Updated: 22 September 2026. **Batch A complete; replacement feasibility run authorized after main rebase and fresh preflight.** The user selected two hours/task, 30M total measured tokens and one hour per Implement/Repair call. The first enlarged trial was interrupted by host sleep and is retained as invalid. Read [MODEL-EVALUATION-CHECKPOINT.md](MODEL-EVALUATION-CHECKPOINT.md) before continuing; no policy is promoted and Batch B remains unlaunched.
+Updated: 22 September 2026. **Offline handoff: no active evaluations or graders. Start with [MODEL-EVALUATION-HANDOFF.md](MODEL-EVALUATION-HANDOFF.md).** The fresh larger-limit run reached human approval autonomously and passed corrected behavior checks; its independent blind rubric has not started. This older programme brief is historical context, not dispatch authority. The handoff supersedes its execution order and starting-state snapshot.
 
 ## User intent and authority
 
