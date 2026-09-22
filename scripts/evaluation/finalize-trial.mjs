@@ -63,6 +63,7 @@ try {
     const checks = JSON.parse(await readFile(checksFile, "utf8"));
     let rubricPassed = false;
     if (checks.passed) {
+      const rubric = JSON.parse(await readFile(path.join(root, "evaluations/rubric-v1.json"), "utf8"));
       const result = await exec(
         process.execPath,
         [
@@ -71,7 +72,7 @@ try {
           config.taskInput.experiment.frozenBaseSha,
           path.join(gradeRoot, "rubric"),
         ],
-        { cwd: root, env: process.env, maxBuffer: 5_000_000, timeout: 330000 },
+        { cwd: root, env: process.env, maxBuffer: 5_000_000, timeout: rubric.maxWallTimeMs + 30000 },
       );
       await writeFile(path.join(gradeRoot, "rubric.log"), result.stdout + result.stderr);
       const grade = JSON.parse(await readFile(path.join(gradeRoot, "rubric/grade.json"), "utf8"));

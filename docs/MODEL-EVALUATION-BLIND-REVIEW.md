@@ -1,5 +1,7 @@
 # Fresh blind review closeout — 22 September 2026
 
+Subsequent product/UI fixes and new-run allowances are in [MODEL-EVALUATION-GRILL-FIX.md](MODEL-EVALUATION-GRILL-FIX.md). They supersede the proposed future allowances below; this historical result remains unchanged.
+
 **The fresh candidate is not accepted.** Its workflow and nine corrected behavior checks passed, but the blind reviewer identified a missing downstream handoff. A deterministic diagnostic confirms that automatically accepted Grill answers do not enter the specification agent's decision context. No candidate code was changed.
 
 The formal blind grade is **ungraded**: the single review consumed 229,204 tokens against its frozen 200,000-token allowance. Its raw verdict was rejection, not a pass lost solely to the limit. Preserve the invalid grading attempt and the confirmed defect separately; neither justifies another delivery run or an automatic grading retry.

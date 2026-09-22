@@ -2,7 +2,7 @@
 
 ## Read this first
 
-Shaun explicitly resumed the bounded blind review after the offline handoff. **That unit is now closed; nothing is running.** Read [the blind review closeout](MODEL-EVALUATION-BLIND-REVIEW.md) first. The single reviewer rejected the candidate on substance but exceeded its grading allowance, so the formal rubric result remains ungraded. A zero-inference diagnostic confirms the blocking automatic-answer context defect. Do not retry grading or restart delivery from this document.
+Latest continuation: Shaun requested the Grill product correction, Frontier UI validation and generous evaluation allowances. **Those fixes are locally qualified; no evaluation or grader is running.** Read [the Grill fix and next-step record](MODEL-EVALUATION-GRILL-FIX.md) first. An isolated fixture-only preview is available on 5174 with its API on 4337. The earlier [blind review closeout](MODEL-EVALUATION-BLIND-REVIEW.md) remains historical evidence: its candidate is still rejected diagnostically and formally ungraded. Do not retry that completed review or rewrite its receipts.
 
 The original goal remains unfinished: establish reliable baseline model/effort groupings for tasks of different difficulty, then optimize cost and latency using repeated real-project tasks. We have demonstrated workflow completion on one Harness case, but the fresh candidate has a confirmed acceptance gap. We have not established an optimal policy, a dependable pass rate across task classes, or cross-project reliability. No production policy was promoted and no benchmark PR was published.
 
@@ -12,11 +12,11 @@ The original goal remains unfinished: establish reliable baseline model/effort g
 | --- | --- |
 | Canonical evaluation checkout | `/Users/shaun/.codex/worktrees/model-evaluation/agent-harness-ui` |
 | Branch | `codex/model-evaluation-20260922` |
-| Latest code commit (later changes are documentation) | `33e3c53d3930bf6415081b32d72fd47f395860a6` |
+| Prior blind-review closeout commit | `45875d2aadf0ab33937c1578d851e4cb321e8108`; subsequent Grill/allowance changes are recorded in the linked fix document and current branch history |
 | Original offline handoff commit | `614b297facf87171abdd9e38f36f6f2c8d895ba0` |
 | Fresh delivery harness freeze | `982894e023e98b07188dd1edd1532c8e5ad08dc2` |
 | Main incorporated into that harness | `3878a2419979465a53171cd59a5cff455a6a2646` |
-| Original checkout, clean at handoff | `/Users/shaun/projects/agent-harness-ui` at `3878a24` |
+| Original checkout, concurrent edits preserved | `/Users/shaun/projects/agent-harness-ui` at `3878a24` |
 | Private evidence root | `/Users/shaun/.codex/model-evaluation/20260922` |
 | Fresh campaign | `feasibility-v4/F1` — finished; never restart |
 | Fresh candidate | C1 revision 2, `0389a30f502e63fe8cbccac399dcc874a4792afd` |
@@ -94,7 +94,7 @@ The raw verdict was rejection, with P1 missing downstream automatic-answer conte
 
 Evidence: private `grading-replay-v2/closeout.json`, `fresh-rubric/`, `grill-context-diagnostic.json`, and `workflow-evidence-verification.json`. The candidate, delivery receipt, SQLite, original checker result and report remain unchanged. The review ledger is included in `account-usage.py`. Exec session 75384 finished; never resume or redispatch it.
 
-The old pending-review command is intentionally removed from this current handoff. Git commit `614b297` preserves the offline instructions. [MODEL-EVALUATION-BLIND-REVIEW.md](MODEL-EVALUATION-BLIND-REVIEW.md) records the result, diagnostic, runner limitations, and a proposed two-arm comparison with an explicit aggregate budget. The next recommended unit is zero-inference grader coverage and calibration, before any further delivery campaign. No further unit has been launched.
+The old pending-review command is intentionally removed from this current handoff. Git commit `614b297` preserves the offline instructions. [MODEL-EVALUATION-BLIND-REVIEW.md](MODEL-EVALUATION-BLIND-REVIEW.md) records the result, diagnostic, runner limitations, and a proposed two-arm comparison with an explicit aggregate budget. The subsequent product fix and review-runner qualification are recorded in [MODEL-EVALUATION-GRILL-FIX.md](MODEL-EVALUATION-GRILL-FIX.md). Independent H02 checker coverage remains the next gate before a new delivery; the earlier comparison proposal is superseded by a single fresh baseline first.
 
 ## How far the comparison got
 
@@ -162,4 +162,4 @@ Repository companions: [feasibility results](MODEL-EVALUATION-FEASIBILITY.md), [
 
 ## Suggested next-unit prompt (zero inference)
 
-> Read `docs/MODEL-EVALUATION-BLIND-REVIEW.md` and this handoff in the canonical evaluation worktree. Qualify a new versioned H02 check that verifies automatically accepted answers and their provenance reach the specification prompt and context manifest; use the preserved fresh candidate as a known-bad subject, a reviewed reference, and appropriate controls. Diagnose and qualify the review-runner allowance and command limits without live model calls. Preserve every existing candidate and receipt; do not modify candidate code, change production defaults, retry the completed blind review, or launch a delivery campaign. Report the proposed next comparison and aggregate budget for a separate decision.
+> Read `docs/MODEL-EVALUATION-GRILL-FIX.md`, `docs/MODEL-EVALUATION-BLIND-REVIEW.md` and this handoff in the canonical evaluation worktree. Qualify a new versioned H02 check that verifies automatically accepted answers and their provenance reach the specification prompt and context manifest; use the preserved fresh candidate as a known-bad subject, a reviewed reference, and appropriate controls. The product fix and enlarged review-runner allowance already passed local qualification; preserve them and use the new allowance only for newly frozen work. Preserve every existing candidate and receipt; do not modify candidate code, change production defaults, retry the completed blind review, or launch a delivery campaign. Prepare the acceptance gate for one fresh baseline before any wider model comparison; do not dispatch from this handoff alone.

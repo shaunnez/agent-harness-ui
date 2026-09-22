@@ -156,3 +156,72 @@ test("a disabled native Claude sandbox is refused before a call is reserved", ()
     );
     assert.equal((await ledger()).invocations.length, 0);
   }, 'print("should not run")'));
+
+test("blind grading accepts a complete review above the retired 200k cap and records its full usage", {
+  skip: !mac,
+}, async () => {
+  const root = await realpath(await mkdtemp(path.join(os.tmpdir(), "rubric-allowance-")));
+  const repository = path.join(root, "candidate");
+  let reviewRoot;
+  try {
+    await exec("git", ["init", repository]);
+    await writeFile(
+      path.join(repository, "README.md"),
+      "Synthetic candidate for review-runner qualification.\n",
+    );
+    await exec("git", ["add", "."], { cwd: repository });
+    await exec(
+      "git",
+      [
+        "-c",
+        "commit.gpgsign=false",
+        "-c",
+        "user.name=Evaluation fixture",
+        "-c",
+        "user.email=fixture@localhost",
+        "commit",
+        "-m",
+        "Fixture",
+      ],
+      { cwd: repository },
+    );
+    const head = (await exec("git", ["rev-parse", "HEAD"], { cwd: repository })).stdout.trim();
+    const cli = path.join(root, "codex");
+    await writeFile(
+      cli,
+      `#!/usr/bin/env node
+import {readFileSync} from 'node:fs';
+readFileSync('README.md','utf8');
+for(const event of [
+ {type:'item.completed',item:{type:'command_execution',command:'cat README.md',exit_code:0}},
+ {type:'item.completed',item:{type:'agent_message',text:JSON.stringify({passed:true,findings:[],unmetRequirements:[],summary:'Synthetic runner fixture, not a real review.'})}},
+ {type:'turn.completed',usage:{input_tokens:226409,cached_input_tokens:187904,output_tokens:2795}}
+]) console.log(JSON.stringify(event));
+`,
+    );
+    await chmod(cli, 0o700);
+    const output = path.join(root, "review");
+    await exec(
+      process.execPath,
+      [new URL("../scripts/evaluation/grade-rubric.mjs", import.meta.url).pathname, repository, head, output],
+      {
+        env: { ...process.env, PATH: `${root}${path.delimiter}${process.env.PATH}` },
+        timeout: 15000,
+      },
+    );
+    const grade = JSON.parse(await readFile(path.join(output, "grade.json"), "utf8"));
+    reviewRoot = grade.reviewRoot;
+    assert.equal(grade.headRevision, head);
+    assert.equal(grade.grade.passed, true);
+    assert.equal(grade.usage.totalTokens, 229204);
+    const ledger = JSON.parse(await readFile(path.join(output, "provider-ledger.json"), "utf8"));
+    assert.equal(ledger.invocations.length, 1);
+    assert.equal(ledger.invocations[0].totalTokens, 229204);
+    assert.ok(ledger.deadline - ledger.invocations[0].startedAt > 3500);
+    assert.ok(ledger.invocations[0].endedAt);
+    assert.ok(!(await readFile(path.join(output, "input.txt"), "utf8")).includes("one to three"));
+  } finally {
+    if (reviewRoot) await rm(reviewRoot, { recursive: true, force: true });
+    await rm(root, { recursive: true, force: true });
+  }
+});

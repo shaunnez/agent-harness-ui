@@ -67,14 +67,24 @@ const changed = (await git(root, ["status", "--porcelain"])).stdout;
 if (mode !== "dry-run" && changed.trim())
   throw new Error("Commit the qualified harness before preparing an inference campaign.");
 const harnessVersion = (await git(root, ["rev-parse", "HEAD"])).stdout.trim();
-// Historical completed delivery median is 2.17M tokens. The 600k feasibility
-// trial exhausted its allowance before implementation; keep its receipt separate.
-// The feasibility limits were explicitly selected by the user after Batch A.
-const budget = feasibility
-  ? { maxWallTimeMs: 7200000, maxTotalTokens: 30000000 }
-  : { maxWallTimeMs: 1800000, maxTotalTokens: 5000000 };
-const stageTimeoutOverridesMs = feasibility ? { implement: 3600000, repair: 3600000 } : {};
-const limits = { maxAgentRuns: 24, maxProviderInvocations: 40 };
+// User-selected quality-first allowances apply to every new evaluation mode.
+// Retained campaigns keep their frozen limits; preparation never edits them.
+const budget = { maxWallTimeMs: 7200000, maxTotalTokens: 30000000 };
+const stageTimeoutOverridesMs = Object.fromEntries(
+  [
+    "triage",
+    "scouts",
+    "grill",
+    "specification",
+    "plan",
+    "implement",
+    "repair",
+    "dev-review",
+    "test",
+    "final-review",
+  ].map((stage) => [stage, 3600000]),
+);
+const limits = { maxAgentRuns: 100, maxProviderInvocations: 1000 };
 const order = feasibility
   ? ["balanced"]
   : [
