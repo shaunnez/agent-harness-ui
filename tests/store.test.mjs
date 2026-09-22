@@ -589,7 +589,7 @@ test("migrates legacy design requests without rewriting recorded provider models
     assert.equal(migratedCompleted.designRequest.variants[0].policy.model, "claude-fable-5");
     assert.equal(migratedCompleted.designRequest.policies["claude-design"].model, "claude-fable-5");
     assert.equal((await rebooted.settings()).designPolicies["claude-design"].model, "claude-opus-5-5");
-    assert.equal((await rebooted.settings()).designPolicies["codex-design"].model, "gpt-5.6-sol");
+    assert.equal((await rebooted.settings()).designPolicies["codex-design"].model, "gpt-6-sol");
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

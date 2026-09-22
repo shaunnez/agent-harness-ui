@@ -14,13 +14,16 @@ import {
 } from "./policy-defaults.mjs";
 import { DEFAULT_EXECUTION_PROVIDER } from "./run-activity.mjs";
 
-export const PRICING_SOURCE_URL = "https://platform.openai.com/docs/pricing";
+export const PRICING_SOURCE_URL = "https://developers.openai.com/api/docs/pricing";
 export const CREDIT_SOURCE_URL = "https://learn.chatgpt.com/docs/pricing";
-export const PRICING_VERSION = "2026-08-02";
+export const PRICING_VERSION = "2026-09-23";
 
 // Standard API-equivalent prices per 1M tokens. ChatGPT-plan Codex sessions do
 // not report a dollar charge, so callers must label calculated values as estimates.
 export const MODEL_PRICING = {
+  "gpt-6-astra": rate(10, 1, 12.5, 50, 20, 2, 25, 75),
+  "gpt-6-sol": rate(2, 0.2, 2.5, 10, 4, 0.4, 5, 15),
+  "gpt-6-luna": rate(0.1, 0.01, 0.125, 0.5, 0.2, 0.02, 0.25, 0.75),
   "gpt-5.6-sol": rate(5, 0.5, 6.25, 30, 10, 1, 12.5, 45),
   "gpt-5.6-terra": rate(2, 0.2, 2.5, 12, 4, 0.4, 5, 18),
   "gpt-5.6-luna": rate(0.2, 0.02, 0.25, 1.2, 0.4, 0.04, 0.5, 1.8),
@@ -61,6 +64,9 @@ const CLAUDE_MODEL_ID_SET = new Set(CLAUDE_MODEL_IDS);
 // Current ChatGPT Work / Codex credit rates per 1M tokens. Credits are a
 // usage-comparison unit, not an attributable dollar charge for plan sessions.
 export const MODEL_CREDIT_RATES = {
+  "gpt-6-astra": { input: 250, cachedInput: 25, output: 1250 },
+  "gpt-6-sol": { input: 50, cachedInput: 5, output: 250 },
+  "gpt-6-luna": { input: 2.5, cachedInput: 0.25, output: 12.5 },
   "gpt-5.6-sol": { input: 125, cachedInput: 12.5, output: 750 },
   "gpt-5.6-terra": { input: 50, cachedInput: 5, output: 300 },
   "gpt-5.6-luna": { input: 5, cachedInput: 0.5, output: 30 },
@@ -69,7 +75,22 @@ export const MODEL_CREDIT_RATES = {
 export { POLICY_IDS } from "./policy-ids.mjs";
 
 const FALLBACK_MODELS = [
-  model("gpt-5.6-sol", "GPT-5.6 Sol", "Latest frontier agentic coding model.", "low", [
+  model("gpt-6-sol", "GPT-6 Sol", "Latest frontier agentic coding model.", "low", [
+    "low",
+    "medium",
+    "high",
+    "xhigh",
+    "max",
+    "ultra",
+  ]),
+  model("gpt-6-luna", "GPT-6 Luna", "Fast and affordable agentic coding model.", "medium", [
+    "low",
+    "medium",
+    "high",
+    "xhigh",
+    "max",
+  ]),
+  model("gpt-5.6-sol", "GPT-5.6 Sol", "Previous frontier agentic coding model.", "low", [
     "low",
     "medium",
     "high",
@@ -85,7 +106,7 @@ const FALLBACK_MODELS = [
     "max",
     "ultra",
   ]),
-  model("gpt-5.6-luna", "GPT-5.6 Luna", "Fast and affordable agentic coding model.", "medium", [
+  model("gpt-5.6-luna", "GPT-5.6 Luna", "Previous fast and affordable agentic coding model.", "medium", [
     "low",
     "medium",
     "high",
@@ -247,7 +268,7 @@ export {
 
 export const DEFAULT_DESIGN_POLICIES = Object.freeze({
   "claude-design": Object.freeze({ provider: "claude", model: "claude-opus-5-5", reasoning: "high" }),
-  "codex-design": Object.freeze({ provider: "codex", model: "gpt-5.6-sol", reasoning: "high" }),
+  "codex-design": Object.freeze({ provider: "codex", model: "gpt-6-sol", reasoning: "high" }),
 });
 
 // Design requests created before provider-specific selection existed must keep
@@ -287,7 +308,7 @@ export function defaultRuntimeSettings() {
     // against this list and a Claude task's policies must name Claude models. The
     // selected provider, not this list, decides which runtime executes.
     allowedModels: [
-      ...new Set([defaultModel, "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", ...CLAUDE_MODEL_IDS]),
+      ...new Set([defaultModel, "gpt-6-sol", "gpt-6-luna", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", ...CLAUDE_MODEL_IDS]),
     ],
     defaultModel,
     defaultReasoning,
@@ -519,7 +540,9 @@ export function enrichUsage(modelId, usage, pricing, pricingVersion = PRICING_VE
 }
 
 export function priceCredits(modelId, usage, creditRates = MODEL_CREDIT_RATES) {
-  const configured = creditRates?.[normalizeModelId(modelId)];
+  const normalized = normalizeModelId(modelId);
+  // A stored rate card predating a model falls back to the bundled one, as priceUsage does.
+  const configured = creditRates?.[normalized] ?? MODEL_CREDIT_RATES[normalized];
   if (!configured) return null;
   const inputTokens = finite(usage?.inputTokens);
   const cachedInputTokens = Math.min(inputTokens, finite(usage?.cachedInputTokens));
@@ -535,6 +558,14 @@ export function priceCredits(modelId, usage, creditRates = MODEL_CREDIT_RATES) {
   );
 }
 
+export const REQUIRED_VERIFIED_PRICING = Object.freeze([
+  "gpt-6-sol",
+  "gpt-6-luna",
+  "gpt-5.6-sol",
+  "gpt-5.6-terra",
+  "gpt-5.6-luna",
+]);
+
 export function validatePricingRates(value) {
   if (!value || typeof value !== "object" || Array.isArray(value))
     throw new Error("Pricing verification did not return a rate map.");
@@ -546,8 +577,8 @@ export function validatePricingRates(value) {
     const long = entry?.long ? validateRate(entry.long) : MODEL_PRICING[normalized].long;
     validated[normalized] = { short, long: long ?? null };
   }
-  if (!["gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna"].every((id) => validated[id])) {
-    throw new Error("Pricing verification omitted one or more GPT-5.6 family rates.");
+  if (!REQUIRED_VERIFIED_PRICING.every((id) => validated[id])) {
+    throw new Error("Pricing verification omitted one or more GPT-6 or GPT-5.6 family rates.");
   }
   return validated;
 }

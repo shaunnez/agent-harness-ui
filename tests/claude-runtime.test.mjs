@@ -831,7 +831,7 @@ test("publishes a bundled Claude catalogue attributed to its provider", async ()
   // Codex has `ultra`; Claude does not. An unsupported level refuses rather than
   // silently downgrading.
   assert.throws(() => assertSupportedReasoning("claude-opus-5", "ultra"), /does not support ultra/);
-  assert.throws(() => assertSupportedReasoning("gpt-5.6-sol", "high"), /Unknown model/);
+  assert.throws(() => assertSupportedReasoning("gpt-6-sol", "high"), /Unknown model/);
 
   // Fable 5.1 is additive alongside Fable 5: selectable everywhere Fable 5 is,
   // with the same full reasoning-effort range.
@@ -849,7 +849,7 @@ test("publishes a bundled Claude catalogue attributed to its provider", async ()
 test("attributes model ids to providers and leaves unknown ids unattributed", () => {
   assert.equal(providerForModelId("claude-opus-5"), "claude");
   assert.equal(providerForModelId("claude-sonnet-5-20260101"), "claude");
-  assert.equal(providerForModelId("gpt-5.6-luna"), "codex");
+  assert.equal(providerForModelId("gpt-6-luna"), "codex");
   assert.equal(providerForModelId("mistral-large"), null);
   // The global default remains on the locally verified Codex path; Claude stays
   // selectable per stage and per task but is never selected implicitly.
@@ -859,8 +859,8 @@ test("attributes model ids to providers and leaves unknown ids unattributed", ()
     "the empty id normalizes to the verified default model's provider",
   );
   assert.deepEqual(providerRuntimeDefaults("claude"), { model: "claude-sonnet-5", reasoning: "xhigh" });
-  assert.deepEqual(providerRuntimeDefaults("codex"), { model: "gpt-5.6-luna", reasoning: "xhigh" });
-  assert.deepEqual(providerRuntimeDefaults(), { model: "gpt-5.6-luna", reasoning: "xhigh" });
+  assert.deepEqual(providerRuntimeDefaults("codex"), { model: "gpt-6-luna", reasoning: "xhigh" });
+  assert.deepEqual(providerRuntimeDefaults(), { model: "gpt-6-luna", reasoning: "xhigh" });
   assert.throws(() => providerRuntimeDefaults("gemini"), /No runtime defaults/);
 });
 
@@ -875,7 +875,7 @@ test("splits Claude stage policies without disturbing the Codex defaults", () =>
   }
   assert.deepEqual(claude["final-review"], { model: "claude-sonnet-5", reasoning: "medium" });
   assert.deepEqual(defaultStagePolicies(), defaultStagePolicies("codex"));
-  assert.equal(defaultStagePolicies().plan.model, "gpt-5.6-sol");
+  assert.equal(defaultStagePolicies().plan.model, "gpt-6-sol");
 });
 
 test("reproduces the CLI's own Sonnet 5 accounting from the bundled rate card", async () => {
@@ -963,7 +963,7 @@ test("leaves a Codex usage record byte-identical when nothing was reported", () 
     outputTokens: 500,
     totalTokens: 1_500,
   };
-  const enriched = enrichUsage("gpt-5.6-sol", usage, undefined, "2026-08-02");
+  const enriched = enrichUsage("gpt-6-sol", usage, undefined, "2026-08-02");
   assert.deepEqual(Object.keys(enriched), [
     "inputTokens",
     "cachedInputTokens",
@@ -1976,8 +1976,8 @@ test("refuses to run another provider's model", async () => {
   // A Claude task whose stage policy still names a GPT model must fail with a message
   // that says why, not with an opaque catalogue lookup error.
   await assert.rejects(
-    () => runClaude({ cwd: "/tmp", prompt: "x", model: "gpt-5.6-luna", reasoning: "xhigh" }),
-    /Claude cannot run gpt-5\.6-luna, which belongs to codex provider/,
+    () => runClaude({ cwd: "/tmp", prompt: "x", model: "gpt-6-luna", reasoning: "xhigh" }),
+    /Claude cannot run gpt-6-luna, which belongs to codex provider/,
   );
   await assert.rejects(
     () => runClaude({ cwd: "/tmp", prompt: "x", model: "mistral-large", reasoning: "high" }),
@@ -1998,12 +1998,12 @@ test("lets every stage pick its own provider, model and reasoning", async () => 
       scouts: { model: "claude-haiku-4-5", reasoning: NO_REASONING_EFFORT },
       grill: { model: "claude-sonnet-5", reasoning: "high" },
       specification: { model: "claude-sonnet-5", reasoning: "high" },
-      plan: { model: "gpt-5.6-sol", reasoning: "ultra" },
+      plan: { model: "gpt-6-sol", reasoning: "ultra" },
       implement: { model: "claude-opus-5", reasoning: "xhigh" },
       repair: { model: "claude-opus-5", reasoning: "max" },
-      "dev-review": { model: "gpt-5.6-sol", reasoning: "high" },
-      test: { model: "gpt-5.6-luna", reasoning: "xhigh" },
-      "final-review": { model: "gpt-5.6-sol", reasoning: "ultra" },
+      "dev-review": { model: "gpt-6-sol", reasoning: "high" },
+      test: { model: "gpt-6-luna", reasoning: "xhigh" },
+      "final-review": { model: "gpt-6-sol", reasoning: "ultra" },
     };
     const task = await store.create({
       title: "Mixed providers",
@@ -2064,8 +2064,8 @@ test("lets every stage pick its own provider, model and reasoning", async () => 
     // Codex default rather than opting into another provider implicitly.
     assert.equal(resolveAgentPolicy({ agentConfig: {} }, "plan").provider, "codex");
     assert.equal(defaultRuntimeSettings().defaultProvider, "codex");
-    assert.equal(defaultRuntimeSettings().stagePolicies.plan.model, "gpt-5.6-sol");
-    assert.equal(defaultRuntimeSettings().stagePolicies.implement.model, "gpt-5.6-luna");
+    assert.equal(defaultRuntimeSettings().stagePolicies.plan.model, "gpt-6-sol");
+    assert.equal(defaultRuntimeSettings().stagePolicies.implement.model, "gpt-6-luna");
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
@@ -2078,9 +2078,9 @@ test("offers both providers' models with their own reasoning levels", async () =
   // Settings validation and task creation validate reasoning against the model's own
   // levels, so a single-provider catalogue would leave the other's models with none and
   // reject every value for them.
-  assert.equal(byId.get("gpt-5.6-sol").provider, "codex");
+  assert.equal(byId.get("gpt-6-sol").provider, "codex");
   assert.equal(byId.get("claude-opus-5").provider, "claude");
-  assert.ok(byId.get("gpt-5.6-sol").reasoningLevels.includes("ultra"));
+  assert.ok(byId.get("gpt-6-sol").reasoningLevels.includes("ultra"));
   assert.equal(byId.get("claude-opus-5").reasoningLevels.includes("ultra"), false);
   assert.deepEqual(byId.get("claude-haiku-4-5").reasoningLevels, [NO_REASONING_EFFORT]);
   // Editable, so settings validation accepts them as selectable.
@@ -2511,7 +2511,7 @@ test("referencing a discovered model in settings does not make it unselectable",
         editable: true,
       },
       {
-        id: "gpt-5.6-luna",
+        id: "gpt-6-luna",
         provider: "codex",
         provenance: "discovered",
         availability: "discovered",
@@ -2530,13 +2530,13 @@ test("referencing a discovered model in settings does not make it unselectable",
   };
   const models = withConfiguredModels(catalog, {
     defaultModel: "claude-sonnet-5",
-    allowedModels: ["claude-sonnet-5", "gpt-5.6-luna", "gpt-5.3-codex-spark"],
+    allowedModels: ["claude-sonnet-5", "gpt-6-luna", "gpt-5.3-codex-spark"],
     stagePolicies: { plan: { model: "claude-opus-5", reasoning: "xhigh" } },
   }).models;
   const byId = (id) => models.find((model) => model.id === id);
 
   assert.equal(byId("claude-sonnet-5").editable, true, "a discovered model stays selectable when referenced");
-  assert.equal(byId("gpt-5.6-luna").editable, true);
+  assert.equal(byId("gpt-6-luna").editable, true);
   // A model the runtime could not confirm is still downgraded, which is what the branch is for.
   assert.equal(byId("gpt-5.3-codex-spark").editable, false);
   assert.equal(byId("gpt-5.3-codex-spark").availability, "configured");

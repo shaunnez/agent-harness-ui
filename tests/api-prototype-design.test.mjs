@@ -25,7 +25,7 @@ test("persists the design option and serves only the retained prototype asset", 
       },
       "codex-design": {
         provider: "codex",
-        model: "gpt-5.6-sol",
+        model: "gpt-6-sol",
         reasoning: "high",
         provenance: "settings-default",
       },
@@ -51,7 +51,7 @@ test("persists the design option and serves only the retained prototype asset", 
           externalUrl: null,
           bundlePath,
           bundleHash: "abc123",
-          model: "gpt-5.6-luna",
+          model: "gpt-6-luna",
           reasoning: "xhigh",
           createdAt: new Date().toISOString(),
           completedAt: new Date().toISOString(),
@@ -117,8 +117,8 @@ test("validates exact design provider and reasoning selections server-side", asy
       workflow: "implement",
       designRequested: true,
       designPolicies: {
-        "claude-design": { provider: "codex", model: "gpt-5.6-sol", reasoning: "high" },
-        "codex-design": { provider: "codex", model: "gpt-5.6-sol", reasoning: "high" },
+        "claude-design": { provider: "codex", model: "gpt-6-sol", reasoning: "high" },
+        "codex-design": { provider: "codex", model: "gpt-6-sol", reasoning: "high" },
       },
     });
     assert.equal(mismatch.status, 400);
@@ -132,7 +132,7 @@ test("validates exact design provider and reasoning selections server-side", asy
       designRequested: true,
       designPolicies: {
         "claude-design": { provider: "claude", model: "claude-opus-5-5", reasoning: "ultra" },
-        "codex-design": { provider: "codex", model: "gpt-5.6-sol", reasoning: "high" },
+        "codex-design": { provider: "codex", model: "gpt-6-sol", reasoning: "high" },
       },
     });
     assert.equal(unsupported.status, 400);
@@ -165,7 +165,7 @@ test("changing design defaults does not alter an existing task snapshot", async 
         defaultReasoning: current.defaultReasoning,
         designPolicies: {
           "claude-design": { provider: "claude", model: "claude-sonnet-5", reasoning: "high" },
-          "codex-design": { provider: "codex", model: "gpt-5.6-luna", reasoning: "xhigh" },
+          "codex-design": { provider: "codex", model: "gpt-6-luna", reasoning: "xhigh" },
         },
       }),
     });
@@ -173,7 +173,7 @@ test("changing design defaults does not alter an existing task snapshot", async 
 
     const retained = (await (await fetch(`${origin}/api/tasks/${created.id}`)).json()).task;
     assert.equal(retained.designRequest.policies["claude-design"].model, "claude-opus-5-5");
-    assert.equal(retained.designRequest.policies["codex-design"].model, "gpt-5.6-sol");
+    assert.equal(retained.designRequest.policies["codex-design"].model, "gpt-6-sol");
   } finally {
     await cleanup(server, directory);
   }

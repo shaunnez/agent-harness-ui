@@ -54,7 +54,7 @@ test("saved defaults affect new tasks only and failed settings validation preser
   const before = await gateway.core("PC-153");
   const original = await gateway.status();
   const settings = settingsInput(original.settings);
-  settings.profileStagePolicies.standard.grill = { model: "gpt-5.6-sol", reasoning: "high" };
+  settings.profileStagePolicies.standard.grill = { model: "gpt-6-sol", reasoning: "high" };
   settings.stagePolicies = structuredClone(settings.profileStagePolicies.standard);
   settings.grillPolicy = "auto-accept-recommendations";
   settings.repairLimits = { package: 3, candidate: { fast: 0, standard: 4, "high-risk": 5 } };

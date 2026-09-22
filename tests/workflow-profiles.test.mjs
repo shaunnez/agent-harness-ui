@@ -220,10 +220,10 @@ test("selects deterministic profiles and escalates fast at explicit boundaries",
     "high-risk",
   );
   const policies = defaultProfileStagePolicies();
-  assert.deepEqual(policies.fast.triage, { model: "gpt-5.6-luna", reasoning: "medium" });
-  assert.deepEqual(policies.fast.implement, { model: "gpt-5.6-luna", reasoning: "high" });
-  assert.deepEqual(policies.standard.implement, { model: "gpt-5.6-luna", reasoning: "xhigh" });
-  assert.deepEqual(policies["high-risk"].plan, { model: "gpt-5.6-sol", reasoning: "high" });
+  assert.deepEqual(policies.fast.triage, { model: "gpt-6-luna", reasoning: "medium" });
+  assert.deepEqual(policies.fast.implement, { model: "gpt-6-luna", reasoning: "high" });
+  assert.deepEqual(policies.standard.implement, { model: "gpt-6-luna", reasoning: "xhigh" });
+  assert.deepEqual(policies["high-risk"].plan, { model: "gpt-6-sol", reasoning: "high" });
 });
 
 test("rejects prose ownership and parses a typed blocked prerequisite without packages", () => {
@@ -685,7 +685,7 @@ test("fast review allows one automatic consolidated repair, invalidates old evid
     assert.match(repairPrompt, /Wrong label/);
     assert.match(repairPrompt, /Missing assertion/);
     assert.match(repairPrompt, /Open StatusLabel and observe the old text/);
-    assert.deepEqual(callPolicies, ["gpt-5.6-sol:high", "gpt-5.6-luna:high", "gpt-5.6-sol:high"]);
+    assert.deepEqual(callPolicies, ["gpt-6-sol:high", "gpt-6-luna:high", "gpt-6-sol:high"]);
     assert.match(finished.error, /reached 1\/1 repair attempts/i);
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 25 });

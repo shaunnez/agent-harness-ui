@@ -327,11 +327,11 @@ export class RuntimeBoundariesOrchestrator {
   async verifyPricing() {
     const settings = await this._store.settings();
     // Pricing verification prompts for OpenAI rates and `validatePricingRates`
-    // hard-requires the GPT-5.6 ids, so it stays pinned to Codex until it is
+    // hard-requires the GPT-6 and GPT-5.6 ids, so it stays pinned to Codex until it is
     // provider-scoped with its own required-id set.
     const result = await this._runAgent(DEFAULT_EXECUTION_PROVIDER, {
       cwd: process.cwd(),
-      prompt: `You are verifying a local GPT-5.6 pricing registry. Use current official OpenAI documentation only: API prices from ${PRICING_SOURCE_URL} and ChatGPT/Codex credit rates from ${CREDIT_SOURCE_URL}. Do not modify files. Return exactly one JSON object between <pricing-rates> and </pricing-rates>. Include gpt-5.6-sol, gpt-5.6-terra, and gpt-5.6-luna. Each value must have short and, when documented, long objects with numeric input, cachedInput, cacheWrite (or null), and output USD prices per 1M tokens. Do not include prose inside the tags.`,
+      prompt: `You are verifying a local GPT-6 and GPT-5.6 pricing registry. Use current official OpenAI documentation only: API prices from ${PRICING_SOURCE_URL} and ChatGPT/Codex credit rates from ${CREDIT_SOURCE_URL}. Do not modify files. Return exactly one JSON object between <pricing-rates> and </pricing-rates>. Include gpt-6-sol, gpt-6-luna, gpt-5.6-sol, gpt-5.6-terra, and gpt-5.6-luna. Each value must have short and, when documented, long objects with numeric input, cachedInput, cacheWrite (or null), and output USD prices per 1M tokens. Do not include prose inside the tags.`,
       sandbox: "read-only",
       model: settings.defaultModel,
       reasoning: "low",

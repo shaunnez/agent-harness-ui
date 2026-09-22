@@ -117,19 +117,19 @@ test("infrastructure failures and pinned roles never trigger reasoning escalatio
     candidates: [evidence.candidate],
     runs: [{ ...evidence.run, gateResult: null, status: "failed" }],
   });
-  assert.equal(resolveEffectiveRunPolicy(infrastructure, "repair").model, "gpt-5.6-luna");
+  assert.equal(resolveEffectiveRunPolicy(infrastructure, "repair").model, "gpt-6-luna");
 
   const pinned = task({ candidates: [evidence.candidate], runs: [evidence.run] });
   pinned.agentConfig.rolePolicySources.repair = "future-role-override";
-  assert.equal(resolveEffectiveRunPolicy(pinned, "repair").model, "gpt-5.6-luna");
+  assert.equal(resolveEffectiveRunPolicy(pinned, "repair").model, "gpt-6-luna");
 });
 
 test("provider presets remain profile-aware while individual roles stay pinned", () => {
   const settings = defaultRuntimeSettings();
   const knownModels = new Map(
     [
-      ["gpt-5.6-luna", ["low", "medium", "high", "xhigh", "max"]],
-      ["gpt-5.6-sol", ["low", "medium", "high", "xhigh", "max", "ultra"]],
+      ["gpt-6-luna", ["low", "medium", "high", "xhigh", "max"]],
+      ["gpt-6-sol", ["low", "medium", "high", "xhigh", "max", "ultra"]],
       ["claude-sonnet-5", ["low", "medium", "high", "xhigh", "max"]],
       ["claude-opus-5-5", ["low", "medium", "high", "xhigh", "max"]],
     ].map(([id, reasoningLevels]) => [id, { id, label: id, reasoningLevels }]),

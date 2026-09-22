@@ -7,7 +7,7 @@ export function fixtureSettings(): { settings: RuntimeSettings; catalog: Runtime
     policyRoles.map(({ id }) => [
       id,
       {
-        model: ["plan", "repair", "dev-review", "final-review"].includes(id) ? "gpt-5.6-sol" : "gpt-5.6-luna",
+        model: ["plan", "repair", "dev-review", "final-review"].includes(id) ? "gpt-6-sol" : "gpt-6-luna",
         reasoning: ["plan", "repair", "dev-review", "final-review"].includes(id) ? "high" : "xhigh",
       },
     ]),
@@ -17,8 +17,8 @@ export function fixtureSettings(): { settings: RuntimeSettings; catalog: Runtime
       grillPolicy: "manual",
       repairLimits: normalizeRepairLimits(null),
       gatePolicies: {},
-      allowedModels: ["gpt-5.6-luna", "gpt-5.6-sol", "claude-opus-5-5"],
-      defaultModel: "gpt-5.6-luna",
+      allowedModels: ["gpt-6-luna", "gpt-6-sol", "claude-opus-5-5"],
+      defaultModel: "gpt-6-luna",
       defaultReasoning: "xhigh",
       stagePolicies,
       profileStagePolicies: {
@@ -27,7 +27,7 @@ export function fixtureSettings(): { settings: RuntimeSettings; catalog: Runtime
         "high-risk": structuredClone(stagePolicies),
       },
       designPolicies: {
-        "codex-design": { provider: "codex", model: "gpt-5.6-sol", reasoning: "high" },
+        "codex-design": { provider: "codex", model: "gpt-6-sol", reasoning: "high" },
         "claude-design": { provider: "claude", model: "claude-opus-5-5", reasoning: "high" },
       },
       pricing: {
@@ -43,13 +43,13 @@ export function fixtureSettings(): { settings: RuntimeSettings; catalog: Runtime
       source: "Demonstration choices; not model discovery",
       models: [
         {
-          id: "gpt-5.6-luna",
+          id: "gpt-6-luna",
           label: "Luna",
           provider: "codex",
           reasoningLevels: ["low", "medium", "high", "xhigh", "max"],
         },
         {
-          id: "gpt-5.6-sol",
+          id: "gpt-6-sol",
           label: "Sol",
           provider: "codex",
           reasoningLevels: ["low", "medium", "high", "xhigh", "max", "ultra"],

@@ -5,11 +5,11 @@ import { DEFAULT_EXECUTION_PROVIDER } from "./run-activity.mjs";
  * runtime both resolve their defaults from here so runtime status, allowed models,
  * and spawned agents cannot advertise different models.
  */
-export const DEFAULT_RUNTIME_MODEL = "gpt-5.6-luna";
+export const DEFAULT_RUNTIME_MODEL = "gpt-6-luna";
 export const DEFAULT_RUNTIME_REASONING = "xhigh";
 
 /** Codex's own default, which is not the global one and must not follow it. */
-export const DEFAULT_CODEX_MODEL = "gpt-5.6-luna";
+export const DEFAULT_CODEX_MODEL = "gpt-6-luna";
 
 /**
  * Provider-specific default stage policies, in a module with no Node built-in
@@ -33,10 +33,10 @@ export function defaultProfileStagePolicies(provider = DEFAULT_EXECUTION_PROVIDE
       "high-risk": profilePolicy(sonnetXHigh, opusHigh, sonnetXHigh, sonnetXHigh, sonnetMedium),
     };
   }
-  const lunaMedium = { model: "gpt-5.6-luna", reasoning: "medium" };
-  const lunaHigh = { model: "gpt-5.6-luna", reasoning: "high" };
-  const lunaXHigh = { model: "gpt-5.6-luna", reasoning: "xhigh" };
-  const solHigh = { model: "gpt-5.6-sol", reasoning: "high" };
+  const lunaMedium = { model: "gpt-6-luna", reasoning: "medium" };
+  const lunaHigh = { model: "gpt-6-luna", reasoning: "high" };
+  const lunaXHigh = { model: "gpt-6-luna", reasoning: "xhigh" };
+  const solHigh = { model: "gpt-6-sol", reasoning: "high" };
   return {
     fast: profilePolicy(lunaMedium, solHigh, lunaHigh, lunaHigh, lunaMedium),
     standard: profilePolicy(lunaXHigh, solHigh, lunaXHigh, lunaXHigh, lunaMedium),

@@ -56,6 +56,8 @@ test("refreshes the pricing registry without rewriting legacy task estimates", a
         call = options;
         return {
           finalText: `<pricing-rates>${JSON.stringify({
+            "gpt-6-sol": { short: { input: 2, cachedInput: 0.2, cacheWrite: 2.5, output: 10 } },
+            "gpt-6-luna": { short: { input: 0.1, cachedInput: 0.01, cacheWrite: 0.125, output: 0.5 } },
             "gpt-5.6-sol": { short: { input: 5, cachedInput: 0.5, cacheWrite: 6.25, output: 30 } },
             "gpt-5.6-terra": { short: { input: 2, cachedInput: 0.2, cacheWrite: 2.5, output: 12 } },
             "gpt-5.6-luna": { short: { input: 0.25, cachedInput: 0.03, cacheWrite: 0.3, output: 1.3 } },

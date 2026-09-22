@@ -8,7 +8,7 @@ test("new runtime settings default design generation to Opus High and Sol High",
     const settings = (await (await fetch(`${origin}/api/settings`)).json()).settings;
     assert.deepEqual(settings.designPolicies, {
       "claude-design": { provider: "claude", model: "claude-opus-5-5", reasoning: "high" },
-      "codex-design": { provider: "codex", model: "gpt-5.6-sol", reasoning: "high" },
+      "codex-design": { provider: "codex", model: "gpt-6-sol", reasoning: "high" },
     });
   } finally {
     await cleanup(server, directory);
@@ -84,14 +84,14 @@ test("persists an allowed Sol model policy and snapshots it on new tasks", async
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         grillPolicy: "auto-accept-recommendations",
-        allowedModels: ["gpt-5.6-sol", "gpt-5.6-luna", "claude-opus-5-5"],
-        defaultModel: "gpt-5.6-sol",
+        allowedModels: ["gpt-6-sol", "gpt-6-luna", "claude-opus-5-5"],
+        defaultModel: "gpt-6-sol",
         defaultReasoning: "xhigh",
       }),
     });
     assert.equal(settingsResponse.status, 200);
     const settings = (await settingsResponse.json()).settings;
-    assert.equal(settings.defaultModel, "gpt-5.6-sol");
+    assert.equal(settings.defaultModel, "gpt-6-sol");
     assert.equal(settings.defaultReasoning, "xhigh");
     assert.equal(settings.grillPolicy, "auto-accept-recommendations");
 
@@ -99,8 +99,8 @@ test("persists an allowed Sol model policy and snapshots it on new tasks", async
       method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        allowedModels: ["gpt-5.6-sol", "gpt-5.6-luna", "claude-opus-5-5"],
-        defaultModel: "gpt-5.6-sol",
+        allowedModels: ["gpt-6-sol", "gpt-6-luna", "claude-opus-5-5"],
+        defaultModel: "gpt-6-sol",
         defaultReasoning: "xhigh",
       }),
     });
@@ -112,16 +112,16 @@ test("persists an allowed Sol model policy and snapshots it on new tasks", async
       repositoryPath: directory,
       workflow: "investigate",
       priority: "medium",
-      model: "gpt-5.6-sol",
+      model: "gpt-6-sol",
       reasoning: "xhigh",
     });
     assert.equal(createResponse.status, 201);
     const task = (await createResponse.json()).task;
-    assert.equal(task.agentConfig.model, "gpt-5.6-sol");
+    assert.equal(task.agentConfig.model, "gpt-6-sol");
     assert.equal(task.agentConfig.reasoning, "xhigh");
-    assert.equal(task.agentConfig.stagePolicies.plan.model, "gpt-5.6-sol");
+    assert.equal(task.agentConfig.stagePolicies.plan.model, "gpt-6-sol");
     assert.equal(task.agentConfig.stagePolicies.test.reasoning, "xhigh");
-    assert.equal(task.models[0].model, "gpt-5.6-sol");
+    assert.equal(task.models[0].model, "gpt-6-sol");
     assert.equal(task.grillPolicy, "auto-accept-recommendations");
 
     const invalidPolicyResponse = await fetch(`${origin}/api/settings`, {
@@ -129,8 +129,8 @@ test("persists an allowed Sol model policy and snapshots it on new tasks", async
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         grillPolicy: "always-automatic",
-        allowedModels: ["gpt-5.6-sol", "gpt-5.6-luna", "claude-opus-5-5"],
-        defaultModel: "gpt-5.6-sol",
+        allowedModels: ["gpt-6-sol", "gpt-6-luna", "claude-opus-5-5"],
+        defaultModel: "gpt-6-sol",
         defaultReasoning: "xhigh",
       }),
     });
@@ -152,12 +152,12 @@ test("rejects a task model outside the configured allowlist", async () => {
       method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        allowedModels: ["gpt-5.6-luna", "claude-opus-5-5"],
-        defaultModel: "gpt-5.6-luna",
+        allowedModels: ["gpt-6-luna", "claude-opus-5-5"],
+        defaultModel: "gpt-6-luna",
         defaultReasoning: "medium",
         designPolicies: {
           "claude-design": { provider: "claude", model: "claude-opus-5-5", reasoning: "high" },
-          "codex-design": { provider: "codex", model: "gpt-5.6-luna", reasoning: "high" },
+          "codex-design": { provider: "codex", model: "gpt-6-luna", reasoning: "high" },
         },
       }),
     });
@@ -166,7 +166,7 @@ test("rejects a task model outside the configured allowlist", async () => {
       description: "This should not run with Sol.",
       repositoryPath: directory,
       workflow: "investigate",
-      model: "gpt-5.6-sol",
+      model: "gpt-6-sol",
       reasoning: "xhigh",
     });
     assert.equal(response.status, 400);
@@ -187,7 +187,7 @@ test("accepts an all-Claude default matrix, the shape the settings editor's prov
       method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        allowedModels: ["gpt-5.6-luna", "gpt-5.6-sol", "claude-opus-5-5", "claude-sonnet-5"],
+        allowedModels: ["gpt-6-luna", "gpt-6-sol", "claude-opus-5-5", "claude-sonnet-5"],
         defaultModel: "claude-sonnet-5",
         defaultReasoning: "xhigh",
         stagePolicies: claude.standard,
@@ -205,14 +205,14 @@ test("accepts an all-Claude default matrix, the shape the settings editor's prov
       method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        allowedModels: ["gpt-5.6-luna", "gpt-5.6-sol", "claude-opus-5-5", "claude-sonnet-5"],
+        allowedModels: ["gpt-6-luna", "gpt-6-sol", "claude-opus-5-5", "claude-sonnet-5"],
         defaultModel: "claude-sonnet-5",
         defaultReasoning: "xhigh",
-        stagePolicies: { ...claude.standard, triage: { model: "gpt-5.6-luna", reasoning: "medium" } },
+        stagePolicies: { ...claude.standard, triage: { model: "gpt-6-luna", reasoning: "medium" } },
       }),
     });
     assert.equal(mixed.status, 200);
-    assert.equal((await mixed.json()).settings.stagePolicies.triage.model, "gpt-5.6-luna");
+    assert.equal((await mixed.json()).settings.stagePolicies.triage.model, "gpt-6-luna");
   } finally {
     await cleanup(server, directory);
   }
