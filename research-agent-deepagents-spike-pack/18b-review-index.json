@@ -1,0 +1,816 @@
+{
+ "generated_at": "2026-09-22",
+ "model": "claude-opus-5",
+ "auth": "claude.ai subscription",
+ "runs_per_scenario": 3,
+ "currency": "NZD",
+ "gst_basis": "exclusive",
+ "source_catalogue": "QV CostBuilder local capture 2026-09-09 (9,816 priced rows)",
+ "counts": {
+  "scenarios": 30,
+  "agreed": 18,
+  "disputed": 10,
+  "not_established": 2,
+  "claims_covered": 258
+ },
+ "scenarios": [
+  {
+   "scenario_id": "retaining-wall-construction",
+   "title": "Retaining wall construction",
+   "family": "civil",
+   "unit": "m2 of retained face",
+   "claims_covered": 29,
+   "status": "disputed",
+   "range": {
+    "min": 581,
+    "max": 865
+   },
+   "consensus": {
+    "low": 727,
+    "high": 838
+   },
+   "agreement": {
+    "low_ratio": 1.251,
+    "high_ratio": 1.19,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "3f159f36118c5625"
+  },
+  {
+   "scenario_id": "channel-drain-installation",
+   "title": "Channel drain installation to paving",
+   "family": "drainage",
+   "unit": "m of channel run",
+   "claims_covered": 23,
+   "status": "agreed",
+   "range": {
+    "min": 570,
+    "max": 800
+   },
+   "consensus": {
+    "low": 580,
+    "high": 700
+   },
+   "agreement": {
+    "low_ratio": 1.088,
+    "high_ratio": 1.29,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "85fcd2e208315c83"
+  },
+  {
+   "scenario_id": "suspended-ceiling-tile-grid",
+   "title": "Suspended tile ceiling supply install",
+   "family": "fitout",
+   "unit": "m2",
+   "claims_covered": 19,
+   "status": "disputed",
+   "range": {
+    "min": 100,
+    "max": 164
+   },
+   "consensus": {
+    "low": 100,
+    "high": 120
+   },
+   "agreement": {
+    "low_ratio": 1.0,
+    "high_ratio": 1.562,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "780cee68fc2de5ad"
+  },
+  {
+   "scenario_id": "mains-and-feeder-cable-install",
+   "title": "Mains and feeder cable installation",
+   "family": "electrical",
+   "unit": "m of installed run",
+   "claims_covered": 17,
+   "status": "agreed",
+   "range": {
+    "min": 204,
+    "max": 224
+   },
+   "consensus": {
+    "low": 206,
+    "high": 215
+   },
+   "agreement": {
+    "low_ratio": 1.02,
+    "high_ratio": 1.047,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "4fbf9f52425ce2e2"
+  },
+  {
+   "scenario_id": "internal-doorset-supply-install",
+   "title": "Internal doorset supply and install",
+   "family": "joinery",
+   "unit": "ea",
+   "claims_covered": 14,
+   "status": "agreed",
+   "range": {
+    "min": 760,
+    "max": 1100
+   },
+   "consensus": {
+    "low": 780,
+    "high": 950
+   },
+   "agreement": {
+    "low_ratio": 1.046,
+    "high_ratio": 1.236,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "AKL",
+   "as_of": "2026-09-22",
+   "record_sha256": "0845aeccef066db0"
+  },
+  {
+   "scenario_id": "solar-mounting-structural-design",
+   "title": "Solar array mounting structural support",
+   "family": "structure",
+   "unit": "sum",
+   "claims_covered": 12,
+   "status": "agreed",
+   "range": {
+    "min": 11000,
+    "max": 23500
+   },
+   "consensus": {
+    "low": 11250.0,
+    "high": 23250.0
+   },
+   "agreement": {
+    "low_ratio": 1.045,
+    "high_ratio": 1.022,
+    "runs_with_band": 2,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "ff7b04d192c9747e"
+  },
+  {
+   "scenario_id": "facade-coating-application",
+   "title": "Facade and soffit coating",
+   "family": "envelope",
+   "unit": "m2",
+   "claims_covered": 9,
+   "status": "disputed",
+   "range": {
+    "min": 41,
+    "max": 76
+   },
+   "consensus": {
+    "low": 43,
+    "high": 71
+   },
+   "agreement": {
+    "low_ratio": 1.39,
+    "high_ratio": 1.134,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "cb911e53362c21ce"
+  },
+  {
+   "scenario_id": "solar-connection-switchboard-works",
+   "title": "Solar connection switchboard works",
+   "family": "electrical",
+   "unit": "ea",
+   "claims_covered": 9,
+   "status": "disputed",
+   "range": {
+    "min": 6150,
+    "max": 18900
+   },
+   "consensus": {
+    "low": 7635,
+    "high": 12660
+   },
+   "agreement": {
+    "low_ratio": 1.707,
+    "high_ratio": 1.557,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "1fccc0a0a3819da4"
+  },
+  {
+   "scenario_id": "switchboard-fault-rating-protection",
+   "title": "Switchboard fault rating and protection",
+   "family": "electrical",
+   "unit": "ea",
+   "claims_covered": 9,
+   "status": "not_established",
+   "range": null,
+   "consensus": null,
+   "agreement": {
+    "low_ratio": null,
+    "high_ratio": null,
+    "runs_with_band": 0,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "8fc979de4e43657a"
+  },
+  {
+   "scenario_id": "concrete-paving-slab",
+   "title": "External concrete paving and slabs",
+   "family": "civil",
+   "unit": "$/m2 of finished slab",
+   "claims_covered": 8,
+   "status": "agreed",
+   "range": {
+    "min": 175,
+    "max": 240
+   },
+   "consensus": {
+    "low": 190,
+    "high": 240
+   },
+   "agreement": {
+    "low_ratio": 1.2,
+    "high_ratio": 1.091,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "f45878a8a4efc83e"
+  },
+  {
+   "scenario_id": "door-hardware-sets",
+   "title": "Door hardware set installation",
+   "family": "joinery",
+   "unit": "ea (per door leaf)",
+   "claims_covered": 8,
+   "status": "disputed",
+   "range": {
+    "min": 1520,
+    "max": 2500
+   },
+   "consensus": {
+    "low": 1790,
+    "high": 2090
+   },
+   "agreement": {
+    "low_ratio": 1.283,
+    "high_ratio": 1.22,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "7da27e3c36e01e8e"
+  },
+  {
+   "scenario_id": "glazed-vision-panel",
+   "title": "Glazed vision panel to door",
+   "family": "joinery",
+   "unit": "ea",
+   "claims_covered": 8,
+   "status": "agreed",
+   "range": {
+    "min": 1100,
+    "max": 1900
+   },
+   "consensus": {
+    "low": 1100,
+    "high": 1900
+   },
+   "agreement": {
+    "low_ratio": 1.0,
+    "high_ratio": 1.0,
+    "runs_with_band": 1,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "0f9442627f89b494"
+  },
+  {
+   "scenario_id": "site-establishment-relocation",
+   "title": "Site establishment and compound relocation",
+   "family": "civil",
+   "unit": "sum",
+   "claims_covered": 8,
+   "status": "agreed",
+   "range": {
+    "min": 3100,
+    "max": 7500
+   },
+   "consensus": {
+    "low": 3300,
+    "high": 7000
+   },
+   "agreement": {
+    "low_ratio": 1.226,
+    "high_ratio": 1.339,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "AKL",
+   "as_of": "2026-09-22",
+   "record_sha256": "5292f520b3774ced"
+  },
+  {
+   "scenario_id": "deflection-head-acoustic-seal",
+   "title": "Deflection head and acoustic seal",
+   "family": "envelope",
+   "unit": "m",
+   "claims_covered": 7,
+   "status": "agreed",
+   "range": {
+    "min": 100,
+    "max": 184.95
+   },
+   "consensus": {
+    "low": 100.7,
+    "high": 158
+   },
+   "agreement": {
+    "low_ratio": 1.2,
+    "high_ratio": 1.193,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "cb5f68ade0194c76"
+  },
+  {
+   "scenario_id": "garden-bed-planting",
+   "title": "Garden bed planting installation",
+   "family": "external_works",
+   "unit": "m2",
+   "claims_covered": 7,
+   "status": "disputed",
+   "range": {
+    "min": 90,
+    "max": 215
+   },
+   "consensus": {
+    "low": 110,
+    "high": 200
+   },
+   "agreement": {
+    "low_ratio": 1.611,
+    "high_ratio": 1.162,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "44f4c55f7bf8dc39"
+  },
+  {
+   "scenario_id": "glass-kitchen-splashback",
+   "title": "Glass splashback supply install",
+   "family": "fitout",
+   "unit": "m2",
+   "claims_covered": 7,
+   "status": "agreed",
+   "range": {
+    "min": 600,
+    "max": 850
+   },
+   "consensus": {
+    "low": 620,
+    "high": 790
+   },
+   "agreement": {
+    "low_ratio": 1.033,
+    "high_ratio": 1.334,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "9da7f9983be51771"
+  },
+  {
+   "scenario_id": "internal-stud-partition-walls",
+   "title": "Internal stud partition wall construction",
+   "family": "fitout",
+   "unit": "m2 of wall elevation (one face, floor to underside of ceiling)",
+   "claims_covered": 7,
+   "status": "agreed",
+   "range": {
+    "min": 185,
+    "max": 249
+   },
+   "consensus": {
+    "low": 190,
+    "high": 240
+   },
+   "agreement": {
+    "low_ratio": 1.027,
+    "high_ratio": 1.069,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "b6bd2a1db973af43"
+  },
+  {
+   "scenario_id": "metering-control-instrumentation-wiring",
+   "title": "Metering and control wiring installation",
+   "family": "electrical",
+   "unit": "m",
+   "claims_covered": 7,
+   "status": "agreed",
+   "range": {
+    "min": 40.0,
+    "max": 85
+   },
+   "consensus": {
+    "low": 49.0,
+    "high": 69.0
+   },
+   "agreement": {
+    "low_ratio": 1.25,
+    "high_ratio": 1.269,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "a7fcdafc1093df65"
+  },
+  {
+   "scenario_id": "steel-connection-fabrication",
+   "title": "Structural steel connection fabrication upgrades",
+   "family": "structure",
+   "unit": "ea",
+   "claims_covered": 7,
+   "status": "disputed",
+   "range": {
+    "min": 180,
+    "max": 430
+   },
+   "consensus": {
+    "low": 195,
+    "high": 293
+   },
+   "agreement": {
+    "low_ratio": 1.278,
+    "high_ratio": 1.509,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "a2dab0904ea787cb"
+  },
+  {
+   "scenario_id": "interior-finishes-to-schedule",
+   "title": "Interior finishes to schedule",
+   "family": "fitout",
+   "unit": "sum",
+   "claims_covered": 6,
+   "status": "agreed",
+   "range": {
+    "min": 135000,
+    "max": 207000
+   },
+   "consensus": {
+    "low": 137000,
+    "high": 197000
+   },
+   "agreement": {
+    "low_ratio": 1.022,
+    "high_ratio": 1.084,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "290e62c6157ae622"
+  },
+  {
+   "scenario_id": "network-supply-connection-hv-metering",
+   "title": "Network supply connection and metering",
+   "family": "electrical",
+   "unit": "sum",
+   "claims_covered": 6,
+   "status": "not_established",
+   "range": null,
+   "consensus": null,
+   "agreement": {
+    "low_ratio": null,
+    "high_ratio": null,
+    "runs_with_band": 0,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "4425302d0ff8b39e"
+  },
+  {
+   "scenario_id": "sprinkler-system-installation",
+   "title": "Fire sprinkler system installation",
+   "family": "fire",
+   "unit": "m2",
+   "claims_covered": 6,
+   "status": "disputed",
+   "range": {
+    "min": 35,
+    "max": 75
+   },
+   "consensus": {
+    "low": 45,
+    "high": 68
+   },
+   "agreement": {
+    "low_ratio": 1.371,
+    "high_ratio": 1.25,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "3cfab10491999f22"
+  },
+  {
+   "scenario_id": "data-rack-and-network-hardware",
+   "title": "Data rack and network hardware",
+   "family": "electrical",
+   "unit": "ea (per completed comms rack, 96 certified links)",
+   "claims_covered": 5,
+   "status": "agreed",
+   "range": {
+    "min": 24000,
+    "max": 42000
+   },
+   "consensus": {
+    "low": 28000,
+    "high": 42000
+   },
+   "agreement": {
+    "low_ratio": 1.25,
+    "high_ratio": 1.105,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "604e73d44d62664b"
+  },
+  {
+   "scenario_id": "emergency-lighting-exit-signage",
+   "title": "Emergency lighting and exit signage",
+   "family": "electrical",
+   "unit": "ea",
+   "claims_covered": 5,
+   "status": "agreed",
+   "range": {
+    "min": 315,
+    "max": 525
+   },
+   "consensus": {
+    "low": 350,
+    "high": 480
+   },
+   "agreement": {
+    "low_ratio": 1.175,
+    "high_ratio": 1.25,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "c907485fb1b26709"
+  },
+  {
+   "scenario_id": "industrial-roller-doors",
+   "title": "Industrial roller and specialist doors",
+   "family": "joinery",
+   "unit": "ea",
+   "claims_covered": 5,
+   "status": "disputed",
+   "range": {
+    "min": 6800,
+    "max": 15500
+   },
+   "consensus": {
+    "low": 7000,
+    "high": 11500
+   },
+   "agreement": {
+    "low_ratio": 1.397,
+    "high_ratio": 1.55,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "52422956eb622fa4"
+  },
+  {
+   "scenario_id": "joinery-finishing-painting",
+   "title": "Joinery finishing and painting",
+   "family": "joinery",
+   "unit": "m2 of finished face area",
+   "claims_covered": 5,
+   "status": "agreed",
+   "range": {
+    "min": 90,
+    "max": 175
+   },
+   "consensus": {
+    "low": 92.5,
+    "high": 167.5
+   },
+   "agreement": {
+    "low_ratio": 1.056,
+    "high_ratio": 1.094,
+    "runs_with_band": 2,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "8aa13e89f36a6968"
+  },
+  {
+   "scenario_id": "site-electrical-reticulation",
+   "title": "Site electrical reticulation and services",
+   "family": "electrical",
+   "unit": "sum",
+   "claims_covered": 5,
+   "status": "disputed",
+   "range": {
+    "min": 74400,
+    "max": 146000
+   },
+   "consensus": {
+    "low": 78500,
+    "high": 110500
+   },
+   "agreement": {
+    "low_ratio": 1.304,
+    "high_ratio": 1.325,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "a77c46cc0bebc32b"
+  },
+  {
+   "scenario_id": "acfacade-cladding-install",
+   "title": "Acfacade Cladding Install",
+   "family": null,
+   "unit": "m2 of net cladding face area (openings deducted)",
+   "claims_covered": null,
+   "status": "agreed",
+   "range": {
+    "min": 470,
+    "max": 710
+   },
+   "consensus": {
+    "low": 475,
+    "high": 625
+   },
+   "agreement": {
+    "low_ratio": 1.087,
+    "high_ratio": 1.145,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "5fdf1378ee92c945"
+  },
+  {
+   "scenario_id": "benchtoand-laminate-panel",
+   "title": "Benchtoand Laminate Panel",
+   "family": null,
+   "unit": "m of benchtop run",
+   "claims_covered": null,
+   "status": "agreed",
+   "range": {
+    "min": 545,
+    "max": 865
+   },
+   "consensus": {
+    "low": 640,
+    "high": 800
+   },
+   "agreement": {
+    "low_ratio": 1.193,
+    "high_ratio": 1.236,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "15493eafa2954be5"
+  },
+  {
+   "scenario_id": "subgrade-prebasecourse-replacement",
+   "title": "Subgrade Prebasecourse Replacement",
+   "family": null,
+   "unit": "m3 in-situ undercut volume",
+   "claims_covered": null,
+   "status": "agreed",
+   "range": {
+    "min": 186.0,
+    "max": 290.0
+   },
+   "consensus": {
+    "low": 195,
+    "high": 275
+   },
+   "agreement": {
+    "low_ratio": 1.075,
+    "high_ratio": 1.16,
+    "runs_with_band": 3,
+    "runs_total": 3
+   },
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "centre": "Auckland",
+   "as_of": "2026-09-22",
+   "record_sha256": "e1ac5efcf7d94e7b"
+  }
+ ]
+}

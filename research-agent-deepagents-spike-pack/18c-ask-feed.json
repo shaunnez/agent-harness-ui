@@ -1,0 +1,720 @@
+{
+ "generated_at": "2026-09-22",
+ "model": "claude-opus-5",
+ "auth": "claude.ai subscription",
+ "note": "Free-text questions, one run each. Not the pinned-scenario path.",
+ "asks": [
+  {
+   "ask_id": "a1",
+   "question": "how come you couldn't price the asbestos soffit removal on our tender? What does that actually cost?",
+   "interpreted_as": "Strip and dispose of bonded (non-friable) asbestos-cement soffit/eaves lining from a single-storey timber-framed house in Auckland, area assumed >10m2 (Class B licensed work, WorkSafe notifiable), ground-level access, waste to consented landfill; removal only, reinstatement lining priced separately.",
+   "assumptions_invented": [
+    "Material is non-friable asbestos cement sheet, not friable board or sprayed coating",
+    "Single storey, ladder or light scaffold access, no restricted-access or two-storey work",
+    "Soffit area exceeds 10m2 so Class B licence and 5-working-day WorkSafe notification apply",
+    "Fascia, roof sheets and wall cladding behind are asbestos-free and not in scope",
+    "Auckland as the pricing centre",
+    "Removal and disposal only; new soffit lining is a separate item",
+    "Occupied dwelling requiring containment and neighbour notification, but no full enclosure"
+   ],
+   "status": "answered",
+   "range": {
+    "min": 1500,
+    "max": 6000
+   },
+   "unit": "lump sum, soffit/eaves removal on a single-storey house",
+   "centre": "Auckland",
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "as_of": "2026-09-22",
+   "basis": "NZ contractor and cost-guide web pages only. QV CostBuilder has no asbestos coverage at all across all 9,816 indexed rows. GST treatment is not stated by any source, so this band cannot be confirmed as GST-exclusive. Excludes survey, clearance certificate and reinstatement lining, which are listed separately. Treat as an order-of-magnitude range pending three licensed quotes.",
+   "resolved_from": "web",
+   "confidence": "low",
+   "components": [
+    {
+     "role": "Licensed Class B removal of AC soffit lining, incl containment, disposal and site clean",
+     "row_id": null,
+     "source": "https://builderconnect.co.nz/blog/asbestos-removal-cost-nz/",
+     "unit": "lump sum, typical house eaves run",
+     "amount": {
+      "low": 1500,
+      "high": 6000
+     },
+     "centre": "NZ national",
+     "caveat": "Contractor marketing pages, not a rate book. GST treatment not stated by any source - likely GST-inclusive retail. QV CostBuilder contains no asbestos rows whatsoever."
+    },
+    {
+     "role": "Per-m2 cross-check on removal rate",
+     "row_id": null,
+     "source": "https://checkmybuilder.co.nz/cost/asbestos-removal",
+     "unit": "m2",
+     "amount": {
+      "low": 30,
+      "high": 150
+     },
+     "centre": "NZ national",
+     "caveat": "Spans all material types and locations; soffits sit at the upper end because area is small relative to set-up, access and containment cost."
+    },
+    {
+     "role": "Pre-removal asbestos sampling and identification report",
+     "row_id": null,
+     "source": "https://www.asbestossafeconsultancy.co.nz/prices",
+     "unit": "job",
+     "amount": {
+      "low": 210,
+      "high": 435
+     },
+     "centre": "NZ national",
+     "caveat": "Plus GST, as stated by the source. Lower figure is a single sample; upper is a typical multi-sample residential round."
+    },
+    {
+     "role": "Refurbishment / demolition survey",
+     "row_id": null,
+     "source": "https://www.asbestossafeconsultancy.co.nz/prices",
+     "unit": "job",
+     "amount": {
+      "low": 349,
+      "high": 349
+     },
+     "centre": "NZ national",
+     "caveat": "'From' price plus GST. Rises with building size, complexity and travel."
+    },
+    {
+     "role": "Clearance certificate on completion",
+     "row_id": null,
+     "source": "https://aerem.co.nz/services/asbestos-assessors-and-clearances/",
+     "unit": "job",
+     "amount": {
+      "low": 299,
+      "high": 299
+     },
+     "centre": "NZ national",
+     "caveat": "'From' price plus GST. Independent party required. Licensed assessor and air monitoring are mandatory for Class A only, not Class B."
+    },
+    {
+     "role": "Hazardous waste disposal to landfill",
+     "row_id": null,
+     "source": "https://www.ntrlbu.org.nz/fees-charges",
+     "unit": "tonne",
+     "amount": {
+      "low": 431.25,
+      "high": 431.25
+     },
+     "centre": "Nelson Tasman",
+     "caveat": "Wrong centre - used only as a sanity check. No Auckland asbestos gate rate is published; Redvale, Whitford and Hampton Downs accept asbestos but do not publish the charge. Usually bundled into the removalist's lump sum."
+    },
+    {
+     "role": "Reinstatement: new fibre cement eaves lining (QV, area basis)",
+     "row_id": "9bd8f998e94fb5e52699ed2b20902f0ecc410fad78bb9c156213c3ff5b2a2711:t55:r1",
+     "source": null,
+     "unit": "m2",
+     "amount": {
+      "low": 67,
+      "high": 70
+     },
+     "centre": "AKL 70.00 / WLG 67.00 / CHC 69.00",
+     "caveat": "Unreviewed QV row. HardieFlex 4.5mm incl PVC mouldings to sheet joints. Lining only - excludes framing and fascia."
+    },
+    {
+     "role": "Reinstatement: new fibre cement eaves lining (QV, lineal basis, 600mm wide)",
+     "row_id": "9bd8f998e94fb5e52699ed2b20902f0ecc410fad78bb9c156213c3ff5b2a2711:t55:r3",
+     "source": null,
+     "unit": "m",
+     "amount": {
+      "low": 49,
+      "high": 51
+     },
+     "centre": "AKL 50.00 / WLG 49.00 / CHC 51.00",
+     "caveat": "Unreviewed QV row. Use this OR the m2 row above, never both. Do not add either to row 05507449e3aed084cd6a9d8c1d66d530536ce71004098595e4ca04ee74122a26:t4:r3 (AKL 173.00/m), which is the complete soffit including framing and fascia and already contains the lining."
+    }
+   ],
+   "qv_sources": [
+    {
+     "url": "https://costbuilder.qv.co.nz/detailed-rates/carpentry/carpentry/",
+     "section": "Carpentry / Lining: Soffit, Fibre Cement",
+     "group": null,
+     "desc": "HardieFlex\u2122 Eaves Lining, 4.5mm thick, including pvc mouldings to sheet joints",
+     "unit": "m\u00b2",
+     "regional": {
+      "Auckland": "70.00",
+      "Christchurch": "69.00",
+      "Dunedin": "64.00",
+      "Hamilton": "62.00",
+      "Palmerston North": "60.00",
+      "Wellington": "67.00"
+     },
+     "row_id": "9bd8f998e94fb5e52699ed2b20902f0ecc410fad78bb9c156213c3ff5b2a2711:t55:r1"
+    },
+    {
+     "url": "https://costbuilder.qv.co.nz/detailed-rates/carpentry/carpentry/",
+     "section": "Carpentry / Lining: Soffit, Fibre Cement",
+     "group": null,
+     "desc": "600mm wide",
+     "unit": "m",
+     "regional": {
+      "Auckland": "50.00",
+      "Christchurch": "51.00",
+      "Dunedin": "48.00",
+      "Hamilton": "46.00",
+      "Palmerston North": "45.00",
+      "Wellington": "49.00"
+     },
+     "row_id": "9bd8f998e94fb5e52699ed2b20902f0ecc410fad78bb9c156213c3ff5b2a2711:t55:r3"
+    }
+   ],
+   "web_sources": [
+    "https://aerem.co.nz/services/asbestos-assessors-and-clearances/",
+    "https://builderconnect.co.nz/blog/asbestos-removal-cost-nz/",
+    "https://checkmybuilder.co.nz/cost/asbestos-removal",
+    "https://www.asbestossafeconsultancy.co.nz/prices",
+    "https://www.ntrlbu.org.nz/fees-charges"
+   ],
+   "open_questions": [
+    "Actual soffit area or lineal metres - the single biggest price driver, and the reason the range spans 4x",
+    "Whether the material is genuinely asbestos, and whether bonded or friable (Class A vs Class B changes the rate materially)",
+    "Auckland landfill gate rate per tonne for asbestos waste - not published by Redvale, Whitford or Hampton Downs",
+    "Scaffold or access cost as a separate line - QV holds only painting rates for working off scaffolding, not scaffold hire itself",
+    "Whether published removal figures are GST-inclusive or exclusive",
+    "WorkSafe notification fee, if any, for licensed removal work",
+    "Two-storey, restricted-access or occupied-building loadings"
+   ],
+   "suppliers_to_ring": [
+    "Chemcare (national, asbestos removal and cost calculators by region)",
+    "Safety 1st Removals (Auckland)",
+    "Revolve Asbestos Solutions",
+    "Union Demolition",
+    "Aerem (licensed asbestos assessor, clearance certificates and air monitoring)",
+    "Asbestos Safe Consultancy (surveys and sampling)",
+    "Waste Disposal Services - Whitford Landfill (Auckland asbestos gate rate)"
+   ],
+   "review": {
+    "state": "pending",
+    "decision": null,
+    "reviewer": null,
+    "note": null,
+    "decided_at": null
+   },
+   "record_sha256": "76728273771771ce"
+  },
+  {
+   "ask_id": "a2",
+   "question": "Our tender flagged liquefaction-prone ground. What does ground improvement cost for a single-storey light commercial building in Christchurch, and how common is this problem?",
+   "interpreted_as": "Ground improvement works only (excluding the building slab), per m2 of building footprint, for a single-storey light commercial slab-on-grade building in Christchurch on liquefaction-prone ground, using the undercut-and-replace method (excavate, engineered gravel raft, triaxial geogrid) at 1.0m to ~2.3m depth; plus a qualitative prevalence answer on liquefaction-prone ground across the Christchurch district.",
+   "assumptions_invented": [
+    "Footprint 300-800 m2, single storey, slab-on-grade, no basement",
+    "Ground is TC2 or TC3-equivalent; the tender did not state a technical category or CPT results",
+    "Undercut-and-replace is the selected method, not RAPs, stone columns or deep soil mixing",
+    "Improvement depth 1.0m (low) to approximately 2.3m (high)",
+    "Water table sits below the excavation, so no dewatering is priced",
+    "Spoil is clean and uncontaminated, carted approximately 10km",
+    "Light commercial floor loading (retail/office), not racked warehouse",
+    "Slab, foundations and superstructure are excluded from the band"
+   ],
+   "status": "answered",
+   "range": {
+    "min": 220,
+    "max": 420
+   },
+   "unit": "m2 of building footprint",
+   "centre": "Christchurch",
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "as_of": "2026-09-22",
+   "basis": "Low end is the sum of QV CHC rows t12:r3 + t12:r4 + t12:r5 = $218.80/m2 for a 1m undercut-and-replace with geogrid, rounded to $220. High end is the QV CHC aggregate total row t13:r14 = $420/m2 for an approximately 2.3m imported-GAP40 replacement with two geogrid layers. Excludes the slab, dewatering, geotechnical investigation, consultant fees, contaminated spoil and P&G. All source rows come from QV's Canterbury RESIDENTIAL foundation tables, which use an NZS 3604 slab as the deduct baseline; a commercial building is specific engineering design and may land above this band.",
+   "resolved_from": "qv+web",
+   "confidence": "low",
+   "components": [
+    {
+     "role": "Excavate 1m deep and dispose, 1.37m3 per m2",
+     "row_id": "f0968d722af3d033d91c79c47fe7ecbea989e5abaecc3422c66d853ac075ca53:t12:r3",
+     "source": null,
+     "unit": "m2",
+     "amount": {
+      "low": 80.0,
+      "high": 80.0
+     },
+     "centre": "Christchurch",
+     "caveat": "Unreviewed QV row from a residential TC1/TC2 table; no dewatering, no contaminated spoil allowance"
+    },
+    {
+     "role": "GAP65 hardfill, 1m deep, compacted, 1.37m3 per m2",
+     "row_id": "f0968d722af3d033d91c79c47fe7ecbea989e5abaecc3422c66d853ac075ca53:t12:r4",
+     "source": null,
+     "unit": "m2",
+     "amount": {
+      "low": 126.0,
+      "high": 126.0
+     },
+     "centre": "Christchurch",
+     "caveat": "Unreviewed; aggregate supply is volatile and quarry-distance sensitive"
+    },
+    {
+     "role": "Triaxial geogrid, 1.63m2 per m2",
+     "row_id": "f0968d722af3d033d91c79c47fe7ecbea989e5abaecc3422c66d853ac075ca53:t12:r5",
+     "source": null,
+     "unit": "m2",
+     "amount": {
+      "low": 12.8,
+      "high": 12.8
+     },
+     "centre": "Christchurch",
+     "caveat": "Unreviewed; single-layer allowance, commercial SED may require two layers"
+    },
+    {
+     "role": "Deeper replacement package, imported GAP40 - aggregate total for TC3 Type 1 (excavate/dispose 3.1m3, compact subgrade, GAP40 compacted, 2 layers geogrid with 3m return)",
+     "row_id": "f0968d722af3d033d91c79c47fe7ecbea989e5abaecc3422c66d853ac075ca53:t13:r14",
+     "source": null,
+     "unit": "m2",
+     "amount": {
+      "low": 420.0,
+      "high": 420.0
+     },
+     "centre": "Christchurch",
+     "caveat": "Aggregate total row flagged total_or_build_up_check_components - must NOT be added to its own components t13:r10-r13; residential TC3 basis"
+    },
+    {
+     "role": "Alternative deeper package re-using excavated material rather than importing fill",
+     "row_id": "f0968d722af3d033d91c79c47fe7ecbea989e5abaecc3422c66d853ac075ca53:t13:r8",
+     "source": null,
+     "unit": "m2",
+     "amount": {
+      "low": 270.0,
+      "high": 270.0
+     },
+     "centre": "Christchurch",
+     "caveat": "Aggregate total row; only valid if the excavated material is geotechnically suitable for re-use, which a CPEng must confirm"
+    },
+    {
+     "role": "Prevalence context - district-wide liquefaction vulnerability mapping extent",
+     "row_id": null,
+     "source": "https://ccc.govt.nz/environment/land/liquefaction",
+     "unit": "ha",
+     "amount": {
+      "low": 46000,
+      "high": 46000
+     },
+     "centre": "Christchurch",
+     "caveat": "This is the mapped study area of flat land, not the area assessed as vulnerable; no published category split found"
+    },
+    {
+     "role": "Prevalence context - District Plan Liquefaction Management Area covers most Christchurch landowners; CPEng geotechnical report required in the managed category",
+     "row_id": null,
+     "source": "https://www.mondaq.com/newzealand/construction-planning/516786/new-liquefaction-management-areas-affecting-most-christchurch-landowners",
+     "unit": "qualitative",
+     "amount": {
+      "low": null,
+      "high": null
+     },
+     "centre": "Christchurch",
+     "caveat": "Secondary legal commentary, not the primary District Plan text; verify against districtplan.ccc.govt.nz for the current rule"
+    }
+   ],
+   "qv_sources": [
+    {
+     "url": "https://costbuilder.qv.co.nz/cost-planning-rates/substructure/substructure/",
+     "section": "Substructure / New Foundations, TC1 and TC2",
+     "group": "Excavate and replace upper layers of soil with compacted, well-graded gravels, geogrid and slab",
+     "desc": "Excavate 1m deep, disposal, 1.37m3",
+     "unit": "m\u00b2",
+     "regional": {
+      "Auckland": "81.00",
+      "Christchurch": "80.00",
+      "Dunedin": "71.00",
+      "Hamilton": "75.00",
+      "Palmerston North": "71.00",
+      "Wellington": "73.00"
+     },
+     "row_id": "f0968d722af3d033d91c79c47fe7ecbea989e5abaecc3422c66d853ac075ca53:t12:r3"
+    },
+    {
+     "url": "https://costbuilder.qv.co.nz/cost-planning-rates/substructure/substructure/",
+     "section": "Substructure / New Foundations, TC1 and TC2",
+     "group": "Excavate and replace upper layers of soil with compacted, well-graded gravels, geogrid and slab",
+     "desc": "GAP65 hardfill, 1m deep, 1.37m3",
+     "unit": "m\u00b2",
+     "regional": {
+      "Auckland": "160.00",
+      "Christchurch": "126.00",
+      "Dunedin": "142.00",
+      "Hamilton": "147.00",
+      "Palmerston North": "154.00",
+      "Wellington": "117.00"
+     },
+     "row_id": "f0968d722af3d033d91c79c47fe7ecbea989e5abaecc3422c66d853ac075ca53:t12:r4"
+    },
+    {
+     "url": "https://costbuilder.qv.co.nz/cost-planning-rates/substructure/substructure/",
+     "section": "Substructure / New Foundations, TC1 and TC2",
+     "group": "Excavate and replace upper layers of soil with compacted, well-graded gravels, geogrid and slab",
+     "desc": "Triaxial geogrid, 1.63m2",
+     "unit": "m\u00b2",
+     "regional": {
+      "Auckland": "12.20",
+      "Christchurch": "12.80",
+      "Dunedin": "12.00",
+      "Hamilton": "12.20",
+      "Palmerston North": "12.00",
+      "Wellington": "12.50"
+     },
+     "row_id": "f0968d722af3d033d91c79c47fe7ecbea989e5abaecc3422c66d853ac075ca53:t12:r5"
+    },
+    {
+     "url": "https://costbuilder.qv.co.nz/cost-planning-rates/substructure/substructure/",
+     "section": "Substructure / New Foundations, TC3",
+     "group": "Imported fill, GAP40",
+     "desc": "Type 1 Total imported GAP40",
+     "unit": "m\u00b2",
+     "regional": {
+      "Auckland": "482.30",
+      "Christchurch": "420.00",
+      "Dunedin": "433.50",
+      "Hamilton": "457.70",
+      "Palmerston North": "470.50",
+      "Wellington": "404.10"
+     },
+     "row_id": "f0968d722af3d033d91c79c47fe7ecbea989e5abaecc3422c66d853ac075ca53:t13:r14"
+    },
+    {
+     "url": "https://costbuilder.qv.co.nz/cost-planning-rates/substructure/substructure/",
+     "section": "Substructure / New Foundations, TC3",
+     "group": "Re-used excavated material",
+     "desc": "Type 1 Total re-used excavated material",
+     "unit": "m\u00b2",
+     "regional": {
+      "Auckland": "271.30",
+      "Christchurch": "270.00",
+      "Dunedin": "239.50",
+      "Hamilton": "252.70",
+      "Palmerston North": "240.50",
+      "Wellington": "246.10"
+     },
+     "row_id": "f0968d722af3d033d91c79c47fe7ecbea989e5abaecc3422c66d853ac075ca53:t13:r8"
+    }
+   ],
+   "web_sources": [
+    "https://ccc.govt.nz/environment/land/liquefaction",
+    "https://www.mondaq.com/newzealand/construction-planning/516786/new-liquefaction-management-areas-affecting-most-christchurch-landowners"
+   ],
+   "open_questions": [
+    "Rates for specialist ground improvement: rammed aggregate piers, stone columns, low-mobility grout, resin injection, deep soil mixing, rapid impact compaction, driven timber pile densification - no NZ published rates found in QV or on the web",
+    "Dewatering / wellpoint rates - QV contains no dewatering rows at all",
+    "CPT, borehole and geotechnical investigation costs - QV contains no site investigation rows",
+    "Geotechnical consultant (CPEng) fee for the liquefaction assessment and foundation design",
+    "A commercial-specific (non-residential) ground improvement rate from any published NZ source",
+    "The percentage of Christchurch land or the property count in each liquefaction vulnerability category or TC zone",
+    "Required improvement depth for this specific site - swings the band by roughly $200/m2"
+   ],
+   "suppliers_to_ring": [
+    "CLL (Contract Landscapes Ltd), Christchurch - rammed aggregate piers and stone columns",
+    "Hiway Stabilizers - soil-cement rafts and in-situ stabilisation",
+    "Brian Perry Civil - stone columns, deep soil mixing, specialist geotechnical",
+    "Tonkin + Taylor, Christchurch - geotechnical design and liquefaction assessment",
+    "Fulton Hogan or Isaac Construction, Christchurch - bulk undercut, engineered fill supply, dewatering"
+   ],
+   "review": {
+    "state": "pending",
+    "decision": null,
+    "reviewer": null,
+    "note": null,
+    "decided_at": null
+   },
+   "record_sha256": "a1022734b17a3c0e"
+  },
+  {
+   "ask_id": "a3",
+   "question": "Client wants to know the cost impact of switching the roof from long-run coloursteel to a membrane on a 1200m2 warehouse.",
+   "interpreted_as": "Cost delta of substituting 1200 m2 of 0.55mm pre-finished high-rib trapezoidal long-run steel roofing on purlins (with underlay, netting and flashings) for a sheet membrane roof on a new continuous plywood deck, on a simple low-pitch portal-frame warehouse, new build, Auckland, GST exclusive, no insulation either side.",
+   "assumptions_invented": [
+    "1200 m2 is roof area not floor plate; low pitch so the two are within ~1%",
+    "Base spec is 0.55mm pre-finished (MagnaFlow/MAXAM) high-rib trapezoidal, the normal warehouse covering",
+    "Membrane requires a new continuous substrate because it cannot span purlins; 17mm H3 plywood deck assumed",
+    "Simple roof: no parapets, no roof plant, existing spouting and downpipe layout retained",
+    "Auckland centre",
+    "New build, not a re-roof (no strip-out or asbestos)",
+    "Neither option insulated; warm-roof build-up excluded",
+    "No scaffold/edge-protection duration difference allowed"
+   ],
+   "status": "answered",
+   "range": {
+    "min": 42,
+    "max": 110
+   },
+   "unit": "m2 of roof (cost IMPACT, membrane less long-run)",
+   "centre": "Auckland",
+   "currency": "NZD",
+   "gst_basis": "exclusive",
+   "as_of": "2026-09-22",
+   "basis": "Membrane build-up of deck proxy $89/m2 plus sheet membrane $69-$137/m2 = $158-$226/m2, less the QV composite long-run all-in rate of $116/m2. Over 1200 m2 this is +$50,400 to +$132,000 GST exclusive. Excludes insulation, tapered falls, purlin changes, internal gutters and warranty. Band is wide because the deck rate is a proxy and QV publishes no single-ply TPO row.",
+   "resolved_from": "qv+web",
+   "confidence": "low",
+   "components": [
+    {
+     "role": "base case: long-run coloursteel, all-in",
+     "row_id": "05507449e3aed084cd6a9d8c1d66d530536ce71004098595e4ca04ee74122a26:t0:r38",
+     "source": null,
+     "unit": "m2",
+     "amount": {
+      "low": 116,
+      "high": 116
+     },
+     "centre": "Auckland",
+     "caveat": "Composite row already includes wire netting, underlay and 0.1m flashing per m2 \u2014 must not be added to the covering-only rows in table 528b0345...:t1. UNREVIEWED."
+    },
+    {
+     "role": "base case alternative profile (LT7)",
+     "row_id": "05507449e3aed084cd6a9d8c1d66d530536ce71004098595e4ca04ee74122a26:t0:r49",
+     "source": null,
+     "unit": "m2",
+     "amount": {
+      "low": 117,
+      "high": 117
+     },
+     "centre": "Auckland",
+     "caveat": "Same inclusions as above; shown only to confirm the base band is stable across warehouse profiles. UNREVIEWED."
+    },
+    {
+     "role": "membrane case: continuous deck (proxy)",
+     "row_id": "9bd8f998e94fb5e52699ed2b20902f0ecc410fad78bb9c156213c3ff5b2a2711:t46:r6",
+     "source": null,
+     "unit": "m2",
+     "amount": {
+      "low": 89,
+      "high": 89
+     },
+     "centre": "Auckland",
+     "caveat": "WEAK PROXY. This is plywood cladding fixed to timber frame, not a roof deck over steel purlins. QV indexes no roof-deck-on-purlin plywood row. Excludes extra purlins or nailing strips. UNREVIEWED."
+    },
+    {
+     "role": "membrane sheet, low end",
+     "row_id": "528b0345b043e4fd4388c15791ed435780da353d16f5661d6f244fcae161ad02:t9:r10",
+     "source": null,
+     "unit": "m2",
+     "amount": {
+      "low": 69,
+      "high": 69
+     },
+     "centre": "national single price",
+     "caveat": "Soprasun 4AR torch-applied single layer. Single national price, no centre differentiation, which is itself a reliability flag. Excludes deck. UNREVIEWED."
+    },
+    {
+     "role": "membrane sheet, mid",
+     "row_id": "528b0345b043e4fd4388c15791ed435780da353d16f5661d6f244fcae161ad02:t9:r6",
+     "source": null,
+     "unit": "m2",
+     "amount": {
+      "low": 134,
+      "high": 134
+     },
+     "centre": "national single price",
+     "caveat": "Polibit double layer 6-7mm Novaflex. Excludes deck. UNREVIEWED."
+    },
+    {
+     "role": "membrane sheet, high end",
+     "row_id": "528b0345b043e4fd4388c15791ed435780da353d16f5661d6f244fcae161ad02:t8:r4",
+     "source": null,
+     "unit": "m2",
+     "amount": {
+      "low": 137,
+      "high": 137
+     },
+     "centre": "Auckland",
+     "caveat": "Butyl 1.5mm black, explicitly 'laid to falls on plywood or concrete' \u2014 deck excluded. Excludes skirtings, outlet dressings and gutter linings, all separately priced in the same table. UNREVIEWED."
+    },
+    {
+     "role": "cross-check: NZ single-ply TPO installed (not in QV)",
+     "row_id": null,
+     "source": "https://roofingexpert.co.nz/blog/membrane-roof-cost-auckland/",
+     "unit": "m2",
+     "amount": {
+      "low": 120,
+      "high": 250
+     },
+     "centre": "Auckland",
+     "caveat": "Roofing contractor marketing blog, not a cost authority. Unsourced, no spec or inclusions stated, may or may not include deck. Use only to confirm the QV-derived membrane band is not absurd."
+    },
+    {
+     "role": "adder not included: roof drain for internal gutter",
+     "row_id": "528b0345b043e4fd4388c15791ed435780da353d16f5661d6f244fcae161ad02:t22:r3",
+     "source": null,
+     "unit": "each",
+     "amount": {
+      "low": 537,
+      "high": 537
+     },
+     "centre": "Auckland",
+     "caveat": "Sureflow 100mm dia with clamp ring and dome grate. Quantity not established \u2014 depends on whether the membrane design introduces internal gutters. Not in the band."
+    },
+    {
+     "role": "adder not included: nailing strip to purlins for plywood deck",
+     "row_id": "52d4a068b2aced2722dab3e921b35879d1a60fc34fe3b6d61a4a3aec5c10b994:t7:r38",
+     "source": null,
+     "unit": "m",
+     "amount": {
+      "low": 15.4,
+      "high": 15.4
+     },
+     "centre": "Auckland",
+     "caveat": "Component rate, deliberately NOT rolled into the band. At 900mm centres this is roughly 1.11 m per m2 of roof. Purlin recentring for a plywood deck is a structural decision not yet made."
+    }
+   ],
+   "qv_sources": [
+    {
+     "url": "https://costbuilder.qv.co.nz/cost-planning-rates/roof/roof/",
+     "section": "Roof / Roof Covering & Associated Flashings",
+     "group": "Sheet Roofing, Trapezoidal Profile, High Rib BB900/Steelspan/Topspan, with wire netting, underlay and 0.1m of flashing per m2 of roof",
+     "desc": "MagnaFlow\u2122/MAXAM\u00ae 0.55mm",
+     "unit": "m\u00b2",
+     "regional": {
+      "Auckland": "116.00",
+      "Christchurch": "113.00",
+      "Dunedin": "106.00",
+      "Hamilton": "108.00",
+      "Palmerston North": "106.00",
+      "Wellington": "109.00"
+     },
+     "row_id": "05507449e3aed084cd6a9d8c1d66d530536ce71004098595e4ca04ee74122a26:t0:r38"
+    },
+    {
+     "url": "https://costbuilder.qv.co.nz/cost-planning-rates/roof/roof/",
+     "section": "Roof / Roof Covering & Associated Flashings",
+     "group": "Sheet Roofing, Trapezoidal Profile, High Rib LT7, with wire netting, underlay and 0.1m of flashing per m2 of roof",
+     "desc": "MagnaFlow\u2122/MAXAM\u00ae 0.55mm",
+     "unit": "m\u00b2",
+     "regional": {
+      "Auckland": "117.00",
+      "Christchurch": "114.00",
+      "Dunedin": "107.00",
+      "Hamilton": "109.00",
+      "Palmerston North": "106.00",
+      "Wellington": "109.00"
+     },
+     "row_id": "05507449e3aed084cd6a9d8c1d66d530536ce71004098595e4ca04ee74122a26:t0:r49"
+    },
+    {
+     "url": "https://costbuilder.qv.co.nz/detailed-rates/carpentry/carpentry/",
+     "section": "Carpentry / Cladding: Plywood",
+     "group": "Plywood, CD, H3, Exterior Grade Fixed to timber frame",
+     "desc": "17mm thick",
+     "unit": "m\u00b2",
+     "regional": {
+      "Auckland": "89.00",
+      "Christchurch": "86.00",
+      "Dunedin": "80.00",
+      "Hamilton": "80.00",
+      "Palmerston North": "77.00",
+      "Wellington": "84.00"
+     },
+     "row_id": "9bd8f998e94fb5e52699ed2b20902f0ecc410fad78bb9c156213c3ff5b2a2711:t46:r6"
+    },
+    {
+     "url": "https://costbuilder.qv.co.nz/detailed-rates/roof-coverings/roof-coverings/",
+     "section": "Roof Coverings / Bituminous and Acrylic Membranes",
+     "group": "Soprasun 4AR Bituminous membrane, polyester-reinforced slate, chip coated, torch applied",
+     "desc": "Single layer",
+     "unit": "m\u00b2",
+     "regional": {
+      "Auckland": "69.00",
+      "Christchurch": "69.00",
+      "Dunedin": "69.00",
+      "Hamilton": "69.00",
+      "Palmerston North": "69.00",
+      "Wellington": "69.00"
+     },
+     "row_id": "528b0345b043e4fd4388c15791ed435780da353d16f5661d6f244fcae161ad02:t9:r10"
+    },
+    {
+     "url": "https://costbuilder.qv.co.nz/detailed-rates/roof-coverings/roof-coverings/",
+     "section": "Roof Coverings / Bituminous and Acrylic Membranes",
+     "group": "Polibit Double layer system",
+     "desc": "6-7mm Novaflex",
+     "unit": "m\u00b2",
+     "regional": {
+      "Auckland": "134.00",
+      "Christchurch": "134.00",
+      "Dunedin": "134.00",
+      "Hamilton": "134.00",
+      "Palmerston North": "134.00",
+      "Wellington": "134.00"
+     },
+     "row_id": "528b0345b043e4fd4388c15791ed435780da353d16f5661d6f244fcae161ad02:t9:r6"
+    },
+    {
+     "url": "https://costbuilder.qv.co.nz/detailed-rates/roof-coverings/roof-coverings/",
+     "section": "Roof Coverings / Butyl Rubber Membrane Roofing",
+     "group": "Butyl Rubber Roofing Laid to falls on plywood or concrete, including lapped joints",
+     "desc": "1.5mm thick, black",
+     "unit": "m\u00b2",
+     "regional": {
+      "Auckland": "137.00",
+      "Christchurch": "136.00",
+      "Dunedin": "130.00",
+      "Hamilton": "133.00",
+      "Palmerston North": "131.00",
+      "Wellington": "132.00"
+     },
+     "row_id": "528b0345b043e4fd4388c15791ed435780da353d16f5661d6f244fcae161ad02:t8:r4"
+    },
+    {
+     "url": "https://costbuilder.qv.co.nz/detailed-rates/roof-coverings/roof-coverings/",
+     "section": "Roof Coverings / Roof and Deck Drains",
+     "group": "Sureflow Roof Drain With clamp ring and dome grate",
+     "desc": "100mm diameter",
+     "unit": "each",
+     "regional": {
+      "Auckland": "537.00",
+      "Christchurch": "531.00",
+      "Dunedin": "513.00",
+      "Hamilton": "520.00",
+      "Palmerston North": "514.00",
+      "Wellington": "519.00"
+     },
+     "row_id": "528b0345b043e4fd4388c15791ed435780da353d16f5661d6f244fcae161ad02:t22:r3"
+    },
+    {
+     "url": "https://costbuilder.qv.co.nz/detailed-rates/structural-steelwork/structural-steelwork/",
+     "section": "Structural Steelwork / Proprietary Purlins",
+     "group": "Tie Rods Bolted to steel, galvanised",
+     "desc": "50mm x 50mm nailing strip to purlins",
+     "unit": "m",
+     "regional": {
+      "Auckland": "15.40",
+      "Christchurch": "14.70",
+      "Dunedin": "14.00",
+      "Hamilton": "13.80",
+      "Palmerston North": "13.30",
+      "Wellington": "14.80"
+     },
+     "row_id": "52d4a068b2aced2722dab3e921b35879d1a60fc34fe3b6d61a4a3aec5c10b994:t7:r38"
+    }
+   ],
+   "web_sources": [
+    "https://roofingexpert.co.nz/blog/membrane-roof-cost-auckland/"
+   ],
+   "open_questions": [
+    "Single-ply TPO/PVC roofing (Viking Enviroclad, Nuraply) \u2014 the system actually specified on NZ warehouses; QV indexes no TPO or PVC single-ply row at any thickness",
+    "Rigid insulation board (PIR/EPS) and tapered insulation to create falls on a warm roof \u2014 no QV row found; frequently $60-$120/m2 and could double the delta",
+    "Plywood or steel tray roof decking over steel purlins as a roof element \u2014 QV has no such row; only cladding and flooring plywood proxies",
+    "Structural consequence of the added deck dead load and any purlin recentring, and the engineer's fee to reassess the portal frame",
+    "Internal gutter, sump and overflow quantities that a low-pitch membrane design would introduce",
+    "BRANZ-appraised system cost, producer statement and installer warranty premium for the membrane package",
+    "Scaffolding and edge-protection duration difference between the two trades",
+    "Whether this is a new build or a re-roof \u2014 a re-roof adds strip-out, disposal and possible asbestos, none of which is priced here"
+   ],
+   "suppliers_to_ring": [
+    "Viking Roofspec (Enviroclad TPO system and nearest approved applicator)",
+    "Nuralite Waterproofing",
+    "Equus Industries",
+    "Dimond Roofing (long-run base case)",
+    "Roofing Industries Ltd (long-run base case)"
+   ],
+   "review": {
+    "state": "pending",
+    "decision": null,
+    "reviewer": null,
+    "note": null,
+    "decided_at": null
+   },
+   "record_sha256": "368162d804564104"
+  }
+ ]
+}
