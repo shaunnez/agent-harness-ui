@@ -33,6 +33,18 @@ export function comparePhases({ phase1, phase2, verifier, scenariosRun = null, r
       reason: `A verdict needs all ${requiredScenarios} pinned scopes; this run covered ${scenariosRun}.`,
       reasons: [],
     };
+  // A scenario whose runs failed is not a datum for either side. Counting it would let a quota
+  // wall during one phase's run decide which structure "won".
+  const incomplete = (phase1.counts.incomplete ?? 0) + (phase2.counts.incomplete ?? 0);
+  if (incomplete)
+    return {
+      winner: null,
+      applicable: false,
+      reason:
+        `${incomplete} scenario(s) across the two phases did not complete all three runs. ` +
+        "Re-run them and merge before comparing; a failed run is not evidence for either structure.",
+      reasons: [],
+    };
   const reasons = [];
   const bandDelta = phase2.counts.withBand - phase1.counts.withBand;
   const agreedDelta = phase2.counts.agreed - phase1.counts.agreed;

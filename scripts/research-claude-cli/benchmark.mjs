@@ -12,6 +12,7 @@
 // the gates were themselves model runs; that mistake is not rebuilt here.
 
 import { agreementCounts } from "../../server/research/claude-cli/agreement.mjs";
+import { PLAN_LIMIT_ERROR_CODE } from "../../server/research/claude-cli/cli-call.mjs";
 import { runTrio } from "../../server/research/claude-cli/trio.mjs";
 import { loadPinnedScopes, loadRecordedBaseline } from "./scopes.mjs";
 
@@ -35,6 +36,14 @@ export const RECORDED_BASELINE = Object.freeze({
  * Scenarios are submitted one at a time and their three runs together: the runtime's own
  * concurrency cap decides how many CLI children actually exist at once, and holding the whole
  * batch back to one scenario keeps the queue depth predictable while a long benchmark runs.
+ *
+ * Stops the moment the claude.ai plan window is exhausted. The quota is not per call, so every
+ * remaining scenario would fail the same way, and a benchmark that carried on would spend its
+ * remaining wall clock writing $0.00 one-turn failures into a results file that gets read as
+ * research. That is what the first live exit test did over its last five scenarios.
+ *
+ * Returns `{ records, aborted }`, never a bare array: a caller that cannot see the run was cut
+ * short will compare 25 scenarios against a 30-scenario baseline and call it a verdict.
  */
 export async function runBenchmark({ runtime, scopes, budget, profile = "standard", onProgress = () => {} }) {
   const records = [];
@@ -54,8 +63,21 @@ export async function runBenchmark({ runtime, scopes, budget, profile = "standar
       costUsd: sum(record.runs.map((run) => run.costUsd ?? 0)),
     });
     onProgress({ index: index + 1, total: scopes.length, record: records.at(-1) });
+    const planLimited = record.runs.find((run) => run.error?.code === PLAN_LIMIT_ERROR_CODE);
+    if (planLimited)
+      return {
+        records,
+        aborted: {
+          reason: PLAN_LIMIT_ERROR_CODE,
+          scenario: scope.id,
+          message: planLimited.error.message,
+          scenariosRun: records.length,
+          scenariosPlanned: scopes.length,
+          remaining: scopes.slice(index + 1).map((entry) => entry.id),
+        },
+      };
   }
-  return records;
+  return { records, aborted: null };
 }
 
 /** Compare a benchmark run with the recorded baseline, scenario by scenario. */
@@ -74,6 +96,9 @@ export async function compareWithBaseline(records) {
       recordedConsensus: consensusOf(recordedBanded),
       runsWithBand: record.agreement.runsWithBand,
       recordedRunsWithBand: recordedBanded.length,
+      // Named rather than counted, so a reader of the report can tell a scenario that was
+      // researched and found nothing from one whose runs died.
+      failedRuns: record.failedRuns ?? [],
       costUsd: round2(record.costUsd),
       recordedCostUsd: round2(sum(recorded.map((entry) => entry.costUsd ?? 0))),
     };
@@ -94,9 +119,12 @@ export async function compareWithBaseline(records) {
  * The phase 1 exit test, as stated: 28 of 30 with a band, 18 of those tight, and the two named
  * scenarios producing no band.
  *
- * Only meaningful over the full set. A partial run reports `applicable: false` rather than a
- * verdict, because "18 agreed" out of three scenarios is not a weaker version of the exit test,
- * it is a different claim.
+ * Only meaningful over the full set, and only when all of it actually ran. A partial run
+ * reports `applicable: false` rather than a verdict, because "18 agreed" out of three scenarios
+ * is not a weaker version of the exit test, it is a different claim. A scenario whose runs
+ * failed is refused for the same reason and more sharply: the test's third check is that two
+ * named scenarios produce no band, and a scenario that crashed produces no band too. Scoring
+ * the crash would let the port pass or fail its load-bearing check without being exercised.
  */
 export function evaluateExitTest(comparison, { scenariosRun }) {
   if (scenariosRun !== RECORDED_BASELINE.scenarios)
@@ -104,6 +132,18 @@ export function evaluateExitTest(comparison, { scenariosRun }) {
       applicable: false,
       passed: null,
       reason: `The exit test is defined over all ${RECORDED_BASELINE.scenarios} pinned scopes; this run covered ${scenariosRun}.`,
+    };
+  const incomplete = comparison.scenarios
+    .filter((entry) => entry.status === "incomplete")
+    .map((entry) => entry.scenario);
+  if (incomplete.length)
+    return {
+      applicable: false,
+      passed: null,
+      incomplete,
+      reason:
+        `${incomplete.length} scenario(s) did not complete all three runs, so they are not evidence ` +
+        `either way: ${incomplete.join(", ")}. Re-run those scenarios and merge before scoring.`,
     };
   const noBand = comparison.scenarios
     .filter((entry) => entry.status === "not_established")

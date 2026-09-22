@@ -17,17 +17,29 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import {
+  compareWithBaseline,
+  evaluateExitTest,
+  RECORDED_BASELINE,
+  runBenchmark,
+} from "../scripts/research-claude-cli/benchmark.mjs";
+import {
+  loadPinnedScopes,
+  loadRecordedBaseline,
+  recordedKeyForScope,
+} from "../scripts/research-claude-cli/scopes.mjs";
+import {
   agreementCounts,
   agreementForRuns,
   TIGHT_HIGH_RATIO,
   TIGHT_LOW_RATIO,
 } from "../server/research/claude-cli/agreement.mjs";
 import {
-  isSubscriptionAuth,
-  readSubscriptionAuth,
-  REQUIRED_AUTH_METHOD,
   assertSubscriptionAuth,
+  isSubscriptionAuth,
+  REQUIRED_AUTH_METHOD,
+  readSubscriptionAuth,
 } from "../server/research/claude-cli/auth.mjs";
+import { PLAN_LIMIT_ERROR_CODE } from "../server/research/claude-cli/cli-call.mjs";
 import {
   findingsFromCostBand,
   parseCostBand,
@@ -48,16 +60,6 @@ import {
   usageFromResultLine,
 } from "../server/research/claude-cli/stream.mjs";
 import { assertResearchRuntime } from "../server/research/research-runtime-registry.mjs";
-import {
-  loadPinnedScopes,
-  loadRecordedBaseline,
-  recordedKeyForScope,
-} from "../scripts/research-claude-cli/scopes.mjs";
-import {
-  compareWithBaseline,
-  evaluateExitTest,
-  RECORDED_BASELINE,
-} from "../scripts/research-claude-cli/benchmark.mjs";
 
 const COST_BAND_ANSWER = {
   id: "channel-drain-installation-pinned",
@@ -617,6 +619,8 @@ test("the agreement maths reproduces the 90 recorded runs exactly", async () => 
     agreed: RECORDED_BASELINE.agreed,
     disputed: 10,
     notEstablished: 2,
+    // The recorded rows carry no run status, so none of them can be mistaken for a crash.
+    incomplete: 0,
     withBand: RECORDED_BASELINE.withBand,
   });
   assert.deepEqual(
@@ -626,6 +630,143 @@ test("the agreement maths reproduces the 90 recorded runs exactly", async () => 
       .sort(),
     [...RECORDED_BASELINE.noBandExpected].sort(),
   );
+});
+
+// --- the plan window --------------------------------------------------------------------------
+//
+// The first live 30-scope exit test hit the claude.ai five-hour limit at scenario 26. The
+// harness scored the five dead scenarios as `not_established` and printed EXIT TEST FAILED —
+// including for `switchboard-fault-rating-protection`, which the exit test requires to produce
+// no band, so that check passed because the runs never happened. These four tests are that
+// failure, written down.
+
+/** The stream the CLI actually produced when the plan window was exhausted, trimmed. */
+function planLimitLines() {
+  return [
+    {
+      type: "rate_limit_event",
+      rate_limit_info: {
+        status: "rejected",
+        rateLimitType: "five_hour",
+        resetsAt: 1_790_081_400,
+        overageStatus: "rejected",
+        overageDisabledReason: "org_level_disabled",
+      },
+    },
+    {
+      type: "assistant",
+      message: { content: [{ type: "text", text: "You've hit your session limit · resets 12:50am" }] },
+    },
+    {
+      type: "result",
+      subtype: "error_during_execution",
+      is_error: true,
+      api_error_status: 429,
+      num_turns: 1,
+      duration_ms: 4_000,
+      total_cost_usd: 0,
+      usage: { input_tokens: 0, output_tokens: 0 },
+    },
+  ];
+}
+
+test("an exhausted plan window is its own error code, not a generic CLI error", async () => {
+  await withRuntime(
+    async ({ runtime }) => {
+      await runtime.start(request("RSCH-CLI-PLAN"));
+      await drain(runtime, "RSCH-CLI-PLAN");
+      const status = await runtime.status("RSCH-CLI-PLAN");
+      assert.equal(status.status, "failed");
+      assert.equal(status.error.code, PLAN_LIMIT_ERROR_CODE);
+      // Not retryable by any loop running now: the quota is for the window, so every retry in
+      // the next few seconds fails identically.
+      assert.equal(status.error.retryable, false);
+      assert.match(status.error.message, /five_hour/);
+      assert.match(status.error.message, /must not be scored/);
+    },
+    { run: replayRunner(planLimitLines(), { code: 1 }) },
+  );
+});
+
+test("a scenario whose runs failed is incomplete, never a scenario that found nothing", () => {
+  const crashed = agreementForRuns([
+    { run: "r1", status: "failed", band: null, error: { code: PLAN_LIMIT_ERROR_CODE } },
+    { run: "r2", status: "failed", band: null, error: { code: PLAN_LIMIT_ERROR_CODE } },
+    { run: "r3", status: "failed", band: null, error: { code: PLAN_LIMIT_ERROR_CODE } },
+  ]);
+  assert.equal(crashed.status, "incomplete");
+  assert.equal(crashed.failedRuns.length, 3);
+  assert.equal(crashed.failedRuns[0].errorCode, PLAN_LIMIT_ERROR_CODE);
+
+  // The opposite claim, and it must stay reachable: three runs completed and none of them could
+  // defend a band. That is a finding about the scope.
+  const researched = agreementForRuns([
+    { run: "r1", status: "completed", band: null },
+    { run: "r2", status: "completed", band: null },
+    { run: "r3", status: "completed", band: null },
+  ]);
+  assert.equal(researched.status, "not_established");
+
+  // One dead run poisons the scenario even when the other two banded: three-run agreement over
+  // two runs is a different measurement, and the recorded baseline is three.
+  const partial = agreementForRuns([
+    { run: "r1", status: "completed", band: { low: 100, high: 200 } },
+    { run: "r2", status: "completed", band: { low: 105, high: 210 } },
+    { run: "r3", status: "failed", band: null, error: { code: "claude_cli_failed" } },
+  ]);
+  assert.equal(partial.status, "incomplete");
+
+  // An incomplete scenario is not counted as having produced a band.
+  assert.deepEqual(agreementCounts([crashed, researched, partial]), {
+    scenarios: 3,
+    agreed: 0,
+    disputed: 0,
+    notEstablished: 1,
+    incomplete: 2,
+    withBand: 0,
+  });
+});
+
+test("the benchmark stops at the plan window instead of scoring the scenarios after it", async () => {
+  const scopes = ["one", "two", "three"].map((id) => ({ id, objective: `scope ${id}`, recordedKey: id }));
+  const seen = [];
+  const runtime = {
+    async start() {},
+    async *events() {},
+    async status(id) {
+      seen.push(id);
+      return seen.length <= 3
+        ? { status: "completed", usage: { estimatedCostUsd: 1 } }
+        : { status: "failed", error: { code: PLAN_LIMIT_ERROR_CODE, message: "window exhausted" } };
+    },
+    costBand: () => ({ band: { low: 100, high: 200 } }),
+  };
+  const { records, aborted } = await runBenchmark({ runtime, scopes, budget: {} });
+  assert.equal(records.length, 2, "it stops after the scenario that hit the wall, not at the end");
+  assert.equal(aborted.reason, PLAN_LIMIT_ERROR_CODE);
+  assert.equal(aborted.scenario, "two");
+  assert.deepEqual(aborted.remaining, ["three"]);
+  assert.equal(records[1].status, "incomplete");
+});
+
+test("the exit test refuses a verdict when any scenario did not complete its runs", async () => {
+  const records = Array.from({ length: RECORDED_BASELINE.scenarios }, (_unused, index) => ({
+    scenarioId: `scenario-${index}`,
+    recordedKey: "channel-drain",
+    status: index === 29 ? "incomplete" : "agreed",
+    failedRuns: index === 29 ? [{ run: "r1", status: "failed", errorCode: PLAN_LIMIT_ERROR_CODE }] : [],
+    consensus: { low: 580, high: 700 },
+    agreement: { runsWithBand: 3, runsTotal: 3, lowRatio: 1.08, highRatio: 1.29 },
+    runs: [],
+    costUsd: 4.5,
+  }));
+  const comparison = await compareWithBaseline(records);
+  const verdict = evaluateExitTest(comparison, { scenariosRun: RECORDED_BASELINE.scenarios });
+  // All thirty ran, so the old guard would have scored this and failed the port on a quota wall.
+  assert.equal(verdict.applicable, false);
+  assert.equal(verdict.passed, null);
+  assert.deepEqual(verdict.incomplete, ["scenario-29"]);
+  assert.match(verdict.reason, /not evidence either way/);
 });
 
 // --- the pinned scopes ------------------------------------------------------------------------

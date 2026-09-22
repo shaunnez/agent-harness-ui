@@ -61,7 +61,7 @@ process.stderr.write(
   `Running ${scopes.length} scenario(s) x 3 four-role runs at concurrency ${options.concurrency}…\n`,
 );
 
-const records = await runBenchmark({
+const { records, aborted } = await runBenchmark({
   runtime,
   scopes,
   budget,
@@ -81,6 +81,8 @@ const records = await runBenchmark({
   },
 });
 
+if (aborted) process.stderr.write(`\nABORTED after ${aborted.scenario}: ${aborted.message}\n`);
+
 const comparison = await compareWithBaseline(records);
 const exitTest = evaluateExitTest(comparison, { scenariosRun: records.length });
 const phase1 = options.phase1 ? JSON.parse(await readFile(options.phase1, "utf8")) : null;
@@ -98,6 +100,7 @@ const report = {
   roles: ["planner", "researcher", "verifier", "synthesiser"],
   concurrency: options.concurrency,
   elapsedMs: Date.now() - startedAt,
+  aborted,
   comparison,
   exitTest,
   verifier: summariseVerifier(verifierByScenario),
@@ -111,6 +114,8 @@ await writeFile(options.out, `${JSON.stringify(report, null, 1)}\n`, "utf8");
 
 process.stdout.write(`${renderSummary(report)}\n`);
 process.stderr.write(`Report written to ${options.out}\n`);
+// The plan window, not the structure under test. Distinct from any verdict this run could form.
+if (aborted) process.exitCode = 2;
 
 function summariseVerifier(byScenario) {
   const effects = [...byScenario.values()].flat();
@@ -141,9 +146,15 @@ function renderSummary(report) {
     "verifier — the question phase 2 exists to answer",
     `  checks             ${report.verifier.supported} supported, ${report.verifier.weakened} weakened, ${report.verifier.rejected} rejected`,
     `  challenged         ${report.verifier.challenged} across ${report.verifier.runs} runs`,
-    `  components dropped ${report.verifier.droppedComponents}`,
+    `  components removed ${report.verifier.netComponentsRemoved} (${report.verifier.missingByName} missing by name, the rest relabelled)`,
     `  runs it changed nothing on  ${report.verifier.runsWithNoChallenge} of ${report.verifier.runs}`,
   ];
+  if (report.aborted)
+    lines.push(
+      "",
+      `RUN ABORTED at ${report.aborted.scenario}: ${report.aborted.message}`,
+      `  ${report.aborted.remaining.length} scenario(s) never ran: ${report.aborted.remaining.join(", ") || "none"}`,
+    );
   if (report.verdict?.applicable === false) {
     lines.push("", `NO VERDICT: ${report.verdict.reason}`);
   } else if (report.verdict) {

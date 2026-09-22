@@ -75,6 +75,7 @@ export async function runClaudeCall({
     finalText: "",
     resultLine: null,
     sawCeiling: false,
+    ceiling: null,
   };
   const args = claudeCallArgs({ objective, model, systemPrompt, mcpConfigPath, allowedTools, maxUsd });
   const handleLine = (rawLine) => {
@@ -96,7 +97,10 @@ export async function runClaudeCall({
         // as a web search against `maxSearchCalls`.
         if (sourceTypeForTool(event.data.tool) === "web") state.searchCallCount += 1;
       }
-      if (event.type === "budget.ceiling_hit") state.sawCeiling = true;
+      if (event.type === "budget.ceiling_hit") {
+        state.sawCeiling = true;
+        state.ceiling = event.data;
+      }
       // The last text block carrying a fence wins: the prompt asks the model to finish with
       // one, and a fence quoted mid-run is a template rather than an answer.
       if (event.type === "finding.created") state.finalText = String(event.data.message ?? "");
@@ -135,6 +139,7 @@ export async function runClaudeCall({
     toolCallCount: state.toolCallCount,
     searchCallCount: state.searchCallCount,
     sawCeiling: state.sawCeiling,
+    ceiling: state.ceiling,
     usage: state.resultLine
       ? usageFromResultLine(state.resultLine, {
           toolCalls: state.toolCallCount,
@@ -144,9 +149,48 @@ export async function runClaudeCall({
   };
 }
 
+/**
+ * The plan said stop. Distinct from every other failure because it is not about this call: the
+ * quota is exhausted for the window, so the next call fails too, and a benchmark that keeps
+ * going records failures as research results.
+ *
+ * The first run of the 30-scope exit test learned this the hard way — five scenarios were
+ * scored `not_established` at $0.00 and one turn each, and one of them was a scenario the exit
+ * test requires to produce no band, so it "passed" its load-bearing check by never running.
+ */
+export const PLAN_LIMIT_ERROR_CODE = "claude_cli_plan_limit_reached";
+
+/** True when a failed call failed because the claude.ai plan window is exhausted: a blocking
+ *  `rate_limit_event`, or a `result` line carrying the API's own 429. */
+function planLimitReached(call) {
+  if (call.sawCeiling) return true;
+  return Number(call.resultLine?.api_error_status) === 429;
+}
+
 /** Classify one completed call. Shared so a role in a sequence and a whole single-agent run
  *  fail for the same reasons under the same codes. */
-export function classifyCall(call, { emptyOutputCode }) {
+export function classifyCall(call, options) {
+  const verdict = classifyOutcome(call, options);
+  if (verdict.ok || !planLimitReached(call)) return verdict;
+  const resetsAt = Number(call.ceiling?.resetsAt) || null;
+  return {
+    ok: false,
+    timedOut: verdict.timedOut ?? false,
+    planLimit: true,
+    error: {
+      code: PLAN_LIMIT_ERROR_CODE,
+      message:
+        `The Claude subscription's ${call.ceiling?.rateLimitType ?? "plan"} usage window is exhausted` +
+        `${resetsAt ? `; it resets at ${new Date(resetsAt * 1000).toISOString()}` : ""}. ` +
+        "This run produced nothing and must not be scored. Wait for the window and run it again.",
+      // Retryable in principle, but not by any retry loop that runs now: `trio.mjs` retries
+      // within seconds, and every one of those retries would fail the same way.
+      retryable: false,
+    },
+  };
+}
+
+function classifyOutcome(call, { emptyOutputCode }) {
   if (call.spawnError) {
     const timedOut =
       call.spawnError.code === "PROCESS_TIMEOUT" || /timeout/i.test(call.spawnError.name ?? "");

@@ -27,22 +27,46 @@ export const TIGHT_HIGH_RATIO = 1.35;
  * Consensus is the median of the lows and the median of the highs, taken independently. That
  * is what `18f-build-review.py` does. It can produce a consensus pair that no single run
  * proposed, which is correct for a band — the ends are separate estimates, not a unit.
+ *
+ * A run that carries a `status` other than `completed` makes the whole scenario `incomplete`,
+ * never `not_established`. Those are opposite claims: "three runs researched this and no
+ * defensible band exists" is a finding, and "the runs died" is an absence of one. The first
+ * live exit test scored five crashed scenarios as `not_established`, and one of them is a
+ * scenario the exit test requires to produce no band — so it passed its check by never having
+ * run. Entries with no `status` at all are the recorded baseline's `{run, band}` rows, which
+ * predate this field and are all completed runs by construction.
  */
 export function agreementForRuns(runs) {
   const banded = runs.filter((entry) => entry.band && entry.band.low != null && entry.band.high != null);
   const lows = banded.map((entry) => Number(entry.band.low));
   const highs = banded.map((entry) => Number(entry.band.high));
+  const failed = failedRunsIn(runs);
+  if (failed.length)
+    return {
+      status: "incomplete",
+      range: null,
+      consensus: null,
+      failedRuns: failed,
+      agreement: {
+        lowRatio: null,
+        highRatio: null,
+        runsWithBand: banded.length,
+        runsTotal: runs.length,
+      },
+    };
   if (!banded.length)
     return {
       status: "not_established",
       range: null,
       consensus: null,
+      failedRuns: [],
       agreement: { lowRatio: null, highRatio: null, runsWithBand: 0, runsTotal: runs.length },
     };
   const lowRatio = Math.max(...lows) / Math.min(...lows);
   const highRatio = Math.max(...highs) / Math.min(...highs);
   return {
     status: lowRatio <= TIGHT_LOW_RATIO && highRatio <= TIGHT_HIGH_RATIO ? "agreed" : "disputed",
+    failedRuns: [],
     range: { min: Math.min(...lows), max: Math.max(...highs) },
     consensus: { low: round2(median(lows)), high: round2(median(highs)) },
     agreement: {
@@ -58,15 +82,32 @@ export function agreementForRuns(runs) {
 }
 
 /** Roll a set of per-scenario agreement records up into the counts phase 1's exit test checks:
- *  how many scenarios produced a band, and how many of those agree tightly. */
+ *  how many scenarios produced a band, and how many of those agree tightly.
+ *
+ *  `withBand` counts `agreed` and `disputed` by name rather than everything that is not
+ *  `not_established`, so an `incomplete` scenario cannot be counted as having produced one. */
 export function agreementCounts(records) {
+  const count = (status) => records.filter((record) => record.status === status).length;
   return {
     scenarios: records.length,
-    agreed: records.filter((record) => record.status === "agreed").length,
-    disputed: records.filter((record) => record.status === "disputed").length,
-    notEstablished: records.filter((record) => record.status === "not_established").length,
-    withBand: records.filter((record) => record.status !== "not_established").length,
+    agreed: count("agreed"),
+    disputed: count("disputed"),
+    notEstablished: count("not_established"),
+    incomplete: count("incomplete"),
+    withBand: count("agreed") + count("disputed"),
   };
+}
+
+/** The runs that did not complete, named. A run with no `status` field is a recorded-baseline
+ *  row rather than a live run, and is not evidence of a failure. */
+function failedRunsIn(runs) {
+  return runs
+    .filter((entry) => entry.status != null && entry.status !== "completed")
+    .map((entry) => ({
+      run: entry.run ?? entry.runId ?? null,
+      status: entry.status,
+      errorCode: entry.error?.code ?? null,
+    }));
 }
 
 function median(values) {
