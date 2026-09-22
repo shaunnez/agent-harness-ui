@@ -1,3 +1,4 @@
+import type { RepairLimits } from "../repair-limits";
 import type { StageId } from "../domain";
 import type {
   AutoRunStage,
@@ -217,6 +218,7 @@ export interface RuntimeFocusedTestEvidence {
 export interface RuntimeDecision {
   id: string;
   grillQuestionId?: string;
+  linearReply?: RuntimeLinearGrillReply;
   question: string;
   answer: string;
   createdAt: string;
@@ -289,10 +291,21 @@ export type RuntimeGrillAnswerSource =
 
 export type RuntimeGrillCompletionSource =
   | "operator"
+  | "linear"
   | "automation-policy"
   | "no-questions"
   | "legacy-unverified"
   | null;
+
+export interface RuntimeLinearGrillReply {
+  eventId: string;
+  userId: string;
+  userName: string;
+  sessionId: string;
+  issueId: string;
+  organizationId: string;
+  reference: string;
+}
 
 export interface RuntimeGrillQuestion {
   id: string;
@@ -302,6 +315,7 @@ export interface RuntimeGrillQuestion {
   allowCustom: boolean;
   answer: string | null;
   answerSource: RuntimeGrillAnswerSource;
+  linearReply?: RuntimeLinearGrillReply;
   resolvedAt: string | null;
 }
 
@@ -312,6 +326,7 @@ export interface RuntimeGrillSession {
   completedAt: string | null;
   completionReason: string | null;
   completionSource?: RuntimeGrillCompletionSource;
+  linearCompletion?: RuntimeLinearGrillReply;
   policySnapshot?: RuntimeGrillPolicy;
   acceptedRecommendationCount?: number;
 }
@@ -328,9 +343,11 @@ export interface RuntimeWorkPackage {
   verificationRuns?: RuntimeFocusedTestEvidence[];
   status: "planned" | "running" | "ready_for_integration" | "failed" | "integrated";
   attempts: number;
+  automaticRepairAttempts?: number;
   branch: string | null;
   worktreePath: string | null;
   baseRevision: string | null;
+  preparedRevision?: string | null;
   headRevision: string | null;
   files: string[];
   error: string | null;
@@ -533,6 +550,7 @@ export interface RuntimeTask {
     createdAt: string;
   }>;
   automaticRepairCycles?: number;
+  repairLimits?: RepairLimits;
   sameCandidateTestRetries?: Array<{
     id: string;
     candidateId: string;
@@ -924,6 +942,7 @@ export interface RuntimeModelCatalog {
 }
 
 export interface RuntimeSettings {
+  repairLimits?: RepairLimits;
   projects?: RuntimeProject[];
   grillPolicy: RuntimeGrillPolicy;
   gatePolicies?: RuntimeGatePolicies;

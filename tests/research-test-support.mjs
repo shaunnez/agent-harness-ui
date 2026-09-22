@@ -14,8 +14,14 @@ export async function withResearchStore(body) {
   const db = new DatabaseSync(path.join(directory, "tasks.sqlite3"));
   db.exec("PRAGMA foreign_keys = ON");
   migrateSqliteSchema(db);
+  const sourceSnapshotDirectory = path.join(directory, "research-sources");
   try {
-    return await body({ store: new ResearchStore(db), db, directory });
+    return await body({
+      store: new ResearchStore(db, { sourceSnapshotDirectory }),
+      db,
+      directory,
+      sourceSnapshotDirectory,
+    });
   } finally {
     db.close();
     await rm(directory, { recursive: true, force: true });

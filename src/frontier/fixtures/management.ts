@@ -1,3 +1,4 @@
+import { normalizeRepairLimits } from "../../repair-limits.ts";
 import { defaultProfileStagePolicies } from "../../../server/policy-defaults.mjs";
 import { resolveRolePolicyLifecycleEligibility } from "../../../server/role-policy-eligibility.mjs";
 import type { RuntimeProject, RuntimeTask } from "../../domain.ts";
@@ -34,9 +35,17 @@ export function fixtureManagement(
     | "closeTask"
     | "archiveTask"
     | "saveSettings"
+    | "linearIntegration"
+    | "setLinearIntegration"
     | "worktrees"
     | "removeWorktree"
   > = {
+    async linearIntegration() {
+      return { configured: false, enabled: false, changing: false };
+    },
+    async setLinearIntegration() {
+      throw new Error("Linear is unavailable in the sample world.");
+    },
     async saveSettings(input) {
       online();
       const issue = settingsIssue(input, {
@@ -230,6 +239,7 @@ export function fixtureManagement(
       return {
         workflowProfile,
         grillPolicy: configuration.settings.grillPolicy,
+        repairLimits: normalizeRepairLimits(configuration.settings.repairLimits),
         agentConfig: {
           provider: draft.providerConstraint ?? "codex",
           model: draft.providerConstraint ? stagePolicies.triage.model : configuration.settings.defaultModel,

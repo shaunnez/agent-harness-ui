@@ -1,0 +1,223 @@
+- main:
+  - generic "Project bases in the 3D coastal world. Select workers with the world labels or click their models."
+  - 'button "World time: 15:55, Daylight. Open lighting settings"':
+    - strong: 15:55 Daylight
+  - navigation "3D proof views":
+    - text: 3D preview
+    - button "World" [pressed]
+    - button "Exterior"
+    - button "Cutaway"
+    - button "Appearance"
+  - navigation "3D world selection":
+    - button "PlanCheck":
+      - strong: PlanCheck
+    - button "Agent Harness":
+      - strong: Agent Harness
+    - button "MyStrataAssist":
+      - strong: MyStrataAssist
+    - button "PC-153 · Grill · Needs your answer · Should revision labels be normalised before comparison?":
+      - strong: PC-153 · Grill
+    - button "AH-052 · Scouts · Working":
+      - strong: AH-052 · Scouts
+    - button "MS-086 · Grill · Needs your answer · Which channel should receive a meeting notice first?":
+      - strong: MS-086 · Grill
+  - complementary "Project bases map":
+    - button "Frame all project bases":
+      - img "Current project bases across the coast"
+  - button "Agent Harness":
+    - strong: Agent Harness
+  - generic: Project scope
+  - combobox "Project scope":
+    - option "All projects" [selected]
+    - option "PlanCheck"
+    - option "Agent Harness"
+    - option "MyStrataAssist"
+  - generic: 21 September 2026 · 20:16
+  - generic: Pacific/Auckland
+  - navigation "Main navigation":
+    - button "World":
+      - text: World
+    - button "Tasks J":
+      - text: Tasks
+      - generic: J
+    - button "Open command menu":
+      - text: Manage
+  - complementary "Decisions and pinned work":
+    - complementary "Tasks needing your attention":
+      - strong: Needs you
+      - generic: "13"
+      - button "AH-051 · Verify worktree isolation · Execution stopped":
+        - strong: AH-051 · Test
+        - generic: Agent Harness
+        - generic: Execution stopped
+      - button "AH-054 · Qualify dependency batches · S2 failed":
+        - strong: AH-054 · Implement
+        - generic: Agent Harness
+        - generic: S2 failed
+      - button "PC-148 · Retain revision history · Repair required":
+        - strong: PC-148 · Dev review
+        - generic: PlanCheck
+        - generic: Repair required
+      - button "Show all 13 decisions":
+        - text: Show all 13 decisions
+  - region "Selected task":
+    - img "Worker role"
+    - heading "AH-052 · Scouts" [level=2]
+    - paragraph: Review cached token reporting
+    - strong: Working
+    - term: Skill
+    - definition: scout-repository
+    - term: Model
+    - definition: Luna · XHigh
+    - button "Watch agent":
+      - text: Watch agent
+    - button "Inspect":
+      - text: Inspect
+    - button "Configure agent":
+      - text: Configure agent
+    - region "Recorded task usage":
+      - generic: Usage
+      - strong: 72K tokens
+      - generic "Task elapsed time": 30m 56s
+      - generic: Approx. cost —
+      - img "API-rate estimates are not attributable ChatGPT-plan charges"
+      - generic "No recorded usage with a supported rate card": Rate card unavailable
+  - complementary:
+    - button "New task":
+      - text: New task
+    - button "Agent roster":
+      - text: Agent roster
+    - button "Skills":
+      - text: Skills
+    - button "Settings":
+      - text: Settings
+    - generic: Drag to pan · Scroll to zoom · Space to follow
+  - dialog "Task command":
+    - heading "AH-052 · Task workspace" [level=1]
+    - button "Adjust window size" [active]:
+    - button "Maximise window":
+    - button "Close panel":
+    - paragraph: Sample world · Demonstration records and actions stay in this tab.
+    - generic: Agent Harness / agent-harness-ui / AH-052
+    - heading "Review cached token reporting" [level=2]
+    - button "Role policies":
+      - text: Role policies
+    - button "Manage":
+      - text: Manage
+    - button "Pin task":
+      - generic: Pin task
+    - navigation "Task stages":
+      - button "1 Triage" [disabled]:
+        - generic: "1"
+        - generic: Triage
+      - button "2 Scouts":
+        - generic: "2"
+        - generic: Scouts
+      - button "3 Grill" [disabled]:
+        - generic: "3"
+        - generic: Grill
+      - button "4 Specification" [disabled]:
+        - generic: "4"
+        - generic: Specification
+      - button "5 Plan" [disabled]:
+        - generic: "5"
+        - generic: Plan
+      - button "6 Implement" [disabled]:
+        - generic: "6"
+        - generic: Implement
+      - button "7 Dev review" [disabled]:
+        - generic: "7"
+        - generic: Dev review
+      - button "8 Test" [disabled]:
+        - generic: "8"
+        - generic: Test
+      - button "9 Final review" [disabled]:
+        - generic: "9"
+        - generic: Final review
+      - button "10 Approval" [disabled]:
+        - generic: "10"
+        - generic: Approval
+    - region "Current task actions":
+      - strong: Scouts
+      - emphasis: Working
+      - generic: "Current stage: Scouts"
+    - region "Scouts stage content":
+      - heading "Selected scouts" [level=3]
+      - generic: 2 selected
+      - article:
+        - heading "Code path scout" [level=3]
+        - generic: complete
+        - generic: Goal
+        - paragraph: Required to identify the aggregation boundary
+        - generic: Focus
+        - paragraph: Trace token accounting from events to the task summary
+        - generic: No individual run loaded
+      - article:
+        - heading "Test inventory scout" [level=3]
+        - generic: queued
+        - generic: Goal
+        - paragraph: Tests establish the reported-token contract
+        - generic: Focus
+        - paragraph: Locate cache-rate assertion coverage
+        - generic: No individual run loaded
+      - paragraph:
+        - text: "Selected: Code path scout, Test inventory scout"
+        - text: "Skipped: dependency, pattern, schema, user-journey"
+      - paragraph: Two targeted scouts cover this medium-risk boundary.
+      - heading "Synthesis brief" [level=3]
+      - paragraph: No retained artifact is loaded for Scouts. Only retained records are shown.
+      - generic "Run activity · recorded telemetry":
+        - strong: Run activity
+        - generic: · recorded telemetry
+    - generic: Scroll for more ↓
+    - region "Task inspector":
+      - heading "Task brief" [level=3]:
+        - text: Task brief
+      - paragraph: Review cached token reporting
+      - heading "Role & run" [level=3]:
+        - text: Role & run
+      - img "Worker role"
+      - strong: Luna · XHigh
+      - generic: running
+      - text: "Viewed: Scouts"
+      - text: "Active: Scouts"
+      - button "Watch agent":
+        - text: Watch agent
+      - region "Stage usage — Scouts":
+        - heading "Stage usage — Scouts" [level=3]:
+          - text: Stage usage — Scouts
+        - term: Execution time
+        - definition: 30m 56s
+        - term: Input tokens
+        - definition: 62K
+        - term: Output tokens
+        - definition: 10K
+        - term: Cached tokens
+        - definition: 31K
+        - term: Cache rate
+        - definition: 50%
+        - term: Approx. cost
+        - definition: Unavailable
+        - generic: API-rate estimate · Recorded runs, including retries. Execution time sums agent runs; parallel work can overlap.
+        - generic: 1 stage runs loaded.
+      - region "Task total usage":
+        - heading "Task total" [level=3]:
+          - text: Task total
+        - term: Task elapsed
+        - definition: 30m 56s
+        - term: Total tokens
+        - definition: 72K
+        - term: Approx. cost
+        - definition: Unavailable
+        - generic: API-rate estimate · Rate card unavailable
+      - heading "Run safeguards" [level=3]:
+        - text: Run safeguards
+      - paragraph: Detached read-only evidence worktree
+      - generic: Codex reads a detached evidence worktree at aaaaaaa0. Operator checkout changes are excluded.
+      - paragraph: "Stage attempts: 1 / 3"
+      - heading "Context & repository" [level=3]:
+        - text: Context & repository
+      - paragraph: /demo/agent-harness-ui
+      - generic: Captured revision aaaaaaa0aaaa
+      - paragraph: Open each artifact to inspect its supplied-context manifest. Repository permission alone does not prove what an agent used.
+    - generic: Scroll for more ↓

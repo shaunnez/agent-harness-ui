@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
+import { buildChildEnvironment } from "../server/research/deepagents/child-env.mjs";
 
 // Architecture §5.4: `worker.mjs` is the only file in the repository permitted to import
 // `deepagents`, `langchain`, `@langchain/*` or `langsmith`. Everything else in the Deep Agents
@@ -43,4 +44,26 @@ test("src/domain/research.ts and the runtime contract stay free of the restricte
       assert.equal(RESTRICTED.test(line), false, `${file} must not reference deepagents/langchain: ${line}`);
     }
   }
+});
+
+test("search, capture, model and tracing credentials are absent from the child", () => {
+  const environment = buildChildEnvironment({
+    PATH: process.env.PATH,
+    FIRECRAWL_API_KEY: "firecrawl-sentinel",
+    SERPER_API_KEY: "serper-sentinel",
+    TAVILY_API_KEY: "tavily-sentinel",
+    RESEARCH_SEARCH_API_KEY: "search-sentinel",
+    LANGSMITH_API_KEY: "trace-sentinel",
+    ANTHROPIC_API_KEY: "model-sentinel",
+  });
+  const serialized = JSON.stringify(environment);
+  for (const sentinel of [
+    "firecrawl-sentinel",
+    "serper-sentinel",
+    "tavily-sentinel",
+    "search-sentinel",
+    "trace-sentinel",
+    "model-sentinel",
+  ])
+    assert.equal(serialized.includes(sentinel), false, sentinel);
 });

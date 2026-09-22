@@ -27,6 +27,8 @@ test("grants one bounded repair attempt to a blocked candidate", async () => {
     let producerArtifactIds;
     let producerRunIds;
     await store.update(task.id, (draft) => {
+      // Exercise stage retry admission with candidate repair capacity still available.
+      draft.repairLimits.candidate.standard = 5;
       draft.status = "repair-required";
       draft.currentStage = "dev-review";
       draft.attemptsByStage.implement = draft.stageRunLimits.implement;
@@ -142,6 +144,8 @@ test("grants a repair attempt when the authorizing gate's only non-blocking find
     const { task } = await response.json();
     let authorizingGate;
     await store.update(task.id, (draft) => {
+      // Exercise stage retry admission with candidate repair capacity still available.
+      draft.repairLimits.candidate.standard = 5;
       draft.status = "repair-required";
       draft.currentStage = "dev-review";
       const candidate = attachAssemblyLineage(draft, {
@@ -216,6 +220,8 @@ test("grants a second repair attempt after the first failed and moved currentSta
     const { task } = await response.json();
     let authorizingGate;
     await store.update(task.id, (draft) => {
+      // Exercise stage retry admission with candidate repair capacity still available.
+      draft.repairLimits.candidate.standard = 5;
       draft.status = "repair-required";
       // The failed first repair attempt already moved currentStage here.
       draft.currentStage = "implement";

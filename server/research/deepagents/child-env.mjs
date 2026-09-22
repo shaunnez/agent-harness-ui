@@ -39,6 +39,10 @@ export const CHILD_ENV_DENYLIST = Object.freeze([
   "LANGCHAIN_TRACING",
   "ANTHROPIC_API_KEY",
   "OPENAI_API_KEY",
+  "FIRECRAWL_API_KEY",
+  "SERPER_API_KEY",
+  "TAVILY_API_KEY",
+  "RESEARCH_SEARCH_API_KEY",
 ]);
 
 const FALLBACK_PATH = process.platform === "win32" ? "C:\\Windows\\System32" : "/usr/local/bin:/usr/bin:/bin";

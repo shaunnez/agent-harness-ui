@@ -96,3 +96,54 @@ Later benchmark against:
 4. `prompts/03-DEEP-AGENTS-JS-SPIKE.md` — Claude Sonnet, high effort
 5. `prompts/04-ADVERSARIAL-REVIEW.md` — preferably GPT-5.6 Sol High or another independent strong model
 6. run the evaluation plan before selecting production architecture
+
+## Current vertical-slice evaluation
+
+- For the next implementation, read `06-FIRECRAWL-RUNTIME-IMPLEMENTATION-PLAN.md` v2 and use
+  `prompts/05-IMPLEMENT-FIRECRAWL-RUNTIME.md` only after an explicit start instruction. The current slice is
+  single-agent public research; earlier fan-out/model exploration above is not its implementation scope.
+- `04-SEARCH-PROVIDER-BENCHMARK.md` compares public-web discovery.
+- `05-CAPTURE-AND-PDF-BENCHMARK.md` records both live gates: the broad local/Firecrawl/Exa comparison and
+  the difficult Firecrawl-versus-PlanCheck PDF gate, including the final public/private capture boundary.
+- `06-FIRECRAWL-RUNTIME-IMPLEMENTATION-PLAN.md` v2 specifies the settled Firecrawl public capture route,
+  exact configuration/fallback rules, initial OCR mode, bounded snapshot reads, page verification,
+  credit accounting, ordered implementation steps, and separate deterministic/live acceptance gates.
+- `07-CURRENT-PDF-REPLACEMENT-GATE.md` records the corrected current-PlanCheck comparison. It selects Firecrawl
+  PDF Parse for public sources while keeping private PDFs on PlanCheck's local transcription path.
+- The runtime still uses Tavily until the implementation slice is completed and accepted.
+
+## Firecrawl runtime launch and rollback
+
+Keep local research credentials in ignored `.env.research.local` with owner-only mode `0600`. The enabled
+public-only profile uses `RESEARCH_SEARCH_PROVIDER=firecrawl`, `RESEARCH_SEARCH_FALLBACK=serper`,
+`RESEARCH_CAPTURE_PROVIDER=firecrawl`, `RESEARCH_PDF_PROVIDER=firecrawl`, the bounded market/page/credit/call
+settings from the v2 plan, and host-only `FIRECRAWL_API_KEY` / `SERPER_API_KEY`. Never place private document
+context in this route; both queries and URLs leave the machine.
+
+- `npm run research:acceptance` validates the versioned S8 manifest and 12-credit upper bound without DNS,
+  provider or model calls. A live run additionally requires the explicit execution guard and public-only
+  acknowledgement; preparing this command is not permission to execute it.
+- `RUN_RESEARCH_DEMO=1 npm run research:demo:local -- "public objective"` runs the selected live model route
+  only after its separate guard and credential preflight pass.
+- Roll search back with `RESEARCH_SEARCH_PROVIDER=tavily` and `RESEARCH_SEARCH_FALLBACK=none`. Roll capture
+  back with `RESEARCH_CAPTURE_PROVIDER=local` and `RESEARCH_PDF_PROVIDER=disabled`. Rollback does not delete
+  retained snapshots or change historical evidence.
+
+### Current live acceptance status
+
+The final separately authorized S8 run on 21 September 2026 **passed** after three retained failed sessions
+identified and corrected a local Node ABI mismatch, missing failure cleanup, and Firecrawl's successful PDF
+layout-block status `ok`. The passing session committed a 12-credit Firecrawl upper bound against its
+40-credit ceiling and exactly one Serper call. Across all separately authorized attempts, cumulative
+Firecrawl upper-bound exposure was 42 credits; no individual session exceeded its allowance and no ledger
+reported a contract violation.
+
+The passing run verified public HTML search/capture and in-run reuse; a complete two-page OCR PDF snapshot;
+the expected excerpt on physical page 2; wrong-page and cross-run rejection; and exactly one real Serper
+fallback after a synthetic eligible Firecrawl failure. No live model ran, and a scan of all five retained
+artifacts found no provider credential values. The owner-only local receipt is
+`.data/research-runtime-acceptance/2026-09-21T04-36-37-498Z/report.json`.
+
+Implementation, deterministic qualification, S8, and A1-A15 are now complete. This acceptance does not
+activate the Firecrawl profile, change the application's fake default, merge the PR, deploy anything, or
+authorize private/customer documents to leave the existing PlanCheck-local path.

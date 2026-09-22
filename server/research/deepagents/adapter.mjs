@@ -3,9 +3,10 @@
 // No `deepagents`, `langchain`, `@langchain/*` or `langsmith` import may appear in this file
 // — `worker.mjs` is the only file in the repository permitted to import those
 // (`tests/research-deepagents-import-containment.test.mjs` checks this mechanically). This
-// file only spawns a child, parses the NDJSON it writes to stdout, and normalizes what comes
-// back into the neutral `ResearchRuntime` shape. Everything Deep Agents/LangGraph-shaped —
-// the graph, the checkpoint, the thread id — stays on the far side of that pipe.
+// file spawns a child, dispatches its explicitly named host-tool requests, parses the NDJSON
+// it writes to stdout, and normalizes what comes back into the neutral `ResearchRuntime`
+// shape. Everything Deep Agents/LangGraph-shaped — the graph, checkpoint and thread id —
+// stays on the far side of that pipe.
 
 import { randomUUID } from "node:crypto";
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
@@ -14,8 +15,14 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { runProcess } from "../../process-runtime.mjs";
+import { DEFAULT_RESEARCH_SOURCE_DIRECTORY, ResearchWebTools } from "../research-web-tools.mjs";
+import {
+  parseResearchProviderConfig,
+  publicProviderConfigSnapshot,
+} from "../research-provider-contracts.mjs";
+import { resolveResearchProviders } from "../research-provider-resolver.mjs";
 import { buildChildEnvironment } from "./child-env.mjs";
-import { decodeWorkerLine } from "./event-protocol.mjs";
+import { decodeWorkerLine, encodeHostMessage } from "./event-protocol.mjs";
 import { resolveModelConfig, splitModelConfigForChild } from "./model-config.mjs";
 
 const WORKER_ENTRYPOINT = fileURLToPath(new URL("./worker.mjs", import.meta.url));
@@ -32,6 +39,12 @@ export class DeepAgentsResearchRuntime {
   #env;
   #nodeBin;
   #now;
+  #sourceSnapshotDirectory;
+  #searchProvider;
+  #captureProvider;
+  #providerConfig;
+  #providerLedgers;
+  #webToolsOptions;
 
   constructor({
     id = "deepagents",
@@ -39,12 +52,24 @@ export class DeepAgentsResearchRuntime {
     env = process.env,
     nodeBin = process.execPath,
     now = () => Date.now(),
+    sourceSnapshotDirectory = DEFAULT_RESEARCH_SOURCE_DIRECTORY,
+    searchProvider = null,
+    captureProvider = null,
+    providerConfig = null,
+    providerLedgers = [],
+    webToolsOptions = {},
   } = {}) {
     this.#id = id;
     this.#checkpointDbPath = checkpointDbPath;
     this.#env = env;
     this.#nodeBin = nodeBin;
     this.#now = now;
+    this.#sourceSnapshotDirectory = sourceSnapshotDirectory;
+    this.#searchProvider = searchProvider;
+    this.#captureProvider = captureProvider;
+    this.#providerConfig = providerConfig;
+    this.#providerLedgers = providerLedgers;
+    this.#webToolsOptions = webToolsOptions;
   }
 
   get id() {
@@ -55,6 +80,16 @@ export class DeepAgentsResearchRuntime {
     if (this.#runs.has(request.id)) throw new Error(`Research run ${request.id} has already started.`);
     await mkdir(path.dirname(this.#checkpointDbPath), { recursive: true }).catch(() => undefined);
     const modelConfig = resolveModelConfig(this.#env);
+    const config = this.#providerConfig ?? parseResearchProviderConfig(this.#env);
+    let searchProvider = this.#searchProvider;
+    let captureProvider = this.#captureProvider;
+    let providerLedgers = this.#providerLedgers;
+    if (!searchProvider) {
+      const resolved = resolveResearchProviders(this.#env, { config });
+      searchProvider = resolved.searchProvider;
+      captureProvider = resolved.captureProvider;
+      providerLedgers = [resolved.firecrawlLedger, resolved.serperLedger];
+    }
     const { forChild: modelForChild, apiKey } = splitModelConfigForChild(modelConfig);
     const workingDirectory = await mkdtemp(path.join(os.tmpdir(), "research-deepagents-"));
     const controller = new AbortController();
@@ -70,6 +105,7 @@ export class DeepAgentsResearchRuntime {
       controller,
       workingDirectory,
       childPid: null,
+      childStdin: null,
       usage: null,
       budgetState: null,
       truncatedBy: null,
@@ -77,7 +113,24 @@ export class DeepAgentsResearchRuntime {
       error: null,
       cancelRequested: false,
       startedAtMs,
+      webTools: null,
+      providerAccounting: [],
     };
+    run.webTools = new ResearchWebTools({
+      runId: request.id,
+      budget: request.budget,
+      context: request.context ?? [],
+      searchProvider,
+      captureProvider,
+      providerConfig: config,
+      providerLedgers,
+      snapshotDirectory: this.#sourceSnapshotDirectory,
+      signal: controller.signal,
+      onEvent: (type, data) => {
+        if (!run.closed) this.#emit(run, request.id, type, data);
+      },
+      ...this.#webToolsOptions,
+    });
     this.#runs.set(request.id, run);
 
     const childConfig = {
@@ -102,12 +155,20 @@ export class DeepAgentsResearchRuntime {
     runProcess(this.#nodeBin, [WORKER_ENTRYPOINT], {
       cwd: workingDirectory,
       env,
-      input: JSON.stringify(childConfig),
+      input: `${JSON.stringify(childConfig)}\n`,
+      keepStdinOpen: true,
       signal: controller.signal,
       timeoutMs: request.budget.maxRuntimeMs,
       label: RUN_LABEL,
       onSpawn: (child) => {
         run.childPid = child.pid ?? null;
+        run.childStdin = child.stdin;
+        child.stdin.on("error", (error) => {
+          if (!run.closed && error?.code !== "EPIPE")
+            this.#emit(run, request.id, "log", {
+              message: `Research worker input failed: ${error?.message ?? error}`,
+            });
+        });
       },
       onStdoutLine: (line) => this.#handleLine(run, request.id, line),
     }).then(
@@ -124,6 +185,7 @@ export class DeepAgentsResearchRuntime {
       runtimeMetadata: {
         threadId,
         checkpointDbPath: this.#checkpointDbPath,
+        providerConfig: publicProviderConfigSnapshot(config),
         ...(run.childPid ? { childPid: String(run.childPid) } : {}),
       },
     };
@@ -205,6 +267,13 @@ export class DeepAgentsResearchRuntime {
     }
     switch (message.type) {
       case "research_event":
+        if (message.event === "source.retrieved") {
+          run.error = {
+            code: "host_owned_event_rejected",
+            message: "The child attempted to emit a host-owned source event.",
+          };
+          break;
+        }
         this.#emit(run, runId, message.event, message.data ?? {});
         break;
       case "usage":
@@ -223,13 +292,57 @@ export class DeepAgentsResearchRuntime {
       case "log":
         this.#emit(run, runId, "log", { message: message.message });
         break;
+      case "tool_request":
+        void this.#handleToolRequest(run, runId, message);
+        break;
       default:
         break;
     }
   }
 
+  async #handleToolRequest(run, runId, message) {
+    if (run.closed || !run.childStdin || !message.requestId) return;
+    let response;
+    try {
+      const payload = await run.webTools.invoke(message.tool, message.input ?? {});
+      response = { type: "tool_response", requestId: message.requestId, ok: true, ...payload };
+    } catch (error) {
+      response = {
+        type: "tool_response",
+        requestId: message.requestId,
+        ok: false,
+        error: {
+          code: error?.code ?? "host_tool_failed",
+          message: error?.message ?? String(error),
+          ...(error?.ceiling ? { ceiling: error.ceiling } : {}),
+        },
+        budgetState: run.webTools.budgetState(),
+      };
+    }
+    if (run.closed || !run.childStdin) return;
+    try {
+      run.childStdin.write(encodeHostMessage(response));
+    } catch (error) {
+      this.#emit(run, runId, "log", {
+        message: `Could not reply to host tool request ${message.requestId}: ${error?.message ?? error}`,
+      });
+    }
+  }
+
   #handleExit(run, runId, processResult, spawnError) {
     if (run.closed) return;
+    const warnings = run.webTools.unresolvedCoverageWarnings();
+    if (run.finalResult && warnings.length) {
+      run.finalResult.unresolvedQuestions = [
+        ...new Set([...(run.finalResult.unresolvedQuestions ?? []), ...warnings]),
+      ];
+    }
+    run.providerAccounting = run.webTools.close();
+    if (run.finalResult) run.finalResult.providerUsage = run.providerAccounting;
+    this.#emit(run, runId, "log", {
+      message: "External provider accounting finalized.",
+      providers: run.providerAccounting,
+    });
     if (run.cancelRequested) {
       run.state = "cancelled";
       this.#emit(run, runId, "run.cancelled", { reason: "operator" });
@@ -269,6 +382,7 @@ export class DeepAgentsResearchRuntime {
       });
     }
     run.closed = true;
+    if (!run.controller.signal.aborted) run.controller.abort();
     for (const resolve of run.waiters.splice(0)) resolve();
     void rm(run.workingDirectory, { recursive: true, force: true }).catch(() => undefined);
   }

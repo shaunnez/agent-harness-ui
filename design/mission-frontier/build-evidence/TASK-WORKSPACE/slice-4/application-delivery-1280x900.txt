@@ -1,0 +1,324 @@
+- main:
+  - generic "Project bases in the 3D coastal world. Select workers with the world labels or click their models."
+  - 'button "World time: 15:56, Daylight. Open lighting settings"':
+    - strong: 15:56 Daylight
+  - navigation "3D proof views":
+    - text: 3D preview
+    - button "World" [pressed]
+    - button "Exterior"
+    - button "Cutaway"
+    - button "Appearance"
+  - navigation "3D world selection":
+    - button "PlanCheck":
+      - strong: PlanCheck
+    - button "Agent Harness":
+      - strong: Agent Harness
+    - button "MyStrataAssist":
+      - strong: MyStrataAssist
+    - button "PC-153 · Grill · Needs your answer · Should revision labels be normalised before comparison?":
+      - strong: PC-153 · Grill
+    - button "AH-051 · Test · Execution stopped · The verification command could not start in its isolated worktree.":
+      - strong: AH-051 · Test
+    - button "MS-091 · Approval · Waiting for delivery · Awaiting confirmed delivery state":
+      - strong: MS-091 · Approval
+  - complementary "Project bases map":
+    - button "Frame all project bases":
+      - img "Current project bases across the coast"
+  - button "Agent Harness":
+    - strong: Agent Harness
+  - generic: Project scope
+  - combobox "Project scope":
+    - option "All projects" [selected]
+    - option "PlanCheck"
+    - option "Agent Harness"
+    - option "MyStrataAssist"
+  - generic: 21 September 2026 · 20:16
+  - generic: Pacific/Auckland
+  - navigation "Main navigation":
+    - button "World":
+      - text: World
+    - button "Tasks J":
+      - text: Tasks
+      - generic: J
+    - button "Open command menu":
+      - text: Manage
+  - complementary "Decisions and pinned work":
+    - complementary "Tasks needing your attention":
+      - strong: Needs you
+      - generic: "13"
+      - button "AH-051 · Verify worktree isolation · Execution stopped":
+        - strong: AH-051 · Test
+        - generic: Agent Harness
+        - generic: Execution stopped
+      - button "AH-054 · Qualify dependency batches · S2 failed":
+        - strong: AH-054 · Implement
+        - generic: Agent Harness
+        - generic: S2 failed
+      - button "PC-148 · Retain revision history · Repair required":
+        - strong: PC-148 · Dev review
+        - generic: PlanCheck
+        - generic: Repair required
+      - button "Show all 13 decisions":
+        - text: Show all 13 decisions
+  - region "Selected task":
+    - img "Worker role"
+    - heading "MS-091 · Approval" [level=2]
+    - paragraph: Track approved delivery
+    - strong: Waiting for delivery
+    - term: Skill
+    - definition: request-approval
+    - term: Model
+    - definition: No recorded run
+    - button "Inspect":
+      - text: Inspect
+    - button "Configure agent":
+      - text: Configure agent
+    - region "Recorded task usage":
+      - generic: Usage
+      - strong: 0 tokens
+      - generic "Task elapsed time": Not recorded
+      - generic: Approx. cost —
+      - img "API-rate estimates are not attributable ChatGPT-plan charges"
+      - generic "No recorded usage with a supported rate card": Rate card unavailable
+  - complementary:
+    - button "New task":
+      - text: New task
+    - button "Agent roster":
+      - text: Agent roster
+    - button "Skills":
+      - text: Skills
+    - button "Settings":
+      - text: Settings
+    - generic: Drag to pan · Scroll to zoom · Space to follow
+  - dialog "Task command":
+    - heading "MS-091 · Task workspace" [level=1]
+    - button "Adjust window size" [active]:
+    - button "Maximise window":
+    - button "Close panel":
+    - paragraph: Sample world · Demonstration records and actions stay in this tab.
+    - generic: Agent Harness / eversor-mystrataassist / MS-091
+    - heading "Track approved delivery" [level=2]
+    - button "Role policies":
+      - text: Role policies
+    - button "Manage":
+      - text: Manage
+    - button "Pin task":
+      - generic: Pin task
+    - navigation "Task stages":
+      - button "Triage":
+        - generic: Triage
+      - button "Scouts":
+        - generic: Scouts
+      - button "Grill":
+        - generic: Grill
+      - button "Specification":
+        - generic: Specification
+      - button "Plan":
+        - generic: Plan
+      - button "Implement":
+        - generic: Implement
+      - button "7 Dev review":
+        - generic: "7"
+        - generic: Dev review
+      - button "8 Test":
+        - generic: "8"
+        - generic: Test
+      - button "9 Final review":
+        - generic: "9"
+        - generic: Final review
+      - button "10 Approval":
+        - generic: "10"
+        - generic: Approval
+    - region "Current task actions":
+      - strong: Approval
+      - emphasis: Waiting for delivery
+      - generic: Awaiting confirmed delivery state
+      - button "Check GitHub now":
+        - text: Check GitHub now
+    - region "Approval stage content":
+      - heading "Awaiting PR merge" [level=3]
+      - 'heading "sample/mission-frontier #214" [level=3]'
+      - term: Exact approved head
+      - definition:
+        - code: aaaaaaa1aaaaaaa1aaaaaaa1aaaaaaa1aaaaaaa1
+      - term: Candidate
+      - definition: C-MS-091 r1
+      - term: Target
+      - definition: main
+      - term: Last GitHub check
+      - definition: 21/09/2026, 20:01:21
+      - term: Completion
+      - definition: Pending exact merge confirmation
+      - button "Open exact diff"
+      - list:
+        - strong: Publication requested
+        - generic: 21/09/2026, 20:01:21
+        - strong: PR opened
+        - generic: 21/09/2026, 20:01:21
+        - strong: Exact merge confirmation
+        - generic: Pending
+      - paragraph: The runtime tracks this exact PR, repository, target and approved head. Opening a PR does not complete the task.
+      - heading "Candidate-bound gates" [level=3]
+      - generic: Current revision
+      - article:
+        - heading "Dev review" [level=3]
+        - strong: Verdict unavailable
+        - paragraph: No authoritative verdict retained.
+      - article:
+        - heading "Test" [level=3]
+        - strong: Verdict unavailable
+        - paragraph: No authoritative verdict retained.
+      - article:
+        - heading "Final review" [level=3]
+        - strong: Verdict unavailable
+        - paragraph: No authoritative verdict retained.
+      - paragraph: Each gate must apply to this candidate revision. Earlier evidence remains available for audit.
+      - heading "Recorded journey" [level=3]
+      - generic: 9 prior stages
+      - table:
+        - rowgroup:
+          - row "Stage State Tokens Execution time Approx. cost Outcome":
+            - columnheader "Stage"
+            - columnheader "State"
+            - columnheader "Tokens"
+            - columnheader "Execution time"
+            - columnheader "Approx. cost"
+            - columnheader "Outcome"
+        - rowgroup:
+          - row "Triage Recorded Unavailable Unavailable — No retained output":
+            - cell "Triage":
+              - button "Triage"
+            - cell "Recorded"
+            - cell "Unavailable"
+            - cell "Unavailable"
+            - cell "—"
+            - cell "No retained output"
+          - row "Scouts Recorded Unavailable Unavailable — No retained output":
+            - cell "Scouts":
+              - button "Scouts"
+            - cell "Recorded"
+            - cell "Unavailable"
+            - cell "Unavailable"
+            - cell "—"
+            - cell "No retained output"
+          - row "Grill Recorded Unavailable Unavailable — No retained output":
+            - cell "Grill":
+              - button "Grill"
+            - cell "Recorded"
+            - cell "Unavailable"
+            - cell "Unavailable"
+            - cell "—"
+            - cell "No retained output"
+          - row "Specification Recorded Unavailable Unavailable — No retained output":
+            - cell "Specification":
+              - button "Specification"
+            - cell "Recorded"
+            - cell "Unavailable"
+            - cell "Unavailable"
+            - cell "—"
+            - cell "No retained output"
+          - row "Plan Recorded Unavailable Unavailable — No retained output":
+            - cell "Plan":
+              - button "Plan"
+            - cell "Recorded"
+            - cell "Unavailable"
+            - cell "Unavailable"
+            - cell "—"
+            - cell "No retained output"
+          - row "Implement Recorded Unavailable Unavailable — No retained output":
+            - cell "Implement":
+              - button "Implement"
+            - cell "Recorded"
+            - cell "Unavailable"
+            - cell "Unavailable"
+            - cell "—"
+            - cell "No retained output"
+          - row "Dev review Verdict unavailable Unavailable Unavailable — No retained output":
+            - cell "Dev review":
+              - button "Dev review"
+            - cell "Verdict unavailable"
+            - cell "Unavailable"
+            - cell "Unavailable"
+            - cell "—"
+            - cell "No retained output"
+          - row "Test Verdict unavailable Unavailable Unavailable — No retained output":
+            - cell "Test":
+              - button "Test"
+            - cell "Verdict unavailable"
+            - cell "Unavailable"
+            - cell "Unavailable"
+            - cell "—"
+            - cell "No retained output"
+          - row "Final review Verdict unavailable Unavailable Unavailable — No retained output":
+            - cell "Final review":
+              - button "Final review"
+            - cell "Verdict unavailable"
+            - cell "Unavailable"
+            - cell "Unavailable"
+            - cell "—"
+            - cell "No retained output"
+      - paragraph: Execution time sums agent runs, including retries; parallel runs can overlap. Task elapsed time is shown separately in the inspector.
+      - generic: API-rate estimate · — means cost unavailable. 0 of 0 task runs loaded. Partial values are labelled; unloaded runs are not counted as zero.
+      - paragraph: No retained artifact is loaded for Approval. Only retained records are shown.
+      - heading "Repair & revision history" [level=3]
+      - article:
+        - generic: Current candidate
+        - strong: C-MS-091 r1 · aaaaaaa1aaaa
+        - paragraph: Sample qualified slices assembled in dependency order
+        - generic: 21/09/2026, 20:01:21
+        - button "Inspect diff":
+          - text: Inspect diff
+      - paragraph: A repair creates a new revision; affected reviews and tests must rerun. No future revision is implied.
+      - generic "Run activity · recorded telemetry":
+        - strong: Run activity
+        - generic: · recorded telemetry
+    - generic: Scroll for more ↓
+    - region "Task inspector":
+      - heading "Task brief" [level=3]:
+        - text: Task brief
+      - paragraph: Track approved delivery
+      - heading "Role & run" [level=3]:
+        - text: Role & run
+      - img "Worker role"
+      - strong: Operator
+      - generic: Deterministic gate
+      - text: "Viewed: Approval"
+      - text: "Active: Approval"
+      - region "Stage usage — Approval":
+        - heading "Stage usage — Approval" [level=3]:
+          - text: Stage usage — Approval
+        - term: Execution time
+        - definition: Unavailable
+        - term: Input tokens
+        - definition: Unavailable
+        - term: Output tokens
+        - definition: Unavailable
+        - term: Cached tokens
+        - definition: Unavailable
+        - term: Cache rate
+        - definition: Unavailable
+        - term: Approx. cost
+        - definition: Unavailable
+        - generic: API-rate estimate · Recorded runs, including retries. Execution time sums agent runs; parallel work can overlap.
+        - generic: 0 stage runs loaded.
+      - region "Task total usage":
+        - heading "Task total" [level=3]:
+          - text: Task total
+        - term: Task elapsed
+        - definition: Unavailable
+        - term: Total tokens
+        - definition: "0"
+        - term: Approx. cost
+        - definition: Unavailable
+        - generic: API-rate estimate · Rate card unavailable
+      - heading "Run safeguards" [level=3]:
+        - text: Run safeguards
+      - paragraph: Detached read-only evidence worktree
+      - generic: Codex reads a detached evidence worktree at aaaaaaa0. Operator checkout changes are excluded.
+      - paragraph: "Stage attempts: 0 / 3"
+      - heading "Context & repository" [level=3]:
+        - text: Context & repository
+      - paragraph: /demo/eversor-mystrataassist
+      - generic: Captured revision aaaaaaa0aaaa
+      - paragraph: Open each artifact to inspect its supplied-context manifest. Repository permission alone does not prove what an agent used.
+    - generic: Scroll for more ↓

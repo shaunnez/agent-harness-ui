@@ -137,6 +137,7 @@ export interface RuntimeRun {
   workPackageId: string | null;
   attempt: number | null;
   retryOfRunId: string | null;
+  packageRepairOfRunId?: string;
   repairOfRunId: string | null;
   toolCalls: RuntimeToolCall[];
   test: RuntimeRunTestSummary | null;

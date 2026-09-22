@@ -11,6 +11,9 @@
 // COMMIT synchronously, so a task transaction and a research transaction can never interleave
 // on the single-threaded event loop.
 
+import { DEFAULT_RESEARCH_SOURCE_DIRECTORY } from "./research-web-tools.mjs";
+import { verifySnapshotEvidence } from "./research-source-snapshots.mjs";
+
 const RUN_ID_PREFIX = "RSCH";
 
 /** The only value `recordResult` may write to `quote_verified`. See the call site. */
@@ -18,10 +21,12 @@ const UNVERIFIED = 0;
 
 export class ResearchStore {
   #db;
+  #sourceSnapshotDirectory;
 
-  constructor(db) {
+  constructor(db, { sourceSnapshotDirectory = DEFAULT_RESEARCH_SOURCE_DIRECTORY } = {}) {
     if (!db) throw new Error("ResearchStore requires an open database handle.");
     this.#db = db;
+    this.#sourceSnapshotDirectory = sourceSnapshotDirectory;
   }
 
   async createRun({ runtimeId, request, budget, now = new Date().toISOString() }) {
@@ -185,6 +190,7 @@ export class ResearchStore {
    *  `source.retrieved` event are backfilled here, so an evidence row can never point at a
    *  source the operator cannot inspect. */
   async recordResult(runId, result, { now = new Date().toISOString() } = {}) {
+    const verifiedEvidence = await this.#verifyResultEvidence(runId, result);
     return this.#transaction(() => {
       const known = new Set(
         this.#db
@@ -254,11 +260,7 @@ export class ResearchStore {
             reference.locator ? JSON.stringify(reference.locator) : null,
             reference.excerpt ?? null,
             reference.snapshotRef ?? null,
-            // Host-owned, and deliberately not read from the result. A runtime asserting
-            // `quoteVerified: true` is asserting something only the host can know, so the claim
-            // is discarded rather than trusted. The column moves off 0 when a host-side snapshot
-            // check writes it through a verification path Eversor owns (slice 7).
-            UNVERIFIED,
+            verifiedEvidence.has(`${finding.id}#${position + 1}`) ? 1 : UNVERIFIED,
             reference.authority ?? null,
           );
         }
@@ -356,6 +358,28 @@ export class ResearchStore {
       .prepare("SELECT * FROM research_sources WHERE run_id = ? ORDER BY retrieved_at ASC, id ASC")
       .all(runId)
       .map(sourceRecord);
+  }
+
+  async #verifyResultEvidence(runId, result) {
+    const sources = new Map(this.listSourcesSync(runId).map((source) => [source.id, source]));
+    const verified = new Set();
+    await Promise.all(
+      (result.findings ?? []).flatMap((finding) =>
+        (finding.evidence ?? []).map(async (reference, index) => {
+          const source = sources.get(reference.sourceId);
+          if (
+            await verifySnapshotEvidence({
+              source,
+              reference,
+              snapshotDirectory: this.#sourceSnapshotDirectory,
+            })
+          ) {
+            verified.add(`${finding.id}#${index + 1}`);
+          }
+        }),
+      ),
+    );
+    return verified;
   }
 
   #readRun(runId) {

@@ -291,6 +291,35 @@ test("offers only a planning recheck for a typed prerequisite blocker", () => {
   });
 });
 
+test("falls back to a retry grant when a typed prerequisite blocker has exhausted its Plan allowance", () => {
+  return withWorkspace(async ({ nextAction }) => {
+    const task = createTask({
+      status: "blocked",
+      currentStage: "plan",
+      attemptsByStage: { plan: 3 },
+      stageRunLimits: { plan: 3 },
+      blocker: {
+        code: "plan-prerequisite",
+        prerequisiteCode: "external-data-unavailable",
+        detail: "The required records are unavailable.",
+        requiredAction: "Attach a trusted read-only export.",
+        detectedAt: "2026-08-01T12:00:00.000Z",
+      },
+      actionEligibility: {
+        generatedAt: "2026-08-01T12:01:00.000Z",
+        actions: {
+          plan: { allowed: false, reason: "The plan stage has exhausted its retry allowance." },
+          "grant-retry": { allowed: true, reason: null },
+        },
+      },
+    });
+
+    const action = nextAction(task);
+    assert.equal(action.action, "grant-retry");
+    assert.equal(action.label, "Grant one stage attempt");
+  });
+});
+
 test("renders only backend-authorized failed Plan recovery and names the failed stage", () => {
   return withWorkspace(async ({ RuntimeCommandBar, RuntimeTaskWorkspace, nextAction }) => {
     const baseProps = {

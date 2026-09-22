@@ -274,6 +274,8 @@ export class RepairExecutionOrchestrator {
         stageId === "test"
           ? `Interpreting harness verification of ${cwd}; source changes are checked before and after the run`
           : `${sandbox === "read-only" ? "Reading" : "Working in"} ${cwd}`;
+      const packageRepairOfRunId = task.workPackages?.find((item) => item.id === workPackageId)
+        ?.retainedContinuation?.packageRepairOfRunId;
       const run = beginAgentRun(draft, {
         id: runId,
         kind: runKind,
@@ -291,6 +293,11 @@ export class RepairExecutionOrchestrator {
         repositoryTargetRef: reservation.repositoryTargetRef ?? null,
         repositoryAuthorityCheckedAt: reservation.repositoryAuthorityCheckedAt ?? null,
         workPackageId,
+        packageRepairOfRunId: draft.runs.some(
+          (prior) => prior.id === packageRepairOfRunId && prior.workflowReservationId === reservation.id,
+        )
+          ? packageRepairOfRunId
+          : null,
         workflowAttempt: reservation?.workflowAttempt ?? null,
         workflowReservationId: reservation?.id ?? null,
         policyVersion: policy.policyVersion,

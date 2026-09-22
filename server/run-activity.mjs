@@ -297,6 +297,7 @@ export function beginAgentRun(task, input) {
     policyEscalationReason: input.policyEscalationReason ?? null,
     attempt: relatedRuns.length + 1,
     retryOfRunId,
+    ...(input.packageRepairOfRunId ? { packageRepairOfRunId: input.packageRepairOfRunId } : {}),
     repairOfRunId,
     toolCalls: [],
     test: null,

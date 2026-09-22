@@ -332,3 +332,31 @@ test("refuses to attribute evidence to a revision the worktree is not at", async
     /would describe a different commit/,
   );
 });
+
+test("keeps failing TAP assertions when successful output would push them out of the tail", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "verification-failure-excerpt-"));
+  try {
+    const result = await runRepositoryVerification({
+      worktreePath: directory,
+      candidate,
+      readHeadRevision: async () => candidate.headRevision,
+      manifest: manifest([
+        {
+          id: "test",
+          title: "Tests",
+          command: [
+            process.execPath,
+            "-e",
+            `console.log('not ok 1 - operator provenance\\n  ---\\n  expected: operator-ui\\n  actual: missing\\n  ...\\n' + 'ok - passing\\n'.repeat(2000)); process.exitCode = 1;`,
+          ],
+        },
+      ]),
+    });
+    assert.equal(result.status, "failed");
+    assert.match(result.rows[0].failureDetails, /operator provenance/);
+    assert.match(result.rows[0].failureDetails, /expected: operator-ui/);
+    assert.ok(result.rows[0].failureDetails.length < 4500);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});

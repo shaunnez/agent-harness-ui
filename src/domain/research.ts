@@ -183,8 +183,8 @@ export interface EvidenceRef {
   retrievedAt: string;
   locator?: EvidenceLocator;
   excerpt?: string;
-  /** Content-addressed reference to a retained snapshot. Absent until the host writes
-   *  snapshots (architecture §7.4, slice 6). Without it a citation is an assertion. */
+  /** Content-addressed reference to a retained snapshot. Without it a citation is an assertion
+   *  rather than host-verifiable evidence (architecture §7.4). */
   snapshotRef?: string;
   /** Set by the host after checking `excerpt` against the snapshot (§10.3). Never supplied by
    *  a model, and false whenever no snapshot exists to check against. */

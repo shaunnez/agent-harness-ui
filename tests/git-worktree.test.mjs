@@ -930,7 +930,10 @@ test("reads merge state for a frozen base pinned to a commit rather than a branc
 });
 
 test("parses the commit target-ref sentinel and leaves ordinary refs alone", () => {
-  assert.equal(parseCommitSentinel("commit:0123456789abcdef0123456789abcdef01234567"), "0123456789abcdef0123456789abcdef01234567");
+  assert.equal(
+    parseCommitSentinel("commit:0123456789abcdef0123456789abcdef01234567"),
+    "0123456789abcdef0123456789abcdef01234567",
+  );
   assert.equal(parseCommitSentinel("commit:f18c5673"), "f18c5673");
   assert.equal(parseCommitSentinel("refs/heads/main"), null);
   assert.equal(parseCommitSentinel("commit:not-a-sha"), null);

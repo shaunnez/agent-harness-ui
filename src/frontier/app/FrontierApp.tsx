@@ -21,8 +21,8 @@ import { AgentPanel } from "../views/AgentPanel";
 import { BaseSelection } from "../views/BaseSelection";
 import { DecisionNavigation } from "../views/DecisionNavigation";
 import { PinnedWork } from "../views/WatchPins";
+import { shouldShowWelcome, Welcome } from "../views/Welcome";
 import { AttentionQueue, ConnectionBadge, SelectionHud, WorldActions, WorldClock } from "../views/WorldHud";
-import { Welcome, shouldShowWelcome } from "../views/Welcome";
 import { WorldNavigation } from "../views/WorldNavigation";
 import { type ProofControls, proofVisible } from "../world-3d/model";
 import { BuildDiagnostics } from "./BuildDiagnostics";
@@ -51,10 +51,13 @@ export function FrontierApp() {
                     ? "normal"
                     : undefined
                 : undefined,
-              new URLSearchParams(window.location.search).get("scenario") === "workflow",
+              ["workflow", "workspace"].includes(
+                new URLSearchParams(window.location.search).get("scenario") ?? "",
+              ),
               new URLSearchParams(window.location.search).get("qa") === "1" &&
                 new URLSearchParams(window.location.search).get("scenario") === "stations",
               new URLSearchParams(window.location.search).get("scenario") === "colony-stress",
+              new URLSearchParams(window.location.search).get("scenario") === "workspace",
             )
           : liveGateway,
       ),

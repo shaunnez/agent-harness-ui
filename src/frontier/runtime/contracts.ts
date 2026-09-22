@@ -1,4 +1,4 @@
-import type { CandidateDiffResponse } from "../../api.ts";
+import type { CandidateDiffResponse, LinearIntegrationStatus } from "../../api.ts";
 import type { OnboardingProposal, OnboardingReview } from "../../domain/onboarding.ts";
 import type {
   WatchedRun,
@@ -64,6 +64,8 @@ export interface FrontierGateway {
   watchedRun(taskId: string, runId: string, sourceId: string): Promise<WatchedRun>;
   exactRun(taskId: string, runId: string, sourceId: string): Promise<RuntimeRun | null>;
   status(): Promise<RuntimeStatus>;
+  linearIntegration(): Promise<LinearIntegrationStatus>;
+  setLinearIntegration(enabled: boolean): Promise<LinearIntegrationStatus>;
   saveSettings(input: SettingsInput): Promise<RuntimeSettings>;
   worktrees(taskId: string): Promise<RuntimeWorktreeInventoryRow[]>;
   removeWorktree(taskId: string, rowId: string): Promise<RuntimeWorktreeInventoryRow[]>;

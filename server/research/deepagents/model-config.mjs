@@ -71,6 +71,7 @@ export function resolveModelConfig(env = process.env) {
     // actually producing bad output on demand.
     ...(env.RESEARCH_MODEL_FAKE_DELAY_MS ? { fakeDelayMs: Number(env.RESEARCH_MODEL_FAKE_DELAY_MS) } : {}),
     ...(env.RESEARCH_MODEL_FAKE_MISBEHAVIOR ? { fakeMisbehavior: env.RESEARCH_MODEL_FAKE_MISBEHAVIOR } : {}),
+    ...(env.RESEARCH_MODEL_FAKE_SCENARIO ? { fakeScenario: env.RESEARCH_MODEL_FAKE_SCENARIO } : {}),
   };
 }
 

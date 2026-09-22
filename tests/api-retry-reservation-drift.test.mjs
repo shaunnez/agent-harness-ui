@@ -171,6 +171,8 @@ test("rejects a repair grant when its retained authorizing gate changes before t
     const { task } = await response.json();
     taskId = task.id;
     await store.update(task.id, (draft) => {
+      // Exercise stage retry admission with candidate repair capacity still available.
+      draft.repairLimits.candidate.standard = 5;
       draft.status = "repair-required";
       draft.currentStage = "dev-review";
       draft.attemptsByStage.implement = draft.stageRunLimits.implement;

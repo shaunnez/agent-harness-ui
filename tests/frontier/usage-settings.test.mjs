@@ -57,11 +57,13 @@ test("saved defaults affect new tasks only and failed settings validation preser
   settings.profileStagePolicies.standard.grill = { model: "gpt-5.6-sol", reasoning: "high" };
   settings.stagePolicies = structuredClone(settings.profileStagePolicies.standard);
   settings.grillPolicy = "auto-accept-recommendations";
+  settings.repairLimits = { package: 3, candidate: { fast: 0, standard: 4, "high-risk": 5 } };
   settings.gatePolicies = { ...settings.gatePolicies, "dev-review": "auto-accept-recommendations" };
   await gateway.saveSettings(settings);
   const after = await gateway.core("PC-153");
   assert.deepEqual(after.agentConfig, before.agentConfig);
   assert.equal(after.grillPolicy, before.grillPolicy);
+  assert.deepEqual(after.repairLimits, before.repairLimits);
   const task = await gateway.create({
     title: "New defaults",
     description: "Fixture",
@@ -72,6 +74,7 @@ test("saved defaults affect new tasks only and failed settings validation preser
   });
   assert.deepEqual(task.agentConfig.stagePolicies.grill, settings.stagePolicies.grill);
   assert.equal(task.grillPolicy, "auto-accept-recommendations");
+  assert.deepEqual(task.repairLimits, settings.repairLimits);
   assert.equal((await gateway.status()).settings.gatePolicies?.["dev-review"], "auto-accept-recommendations");
   assert.equal((await gateway.status()).settings.gatePolicies?.test ?? "manual", "manual");
   await assert.rejects(gateway.saveSettings({ ...settings, allowedModels: [] }), /allowed/);
@@ -95,4 +98,61 @@ test("unified diff line numbers follow source hunks across additions, removals a
   );
   assert.equal(files[1].lines.at(-1).next, 1);
   assert.equal(files[1].lines.at(-1).text, "+first");
+});
+
+test("stage usage includes retries, preserves missing/zero measurements and marks paged subtotals", async () => {
+  const { stageUsage } = await import("../../src/frontier/runtime/usage.ts");
+  const run = (id, stage, usage, durationMs) => ({ id, stage, usage, durationMs, status: "completed" });
+  const usage = {
+    inputTokens: 100,
+    outputTokens: 20,
+    totalTokens: 120,
+    cachedInputTokens: 50,
+    cost: 0.2,
+    pricingVersion: "test-rate",
+  };
+  const evidence = {
+    core: { activeRunIds: [] },
+    runs: {
+      items: [
+        run("first", "implement", usage, 2000),
+        run("retry", "implement", usage, 3000),
+        run("review", "dev-review", usage, 4000),
+      ],
+      total: 3,
+      nextCursor: null,
+    },
+  };
+  let result = stageUsage(evidence, "implement", 0);
+  assert.equal(result.tokens.value, 240);
+  assert.equal(result.execution.value, 5000);
+  assert.equal(result.cost.value, 0.4);
+  assert.equal(result.cacheRate, 0.5);
+  assert.equal(result.partialHistory, false);
+  assert.equal(stageUsage(evidence, "test", 0).tokens.value, null);
+  evidence.runs.items.push(run("unknown", "implement", null, null));
+  evidence.runs.total = 8;
+  evidence.runs.nextCursor = "older";
+  result = stageUsage(evidence, "implement", 0);
+  assert.equal(result.partialHistory, true);
+  assert.equal(result.tokens.known, 2);
+  assert.equal(result.tokens.total, 3);
+  assert.equal(result.cacheRate, null);
+  evidence.runs = {
+    items: [
+      run(
+        "zero",
+        "implement",
+        { ...usage, inputTokens: 0, outputTokens: 0, totalTokens: 0, cachedInputTokens: 0, cost: 0 },
+        0,
+      ),
+    ],
+    total: 1,
+    nextCursor: null,
+  };
+  result = stageUsage(evidence, "implement", 0);
+  assert.equal(result.tokens.value, 0);
+  assert.equal(result.execution.value, 0);
+  assert.equal(result.cost.value, 0);
+  assert.equal(result.cacheRate, null);
 });

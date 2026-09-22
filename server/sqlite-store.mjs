@@ -380,9 +380,29 @@ export class SqliteTaskStore {
     );
   }
 
+  async findExternalTask(provider, organizationId, issueId) {
+    const row = this.#db
+      .prepare(`SELECT id FROM tasks
+      WHERE json_extract(core_json, '$.externalSource.provider') = ?
+      AND json_extract(core_json, '$.externalSource.organizationId') = ?
+      AND json_extract(core_json, '$.externalSource.issueId') = ?`)
+      .get(provider, organizationId, issueId);
+    return row ? clone(this.#readTask(row.id)) : null;
+  }
+
   async create(input) {
     return this.#enqueue(() =>
       this.#transaction(() => {
+        const source = input.externalSource;
+        if (source) {
+          const existing = this.#db
+            .prepare(`SELECT id FROM tasks
+            WHERE json_extract(core_json, '$.externalSource.provider') = ?
+            AND json_extract(core_json, '$.externalSource.organizationId') = ?
+            AND json_extract(core_json, '$.externalSource.issueId') = ?`)
+            .get(source.provider, source.organizationId, source.issueId);
+          if (existing) return clone(this.#readTask(existing.id));
+        }
         const nextId = Number(this.#metadata("next_id") ?? 1);
         const state = { nextId, settings: this.#readSettings(), tasks: [] };
         const task = createTaskRecord(state, input);

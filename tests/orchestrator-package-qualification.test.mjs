@@ -1,4 +1,13 @@
 import test from "node:test";
+import { waitUntil } from "./wait-support.mjs";
+import { readFile } from "node:fs/promises";
+import { GitWorktreeManager } from "../server/git-worktree.mjs";
+import {
+  effectivePackageRuns,
+  validInitialCandidateProducer,
+  validateRetryRunScopes,
+} from "../server/retry-reservation-validation.mjs";
+import { candidateRevisionProducerEvidence } from "../server/candidate-lineage-validation.mjs";
 import {
   assert,
   git,
@@ -653,5 +662,325 @@ test("a dirty source checkout refuses Implement before a stage attempt is spent"
     assert.equal(after.activeRunKind, null);
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+for (const scenario of [
+  {
+    name: "cancellation during qualification never launches a repair",
+    limit: 2,
+    failures: 1,
+    calls: 1,
+    status: "cancelled",
+    cancel: true,
+  },
+  {
+    name: "turning automatic repair off prevents the next retry",
+    limit: 2,
+    failures: 1,
+    calls: 1,
+    status: "failed",
+    disable: true,
+  },
+  {
+    name: "ownership failures do not trigger automatic repairs",
+    limit: 2,
+    failures: 1,
+    calls: 1,
+    status: "failed",
+    ownership: true,
+  },
+  {
+    name: "repairs a failed check and integrates only the corrected package",
+    limit: 2,
+    failures: 1,
+    calls: 2,
+    status: "ready-for-review",
+  },
+  {
+    name: "stops at the configured package repair limit",
+    limit: 2,
+    failures: 9,
+    calls: 3,
+    status: "failed",
+    manualContinuation: true,
+  },
+  {
+    name: "manual repair mode does not dispatch a package retry",
+    limit: 2,
+    failures: 1,
+    calls: 1,
+    status: "failed",
+    manual: true,
+  },
+  { name: "zero disables package repairs", limit: 0, failures: 1, calls: 1, status: "failed" },
+  {
+    name: "does not retry a command that could not start",
+    limit: 2,
+    failures: 1,
+    calls: 1,
+    status: "failed",
+    exitCode: null,
+  },
+  {
+    name: "does not repair a repository baseline failure",
+    limit: 2,
+    failures: 1,
+    calls: 1,
+    status: "blocked",
+    baseline: true,
+  },
+]) {
+  test(scenario.name, async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "harness-package-repair-"));
+    try {
+      const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+      await store.init();
+      await store.updateSettings((settings) => {
+        settings.gatePolicies = { repair: scenario.manual ? "manual" : "auto-accept-recommendations" };
+        settings.repairLimits = {
+          package: scenario.limit,
+          candidate: { fast: 1, standard: 2, "high-risk": 3 },
+        };
+      });
+      const task = await store.create({
+        title: scenario.name,
+        description: "Correct failing checks without losing prior work.",
+        repositoryPath: directory,
+        workflow: "implement",
+        priority: "medium",
+      });
+      await store.update(task.id, (draft) => {
+        draft.status = "ready-for-implementation";
+        draft.currentStage = "implement";
+        draft.workPackages = parseWorkPackages(
+          '<work-packages>{"packages":[{"id":"S1","title":"Feature","description":"Implement feature.","dependencies":[],"ownedPaths":["feature.ts"],"verificationCommandIds":["test"]}]}</work-packages>',
+        );
+      });
+      let manualContinuation = false;
+      let preparations = 0;
+      let commits = 0;
+      let assemblies = 0;
+      const prompts = [];
+      const paths = [];
+      const orchestrator = new TaskOrchestrator(store, {
+        worktreeManager: {
+          base: async () => ({ repositoryRoot: directory, baseRevision: "a".repeat(40), baseBranch: "main" }),
+          prepare: async (_task, id) => {
+            if (id.startsWith("S")) preparations++;
+            return {
+              id,
+              revisionNumber: 1,
+              baseRevision: "a".repeat(40),
+              branch: "package",
+              worktreePath: path.join(directory, "retained"),
+              headRevision: null,
+              revisions: [],
+            };
+          },
+          inspectRetainedSlice: async (p) => ({
+            worktreePath: p.worktreePath,
+            headRevision: p.headRevision,
+            clean: true,
+            files: [],
+          }),
+          commit: async (slice) => {
+            paths.push(slice.worktreePath);
+            commits++;
+            if (scenario.ownership) throw new Error("Candidate changed outside declared ownership");
+            return {
+              headRevision: String(commits).repeat(40),
+              files: ["feature.ts"],
+              summary: "change",
+              diff: "+change",
+              ownSummary: "change",
+              ownDiff: "+change",
+            };
+          },
+          assemble: async () => {
+            assemblies++;
+            return {
+              headRevision: "f".repeat(40),
+              files: ["feature.ts"],
+              summary: "change",
+              diff: "+change",
+            };
+          },
+        },
+        runCodex: async ({ prompt }) => {
+          prompts.push(prompt);
+          return {
+            finalText: "## Outcome\nImplemented",
+            usage: { inputTokens: 1, outputTokens: 1, cachedInputTokens: 0, totalTokens: 2 },
+          };
+        },
+        runPackageVerification: async ({ workPackageId, attempt }) => {
+          if (scenario.cancel) await orchestrator.cancel(task.id);
+          if (scenario.disable)
+            await store.updateSettings((settings) => {
+              settings.gatePolicies.repair = "manual";
+            });
+          const status = !manualContinuation && attempt <= scenario.failures ? "failed" : "passed";
+          const summary = makeFocusedTestSummary({
+            candidateId: workPackageId,
+            candidateRevision: attempt,
+            status,
+          });
+          summary.headRevision = String(attempt).repeat(40);
+          summary.rows[0].exitCode = status === "passed" ? 0 : "exitCode" in scenario ? scenario.exitCode : 1;
+          summary.rows[0].failureDetails =
+            status === "passed"
+              ? null
+              : "not ok 1 - API operator provenance\nexpected missing question; actual missing operator source";
+          if (scenario.baseline) {
+            summary.failureKind = "repository-baseline";
+            summary.baselineVerification = { revision: "a".repeat(40), commandIds: ["test"] };
+          }
+          return summary;
+        },
+      });
+      assert.equal(await orchestrator.start(task.id, "implementation"), true);
+      const finished = await waitForStatus(store, task.id, scenario.status);
+      await waitUntil(() => !orchestrator.isRunning(task.id), "package workflow to settle");
+      assert.equal(prompts.length, scenario.calls);
+      assert.equal(preparations, 1, "repairs reuse the retained worktree");
+      assert.equal(new Set(paths).size, 1);
+      assert.equal(finished.workPackages[0].automaticRepairAttempts ?? 0, scenario.calls - 1);
+      assert.equal(
+        finished.workPackages[0].verificationRuns?.length ?? 0,
+        scenario.cancel || scenario.ownership ? 0 : scenario.calls,
+      );
+      assert.equal(assemblies, scenario.status === "ready-for-review" ? 1 : 0);
+      if (scenario.calls > 1) {
+        assert.match(prompts[1], /API operator provenance/);
+        assert.match(prompts[1], /do not start over or discard/);
+        assert.equal(finished.artifacts.filter((a) => a.workPackageId === "S1").length, scenario.calls);
+        const reservation = finished.stageRunReservations.implement;
+        const runs = finished.runs.filter((run) => run.workflowReservationId === reservation.id);
+        assert.equal(validateRetryRunScopes(finished, reservation, runs), null);
+        if (scenario.status === "ready-for-review") {
+          const candidate = finished.candidates[0];
+          assert.equal(validInitialCandidateProducer(finished, candidate, reservation), true);
+          assert.ok(
+            candidateRevisionProducerEvidence(finished, candidate, {
+              byNumber: new Map(candidate.revisions.map((revision) => [revision.number, revision])),
+            }),
+          );
+          const broken = structuredClone(runs);
+          delete broken[1].packageRepairOfRunId;
+          assert.equal(
+            effectivePackageRuns(finished, broken),
+            null,
+            "duplicate calls require recorded repair lineage",
+          );
+          const noFailure = structuredClone(finished);
+          noFailure.artifacts.find((artifact) => artifact.runId === runs[0].id).focusedTest.status = "passed";
+          assert.equal(
+            effectivePackageRuns(noFailure, runs),
+            null,
+            "a passing check cannot authorize a correction",
+          );
+        }
+      }
+      if (scenario.manualContinuation) {
+        manualContinuation = true;
+        assert.equal(await orchestrator.start(task.id, "implementation"), true);
+        const recovered = await waitForStatus(store, task.id, "ready-for-review");
+        await orchestrator.shutdown();
+        const latest = recovered.runs.at(-1);
+        assert.equal(latest.packageRepairOfRunId, undefined);
+        assert.equal(recovered.workPackages[0].automaticRepairAttempts, scenario.limit);
+        assert.equal(
+          validInitialCandidateProducer(
+            recovered,
+            recovered.candidates[0],
+            recovered.stageRunReservations.implement,
+          ),
+          true,
+        );
+      }
+      await orchestrator.shutdown();
+    } finally {
+      await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+    }
+  });
+}
+
+test("automatic repair preserves dependency commits and produces valid candidate lineage", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "package-repair-git-"));
+  try {
+    await git(directory, ["init", "repository"]);
+    const repository = path.join(directory, "repository");
+    await git(repository, ["config", "user.name", "Harness test"]);
+    await git(repository, ["config", "user.email", "harness@example.test"]);
+    await writeFile(path.join(repository, "README.md"), "base\n");
+    await git(repository, ["add", "."]);
+    await git(repository, ["commit", "-m", "base"]);
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    await store.updateSettings((settings) => {
+      settings.gatePolicies = { repair: "auto-accept-recommendations" };
+    });
+    const task = await store.create({
+      title: "Dependent package correction",
+      description: "Keep earlier work while correcting a check.",
+      repositoryPath: repository,
+      workflow: "implement",
+      workflowProfile: "standard",
+      priority: "medium",
+    });
+    await store.update(task.id, (draft) => {
+      draft.status = "ready-for-implementation";
+      draft.currentStage = "implement";
+      draft.workPackages = parseWorkPackages(
+        '<work-packages>{"packages":[{"id":"S1","title":"Dependency","description":"Add dependency","dependencies":[],"ownedPaths":["dependency.txt"],"verificationCommandIds":["test"]},{"id":"S2","title":"Feature","description":"Use dependency","dependencies":["S1"],"ownedPaths":["feature.txt"],"verificationCommandIds":["test"]}]}</work-packages>',
+      );
+    });
+    const manager = new GitWorktreeManager(path.join(directory, "w"));
+    const calls = { S1: 0, S2: 0 };
+    const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: manager,
+      runCodex: async ({ prompt, cwd }) => {
+        const id = prompt.includes("work package S1") ? "S1" : "S2";
+        calls[id]++;
+        if (id === "S2")
+          assert.equal(await readFile(path.join(cwd, "dependency.txt"), "utf8"), "dependency\n");
+        await writeFile(
+          path.join(cwd, id === "S1" ? "dependency.txt" : "feature.txt"),
+          id === "S1" ? "dependency\n" : calls.S2 === 1 ? "broken\n" : "fixed\n",
+        );
+        return {
+          finalText: "## Outcome\nImplemented",
+          usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 },
+        };
+      },
+      runPackageVerification: async ({ workPackageId, attempt, worktreePath }) => {
+        const contents = await readFile(path.join(worktreePath, "feature.txt"), "utf8").catch(() => "");
+        const summary = makeFocusedTestSummary({
+          candidateId: workPackageId,
+          candidateRevision: attempt,
+          status: contents === "broken\n" ? "failed" : "passed",
+        });
+        summary.rows[0].exitCode = summary.status === "failed" ? 1 : 0;
+        summary.rows[0].failureDetails =
+          summary.status === "failed" ? "Expected fixed, received broken" : null;
+        return summary;
+      },
+    });
+    assert.equal(await orchestrator.start(task.id, "implementation"), true);
+    const finished = await waitForStatus(store, task.id, "ready-for-review");
+    await orchestrator.shutdown();
+    assert.deepEqual(calls, { S1: 1, S2: 2 });
+    const candidate = finished.candidates[0];
+    assert.equal(await readFile(path.join(candidate.worktreePath, "feature.txt"), "utf8"), "fixed\n");
+    assert.equal(await readFile(path.join(candidate.worktreePath, "dependency.txt"), "utf8"), "dependency\n");
+    assert.deepEqual(finished.workPackages[1].files, ["feature.txt"]);
+    assert.ok(
+      candidateRevisionProducerEvidence(finished, candidate, {
+        byNumber: new Map(candidate.revisions.map((revision) => [revision.number, revision])),
+      }),
+    );
+  } finally {
+    await rm(directory, { recursive: true, force: true });
   }
 });

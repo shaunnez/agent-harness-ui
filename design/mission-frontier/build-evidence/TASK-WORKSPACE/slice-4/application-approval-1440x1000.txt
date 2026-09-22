@@ -1,0 +1,328 @@
+- main:
+  - generic "Project bases in the 3D coastal world. Select workers with the world labels or click their models."
+  - 'button "World time: 16:02, Golden hour. Open lighting settings"':
+    - strong: 16:02 Golden hour
+  - navigation "3D proof views":
+    - text: 3D preview
+    - button "World" [pressed]
+    - button "Exterior"
+    - button "Cutaway"
+    - button "Appearance"
+  - navigation "3D world selection":
+    - button "PlanCheck":
+      - strong: PlanCheck
+    - button "Agent Harness":
+      - strong: Agent Harness
+    - button "MyStrataAssist":
+      - strong: MyStrataAssist
+    - button "PC-153 · Grill · Needs your answer · Should revision labels be normalised before comparison?":
+      - strong: PC-153 · Grill
+    - button "QA-205 · Approval · Needs your approval · Review approval":
+      - strong: QA-205 · Approval
+    - button "MS-086 · Grill · Needs your answer · Which channel should receive a meeting notice first?":
+      - strong: MS-086 · Grill
+  - complementary "Project bases map":
+    - button "Frame all project bases":
+      - img "Current project bases across the coast"
+  - button "Agent Harness":
+    - strong: Agent Harness
+  - generic: Project scope
+  - combobox "Project scope":
+    - option "All projects" [selected]
+    - option "PlanCheck"
+    - option "Agent Harness"
+    - option "MyStrataAssist"
+  - generic: 21 September 2026 · 20:17
+  - generic: Pacific/Auckland
+  - navigation "Main navigation":
+    - button "World":
+      - text: World
+    - button "Tasks J":
+      - text: Tasks
+      - generic: J
+    - button "Open command menu":
+      - text: Manage
+  - complementary "Decisions and pinned work":
+    - complementary "Tasks needing your attention":
+      - strong: Needs you
+      - generic: "13"
+      - button "AH-051 · Verify worktree isolation · Execution stopped":
+        - strong: AH-051 · Test
+        - generic: Agent Harness
+        - generic: Execution stopped
+      - button "AH-054 · Qualify dependency batches · S2 failed":
+        - strong: AH-054 · Implement
+        - generic: Agent Harness
+        - generic: S2 failed
+      - button "PC-148 · Retain revision history · Repair required":
+        - strong: PC-148 · Dev review
+        - generic: PlanCheck
+        - generic: Repair required
+      - button "Show all 13 decisions":
+        - text: Show all 13 decisions
+  - region "Selected task":
+    - img "Worker role"
+    - heading "QA-205 · Approval" [level=2]
+    - paragraph: Sample approval of revision checks
+    - strong: Needs your approval
+    - term: Skill
+    - definition: request-approval
+    - term: Model
+    - definition: Luna · XHigh
+    - button "Review approval":
+      - text: Review approval
+    - button "Inspect":
+      - text: Inspect
+    - button "Configure agent":
+      - text: Configure agent
+    - region "Latest task artifact":
+      - generic: Artifacts
+      - button "See more"
+      - button "final-review.md Final review":
+        - strong: final-review.md
+        - generic: Final review
+    - region "Recorded task usage":
+      - generic: Usage
+      - strong: 648K tokens
+      - generic "Task elapsed time": 30m 10s
+      - generic: Approx. cost —
+      - img "API-rate estimates are not attributable ChatGPT-plan charges"
+      - generic "No recorded usage with a supported rate card": Rate card unavailable
+  - complementary:
+    - button "New task":
+      - text: New task
+    - button "Agent roster":
+      - text: Agent roster
+    - button "Skills":
+      - text: Skills
+    - button "Settings":
+      - text: Settings
+    - generic: Drag to pan · Scroll to zoom · Space to follow
+  - dialog "Task command":
+    - heading "QA-205 · Task workspace" [level=1]
+    - button "Adjust window size" [active]:
+    - button "Maximise window":
+    - button "Close panel":
+    - paragraph: Sample world · Demonstration records and actions stay in this tab.
+    - generic: Agent Harness / agent-harness-ui / QA-205
+    - heading "Sample approval of revision checks" [level=2]
+    - button "Role policies":
+      - text: Role policies
+    - button "Manage":
+      - text: Manage
+    - button "Pin task":
+      - generic: Pin task
+    - navigation "Task stages":
+      - button "Triage":
+        - generic: Triage
+      - button "Scouts":
+        - generic: Scouts
+      - button "Grill":
+        - generic: Grill
+      - button "Specification":
+        - generic: Specification
+      - button "Plan":
+        - generic: Plan
+      - button "Implement":
+        - generic: Implement
+      - button "Dev review":
+        - generic: Dev review
+      - button "Test":
+        - generic: Test
+      - button "Final review":
+        - generic: Final review
+      - button "10 Approval":
+        - generic: "10"
+        - generic: Approval
+    - region "Current task actions":
+      - strong: Approval
+      - emphasis: Needs your approval
+      - generic: Review approval
+      - button "Approve & raise PR":
+        - text: Approve & raise PR
+    - region "Approval stage content":
+      - img "Task worker"
+      - generic: Approval · Human operator
+      - heading "Approve this exact candidate" [level=3]
+      - paragraph: Your approval publishes the reviewed revision to a task-specific branch and opens its pull request.
+      - region "Candidate identity":
+        - strong: C-QA-205 r1
+        - code: aaaaaaa1aaaa
+        - generic: Target · main
+        - button "Open exact diff":
+          - text: Open exact diff
+      - heading "Human approval" [level=3]
+      - heading "Review the exact candidate before publication" [level=3]
+      - paragraph: Approve & raise PR publishes only the reviewed candidate. Completion follows confirmation that the matching pull request merged.
+      - term: Exact head
+      - definition:
+        - code: aaaaaaa1aaaaaaa1aaaaaaa1aaaaaaa1aaaaaaa1
+      - term: Target branch
+      - definition: main
+      - term: Integrated slices
+      - definition: S1
+      - text: Use the eligible action in the command bar. Proceed with reason lets you record an approval note before submission.
+      - heading "Candidate-bound gates" [level=3]
+      - generic: Current revision
+      - article:
+        - heading "Dev review" [level=3]
+        - strong: Fresh
+        - paragraph: Sample verdict bound to this candidate
+      - article:
+        - heading "Test" [level=3]
+        - strong: Fresh
+        - paragraph: Sample verdict bound to this candidate
+      - article:
+        - heading "Final review" [level=3]
+        - strong: Fresh
+        - paragraph: Sample verdict bound to this candidate
+      - paragraph: Each gate must apply to this candidate revision. Earlier evidence remains available for audit.
+      - heading "Recorded journey" [level=3]
+      - generic: 9 prior stages
+      - table:
+        - rowgroup:
+          - row "Stage State Tokens Execution time Approx. cost Outcome":
+            - columnheader "Stage"
+            - columnheader "State"
+            - columnheader "Tokens"
+            - columnheader "Execution time"
+            - columnheader "Approx. cost"
+            - columnheader "Outcome"
+        - rowgroup:
+          - row "Triage Recorded 72K 6m 0s — triage.md":
+            - cell "Triage":
+              - button "Triage"
+            - cell "Recorded"
+            - cell "72K"
+            - cell "6m 0s"
+            - cell "—"
+            - cell "triage.md"
+          - row "Scouts Recorded 72K 6m 0s — scouts.md":
+            - cell "Scouts":
+              - button "Scouts"
+            - cell "Recorded"
+            - cell "72K"
+            - cell "6m 0s"
+            - cell "—"
+            - cell "scouts.md"
+          - row "Grill Recorded 72K 6m 0s — grill.md":
+            - cell "Grill":
+              - button "Grill"
+            - cell "Recorded"
+            - cell "72K"
+            - cell "6m 0s"
+            - cell "—"
+            - cell "grill.md"
+          - row "Specification Recorded 72K 6m 0s — specification.md":
+            - cell "Specification":
+              - button "Specification"
+            - cell "Recorded"
+            - cell "72K"
+            - cell "6m 0s"
+            - cell "—"
+            - cell "specification.md"
+          - row "Plan Recorded 72K 6m 0s — plan.md":
+            - cell "Plan":
+              - button "Plan"
+            - cell "Recorded"
+            - cell "72K"
+            - cell "6m 0s"
+            - cell "—"
+            - cell "plan.md"
+          - row "Implement Recorded 72K 6m 0s — implement.md":
+            - cell "Implement":
+              - button "Implement"
+            - cell "Recorded"
+            - cell "72K"
+            - cell "6m 0s"
+            - cell "—"
+            - cell "implement.md"
+          - row "Dev review Fresh 72K 6m 0s — dev-review.md":
+            - cell "Dev review":
+              - button "Dev review"
+            - cell "Fresh"
+            - cell "72K"
+            - cell "6m 0s"
+            - cell "—"
+            - cell "dev-review.md"
+          - row "Test Fresh 72K 6m 0s — test.md":
+            - cell "Test":
+              - button "Test"
+            - cell "Fresh"
+            - cell "72K"
+            - cell "6m 0s"
+            - cell "—"
+            - cell "test.md"
+          - row "Final review Fresh 72K 6m 0s — final-review.md":
+            - cell "Final review":
+              - button "Final review"
+            - cell "Fresh"
+            - cell "72K"
+            - cell "6m 0s"
+            - cell "—"
+            - cell "final-review.md"
+      - paragraph: Execution time sums agent runs, including retries; parallel runs can overlap. Task elapsed time is shown separately in the inspector.
+      - generic: API-rate estimate · — means cost unavailable. 9 of 9 task runs loaded. Partial values are labelled; unloaded runs are not counted as zero.
+      - paragraph: No retained artifact is loaded for Approval. Only retained records are shown.
+      - heading "Repair & revision history" [level=3]
+      - article:
+        - generic: Current candidate
+        - strong: C-QA-205 r1 · aaaaaaa1aaaa
+        - paragraph: Sample qualified slices assembled in dependency order
+        - generic: 21/09/2026, 20:17:26
+        - button "Inspect diff":
+          - text: Inspect diff
+      - paragraph: A repair creates a new revision; affected reviews and tests must rerun. No future revision is implied.
+      - generic "Run activity · recorded telemetry":
+        - strong: Run activity
+        - generic: · recorded telemetry
+    - generic: Scroll for more ↓
+    - region "Task inspector":
+      - heading "Task brief" [level=3]:
+        - text: Task brief
+      - paragraph: Sample approval of revision checks
+      - heading "Role & run" [level=3]:
+        - text: Role & run
+      - img "Worker role"
+      - strong: Operator
+      - generic: Deterministic gate
+      - text: "Viewed: Approval"
+      - text: "Active: Approval"
+      - region "Stage usage — Approval":
+        - heading "Stage usage — Approval" [level=3]:
+          - text: Stage usage — Approval
+        - term: Execution time
+        - definition: Unavailable
+        - term: Input tokens
+        - definition: Unavailable
+        - term: Output tokens
+        - definition: Unavailable
+        - term: Cached tokens
+        - definition: Unavailable
+        - term: Cache rate
+        - definition: Unavailable
+        - term: Approx. cost
+        - definition: Unavailable
+        - generic: API-rate estimate · Recorded runs, including retries. Execution time sums agent runs; parallel work can overlap.
+        - generic: 0 stage runs loaded.
+      - region "Task total usage":
+        - heading "Task total" [level=3]:
+          - text: Task total
+        - term: Task elapsed
+        - definition: 30m 10s
+        - term: Total tokens
+        - definition: 648K
+        - term: Approx. cost
+        - definition: Unavailable
+        - generic: API-rate estimate · Rate card unavailable
+      - heading "Run safeguards" [level=3]:
+        - text: Run safeguards
+      - paragraph: Detached read-only evidence worktree
+      - generic: Codex reads a detached evidence worktree at aaaaaaa0. Operator checkout changes are excluded.
+      - paragraph: "Stage attempts: 0 / 3"
+      - heading "Context & repository" [level=3]:
+        - text: Context & repository
+      - paragraph: /demo/agent-harness-ui
+      - generic: Captured revision aaaaaaa0aaaa
+      - paragraph: Open each artifact to inspect its supplied-context manifest. Repository permission alone does not prove what an agent used.
+    - generic: Scroll for more ↓

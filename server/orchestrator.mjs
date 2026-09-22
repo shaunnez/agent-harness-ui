@@ -53,8 +53,8 @@ export class TaskOrchestrator {
     return this.#core.tasks.answerGrillQuestion(id, input);
   }
 
-  async finishGrill(id, { acceptRemaining = false, source = null } = {}) {
-    return this.#core.tasks.finishGrill(id, { acceptRemaining, source });
+  async finishGrill(id, { acceptRemaining = false, source = null, linear = null } = {}) {
+    return this.#core.tasks.finishGrill(id, { acceptRemaining, source, linear });
   }
 
   async retryDesigns(id, { source = null } = {}) {

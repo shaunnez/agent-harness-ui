@@ -1,3 +1,4 @@
+import { normalizeRepairLimits, repairLimitsIssue, type RepairLimits } from "../../repair-limits.ts";
 import type { RuntimeSettings, RuntimeStatus } from "../../domain.ts";
 import { policyRoles } from "./policies.ts";
 
@@ -10,7 +11,10 @@ export type SettingsInput = Pick<
   | "grillPolicy"
   | "gatePolicies"
   | "designPolicies"
-> & { profileStagePolicies: NonNullable<RuntimeSettings["profileStagePolicies"]> };
+> & {
+  repairLimits: RepairLimits;
+  profileStagePolicies: NonNullable<RuntimeSettings["profileStagePolicies"]>;
+};
 export function settingsInput(settings: RuntimeSettings): SettingsInput {
   return structuredClone({
     allowedModels: settings.allowedModels,
@@ -23,11 +27,14 @@ export function settingsInput(settings: RuntimeSettings): SettingsInput {
       "high-risk": settings.stagePolicies,
     },
     grillPolicy: settings.grillPolicy,
+    repairLimits: normalizeRepairLimits(settings.repairLimits),
     gatePolicies: { ...settings.gatePolicies },
     designPolicies: settings.designPolicies,
   });
 }
 export function settingsIssue(input: SettingsInput, status: RuntimeStatus): string | null {
+  const limitIssue = repairLimitsIssue(input.repairLimits);
+  if (limitIssue) return limitIssue;
   const models = status.catalog?.models ?? [];
   // Stage policies may mix providers — each stage runs on the runtime its own model
   // belongs to — so a policy is checked against its model's own provider, matching what

@@ -1,0 +1,486 @@
+[
+  {
+    "screen": "triage",
+    "h": 900,
+    "panels": [
+      {
+        "height": 486,
+        "label": "Triage stage content",
+        "scrollHeight": 983,
+        "scrollWidth": 928,
+        "width": 928
+      },
+      {
+        "height": 484,
+        "label": "Task inspector",
+        "scrollHeight": 1252,
+        "scrollWidth": 268,
+        "width": 268
+      }
+    ],
+    "root": 1280,
+    "w": 1280
+  },
+  {
+    "screen": "scouts",
+    "h": 900,
+    "panels": [
+      {
+        "height": 486,
+        "label": "Scouts stage content",
+        "scrollHeight": 702,
+        "scrollWidth": 928,
+        "width": 928
+      },
+      {
+        "height": 484,
+        "label": "Task inspector",
+        "scrollHeight": 1252,
+        "scrollWidth": 268,
+        "width": 268
+      }
+    ],
+    "root": 1280,
+    "w": 1280
+  },
+  {
+    "screen": "grill",
+    "h": 900,
+    "panels": [
+      {
+        "height": 486,
+        "label": "Grill stage content",
+        "scrollHeight": 971,
+        "scrollWidth": 928,
+        "width": 928
+      },
+      {
+        "height": 484,
+        "label": "Task inspector",
+        "scrollHeight": 1586,
+        "scrollWidth": 268,
+        "width": 268
+      }
+    ],
+    "root": 1280,
+    "w": 1280
+  },
+  {
+    "screen": "specification",
+    "h": 900,
+    "panels": [
+      {
+        "height": 443,
+        "label": "Specification stage content",
+        "scrollHeight": 1368,
+        "scrollWidth": 928,
+        "width": 928
+      },
+      {
+        "height": 441,
+        "label": "Task inspector",
+        "scrollHeight": 1252,
+        "scrollWidth": 268,
+        "width": 268
+      }
+    ],
+    "root": 1280,
+    "w": 1280
+  },
+  {
+    "screen": "plan",
+    "h": 900,
+    "panels": [
+      {
+        "height": 443,
+        "label": "Plan stage content",
+        "scrollHeight": 1663,
+        "scrollWidth": 928,
+        "width": 928
+      },
+      {
+        "height": 441,
+        "label": "Task inspector",
+        "scrollHeight": 1207,
+        "scrollWidth": 268,
+        "width": 268
+      }
+    ],
+    "root": 1280,
+    "w": 1280
+  },
+  {
+    "screen": "implement",
+    "h": 900,
+    "panels": [
+      {
+        "height": 486,
+        "label": "Implement stage content",
+        "scrollHeight": 1216,
+        "scrollWidth": 928,
+        "width": 928
+      },
+      {
+        "height": 484,
+        "label": "Task inspector",
+        "scrollHeight": 1232,
+        "scrollWidth": 268,
+        "width": 268
+      }
+    ],
+    "root": 1280,
+    "w": 1280
+  },
+  {
+    "screen": "review",
+    "h": 900,
+    "panels": [
+      {
+        "height": 486,
+        "label": "Dev review stage content",
+        "scrollHeight": 1286,
+        "scrollWidth": 928,
+        "width": 928
+      },
+      {
+        "height": 484,
+        "label": "Task inspector",
+        "scrollHeight": 1271,
+        "scrollWidth": 268,
+        "width": 268
+      }
+    ],
+    "root": 1280,
+    "w": 1280
+  },
+  {
+    "screen": "test",
+    "h": 900,
+    "panels": [
+      {
+        "height": 486,
+        "label": "Test stage content",
+        "scrollHeight": 1093,
+        "scrollWidth": 928,
+        "width": 928
+      },
+      {
+        "height": 484,
+        "label": "Task inspector",
+        "scrollHeight": 1272,
+        "scrollWidth": 268,
+        "width": 268
+      }
+    ],
+    "root": 1280,
+    "w": 1280
+  },
+  {
+    "screen": "final-review",
+    "h": 900,
+    "panels": [
+      {
+        "height": 486,
+        "label": "Final review stage content",
+        "scrollHeight": 1997,
+        "scrollWidth": 928,
+        "width": 928
+      },
+      {
+        "height": 484,
+        "label": "Task inspector",
+        "scrollHeight": 1252,
+        "scrollWidth": 268,
+        "width": 268
+      }
+    ],
+    "root": 1280,
+    "w": 1280
+  },
+  {
+    "screen": "approval",
+    "h": 900,
+    "panels": [
+      {
+        "height": 486,
+        "label": "Approval stage content",
+        "scrollHeight": 1879,
+        "scrollWidth": 928,
+        "width": 928
+      },
+      {
+        "height": 484,
+        "label": "Task inspector",
+        "scrollHeight": 1207,
+        "scrollWidth": 268,
+        "width": 268
+      }
+    ],
+    "root": 1280,
+    "w": 1280
+  },
+  {
+    "screen": "delivery",
+    "h": 900,
+    "panels": [
+      {
+        "height": 486,
+        "label": "Approval stage content",
+        "scrollHeight": 2027,
+        "scrollWidth": 928,
+        "width": 928
+      },
+      {
+        "height": 484,
+        "label": "Task inspector",
+        "scrollHeight": 1207,
+        "scrollWidth": 268,
+        "width": 268
+      }
+    ],
+    "root": 1280,
+    "w": 1280
+  },
+  {
+    "screen": "triage",
+    "h": 1000,
+    "panels": [
+      {
+        "height": 586,
+        "label": "Triage stage content",
+        "scrollHeight": 983,
+        "scrollWidth": 1088,
+        "width": 1088
+      },
+      {
+        "height": 584,
+        "label": "Task inspector",
+        "scrollHeight": 1252,
+        "scrollWidth": 268,
+        "width": 268
+      }
+    ],
+    "root": 1440,
+    "w": 1440
+  },
+  {
+    "screen": "scouts",
+    "h": 1000,
+    "panels": [
+      {
+        "height": 586,
+        "label": "Scouts stage content",
+        "scrollHeight": 691,
+        "scrollWidth": 1088,
+        "width": 1088
+      },
+      {
+        "height": 584,
+        "label": "Task inspector",
+        "scrollHeight": 1252,
+        "scrollWidth": 268,
+        "width": 268
+      }
+    ],
+    "root": 1440,
+    "w": 1440
+  },
+  {
+    "screen": "grill",
+    "h": 1000,
+    "panels": [
+      {
+        "height": 586,
+        "label": "Grill stage content",
+        "scrollHeight": 971,
+        "scrollWidth": 1088,
+        "width": 1088
+      },
+      {
+        "height": 584,
+        "label": "Task inspector",
+        "scrollHeight": 1586,
+        "scrollWidth": 268,
+        "width": 268
+      }
+    ],
+    "root": 1440,
+    "w": 1440
+  },
+  {
+    "screen": "specification",
+    "h": 1000,
+    "panels": [
+      {
+        "height": 543,
+        "label": "Specification stage content",
+        "scrollHeight": 1368,
+        "scrollWidth": 1088,
+        "width": 1088
+      },
+      {
+        "height": 541,
+        "label": "Task inspector",
+        "scrollHeight": 1252,
+        "scrollWidth": 268,
+        "width": 268
+      }
+    ],
+    "root": 1440,
+    "w": 1440
+  },
+  {
+    "screen": "plan",
+    "h": 1000,
+    "panels": [
+      {
+        "height": 543,
+        "label": "Plan stage content",
+        "scrollHeight": 1663,
+        "scrollWidth": 1088,
+        "width": 1088
+      },
+      {
+        "height": 541,
+        "label": "Task inspector",
+        "scrollHeight": 1207,
+        "scrollWidth": 268,
+        "width": 268
+      }
+    ],
+    "root": 1440,
+    "w": 1440
+  },
+  {
+    "screen": "implement",
+    "h": 1000,
+    "panels": [
+      {
+        "height": 586,
+        "label": "Implement stage content",
+        "scrollHeight": 1216,
+        "scrollWidth": 1088,
+        "width": 1088
+      },
+      {
+        "height": 584,
+        "label": "Task inspector",
+        "scrollHeight": 1232,
+        "scrollWidth": 268,
+        "width": 268
+      }
+    ],
+    "root": 1440,
+    "w": 1440
+  },
+  {
+    "screen": "review",
+    "h": 1000,
+    "panels": [
+      {
+        "height": 586,
+        "label": "Dev review stage content",
+        "scrollHeight": 1286,
+        "scrollWidth": 1088,
+        "width": 1088
+      },
+      {
+        "height": 584,
+        "label": "Task inspector",
+        "scrollHeight": 1271,
+        "scrollWidth": 268,
+        "width": 268
+      }
+    ],
+    "root": 1440,
+    "w": 1440
+  },
+  {
+    "screen": "test",
+    "h": 1000,
+    "panels": [
+      {
+        "height": 586,
+        "label": "Test stage content",
+        "scrollHeight": 1093,
+        "scrollWidth": 1088,
+        "width": 1088
+      },
+      {
+        "height": 584,
+        "label": "Task inspector",
+        "scrollHeight": 1272,
+        "scrollWidth": 268,
+        "width": 268
+      }
+    ],
+    "root": 1440,
+    "w": 1440
+  },
+  {
+    "screen": "final-review",
+    "h": 1000,
+    "panels": [
+      {
+        "height": 586,
+        "label": "Final review stage content",
+        "scrollHeight": 1997,
+        "scrollWidth": 1088,
+        "width": 1088
+      },
+      {
+        "height": 584,
+        "label": "Task inspector",
+        "scrollHeight": 1252,
+        "scrollWidth": 268,
+        "width": 268
+      }
+    ],
+    "root": 1440,
+    "w": 1440
+  },
+  {
+    "screen": "approval",
+    "h": 1000,
+    "panels": [
+      {
+        "height": 586,
+        "label": "Approval stage content",
+        "scrollHeight": 1879,
+        "scrollWidth": 1088,
+        "width": 1088
+      },
+      {
+        "height": 584,
+        "label": "Task inspector",
+        "scrollHeight": 1207,
+        "scrollWidth": 268,
+        "width": 268
+      }
+    ],
+    "root": 1440,
+    "w": 1440
+  },
+  {
+    "screen": "delivery",
+    "h": 1000,
+    "panels": [
+      {
+        "height": 586,
+        "label": "Approval stage content",
+        "scrollHeight": 2027,
+        "scrollWidth": 1088,
+        "width": 1088
+      },
+      {
+        "height": 584,
+        "label": "Task inspector",
+        "scrollHeight": 1207,
+        "scrollWidth": 268,
+        "width": 268
+      }
+    ],
+    "root": 1440,
+    "w": 1440
+  }
+]
