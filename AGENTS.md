@@ -1,5 +1,7 @@
 # Prototype Instructions
 
+- On 23 September 2026 Shaun retired the Deep Agents research runtime (LangGraph over an API key, never measured) and made the `claude-cli` runtime, on the Claude subscription only, the single live research engine. Its good logic moved across: host-owned `fetch_source`/`read_source` through an MCP relay with no credential in the CLI's process tree, checked citations for QV rows and quoted web figures, recoverable tool errors with repeat-call strikes, live budget ceilings, provider outages scored as unassessed, and transcript credential redaction. The four-role phase 2 evaluation is deferred until after the research UI (phase 3).
+
 - On 22 September 2026 Shaun requested a new rebased PR for unpublished Linear workflow changes and confirmed that Linear must be switchable off. Frontier Settings → World & connection → Integrations owns the persisted integration switch. Off pauses Linear intake, replies and publication after the current receipt settles; normal local tasks and manual Grill remain usable.
 
 - On 22 September 2026 Shaun requested a Linear tagging integration in an isolated worktree. Import the issue title, description, project and relevant metadata into a Harness task. Use explicit project-to-repository mapping and retain source provenance; duplicate deliveries must reuse the same task. Task creation alone does not authorize task execution.

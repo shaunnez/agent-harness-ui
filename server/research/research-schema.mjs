@@ -24,6 +24,7 @@ export function createResearchSchema(db) {
       usage_json TEXT,
       budget_state_json TEXT,
       runtime_metadata_json TEXT,
+      model_json TEXT,
       error_json TEXT,
       cancellation_requested_at TEXT
     );
@@ -94,6 +95,16 @@ export function createResearchSchema(db) {
     CREATE INDEX IF NOT EXISTS research_sources_run_idx   ON research_sources(run_id, retrieved_at DESC);
   `);
   if (rebuilding) copyLegacySourceIdentity(db);
+  addResearchRunModelColumn(db);
+}
+
+/** `model_json` arrived after `research_runs` existed, so a database created before it needs
+ *  the column added rather than the table recreated. Null in every pre-existing row, which is
+ *  the correct answer: those runs did not record what answered them. */
+function addResearchRunModelColumn(db) {
+  const columns = db.prepare("PRAGMA table_info(research_runs)").all();
+  if (columns.some((column) => column.name === "model_json")) return;
+  db.exec("ALTER TABLE research_runs ADD COLUMN model_json TEXT");
 }
 
 /** Slice 1 briefly gave `research_sources` a globally unique id. No released schema version

@@ -121,11 +121,30 @@ export interface ResearchBudgetState {
   softOverruns?: Array<"maxUsd" | "maxTokens">;
 }
 
+/** Which model actually answered a run, reported by the adapter that started it.
+ *
+ *  This is an identity, not a selection: no credential, no endpoint, no constructor option,
+ *  and nothing a runtime needs in order to be driven. It is here because an operator reading
+ *  a finding has to be able to tell what produced it — in particular whether a deterministic
+ *  stand-in produced it — and a runtime is the only thing that knows. `provider` is a coarse
+ *  family (`anthropic`, `openai-compatible`, `claude-cli`, `fake`); `model` is whatever that
+ *  provider calls the model, reported verbatim rather than mapped onto a house vocabulary.
+ *
+ *  `live: false` marks a run answered by a deterministic stand-in rather than a model, so a
+ *  reader never has to recognise a particular provider name to know a finding is not real. */
+export interface ResearchModelIdentity {
+  provider: string;
+  model: string;
+  live: boolean;
+}
+
 export interface ResearchRunHandle {
   runId: string;
   runtimeId: string;
   status: ResearchRunState;
   startedAt: string;
+  /** What answered this run. Absent only from a runtime that calls no model at all. */
+  model?: ResearchModelIdentity;
   /** Opaque adapter-owned identifiers. Eversor persists this and never interprets it: it is
    *  the one place a runtime may keep correlation data, and it is a flat string map so that
    *  nothing structured can be smuggled into a neutral contract. */
@@ -215,6 +234,8 @@ export interface ResearchArtifact {
 
 export interface ResearchResult {
   runId: string;
+  /** Carried onto the result so a finding read on its own still says what answered it. */
+  model?: ResearchModelIdentity;
   summary?: string;
   findings: ResearchFinding[];
   artifacts: ResearchArtifact[];
@@ -243,6 +264,9 @@ export interface ResearchRuntime {
 export interface ResearchRunRecord {
   id: string;
   runtimeId: string;
+  /** Null until the runtime has started and reported one, and for a runtime that calls no
+   *  model. Never inferred by the host: an unreported identity stays unknown. */
+  model: ResearchModelIdentity | null;
   profile: ResearchProfile;
   status: ResearchRunState;
   createdAt: string;

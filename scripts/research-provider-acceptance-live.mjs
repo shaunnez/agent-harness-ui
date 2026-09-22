@@ -1,6 +1,5 @@
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
-import process from "node:process";
 import { DatabaseSync } from "node:sqlite";
 import { FallbackSearchProvider } from "../server/research/fallback-search-provider.mjs";
 import { FirecrawlCaptureProvider } from "../server/research/firecrawl-capture-provider.mjs";
@@ -8,12 +7,9 @@ import { FirecrawlSearchProvider } from "../server/research/firecrawl-search-pro
 import { ProviderCreditLedger } from "../server/research/provider-credit-ledger.mjs";
 import { ResearchProviderError } from "../server/research/research-provider-errors.mjs";
 import { verifySnapshotEvidence } from "../server/research/research-source-snapshots.mjs";
+import { ResearchStore } from "../server/research/research-store.mjs";
 import { ResearchWebTools } from "../server/research/research-web-tools.mjs";
 import { SerperSearchProvider } from "../server/research/serper-search-provider.mjs";
-import { DeepAgentsResearchRuntime } from "../server/research/deepagents/adapter.mjs";
-import { createResearchRuntimeRegistry } from "../server/research/research-runtime-registry.mjs";
-import { ResearchService } from "../server/research/research-service.mjs";
-import { ResearchStore } from "../server/research/research-store.mjs";
 import { migrateSqliteSchema } from "../server/sqlite-storage.mjs";
 
 export async function runResearchProviderAcceptance({ environment, manifest }) {
@@ -122,42 +118,54 @@ export async function runResearchProviderAcceptance({ environment, manifest }) {
       },
     };
     const db = new DatabaseSync(path.join(sessionDirectory, "tasks.sqlite3"));
-    let service = null;
+    const service = null;
     try {
       db.exec("PRAGMA foreign_keys = ON");
       migrateSqliteSchema(db);
       const store = new ResearchStore(db, {
         sourceSnapshotDirectory: path.join(sessionDirectory, "sources"),
       });
-      const runtime = new DeepAgentsResearchRuntime({
-        checkpointDbPath: path.join(sessionDirectory, "checkpoints.sqlite3"),
-        sourceSnapshotDirectory: path.join(sessionDirectory, "sources"),
-        env: {
-          PATH: process.env.PATH,
-          HOME: process.env.HOME,
-          RESEARCH_MODEL_PROVIDER: "fake",
-          RESEARCH_MODEL_FAKE_SCENARIO: "pdf",
-        },
+      // The host tools driven directly, as a runtime's model would drive them: the live search
+      // runs, the manifest PDF is captured, and the finding is submitted with its page. No
+      // model call is made, so the acceptance measures the providers and the evidence path.
+      const pdfTools = new ResearchWebTools({
+        runId: `ACCEPT-${sessionId}-PDF`,
+        budget: toolBudget(),
         searchProvider: controlledPdfSearch,
         captureProvider: capture,
         providerConfig: { defaultMarket: pdfCase.market, maxPdfPages: 3 },
         providerLedgers: [firecrawlLedger],
+        snapshotDirectory: path.join(sessionDirectory, "sources"),
       });
-      service = new ResearchService({
-        store,
-        registry: createResearchRuntimeRegistry([runtime]),
+      const created = await store.createRun({
+        runtimeId: "host-tools",
+        request: {
+          id: "",
+          objective: `Retain the public PDF and cite ${pdfCase.successExcerpt} on physical page ${pdfCase.successPage}.`,
+          profile: "quick",
+          context: [],
+          budget: toolBudget(),
+        },
+        budget: toolBudget(),
       });
-      const created = await service.createRun({
-        objective: `Retain the public PDF and cite ${pdfCase.successExcerpt} on physical page ${pdfCase.successPage}.`,
-        profile: "quick",
-        runtimeId: "deepagents",
-        context: [],
+      await pdfTools.invoke("web_search", { query: pdfCase.searchQuery, market: pdfCase.market });
+      const fetched = await pdfTools.invoke("fetch_source", { url: pdfCase.url });
+      await store.upsertSource(created.id, fetched.result.source);
+      const finding = await pdfTools.invoke("submit_finding", {
+        claim: `The retained PDF states ${pdfCase.successExcerpt} on physical page ${pdfCase.successPage}.`,
+        evidence: [
+          {
+            sourceId: fetched.result.source.id,
+            excerpt: pdfCase.successExcerpt,
+            locator: { page: pdfCase.successPage },
+            authority: "primary",
+          },
+        ],
       });
-      await service.settled(created.id);
-      const run = await service.getRun(created.id);
-      assertCompletedAcceptanceRun(run, assertions);
-      const result = await service.getResult(created.id);
-      const sources = await service.listSources(created.id);
+      pdfTools.close();
+      await store.recordResult(created.id, { findings: [finding.result], artifacts: [] });
+      const result = await store.getResult(created.id);
+      const sources = await store.listSources(created.id);
       const pdfSource = sources.find((source) => source.mediaType === "application/pdf");
       assert(Boolean(pdfSource), "The fake-model run retained a PDF source.", assertions);
       const expectedReference = {

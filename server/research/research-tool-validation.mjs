@@ -64,6 +64,10 @@ export function asToolError(error, fallbackCode, fallbackMessage) {
     error?.message ?? fallbackMessage,
   );
   converted.providerAttempt = error?.attempt ?? null;
+  // Kept so a caller can tell an external provider's outage from one website failing: the
+  // first says nothing about the research, the second is something the model can route around.
+  converted.provider = error?.provider ?? null;
+  converted.category = error?.category ?? null;
   return converted;
 }
 

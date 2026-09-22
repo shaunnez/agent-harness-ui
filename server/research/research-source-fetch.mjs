@@ -7,6 +7,8 @@ export const DEFAULT_SOURCE_BYTE_LIMIT = 1_000_000;
 export const DEFAULT_SOURCE_TIMEOUT_MS = 15_000;
 const MAX_REDIRECTS = 5;
 const ALLOWED_MEDIA_TYPES = new Set(["text/html", "application/xhtml+xml", "text/plain"]);
+/** A PDF may be larger than a page of HTML: rate schedules run to tens of pages. */
+export const DEFAULT_PDF_BYTE_LIMIT = 20_000_000;
 
 export async function fetchValidatedSource(requestedUrl, options = {}) {
   const timeoutController = new AbortController();
@@ -58,18 +60,26 @@ async function fetchValidatedSourceWithSignal(requestedUrl, options, signal, tim
       throw toolError("unsupported_media_type", "Source media type was missing or ambiguous.");
     }
     const mediaType = rawType.split(";")[0].trim().toLowerCase();
-    if (!ALLOWED_MEDIA_TYPES.has(mediaType)) {
+    // A PDF comes back as bytes, for a caller that can extract its pages (`acceptPdf`). Everyone
+    // else keeps the text-only contract below.
+    const pdf = options.acceptPdf && mediaType === "application/pdf";
+    if (!pdf && !ALLOWED_MEDIA_TYPES.has(mediaType)) {
       response.destroy?.();
       throw toolError("unsupported_media_type", `Unsupported source media type "${mediaType}".`);
     }
     const declared = Number(response.headers["content-length"] ?? 0);
-    const maxBytes = options.maxResponseBytes ?? DEFAULT_SOURCE_BYTE_LIMIT;
+    const maxBytes = pdf
+      ? (options.maxPdfBytes ?? DEFAULT_PDF_BYTE_LIMIT)
+      : (options.maxResponseBytes ?? DEFAULT_SOURCE_BYTE_LIMIT);
     if (Number.isFinite(declared) && declared > maxBytes) {
       response.destroy?.();
       throw toolError("source_too_large", `Source declares more than the ${maxBytes}-byte limit.`);
     }
     const body = await response.readBody(maxBytes, signal);
-    if (Buffer.from(body).subarray(0, 5).toString("latin1") === "%PDF-")
+    const isPdfBytes = Buffer.from(body).subarray(0, 5).toString("latin1") === "%PDF-";
+    if (pdf || (options.acceptPdf && isPdfBytes))
+      return { url: current.toString(), mediaType: "application/pdf", bytes: Buffer.from(body) };
+    if (isPdfBytes)
       throw toolError(
         "unsupported_media_type",
         "A PDF response cannot use the local HTML/text capture path.",

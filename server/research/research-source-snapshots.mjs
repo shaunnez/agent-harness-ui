@@ -145,13 +145,29 @@ export async function verifySnapshotEvidence({ source, reference, snapshotDirect
       )
         return false;
       const page = retained.pdf.pages.find((candidate) => candidate.pageNumber === reference.locator.page);
-      return Boolean(page?.content.includes(reference.excerpt));
+      return Boolean(page && excerptAppearsIn(page.content, reference.excerpt));
     }
     if (reference.locator?.page != null) return false;
-    return retained.content.includes(reference.excerpt);
+    return excerptAppearsIn(retained.content, reference.excerpt);
   } catch {
     return false;
   }
+}
+
+/**
+ * Whether `excerpt` is quoted from `content`: every character the same, with whitespace
+ * allowed to differ. Retained text keeps a table's cells on separate lines, and a model quoting
+ * a table row joins them with spaces; that is the same quote, and rejecting it taught nothing.
+ * Words, digits, currency and punctuation must still match exactly — only runs of whitespace
+ * are treated as equal.
+ */
+export function excerptAppearsIn(content, excerpt) {
+  const text = String(content ?? "");
+  const quote = String(excerpt ?? "");
+  if (!quote.trim()) return false;
+  if (text.includes(quote)) return true;
+  const collapse = (value) => value.replace(/\s+/g, " ").trim();
+  return collapse(text).includes(collapse(quote));
 }
 
 export function renderPdfPreview(pdf, maxCharacters = 50_000) {
