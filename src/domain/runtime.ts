@@ -1,3 +1,4 @@
+import type { RepairLimits } from "../repair-limits";
 import type { StageId } from "../domain";
 import type {
   AutoRunStage,
@@ -328,9 +329,11 @@ export interface RuntimeWorkPackage {
   verificationRuns?: RuntimeFocusedTestEvidence[];
   status: "planned" | "running" | "ready_for_integration" | "failed" | "integrated";
   attempts: number;
+  automaticRepairAttempts?: number;
   branch: string | null;
   worktreePath: string | null;
   baseRevision: string | null;
+  preparedRevision?: string | null;
   headRevision: string | null;
   files: string[];
   error: string | null;
@@ -533,6 +536,7 @@ export interface RuntimeTask {
     createdAt: string;
   }>;
   automaticRepairCycles?: number;
+  repairLimits?: RepairLimits;
   sameCandidateTestRetries?: Array<{
     id: string;
     candidateId: string;
@@ -923,6 +927,7 @@ export interface RuntimeModelCatalog {
 }
 
 export interface RuntimeSettings {
+  repairLimits?: RepairLimits;
   projects?: RuntimeProject[];
   grillPolicy: RuntimeGrillPolicy;
   gatePolicies?: RuntimeGatePolicies;

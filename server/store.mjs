@@ -1,3 +1,4 @@
+import { normalizeRepairLimits } from "../src/repair-limits.ts";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
@@ -679,6 +680,8 @@ export function createTaskRecord(state, input) {
     : implicitLegacyPins
       ? clone(stagePolicies)
       : {};
+  const repairLimits = normalizeRepairLimits(state.settings.repairLimits);
+  const repairStageLimit = 1 + repairLimits.candidate[workflowProfile.selected];
   const continuation = clone(input.continuation ?? null);
   const importedArtifacts = clone(continuation?.artifacts ?? []);
   const importedDecisions = clone(continuation?.decisions ?? []);
@@ -745,13 +748,21 @@ export function createTaskRecord(state, input) {
     stageDispositions: clone(continuation?.stageDispositions ?? {}),
     reviewRetries: [],
     automaticRepairCycles: 0,
+    repairLimits,
     sameCandidateTestRetries: [],
     status: continuation ? "awaiting-plan-approval" : "queued",
     currentStage: continuation ? "plan" : "triage",
     completedStages: continuation ? importedStages : [],
     stageRun: 0,
     stageRunLimit: DEFAULT_STAGE_RUN_LIMIT,
-    stageRunLimits: Object.fromEntries(CANONICAL_RUN_STAGES.map((stage) => [stage, DEFAULT_STAGE_RUN_LIMIT])),
+    stageRunLimits: Object.fromEntries(
+      CANONICAL_RUN_STAGES.map((stage) => [
+        stage,
+        ["implement", "dev-review", "test", "final-review"].includes(stage)
+          ? Math.max(DEFAULT_STAGE_RUN_LIMIT, repairStageLimit)
+          : DEFAULT_STAGE_RUN_LIMIT,
+      ]),
+    ),
     createdAt: now,
     updatedAt: now,
     startedAt: null,

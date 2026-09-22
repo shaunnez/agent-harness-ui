@@ -7,7 +7,24 @@ import { defaultProfileStagePolicies } from "../server/model-catalog.mjs";
 import { TaskOrchestrator } from "../server/orchestrator.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import { parseFastChangeContract, parseGateEvidence, parsePlanResult } from "../server/structured-output.mjs";
-import { fastEscalation, selectWorkflowProfile } from "../server/workflow-profiles.mjs";
+import {
+  fastEscalation,
+  recordWorkflowProfile,
+  selectWorkflowProfile,
+} from "../server/workflow-profiles.mjs";
+
+test("profile escalation makes room for its configured candidate repairs without resetting attempts", () => {
+  const task = {
+    workflowProfile: selectWorkflowProfile({ requestedProfile: "standard" }),
+    repairLimits: { package: 2, candidate: { fast: 1, standard: 2, "high-risk": 5 } },
+    stageRunLimits: { implement: 3, "dev-review": 3, test: 3, "final-review": 3 },
+    attemptsByStage: { implement: 2 },
+  };
+  recordWorkflowProfile(task, "high-risk", "Requires broader checks");
+  assert.equal(task.stageRunLimits.implement, 6);
+  assert.equal(task.stageRunLimits.test, 6);
+  assert.equal(task.attemptsByStage.implement, 2);
+});
 import { waitForTaskStatus } from "./wait-support.mjs";
 
 const usage = { inputTokens: 100, cachedInputTokens: 60, outputTokens: 20, totalTokens: 120 };
@@ -577,6 +594,9 @@ test("fast review allows one automatic consolidated repair, invalidates old evid
   try {
     const store = new JsonTaskStore(path.join(directory, "tasks.json"));
     await store.init();
+    await store.updateSettings((settings) => {
+      settings.gatePolicies = { repair: "auto-accept-recommendations" };
+    });
     const task = await store.create({
       title: "Small label repair",
       description: "A narrow copy change.",
@@ -666,7 +686,7 @@ test("fast review allows one automatic consolidated repair, invalidates old evid
     assert.match(repairPrompt, /Missing assertion/);
     assert.match(repairPrompt, /Open StatusLabel and observe the old text/);
     assert.deepEqual(callPolicies, ["gpt-5.6-sol:high", "gpt-5.6-luna:high", "gpt-5.6-sol:high"]);
-    assert.match(finished.error, /one automatic candidate-repair cycle/i);
+    assert.match(finished.error, /reached 1\/1 repair attempts/i);
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 25 });
   }

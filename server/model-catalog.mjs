@@ -1,3 +1,4 @@
+import { DEFAULT_REPAIR_LIMITS } from "../src/repair-limits.ts";
 import { readFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -272,6 +273,7 @@ export function defaultRuntimeSettings() {
     // A Grill question is a human decision gate unless the operator explicitly
     // changes this setting. Each new task snapshots the value.
     grillPolicy: "manual",
+    repairLimits: structuredClone(DEFAULT_REPAIR_LIMITS),
     // Both providers' models are selectable, because a stage policy is validated
     // against this list and a Claude task's policies must name Claude models. The
     // selected provider, not this list, decides which runtime executes.

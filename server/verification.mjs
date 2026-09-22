@@ -535,7 +535,7 @@ async function runVerificationCommand({ command, worktreePath, candidate, signal
             : null,
           reportOutcome && !reportOutcome.passed ? reportOutcome.detail : null,
           reportOutcome?.failureDetails,
-          retainedOutput(result),
+          retainedFailureOutput(result),
         ]
           .filter(Boolean)
           .join("\n"),
@@ -546,4 +546,15 @@ function retainedOutput(result) {
   const text = `${result?.stdout ?? ""}\n${result?.stderr ?? ""}`.trim();
   if (!text) return null;
   return text.length > RETAINED_OUTPUT_CHARS ? `…${text.slice(-RETAINED_OUTPUT_CHARS)}` : text;
+}
+
+// Preserve failing TAP assertions even when a long successful tail would hide them.
+function retainedFailureOutput(result) {
+  const text = `${result?.stdout ?? ""}\n${result?.stderr ?? ""}`.trim();
+  const failures = text.match(/^\s*not ok \d+[^\n]*\n(?:[ \t]+[^\n]*\n|\n)*/gm);
+  if (!failures?.length) return retainedOutput(result);
+  const excerpt = failures.join("\n");
+  return excerpt.length > RETAINED_OUTPUT_CHARS
+    ? `${excerpt.slice(0, RETAINED_OUTPUT_CHARS)}\n…further failure output omitted`
+    : excerpt;
 }
