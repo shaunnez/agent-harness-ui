@@ -1,5 +1,7 @@
 # H05 Codex comparison result
 
+> **Superseded as the current result:** this file retains the invalid v1 apparatus outcome. The authorized clean replacement succeeded; see `docs/MODEL-EVALUATION-CODEX-COMPARISON-V2-RESULT.md`.
+
 ## Outcome
 
 The 22 September 2026 H05 Sol-versus-Luna comparison produced no valid model-performance observations. Both prepared trials passed their exact base-repository and isolation preflights, but a coordinator status check opened each live SQLite store from a second process. Store startup recovery treated the active workers as interrupted and cleared their run reservations. The model calls already in flight were allowed to settle, after which both trials failed before Implement and were adjudicated `invalid` with failure class `apparatus`.

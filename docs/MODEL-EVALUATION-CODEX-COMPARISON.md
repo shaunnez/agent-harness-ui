@@ -1,6 +1,6 @@
 # Resume with Sol: two H05 comparison runs
 
-> **Terminal:** the authorized pair was launched on 22 September 2026 and both attempts were invalidated by a coordinator-side SQLite monitoring error before Implement. Do not resume or reuse that campaign. Read `docs/MODEL-EVALUATION-CODEX-COMPARISON-RESULT.md` for the adjudicated result and replacement boundary.
+> **Terminal:** the original pair was invalidated by a coordinator-side SQLite monitoring error. Shaun authorized one clean replacement pair, which completed with both arms independently accepted. Read `docs/MODEL-EVALUATION-CODEX-COMPARISON-V2-RESULT.md` for the current result and `docs/MODEL-EVALUATION-CODEX-COMPARISON-RESULT.md` for the retained invalid v1 history. No evaluation worker or reviewer remains active.
 
 ## Latest user decision
 
