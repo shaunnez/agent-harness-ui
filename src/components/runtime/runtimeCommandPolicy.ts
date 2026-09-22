@@ -10,20 +10,19 @@ import { candidateGateStages, getRuntimeGateFreshness } from "./workflow";
 
 export function nextAction(task: RuntimeTask | RuntimeTaskCore) {
   const next = deriveNextAction(task);
-  if (!next?.action) {
-    if (task.actionEligibility?.actions["grant-retry"]?.allowed) {
-      return {
-        action: "grant-retry" as const,
-        label: "Grant one stage attempt",
-        title: "Stage retry allowance exhausted",
-        detail:
-          "The server has authorized exactly one additional attempt while retaining the existing evidence.",
-      };
-    }
-    return null;
+  const eligible =
+    !next?.action || !task.actionEligibility || Boolean(task.actionEligibility.actions[next.action]?.allowed);
+  if (next?.action && eligible) return next;
+  if (task.actionEligibility?.actions["grant-retry"]?.allowed) {
+    return {
+      action: "grant-retry" as const,
+      label: "Grant one stage attempt",
+      title: "Stage retry allowance exhausted",
+      detail:
+        "The server has authorized exactly one additional attempt while retaining the existing evidence.",
+    };
   }
-  if (!task.actionEligibility) return next;
-  return task.actionEligibility.actions[next.action]?.allowed ? next : null;
+  return null;
 }
 
 export function deriveNextAction(task: RuntimeTask | RuntimeTaskCore) {
