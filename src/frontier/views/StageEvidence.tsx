@@ -154,7 +154,7 @@ export function StageEvidence({
   return (
     <section className={`stage-evidence ${earlyStage ? "workspace-early-evidence" : ""}`}>
       {(stage === "triage" || stage === "scouts") && (
-        <InvestigationEvidence evidence={evidence} stage={stage} onWatch={onWatch} />
+        <InvestigationEvidence evidence={evidence} stage={stage} onWatch={onWatch} onArtifact={onArtifact} />
       )}
       {!detail?.gateResult && reviewIdentity}
       {detail?.gateResult && (
@@ -197,7 +197,7 @@ export function StageEvidence({
         </button>
       )}
       {latest &&
-        ["specification", "plan", "triage", "scouts", "dev-review", "test", "final-review"].includes(stage) &&
+        ["specification", "plan", "triage", "dev-review", "test", "final-review"].includes(stage) &&
         (earlyStage ? (
           <div className="stage-document">
             <ArtifactViewer

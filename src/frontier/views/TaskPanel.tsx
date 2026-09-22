@@ -1,6 +1,7 @@
 import {
   Binoculars,
   Check,
+  CircleNotch,
   ClipboardText,
   FileText,
   FolderOpen,
@@ -24,6 +25,7 @@ import {
   stageLabels,
 } from "../runtime/presentation";
 import { gateStages, stageHasError, stageRecorded, stageState } from "../runtime/workflow";
+import { CollapsibleText } from "../ui/CollapsibleText";
 import { ScrollArea } from "../ui/ScrollArea";
 import { CandidateDiff } from "./CandidateDiff";
 import { CandidateEvidence } from "./CandidateEvidence";
@@ -147,9 +149,14 @@ export function TaskPanel({
       </header>
       <nav className="stage-navigation" aria-label="Task stages">
         {stageIds.map((stage, index) => {
-          const state = stageRecorded(evidence, stage) ? stageState(task, stage) : "Not started";
+          const recorded = stageRecorded(evidence, stage);
+          const state = recorded ? stageState(task, stage) : "Not started";
           const stale = /Rerun/.test(state);
-          const failed = stageHasError(evidence, stage);
+          const failed = recorded && stageHasError(evidence, stage);
+          const running =
+            stage === task.currentStage &&
+            ["running", "cancelling"].includes(task.status) &&
+            (task.activeRunIds?.length ?? 0) > 0;
           const candidateGate = gateStages.some((gate) => gate === stage);
           const completed =
             task.completedStages.includes(stage) &&
@@ -174,7 +181,9 @@ export function TaskPanel({
               }}
             >
               <span className="stage-number">
-                {stale || failed ? (
+                {running ? (
+                  <CircleNotch size={16} className="spin" aria-label="Stage running" />
+                ) : stale || failed ? (
                   <WarningCircle size={16} aria-label={stale ? "Rerun required" : "Stage error"} />
                 ) : completed ? (
                   <Check size={14} weight="bold" aria-hidden="true" />
@@ -379,7 +388,7 @@ export function TaskPanel({
             <ClipboardText size={18} />
             Task brief
           </h3>
-          <p>{task.description}</p>
+          <CollapsibleText text={task.description} label="brief" />
         </section>
         <section>
           <h3>
