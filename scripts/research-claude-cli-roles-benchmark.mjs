@@ -22,6 +22,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { ClaudeCliRolesResearchRuntime } from "../server/research/claude-cli/roles-runtime.mjs";
+import { RECORDED_BASELINE_MODEL } from "../server/research/claude-cli/runtime.mjs";
 import { resolveResearchBudget } from "../src/research-budget-policy.ts";
 import {
   compareWithBaseline,
@@ -52,7 +53,7 @@ const budget = resolveResearchBudget("standard", {
 
 const runtime = new ClaudeCliRolesResearchRuntime({
   maxConcurrentRuns: options.concurrency,
-  ...(options.model ? { model: options.model } : {}),
+  model: options.model ?? RECORDED_BASELINE_MODEL,
 });
 
 const verifierByScenario = new Map();

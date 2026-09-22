@@ -19,7 +19,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
-import { ClaudeCliResearchRuntime } from "../server/research/claude-cli/runtime.mjs";
+import { ClaudeCliResearchRuntime, RECORDED_BASELINE_MODEL } from "../server/research/claude-cli/runtime.mjs";
 import { resolveResearchBudget } from "../src/research-budget-policy.ts";
 import {
   compareWithBaseline,
@@ -56,7 +56,7 @@ const budget = resolveResearchBudget("standard", {
 
 const runtime = new ClaudeCliResearchRuntime({
   maxConcurrentRuns: options.concurrency,
-  ...(options.model ? { model: options.model } : {}),
+  model: options.model ?? RECORDED_BASELINE_MODEL,
   // `--no-host-tools` is the recorded configuration exactly: no way to fetch a page. Without it
   // the agent can retain and quote web pages, which is a different recipe from the one the
   // 90 recorded runs used — so the exit test below becomes a regression check, not a port check.
@@ -90,7 +90,7 @@ const exitTest = evaluateExitTest(comparison, { scenariosRun: records.length });
 const report = {
   generatedAt: new Date().toISOString(),
   runtime: runtime.id,
-  model: options.model ?? null,
+  model: options.model ?? RECORDED_BASELINE_MODEL,
   concurrency: options.concurrency,
   elapsedMs: Date.now() - startedAt,
   aborted,

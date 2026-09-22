@@ -17,12 +17,15 @@ result, and its useful parts moved here — see "What came over from Deep Agents
 
 ```
 claude -p "<pinned scope>" \
-  --model claude-opus-5 \
+  --model claude-opus-5-5 \
   --append-system-prompt <qv-system-prompt.txt> \
   --mcp-config <one stdio server over the local priced-rate capture> \
   --allowed-tools "mcp__qv__search_qv,mcp__qv__get_qv_table,mcp__qv__list_qv_sections,WebSearch" \
   --output-format stream-json --verbose
 ```
+
+The runtime defaults to Opus 5.5. The benchmarks pin Opus 5 (`RECORDED_BASELINE_MODEL`), the
+model behind the recorded runs, unless `--model` names another.
 
 `stream-json --verbose` rather than the recorded script's `json`: `json` returns one blob at
 the end, so `events()` would have nothing to yield until the run was already over.

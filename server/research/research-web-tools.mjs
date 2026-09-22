@@ -63,6 +63,7 @@ export class ResearchWebTools {
   #deadlineAtMs = null;
   #ledgers;
   #closed = false;
+  #pdfExtractor;
 
   constructor({
     runId,
@@ -86,6 +87,9 @@ export class ResearchWebTools {
     // neutral research contract concern, so a caller that needs the ceiling passes it here.
     // Null keeps the existing unlimited behaviour for every caller that does not.
     maxUniqueCaptures = null,
+    // Reads a PDF's physical pages locally (`research-pdf-text.mjs`). Absent, a PDF can only be
+    // read through a capture provider, which is the behaviour every caller had before it.
+    pdfExtractor = null,
   }) {
     // Optional: a runtime whose model has its own search (the Claude CLI's `WebSearch`) uses
     // these tools only to retain and verify, and passes none. `web_search` then fails as a tool
@@ -128,6 +132,7 @@ export class ResearchWebTools {
       throw new Error("maxUniqueCaptures must be a positive integer when supplied.");
     this.#maxUniqueCaptures = maxUniqueCaptures;
     this.#ledgers = providerLedgers.filter(Boolean);
+    this.#pdfExtractor = pdfExtractor;
     this.#startedAtMs = Date.now();
   }
 
@@ -395,24 +400,50 @@ export class ResearchWebTools {
         maxResponseBytes: this.#maxResponseBytes,
         timeoutMs: Math.min(this.#timeoutMs, this.#remainingMs()),
         signal: this.#signal,
+        acceptPdf: Boolean(this.#pdfExtractor),
       });
     } catch (error) {
       throw asToolError(error, error?.code ?? "source_fetch_failed", "Local source capture failed.");
+    }
+    const metadata = {
+      provider: "local",
+      requestedUrl: url,
+      finalUrl: response.url,
+      attempts: priorAttempts,
+      receiptTime: this.#now().toISOString(),
+      normalizationVersion: 1,
+    };
+    if (response.mediaType === "application/pdf") {
+      let validatedPdf;
+      try {
+        validatedPdf = await this.#pdfExtractor(response.bytes, {
+          maxPages: this.#providerConfig.maxPdfPages ?? 30,
+          signal: this.#signal,
+        });
+      } catch (error) {
+        throw asToolError(error, error?.code ?? "source_incomplete", "The PDF could not be read.");
+      }
+      return {
+        mediaType: "application/pdf",
+        content: "",
+        pages: validatedPdf.pages,
+        validatedPdf,
+        metadata: {
+          ...metadata,
+          title: response.url,
+          parserMode: "pdftotext-layout",
+          verifiedPages: validatedPdf.parsedPages,
+          coverage: validatedPdf.coverage,
+          capTruncated: validatedPdf.capTruncated,
+        },
+      };
     }
     const normalized = normalizeSourceContent(response.body, response.mediaType);
     return {
       mediaType: response.mediaType,
       content: normalized.content,
       pages: [],
-      metadata: {
-        provider: "local",
-        requestedUrl: url,
-        finalUrl: response.url,
-        title: normalized.title ?? response.url,
-        attempts: priorAttempts,
-        receiptTime: this.#now().toISOString(),
-        normalizationVersion: 1,
-      },
+      metadata: { ...metadata, title: normalized.title ?? response.url },
     };
   }
 

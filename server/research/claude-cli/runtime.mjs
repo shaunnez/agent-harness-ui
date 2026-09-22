@@ -2,7 +2,7 @@
 //
 // This is the configuration behind all 90 recorded runs, and nothing more than it. Six flags:
 //
-//   claude -p "<objective>" --model claude-opus-5 --append-system-prompt <prompt>
+//   claude -p "<objective>" --model <model> --append-system-prompt <prompt>
 //     --mcp-config <tools> --allowed-tools "<corpus tools>,WebSearch"
 //     --output-format stream-json --verbose
 //
@@ -55,10 +55,13 @@ import { redactSecretsInFile, scannedNeedles } from "./secret-scan.mjs";
 
 export const CLAUDE_CLI_RESEARCH_RUNTIME_ID = "claude-cli";
 
-/** The model all 90 recorded runs used. Overridable, but not by accident: a different model is
- *  a different baseline and the comparison against `17a-top30-results.json` stops meaning
- *  anything the moment it changes. */
-export const DEFAULT_CLAUDE_CLI_MODEL = "claude-opus-5";
+/** The model a research run uses unless told otherwise. */
+export const DEFAULT_CLAUDE_CLI_MODEL = "claude-opus-5-5";
+
+/** The model all 90 recorded runs used. The benchmarks pin it, because a different model is a
+ *  different baseline and the comparison against `17a-top30-results.json` stops meaning anything
+ *  the moment it changes. Pass `--model` to a benchmark to measure another model on purpose. */
+export const RECORDED_BASELINE_MODEL = "claude-opus-5";
 
 /** Eight parallel spawns produced 6 empty outputs out of 72; three produced none. The scopes
  *  were fine in isolation, so this is a spawn-concurrency limit rather than anything about the

@@ -7,7 +7,7 @@
 // process. Only the model and the network are fake.
 
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -27,6 +27,7 @@ import { QV_ALLOWED_TOOLS } from "../server/research/claude-cli/qv-recipe.mjs";
 import { rowIdsIn } from "../server/research/claude-cli/qv-rows.mjs";
 import { ClaudeCliResearchRuntime } from "../server/research/claude-cli/runtime.mjs";
 import { redactSecretsInFile, scannedNeedles } from "../server/research/claude-cli/secret-scan.mjs";
+import { extractPdfPages } from "../server/research/research-pdf-text.mjs";
 import { ResearchProviderError } from "../server/research/research-provider-errors.mjs";
 import { createResearchRuntimeRegistry } from "../server/research/research-runtime-registry.mjs";
 import { ResearchService } from "../server/research/research-service.mjs";
@@ -606,3 +607,100 @@ test("a credential the host holds is redacted from a transcript, and reported on
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+// --- PDFs read on this machine ------------------------------------------------------------------
+
+const HAS_POPPLER = spawnSync("pdftotext", ["-v"]).error == null;
+
+test("a PDF's physical pages are read locally, and a quote verifies only on its own page", {
+  skip: !HAS_POPPLER,
+}, async () => {
+  const pdf = minimalPdf([
+    "Contents and scope of this schedule.",
+    "Capital contribution: $3,193 per connection.",
+  ]);
+  const pages = await extractPdfPages(pdf, { maxPages: 30 });
+  assert.deepEqual([pages.parsedPages, pages.totalPages, pages.coverage], [2, 2, "complete"]);
+  assert.match(pages.pages[1].content, /\$3,193 per connection/);
+
+  const directory = await mkdtemp(path.join(os.tmpdir(), "rcc-pdf-"));
+  const tools = new ResearchWebTools({
+    runId: "RSCH-PDF",
+    budget: BUDGET,
+    snapshotDirectory: path.join(directory, "sources"),
+    pdfExtractor: extractPdfPages,
+    lookup: FIXTURE_WEB.lookup,
+    fetchImpl: async () => new Response(pdf, { headers: { "content-type": "application/pdf" } }),
+  });
+  try {
+    const fetched = (
+      await tools.invoke("fetch_source", { url: "https://operator.example.test/schedule.pdf" })
+    ).result;
+    assert.equal(fetched.source.mediaType, "application/pdf");
+    assert.deepEqual(fetched.pages, [1, 2]);
+    const right = tools.verifyEvidence({
+      sourceId: fetched.source.id,
+      excerpt: "$3,193 per connection",
+      locator: { page: 2 },
+    });
+    assert.equal(right.quoteVerified, true);
+    assert.throws(
+      () =>
+        tools.verifyEvidence({
+          sourceId: fetched.source.id,
+          excerpt: "$3,193 per connection",
+          locator: { page: 1 },
+        }),
+      (error) => error.code === "excerpt_not_found",
+    );
+  } finally {
+    tools.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("without a PDF reader, a PDF is still refused rather than read as text", async () => {
+  const tools = new ResearchWebTools({
+    runId: "RSCH-PDF-OFF",
+    budget: BUDGET,
+    lookup: FIXTURE_WEB.lookup,
+    fetchImpl: async () =>
+      new Response(minimalPdf(["x"]), { headers: { "content-type": "application/pdf" } }),
+  });
+  try {
+    await assert.rejects(
+      tools.invoke("fetch_source", { url: "https://operator.example.test/schedule.pdf" }),
+      (error) => error.code === "unsupported_media_type",
+    );
+  } finally {
+    tools.close();
+  }
+});
+
+/** A valid PDF with one line of text per page, built by hand so the test needs no fixture file. */
+function minimalPdf(pageTexts) {
+  const objects = [];
+  const pageIds = pageTexts.map((_text, index) => 4 + index * 2);
+  objects[1] = "<< /Type /Catalog /Pages 2 0 R >>";
+  objects[2] = `<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(" ")}] /Count ${pageTexts.length} >>`;
+  objects[3] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>";
+  pageTexts.forEach((text, index) => {
+    const pageId = pageIds[index];
+    const stream = `BT /F1 12 Tf 72 720 Td (${text.replace(/[()\\]/g, "\\$&")}) Tj ET`;
+    objects[pageId] =
+      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents ${pageId + 1} 0 R >>`;
+    objects[pageId + 1] = `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`;
+  });
+  let body = "%PDF-1.4\n";
+  const offsets = [];
+  for (let id = 1; id < objects.length; id += 1) {
+    offsets[id] = body.length;
+    body += `${id} 0 obj\n${objects[id]}\nendobj\n`;
+  }
+  const xref = body.length;
+  body += `xref\n0 ${objects.length}\n0000000000 65535 f \n`;
+  for (let id = 1; id < objects.length; id += 1)
+    body += `${String(offsets[id]).padStart(10, "0")} 00000 n \n`;
+  body += `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return Buffer.from(body, "latin1");
+}

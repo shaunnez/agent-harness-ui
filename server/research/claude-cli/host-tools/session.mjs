@@ -3,6 +3,7 @@
 // CLI at the relay. A runtime asks for a session per run and closes it when the run ends.
 
 import process from "node:process";
+import { extractPdfPages } from "../../research-pdf-text.mjs";
 import { DEFAULT_RESEARCH_SOURCE_DIRECTORY, ResearchWebTools } from "../../research-web-tools.mjs";
 import { openHostToolBridge } from "./bridge.mjs";
 
@@ -30,6 +31,9 @@ export async function openHostToolSession({
     providerLedgers,
     snapshotDirectory,
     signal,
+    // PDFs are read on this machine. Pricing schedules are published as PDFs, and without this
+    // the agent's only route to one was a paid capture provider.
+    pdfExtractor: extractPdfPages,
     // `tool.called` is dropped: the CLI stream already reports every tool call, with the id
     // that correlates it to its result, and a second copy from here would double-count them.
     // Everything else — above all `source.retrieved` with the retained snapshot — is the
