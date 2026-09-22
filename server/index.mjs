@@ -1,3 +1,6 @@
+import { createLinearClient } from "./integrations/linear-client.mjs";
+import { LinearIntake, readLinearConfig } from "./integrations/linear-intake.mjs";
+import { createLinearWebhookServer } from "./integrations/linear-webhook.mjs";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
@@ -23,6 +26,23 @@ const suggestedRepository = configuredRepository ?? root;
 const port = Number(process.env.AGENT_HARNESS_PORT ?? 4310);
 
 const jsonStore = process.env.AGENT_HARNESS_STORE === "json";
+const linearConfig = await readLinearConfig(process.env.AGENT_HARNESS_LINEAR_CONFIG);
+const linearPort = Number(process.env.AGENT_HARNESS_LINEAR_PORT ?? 4311);
+if (
+  linearConfig &&
+  (jsonStore ||
+    !process.env.LINEAR_CLIENT_SECRET ||
+    !process.env.LINEAR_WEBHOOK_SECRET ||
+    !Number.isInteger(linearPort) ||
+    linearPort < 1 ||
+    linearPort > 65535 ||
+    linearPort === port)
+) {
+  throw new Error(
+    "Linear intake requires SQLite, LINEAR_CLIENT_SECRET, LINEAR_WEBHOOK_SECRET, and a dedicated valid port.",
+  );
+}
+
 // The store recovers interrupted runs during init, before the HTTP listener can reveal a
 // duplicate process through EADDRINUSE. Own the store first so a second companion cannot
 // rewrite live task state or start a second set of process-local coordinators.
@@ -61,11 +81,29 @@ const pullRequestPollIntervalMs = Number.isFinite(configuredPullRequestPollInter
   ? Math.max(5_000, configuredPullRequestPollIntervalMs)
   : 30_000;
 let stopPullRequestPolling = () => {};
+const linearIntake = linearConfig
+  ? new LinearIntake({
+      store,
+      config: linearConfig,
+      client: createLinearClient({
+        clientId: linearConfig.clientId,
+        clientSecret: process.env.LINEAR_CLIENT_SECRET,
+      }),
+    })
+  : null;
+const linearServer = linearIntake
+  ? createLinearWebhookServer({
+      intake: linearIntake,
+      signingSecret: process.env.LINEAR_WEBHOOK_SECRET,
+    })
+  : null;
+
 const server = createApiServer({
   store,
   orchestrator,
   suggestedRepository,
   researchService,
+  linearIntake,
   reportHttpMetric(metric) {
     if (
       process.env.AGENT_HARNESS_HTTP_METRICS === "1" ||
@@ -84,6 +122,16 @@ server.once("error", async (error) => {
 
 server.listen(port, "127.0.0.1", () => {
   console.log(`Agent Harness local runtime listening on http://127.0.0.1:${port}`);
+  if (linearServer) {
+    linearServer.once("error", async () => {
+      console.error("Linear webhook listener failed to start; stopping this companion.");
+      await shutdown(1);
+    });
+    linearServer.listen(linearPort, "127.0.0.1", () => {
+      console.log(`Linear webhook listener: http://127.0.0.1:${linearPort}/linear/webhook`);
+      linearIntake.start();
+    });
+  }
   stopPullRequestPolling = startPullRequestPolling(orchestrator, {
     intervalMs: pullRequestPollIntervalMs,
   });
@@ -94,6 +142,11 @@ async function shutdown(exitCode) {
   if (shuttingDown) return;
   shuttingDown = true;
   stopPullRequestPolling();
+  const linearClosed = linearServer?.listening
+    ? new Promise((resolve) => linearServer.close(resolve))
+    : Promise.resolve();
+  await linearIntake?.stop();
+  await linearClosed;
   const serverClosed = server.listening
     ? new Promise((resolve, reject) => {
         server.close((error) => (error ? reject(error) : resolve()));
