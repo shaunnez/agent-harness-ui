@@ -158,6 +158,7 @@ test("filters structured activity and renders test run and artifact drilldown", 
         onOpenArtifact: () => {},
       }),
     );
+    assert.match(markup, /<details class="runtime-activity" open="">/);
     assert.match(markup, /Tool calls/);
     assert.match(markup, /Run drilldown/);
     assert.match(markup, /RUN-TEST/);
