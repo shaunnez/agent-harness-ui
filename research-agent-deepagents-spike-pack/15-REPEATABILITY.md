@@ -62,3 +62,62 @@ model randomness and it will not be fixed by a better model or a lower temperatu
 
 Five runs of one scenario. Whether the same pattern holds elsewhere is untested, and
 the scenarios that resolved from a single QV row may well be stable at one run.
+
+---
+
+# Pinning the scope — three more runs
+
+Rewrote the scenario with the three parameters fixed: light commercial duty, 100mm
+nominal, 20m continuous run, one connection at 1.0m invert, and an explicit list of
+what is in and out. Three Opus runs, $4.50 of plan usage.
+
+| | unpinned (5 runs) | pinned (3 runs) |
+|---|---|---|
+| bands | 400–800, 310–860, 520–1050, 530–1040, 520–1050 | 570–620, 620–700, 580–800 |
+| low spread | 1.71x | **1.09x** |
+| high spread | 1.31x | 1.29x |
+| full envelope | 310–1050 (**3.39x**) | 570–800 (**1.40x**) |
+| QV rows cited by every run | 1 of 18 | **5 of 10** |
+
+The three pinned bands overlap. A reviewer looking at 570–620, 620–700 and 580–800
+is looking at one answer of roughly **$580–700 per metre**, not three.
+
+## What is now identical across every run
+
+| component | value |
+|---|---|
+| channel and grate, light commercial 100mm | 416.00 /m |
+| sawcut existing paving, both sides | 28.20 /m |
+| break out and cart 150mm RC paving | 70.4–105.6 /m |
+| stormwater connection, amortised over 20m | 31.85 /m |
+
+The rate lookup was already stable. Pinning the scope made the *build-up* stable too.
+
+## What still varies, and why it is not a scope problem
+
+Two things, both quantity conventions rather than rates:
+
+1. **Reinstatement width.** Run 1 assumed 0.10–0.25 m² per metre, run 2 assumed
+   0.40–0.60, run 3 assumed 0.15–0.30. Same rate ($144/m²), three different strip
+   widths. That is a measurement convention a QS settles once and it applies to every
+   trenching scenario in the catalogue.
+2. **Whether the $416/m channel rate already includes its concrete haunch.** Run 3
+   added a separate haunch component at 0–125/m; runs 1 and 2 treated it as included.
+   The agent has flagged this same uncertainty in every run since the first one:
+   *"whether t16 rates include concrete haunching — strongly indicated by rate level,
+   not confirmed."*
+
+Neither is fixed by more prompt text. The first needs a house measurement convention;
+the second needs one person to open QV's item notes for table t16 and read them.
+
+**That second one is worth stating plainly: a single unanswered question about one QV
+table is responsible for a chunk of the remaining spread, and it is a thirty-second
+lookup for whoever holds the login.**
+
+## What this means for the other 154
+
+The recipe is: pin duty/size, pin a nominal quantity so amortisation is defined, list
+inclusions and exclusions, run three times, show the reviewer all three. Roughly
+$4.50 of plan usage per scenario, and the scope text is a few minutes of QS time.
+
+Untested beyond this one scenario.
