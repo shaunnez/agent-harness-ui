@@ -172,23 +172,23 @@ function makeDeliveryTask({ variantId, taskId, status, gates, decisionMetric }) 
   });
 }
 
-test("a delivery-metric experiment is decided on deterministic delivery, not gate passes", () => {
+test("an undeclared experiment is decided on deterministic delivery, not gate passes", () => {
   // The arm that delivers fails its gates; the arm that passes every gate delivers nothing.
-  // A declared delivery metric cannot be replaced by the more flattering gate rate.
+  // The merged default must not revert to the more flattering gate rate.
   const summary = buildEvaluationSummary([
     makeDeliveryTask({
       variantId: "v1",
       taskId: "AH-1",
       status: "passed",
       gates: ["REPAIR"],
-      decisionMetric: "deterministic-delivery-rate",
+      decisionMetric: null,
     }),
     makeDeliveryTask({
       variantId: "v2",
       taskId: "AH-2",
       status: "failed",
       gates: ["PASS"],
-      decisionMetric: "deterministic-delivery-rate",
+      decisionMetric: null,
     }),
   ]);
   const [decision] = summary.experiments.decisions;

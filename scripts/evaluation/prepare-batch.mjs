@@ -6,6 +6,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 import { readExecutionProviderCatalog } from "../../server/model-catalog.mjs";
 import { formatArgv, parseVerificationManifest } from "../../server/verification.mjs";
+import { DEFAULT_REPAIR_LIMITS } from "../../src/repair-limits.ts";
 
 const exec = promisify(execFile);
 const root = fileURLToPath(new URL("../../", import.meta.url));
@@ -69,7 +70,8 @@ if (mode !== "dry-run" && changed.trim())
 const harnessVersion = (await git(root, ["rev-parse", "HEAD"])).stdout.trim();
 // User-selected quality-first allowances apply to every new evaluation mode.
 // Retained campaigns keep their frozen limits; preparation never edits them.
-const budget = { maxWallTimeMs: 7200000, maxTotalTokens: 30000000 };
+const budget = { maxWallTimeMs: 7200000, maxTotalTokens: feasibility ? 200000000 : 30000000 };
+const repairLimits = structuredClone(DEFAULT_REPAIR_LIMITS);
 const stageTimeoutOverridesMs = Object.fromEntries(
   [
     "triage",
@@ -128,6 +130,7 @@ const environment = {
   workflowProfile: "high-risk",
   grill: "manual with frozen benchmark-user answers",
   stageTimeoutOverridesMs,
+  repairLimits,
 };
 const deny = (paths) =>
   `(version 1)\n(allow default)\n${paths.map((entry) => `(deny file-read* (subpath ${JSON.stringify(entry)}))`).join("\n")}\n`;
@@ -161,11 +164,12 @@ const freeze = {
   graderVersion: `h02-${sha(await read("evaluations/graders/h02.mjs"))}`,
   rubricVersion: `${rubric.version}-${sha(JSON.stringify(rubric))}`,
   environmentVersion: sha(JSON.stringify(environment)),
-  executionVersion: "fixed-policy-native-permissions-v2",
+  executionVersion: "fixed-policy-native-permissions-v3-package-repair",
   environment,
   budget,
   limits,
   stageTimeoutOverridesMs,
+  repairLimits,
   policies,
   trials,
   brief: contract,
@@ -257,6 +261,7 @@ for (const trial of trials) {
   }
   const config = {
     stageTimeoutOverridesMs,
+    repairLimits,
     playwrightModule,
     trialId: trial.id,
     privateRoot: privateTrial,

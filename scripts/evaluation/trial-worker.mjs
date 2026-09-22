@@ -26,6 +26,7 @@ await store.updateSettings((settings) => {
   settings.defaultReasoning = "high";
   settings.grillPolicy = "manual";
   settings.gatePolicies = config.gatePolicies;
+  if (config.repairLimits) settings.repairLimits = structuredClone(config.repairLimits);
 });
 const worktrees = new GitWorktreeManager(path.join(config.publicRoot, "w"));
 const verificationEnvironment = Object.fromEntries(

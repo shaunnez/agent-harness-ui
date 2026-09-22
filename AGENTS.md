@@ -108,6 +108,8 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Durable workflow decisions
 
+- Later on 22 September 2026 Shaun authorized one fresh H02 evaluation after reconciliation with merged main: two-hour delivery, one-hour calls, 200M total delivery tokens, two automatic package corrections and three shared high-risk candidate repairs. Retain the balanced policy and frozen historical case; complete preflight before inference and at most one separately accounted blind review after behavior checks pass. See `docs/MODEL-EVALUATION-H02-V7.md`. This is a single run, not a wider campaign or runtime activation.
+
 - On 22 September 2026 Shaun requested bounded automatic correction of failed package checks and configurable repair attempts in Frontier Settings. Use the existing Repair manual/automatic choice for package and candidate fixes, snapshot numeric limits on new tasks, preserve every failed attempt and the exact retained package, and rerun qualification before integration. Candidate repair limits are shared across Dev Review, Test and Final Review; cancellation, baseline failures and invalid plans still require attention. This change does not authorize a new paid evaluation.
 
 - On 22 September 2026 Shaun requested that automatically accepted Grill questions and answers remain visible in the main Frontier Grill pane after completion. Show recorded answer provenance, retain manual answering, and pass resolved answers with their actual source into downstream model context; never label automatic choices as human decisions.
