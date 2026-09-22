@@ -273,3 +273,48 @@ test("model configuration never reaches the child under the provider's own env v
     },
   );
 });
+
+test("a run with no configured provider fails, naming what to set, instead of faking one", async () => {
+  await withDeepAgentsRuntime(
+    async ({ runtime }) => {
+      const request = testRequest("RSCH-DA-NO-PROVIDER");
+      // `start()` throws rather than resolving a stand-in. `ResearchService` turns that into a
+      // durable `runtime_start_failed` row, so the operator sees a failure carrying the
+      // remedy — not a completed run full of invented findings.
+      await assert.rejects(runtime.start(request), (error) => {
+        assert.match(error.message, /No research model provider is configured/);
+        assert.match(error.message, /RESEARCH_MODEL_PROVIDER=anthropic/);
+        assert.match(error.message, /RESEARCH_MODEL_PROVIDER=fake/);
+        return true;
+      });
+    },
+    // Not `safeChildEnv`, which now names the fake deliberately: this is the bare environment
+    // an operator who set nothing would have.
+    { envOverrides: {}, bareEnv: true },
+  );
+});
+
+test("a live run reports the provider and model that answered it, a fake run reports itself", async () => {
+  await withDeepAgentsRuntime(async ({ runtime }) => {
+    const handle = await runtime.start(testRequest("RSCH-DA-IDENTITY"));
+    assert.deepEqual(handle.model, { provider: "fake", model: "fake-research-model", live: false });
+    await waitForTerminal(runtime, "RSCH-DA-IDENTITY");
+  });
+
+  await withDeepAgentsRuntime(
+    async ({ runtime }) => {
+      // Resolved without any network call: `start()` reports the identity before the child
+      // has done anything, which is what lets the record carry it from the first moment.
+      const handle = await runtime.start(testRequest("RSCH-DA-IDENTITY-LIVE"));
+      assert.deepEqual(handle.model, { provider: "anthropic", model: "claude-identity-test", live: true });
+      await runtime.cancel("RSCH-DA-IDENTITY-LIVE");
+    },
+    {
+      envOverrides: {
+        RESEARCH_MODEL_PROVIDER: "anthropic",
+        RESEARCH_MODEL_ID: "claude-identity-test",
+        RESEARCH_MODEL_API_KEY: "sk-not-used-no-call-is-made",
+      },
+    },
+  );
+});

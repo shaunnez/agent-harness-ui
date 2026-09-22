@@ -23,7 +23,7 @@ import {
 import { resolveResearchProviders } from "../research-provider-resolver.mjs";
 import { buildChildEnvironment } from "./child-env.mjs";
 import { decodeWorkerLine, encodeHostMessage } from "./event-protocol.mjs";
-import { resolveModelConfig, splitModelConfigForChild } from "./model-config.mjs";
+import { FAKE_MODEL_PROVIDER, resolveModelConfig, splitModelConfigForChild } from "./model-config.mjs";
 
 const WORKER_ENTRYPOINT = fileURLToPath(new URL("./worker.mjs", import.meta.url));
 const RUN_LABEL = "Research (Deep Agents)";
@@ -181,6 +181,14 @@ export class DeepAgentsResearchRuntime {
       runtimeId: this.#id,
       status: run.state,
       startedAt: new Date(startedAtMs).toISOString(),
+      // Neutral, and not opaque: the host persists and displays this. The credential, the base
+      // URL and the constructor options stay behind `model-config.mjs`; only the identity of
+      // what answered crosses.
+      model: {
+        provider: modelConfig.provider,
+        model: modelConfig.model,
+        live: modelConfig.provider !== FAKE_MODEL_PROVIDER,
+      },
       // Opaque. Eversor persists this and never interprets it (architecture §4.1(b)).
       runtimeMetadata: {
         threadId,

@@ -17,6 +17,15 @@ const PLANNED_WORKERS = 3;
 /** Deterministic spacing between emitted events, relative to the run's real start. */
 const STEP_INTERVAL_MS = 1_000;
 
+/** What this runtime reports as having answered the run. `live: false` is the point of it:
+ *  every finding this runtime produces is invented, and the record says so without a reader
+ *  having to recognise the word "fake". */
+export const FAKE_RESEARCH_MODEL_IDENTITY = Object.freeze({
+  provider: "fake",
+  model: "deterministic-fake",
+  live: false,
+});
+
 export class FakeResearchRuntime {
   #id;
   #runs = new Map();
@@ -73,6 +82,7 @@ export class FakeResearchRuntime {
       runtimeId: this.#id,
       status: run.state,
       startedAt: new Date(startedAtMs).toISOString(),
+      model: { ...FAKE_RESEARCH_MODEL_IDENTITY },
       // Opaque on purpose. A real adapter puts its own correlation ids here; Eversor stores
       // the map and never reads a key out of it.
       runtimeMetadata: { fakeRunSlot: String(this.#runs.size + 1), fakeAdmittedWorkers: String(workers) },

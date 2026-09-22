@@ -267,8 +267,19 @@ test("the worker hands the configured output ceiling to a real constructor witho
   assert.equal(openai.maxTokens, 512);
 });
 
+test("an unconfigured environment fails instead of quietly resolving the fake model", () => {
+  // The fallback this replaces is the whole of phase 0: a run with no credential used to
+  // produce invented findings that nothing downstream distinguished from real ones.
+  assert.throws(() => resolveModelConfig({}), /No research model provider is configured/);
+  assert.throws(() => resolveModelConfig({}), /RESEARCH_MODEL_PROVIDER=fake/);
+  assert.throws(
+    () => resolveModelConfig({ RESEARCH_MODEL_PROVIDER: "not-a-provider" }),
+    /must be one of anthropic, openai-compatible or fake/,
+  );
+});
+
 test("ordinary fake-model defaults are unchanged and carry no output ceiling", () => {
-  const fake = resolveModelConfig({});
+  const fake = resolveModelConfig({ RESEARCH_MODEL_PROVIDER: "fake" });
   assert.equal(fake.provider, "fake");
   assert.equal(fake.model, "fake-research-model");
   assert.equal("maxOutputTokens" in fake, false);

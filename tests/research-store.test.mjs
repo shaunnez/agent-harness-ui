@@ -543,3 +543,49 @@ test("a database carrying the pre-review global source id migrates forward", asy
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test("a run records what answered it, and a runtime that reports nothing stays unknown", async () => {
+  await withResearchService(async ({ service, runtime, store }) => {
+    const run = await service.createRun({ objective: "Record the model identity." });
+    // The fake runtime is honest about being a fake: `live: false` is what a reader needs in
+    // order to distinguish an invented finding from a real one without recognising a provider
+    // name, and it is the whole of phase 0's second half.
+    assert.deepEqual(run.model, { provider: "fake", model: "deterministic-fake", live: false });
+
+    await runToEnd(service, runtime, run.id);
+    // It survives on the record and reaches the result, so a finding read on its own still
+    // says what produced it.
+    assert.deepEqual((await service.getRun(run.id)).model, run.model);
+    assert.deepEqual((await service.getResult(run.id)).model, run.model);
+    assert.deepEqual((await store.listRuns({}))[0].model, run.model);
+  });
+});
+
+test("an identity the runtime never reported is null, never a plausible default", async () => {
+  await withResearchStore(async ({ store }) => {
+    const silent = {
+      id: "silent",
+      async start(request) {
+        return {
+          runId: request.id,
+          runtimeId: "silent",
+          status: "running",
+          startedAt: new Date().toISOString(),
+        };
+      },
+      async status(runId) {
+        return { runId, status: "completed", usage: { partial: false } };
+      },
+      async cancel() {},
+      async *events() {},
+      async result(runId) {
+        return { runId, findings: [], artifacts: [], usage: { partial: false } };
+      },
+    };
+    const service = new ResearchService({ store, registry: createResearchRuntimeRegistry([silent]) });
+    const run = await service.createRun({ objective: "Say nothing about the model.", runtimeId: "silent" });
+    await service.settled(run.id);
+    assert.equal(run.model, null);
+    assert.equal((await service.getRun(run.id)).model, null);
+  });
+});

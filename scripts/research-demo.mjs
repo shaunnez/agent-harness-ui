@@ -59,6 +59,9 @@ process.stdout.write(
   `${JSON.stringify(
     {
       runId: handle.runId,
+      // Named before anything it produced: a reader scanning this output should not have to
+      // reach the findings before learning whether a model or a stand-in wrote them.
+      model: handle.model ?? null,
       status,
       durationMs: Date.now() - startedAt,
       sources,

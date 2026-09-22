@@ -11,7 +11,7 @@ import {
   researchSoftOverruns,
   resolveResearchBudget,
 } from "../../src/research-budget-policy.ts";
-import { isResearchProfile } from "../../src/research-runtime-contract.ts";
+import { isResearchProfile, readResearchModelIdentity } from "../../src/research-runtime-contract.ts";
 import { DEFAULT_RESEARCH_RUNTIME_ID } from "./research-runtime-registry.mjs";
 
 const MAX_OBJECTIVE_LENGTH = 4_000;
@@ -68,6 +68,10 @@ export class ResearchService {
         draft.status = handle.status ?? "running";
         draft.usage = emptyResearchUsage();
         if (handle.runtimeMetadata) draft.runtimeMetadata = { ...handle.runtimeMetadata };
+        // Stamped once, at start, from what the runtime reported. Not re-derived later and
+        // never guessed: a run whose runtime reported nothing stays `model: null` rather than
+        // acquiring a plausible-looking identity it did not earn.
+        draft.model = readResearchModelIdentity(handle.model);
       },
       { now: this.#now() },
     );

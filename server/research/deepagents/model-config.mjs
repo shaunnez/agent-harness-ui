@@ -2,9 +2,15 @@
 // import here: this module produces a plain object, and worker.mjs — the only file allowed to
 // import a chat-model integration — is what turns it into an actual model instance.
 //
-// Model identifiers never reach the neutral `ResearchRuntime` contract. They live entirely
-// behind this adapter, resolved from environment at `start()` time, exactly the way
-// `execution-providers.mjs` keeps CLI credentials out of `orchestrator-*.mjs`.
+// Model *selection* never reaches the neutral `ResearchRuntime` contract: credentials, base
+// URLs, constructor options and the provider's own environment variable names live entirely
+// behind this adapter, resolved at `start()` time, exactly the way `execution-providers.mjs`
+// keeps CLI credentials out of `orchestrator-*.mjs`.
+//
+// What a run *was* answered by is a different thing from how it was selected, and it does
+// reach the contract, as the `ResearchModelIdentity` an adapter reports on its run handle.
+// Without it nothing downstream can tell a fake run from a live one — which is the failure
+// this module used to create by falling back to the fake model silently.
 
 export const FAKE_MODEL_PROVIDER = "fake";
 export const ANTHROPIC_MODEL_PROVIDER = "anthropic";
@@ -46,6 +52,14 @@ export function resolveModelMaxOutputTokens(env = process.env) {
   return parsed;
 }
 
+/** What to set, named in the failure a run gets when nothing is configured. A message that
+ *  only says "not configured" makes an operator go and read this file; this one does not. */
+export const NO_MODEL_PROVIDER_MESSAGE =
+  "No research model provider is configured. Set RESEARCH_MODEL_PROVIDER=anthropic with " +
+  "RESEARCH_MODEL_API_KEY or ANTHROPIC_API_KEY, RESEARCH_MODEL_PROVIDER=openai-compatible with " +
+  "RESEARCH_MODEL_API_KEY or OPENAI_API_KEY, or RESEARCH_MODEL_PROVIDER=fake to select the " +
+  "deterministic fake model deliberately.";
+
 /**
  * Resolve which model the child should use, from environment, in this order:
  *
@@ -56,8 +70,11 @@ export function resolveModelMaxOutputTokens(env = process.env) {
  * 2. `RESEARCH_MODEL_PROVIDER=anthropic` (or `ANTHROPIC_API_KEY` present with no explicit
  *    provider) — Anthropic, already an approved credential in this repository and the
  *    simplest real provider available for an actual execution test in this slice.
- * 3. No credential available — a deterministic in-process fake requiring no network and no
- *    key. Every test in this slice runs on this path by default.
+ * 3. `RESEARCH_MODEL_PROVIDER=fake` — a deterministic in-process fake requiring no network and
+ *    no key. Reachable ONLY by naming it. It used to be the fallback when no credential was
+ *    present, which meant a run with a missing key silently produced invented findings that
+ *    nothing downstream distinguished from real ones. Falling back to a fake is worse than
+ *    failing, because a failure is visible; this now throws instead.
  */
 export function resolveModelConfig(env = process.env) {
   const provider = env.RESEARCH_MODEL_PROVIDER;
@@ -90,6 +107,12 @@ export function resolveModelConfig(env = process.env) {
       ...(maxOutputTokens == null ? {} : { maxOutputTokens }),
       apiKey,
     };
+  }
+  if (provider !== FAKE_MODEL_PROVIDER) {
+    if (!provider) throw new Error(NO_MODEL_PROVIDER_MESSAGE);
+    throw new Error(
+      `RESEARCH_MODEL_PROVIDER must be one of ${ANTHROPIC_MODEL_PROVIDER}, ${OPENAI_COMPATIBLE_MODEL_PROVIDER} or ${FAKE_MODEL_PROVIDER}; received "${provider}".`,
+    );
   }
   return {
     provider: FAKE_MODEL_PROVIDER,

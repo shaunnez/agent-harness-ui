@@ -7,11 +7,17 @@ import { DeepAgentsResearchRuntime } from "../server/research/deepagents/adapter
 /** No provider credential, ever — the whole main test suite must resolve the "fake" model
  *  regardless of what happens to be in the host's real environment (this repository's own dev
  *  environment carries a real `ANTHROPIC_API_KEY`, which is exactly the case this must not
- *  depend on). Only what a child process needs to start Node at all. */
+ *  depend on). Only what a child process needs to start Node at all.
+ *
+ *  The fake is now selected by name. It used to be what an empty environment fell back to,
+ *  which is the behaviour phase 0 removed: a missing credential fails loudly instead. Tests
+ *  that want the fake say so here, and a test that forgets gets the failure a real operator
+ *  would get rather than a silently invented result. */
 export function safeChildEnv(overrides = {}) {
   return {
     PATH: process.env.PATH,
     HOME: process.env.HOME,
+    RESEARCH_MODEL_PROVIDER: "fake",
     ...(process.platform === "win32"
       ? { SYSTEMROOT: process.env.SYSTEMROOT, USERPROFILE: process.env.USERPROFILE }
       : {}),
@@ -34,6 +40,9 @@ export async function withDeepAgentsRuntime(
   body,
   {
     envOverrides,
+    /** Skip the safe-env scaffolding entirely, for a test that needs the bare environment an
+     *  operator who configured nothing would actually have. */
+    bareEnv = false,
     searchProvider = fixtureSearchProvider(),
     captureProvider = null,
     providerConfig = null,
@@ -45,7 +54,7 @@ export async function withDeepAgentsRuntime(
   const runtime = new DeepAgentsResearchRuntime({
     checkpointDbPath: path.join(directory, "checkpoints.sqlite3"),
     sourceSnapshotDirectory: path.join(directory, "sources"),
-    env: safeChildEnv(envOverrides),
+    env: bareEnv ? { ...envOverrides } : safeChildEnv(envOverrides),
     searchProvider,
     captureProvider,
     providerConfig,

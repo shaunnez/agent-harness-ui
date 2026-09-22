@@ -1,0 +1,193 @@
+// One `claude -p` call: the argv, the environment, and the stream drained into translated
+// events. Both runtimes go through here.
+//
+// That shared path is the point. Phase 2 asks whether four roles beat one agent, and the
+// answer only means something if the two are the same CLI invocation with different prompts.
+// Two copies of the flag list would drift — a stray `--strict-mcp-config` on one side, a
+// different `--output-format` on the other — and the measurement would quietly become a
+// comparison of two harnesses rather than of two prompt structures.
+
+import { buildClaudeEnvironment, CLAUDE_RUN_LABEL } from "../../claude-runtime.mjs";
+import { sourceTypeForTool, translateStreamLine, usageFromResultLine } from "./stream.mjs";
+
+/**
+ * Build the argv for one call. Exported so a test can assert the six flags without spawning.
+ *
+ * `--output-format stream-json --verbose` rather than `json`: `json` returns one blob at the
+ * end, and a runtime whose `events()` had nothing to yield until the run was over would be a
+ * batch job wearing a stream's interface.
+ */
+export function claudeCallArgs({
+  objective,
+  model,
+  systemPrompt,
+  mcpConfigPath,
+  allowedTools,
+  maxUsd = null,
+}) {
+  return [
+    "-p",
+    objective,
+    "--model",
+    model,
+    "--append-system-prompt",
+    systemPrompt,
+    "--mcp-config",
+    mcpConfigPath,
+    "--allowed-tools",
+    allowedTools.join(","),
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    // Absent unless the budget names a dollar ceiling: a default would cap runs nobody asked
+    // to cap, and the recorded baseline was produced without one.
+    ...(maxUsd ? ["--max-budget-usd", String(maxUsd)] : []),
+  ];
+}
+
+/**
+ * Run one call to completion, translating its stream as it arrives.
+ *
+ * Returns what happened rather than throwing on a failed run: a non-zero exit, an empty output
+ * and a CLI-reported error are all outcomes the caller classifies, and the caller is the only
+ * thing that knows whether this call was the whole run or one role in a sequence.
+ */
+export async function runClaudeCall({
+  run,
+  binary,
+  env,
+  cwd,
+  objective,
+  model,
+  systemPrompt,
+  mcpConfigPath,
+  allowedTools,
+  maxUsd = null,
+  timeoutMs,
+  signal,
+  onEvent = () => {},
+  onRawLine = () => {},
+}) {
+  const state = {
+    toolCalls: new Map(),
+    toolCallCount: 0,
+    searchCallCount: 0,
+    finalText: "",
+    resultLine: null,
+    sawCeiling: false,
+  };
+  const args = claudeCallArgs({ objective, model, systemPrompt, mcpConfigPath, allowedTools, maxUsd });
+  const handleLine = (rawLine) => {
+    onRawLine(rawLine);
+    let parsed;
+    try {
+      parsed = JSON.parse(rawLine);
+    } catch {
+      // Not a stream line — a warning the CLI wrote to stdout, or a partial write. Surfaced
+      // rather than dropped, because a silent drop is how a real failure hides.
+      if (rawLine.trim()) onEvent("log", { message: `claude: ${rawLine.slice(0, 500)}` });
+      return;
+    }
+    if (parsed.type === "result") state.resultLine = parsed;
+    for (const event of translateStreamLine(parsed, { toolCalls: state.toolCalls })) {
+      if (event.type === "tool.called") {
+        state.toolCallCount += 1;
+        // Classified the same way the events are, so a licensed corpus lookup is never counted
+        // as a web search against `maxSearchCalls`.
+        if (sourceTypeForTool(event.data.tool) === "web") state.searchCallCount += 1;
+      }
+      if (event.type === "budget.ceiling_hit") state.sawCeiling = true;
+      // The last text block carrying a fence wins: the prompt asks the model to finish with
+      // one, and a fence quoted mid-run is a template rather than an answer.
+      if (event.type === "finding.created") state.finalText = String(event.data.message ?? "");
+      // Terminal states are the caller's to decide. A `result` line followed by a non-zero exit
+      // is a failed call, and trusting the line would call it complete.
+      if (event.type === "run.completed" || event.type === "run.failed") continue;
+      onEvent(event.type, event.data);
+    }
+  };
+
+  let outcome = null;
+  let spawnError = null;
+  try {
+    outcome = await run(binary, args, {
+      cwd,
+      // Built up from an allowlist, so `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` and
+      // `ANTHROPIC_BASE_URL` cannot reach the child and move the call onto metered billing.
+      env,
+      // An empty, closed stdin is what makes `-p` non-interactive — the shell script's
+      // `< /dev/null`.
+      input: "",
+      signal,
+      timeoutMs,
+      label: CLAUDE_RUN_LABEL,
+      onStdoutLine: handleLine,
+    });
+  } catch (error) {
+    spawnError = error;
+  }
+  return {
+    args,
+    outcome,
+    spawnError,
+    resultLine: state.resultLine,
+    finalText: state.finalText,
+    toolCallCount: state.toolCallCount,
+    searchCallCount: state.searchCallCount,
+    sawCeiling: state.sawCeiling,
+    usage: state.resultLine
+      ? usageFromResultLine(state.resultLine, {
+          toolCalls: state.toolCallCount,
+          searchCalls: state.searchCallCount,
+        })
+      : null,
+  };
+}
+
+/** Classify one completed call. Shared so a role in a sequence and a whole single-agent run
+ *  fail for the same reasons under the same codes. */
+export function classifyCall(call, { emptyOutputCode }) {
+  if (call.spawnError) {
+    const timedOut =
+      call.spawnError.code === "PROCESS_TIMEOUT" || /timeout/i.test(call.spawnError.name ?? "");
+    return {
+      ok: false,
+      timedOut,
+      error: {
+        code: timedOut ? "research_timeout" : "claude_cli_failed",
+        message: call.spawnError.message ?? String(call.spawnError),
+      },
+    };
+  }
+  if (call.outcome && call.outcome.code !== 0)
+    return {
+      ok: false,
+      error: {
+        code: "claude_cli_exited_abnormally",
+        message: `The Claude CLI exited with code ${call.outcome.code}${call.outcome.signal ? ` (signal ${call.outcome.signal})` : ""}.`,
+      },
+    };
+  if (!call.resultLine)
+    // The failure mode the 90 recorded runs actually hit: a clean exit with nothing on stdout.
+    // It correlated with spawn concurrency, never with the scope, so it is retryable and says
+    // so in a code rather than leaving a caller to guess from the message.
+    return {
+      ok: false,
+      error: {
+        code: emptyOutputCode,
+        message: "The Claude CLI produced no result line. Retry: this correlates with spawn concurrency.",
+        retryable: true,
+      },
+    };
+  if (call.resultLine.is_error === true || call.resultLine.subtype !== "success")
+    return {
+      ok: false,
+      error: {
+        code: "claude_cli_reported_error",
+        message: `The Claude CLI ended with subtype ${call.resultLine.subtype ?? "unknown"}${call.resultLine.api_error_status ? ` (${call.resultLine.api_error_status})` : ""}.`,
+      },
+    };
+  return { ok: true, error: null };
+}
+
+export { buildClaudeEnvironment };

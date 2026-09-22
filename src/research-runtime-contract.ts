@@ -11,6 +11,7 @@ import type {
   ResearchEvent,
   ResearchEventType,
   ResearchFinding,
+  ResearchModelIdentity,
   ResearchProfile,
   ResearchRequest,
   ResearchResult,
@@ -76,6 +77,19 @@ export function isResearchEventType(value: unknown): value is ResearchEventType 
   return RESEARCH_EVENT_TYPES.includes(value as ResearchEventType);
 }
 
+/** Normalize what a runtime reported about the model that answered a run, or null if it
+ *  reported nothing usable. The host never fills in a missing identity with a plausible one:
+ *  "we do not know what answered this" and "a fake answered this" are different states and a
+ *  default would collapse them. */
+export function readResearchModelIdentity(value: unknown): ResearchModelIdentity | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const candidate = value as Partial<ResearchModelIdentity>;
+  const provider = typeof candidate.provider === "string" ? candidate.provider.trim() : "";
+  const model = typeof candidate.model === "string" ? candidate.model.trim() : "";
+  if (!provider || !model) return null;
+  return { provider, model, live: candidate.live === true };
+}
+
 // --- Compile-time contract tests -------------------------------------------------------
 // These types are never constructed. They exist so that `tsc --noEmit` fails on drift.
 
@@ -116,6 +130,7 @@ type NeutralKeys<T> = [Extract<keyof T, RuntimeSpecificKey>] extends [never] ? t
 
 export type ResearchContractsAreRuntimeNeutral = [
   Assert<NeutralKeys<ResearchRequest>>,
+  Assert<NeutralKeys<ResearchModelIdentity>>,
   Assert<NeutralKeys<ResearchBudget>>,
   Assert<NeutralKeys<ResearchBudgetState>>,
   Assert<NeutralKeys<ResearchRunHandle>>,
