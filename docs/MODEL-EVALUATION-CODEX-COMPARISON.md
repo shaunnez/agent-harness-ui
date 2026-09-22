@@ -1,5 +1,7 @@
 # Resume with Sol: two H05 comparison runs
 
+> **Terminal:** the authorized pair was launched on 22 September 2026 and both attempts were invalidated by a coordinator-side SQLite monitoring error before Implement. Do not resume or reuse that campaign. Read `docs/MODEL-EVALUATION-CODEX-COMPARISON-RESULT.md` for the adjudicated result and replacement boundary.
+
 ## Latest user decision
 
 Shaun accepted two parallel Codex-only H05 runs, comparing Sol High against Luna High for implementation and repair. His Claude allowance is exhausted. He wants to compact before execution and use Sol as the coordinating agent because Astra is expensive. **Do not launch while writing this handoff. After compaction, his continuation instruction starts this bounded comparison without another permission loop.** The coordinating thread's model is selected separately in Codex; this file does not change it.
