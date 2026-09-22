@@ -157,7 +157,8 @@ function actionEligibilityFor(task, action) {
       : deny("The task is not blocked by a candidate refresh conflict.");
   }
   if (action === "restart-implementation") {
-    return task.status === "blocked" && task.blocker?.code === "implementation-target-diverged"
+    return task.status === "blocked" &&
+      ["implementation-target-diverged", "repository-baseline-verification"].includes(task.blocker?.code)
       ? allow()
       : deny("The task is not blocked by target divergence during implementation.");
   }

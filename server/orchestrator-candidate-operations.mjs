@@ -407,14 +407,38 @@ export class CandidateOperationsOrchestrator {
       if (task.candidates?.length) {
         throw new Error("This task already has a candidate; use candidate refresh or rebuild instead.");
       }
-      const checkoutTarget = task.repositoryAuthority?.selectedRevision
+      const recoveringBaselineFailure = task.blocker?.code === "repository-baseline-verification";
+      let freshAuthority = null;
+      if (recoveringBaselineFailure) {
+        // A baseline block means the *repository's own* command failed independently of
+        // this candidate's changes. `task.repositoryAuthority` is captured once at plan
+        // time and never re-polled, so it still names the broken revision even after the
+        // repository has moved past it. Re-capture live before trusting it as a target.
+        freshAuthority = await this._repositoryAuthority.capture(task.repositoryPath, {
+          frozenRevision: task.experiment?.frozenBaseSha ?? null,
+        });
+        if (!freshAuthority?.selectedRevision) {
+          throw new Error("The repository target did not produce a verified revision.");
+        }
+        if (freshAuthority.upstreamRef && freshAuthority.remoteVerification?.status !== "verified") {
+          throw new Error("The tracked repository target could not be verified remotely.");
+        }
+        if (freshAuthority.selectedRevision === task.repositoryAuthority?.selectedRevision) {
+          throw new Error(
+            `The repository baseline has not advanced past ${freshAuthority.selectedRevision.slice(0, 8)}; recheck once the baseline command is fixed there.`,
+          );
+        }
+      }
+      const authorityForTarget = freshAuthority ?? task.repositoryAuthority;
+      const checkoutTarget = authorityForTarget?.selectedRevision
         ? null
         : await this._worktrees.base(task, { allowDirty: true });
-      const targetRevision = task.repositoryAuthority?.selectedRevision ?? checkoutTarget.baseRevision;
+      const targetRevision = authorityForTarget?.selectedRevision ?? checkoutTarget.baseRevision;
       const attemptedBases = new Set(
         (task.workPackages ?? []).map((workPackage) => workPackage.baseRevision).filter(Boolean),
       );
-      const recoveringRecordedDivergence = task.blocker?.code === "implementation-target-diverged";
+      const recoveringRecordedDivergence =
+        task.blocker?.code === "implementation-target-diverged" || recoveringBaselineFailure;
       if (
         !attemptedBases.size ||
         (!recoveringRecordedDivergence &&
@@ -439,8 +463,8 @@ export class CandidateOperationsOrchestrator {
           {
             ...onlyPackage,
             repositoryRoot: task.repositoryPath,
-            baseBranch: task.repositoryAuthority?.checkoutBranch ?? "main",
-            baseRef: task.repositoryAuthority?.targetRef ?? null,
+            baseBranch: authorityForTarget?.checkoutBranch ?? "main",
+            baseRef: authorityForTarget?.targetRef ?? null,
           },
           { targetRevision },
         );
@@ -465,6 +489,14 @@ export class CandidateOperationsOrchestrator {
           !draft.activeRunReservationId &&
           !draft.candidates?.length,
         (draft) => {
+          if (freshAuthority) {
+            draft.repositoryAuthority = structuredClone(freshAuthority);
+            draft.repositoryAuthorityHistory ??= [];
+            if (!draft.repositoryAuthorityHistory.some((entry) => entry.id === freshAuthority.id)) {
+              draft.repositoryAuthorityHistory.push(structuredClone(freshAuthority));
+            }
+            draft.repositoryAuthorityStatus = "bound";
+          }
           for (const workPackage of draft.workPackages ?? []) {
             workPackage.status = "planned";
             workPackage.error = null;
@@ -490,12 +522,16 @@ export class CandidateOperationsOrchestrator {
           draft.events.push(
             activity(
               "implement",
-              retainedReplay
-                ? "Retained package replayed onto latest target"
-                : "Implementation restart authorized from latest target",
-              retainedReplay
-                ? `${retainedReplay.packageId} was replayed onto ${targetRevision.slice(0, 8)} and will be requalified without another model implementation run.`
-                : `Prior slice artifacts remain retained. Approved packages will restart from ${targetRevision.slice(0, 8)} with bounded concurrency and fresh qualification.`,
+              recoveringBaselineFailure
+                ? "Repository baseline recheck restarted implementation"
+                : retainedReplay
+                  ? "Retained package replayed onto latest target"
+                  : "Implementation restart authorized from latest target",
+              recoveringBaselineFailure
+                ? `The repository baseline advanced to ${targetRevision.slice(0, 8)}. ${retainedReplay ? `${retainedReplay.packageId} was replayed onto it and` : "Approved packages"} will be requalified there instead of blaming the retained candidate for an unchanged baseline failure.`
+                : retainedReplay
+                  ? `${retainedReplay.packageId} was replayed onto ${targetRevision.slice(0, 8)} and will be requalified without another model implementation run.`
+                  : `Prior slice artifacts remain retained. Approved packages will restart from ${targetRevision.slice(0, 8)} with bounded concurrency and fresh qualification.`,
               "warning",
               "decision",
             ),

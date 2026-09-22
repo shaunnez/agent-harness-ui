@@ -337,6 +337,173 @@ test("replays one clean retained package onto an advanced target for zero-model 
   }
 });
 
+test("rechecks an advanced repository baseline and replays the retained package onto it", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-baseline-recheck-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Recheck a fixed baseline",
+      description: "The repository baseline command that failed at plan time has since been fixed.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "high",
+    });
+    const oldBase = "a".repeat(40);
+    const oldHead = "b".repeat(40);
+    const fixedRevision = "c".repeat(40);
+    const replayedHead = "d".repeat(40);
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "implement";
+      draft.error = "Repository baseline verification failed for test at aaaaaaaa.";
+      draft.blocker = {
+        code: "repository-baseline-verification",
+        detail: "The same command fails before S1's changes, so retrying the retained slice cannot repair it.",
+        detectedAt: new Date().toISOString(),
+        workPackageId: "S1",
+      };
+      draft.repositoryAuthority = { selectedRevision: oldBase, id: "authority-stale" };
+      draft.repositoryAuthorityHistory = [];
+      draft.workPackages = [
+        {
+          id: "S1",
+          title: "Retained slice",
+          description: "Replay this exact change once the baseline is fixed.",
+          dependencies: [],
+          batch: 1,
+          ownedPaths: ["src/change.ts"],
+          verificationCommandIds: ["test"],
+          status: "failed",
+          attempts: 1,
+          baseRevision: oldBase,
+          branch: "agent-harness/old-slice",
+          worktreePath: directory,
+          headRevision: oldHead,
+          files: ["src/change.ts"],
+          error: draft.error,
+          verificationRuns: [{ status: "failed", headRevision: oldHead }],
+        },
+      ];
+    });
+    let refreshOptions = null;
+    const orchestrator = new TaskOrchestrator(store, {
+      repositoryAuthorityService: {
+        capture: async () => ({
+          id: "authority-fixed",
+          selectedRevision: fixedRevision,
+          checkoutBranch: "main",
+          targetRef: "refs/heads/main",
+          capturedAt: new Date().toISOString(),
+          upstreamRef: null,
+          remoteVerification: { status: "not-configured", error: null },
+        }),
+      },
+      worktreeManager: {
+        inspectRetainedSlice: async () => ({
+          clean: true,
+          branch: "agent-harness/old-slice",
+          worktreePath: directory,
+          headRevision: oldHead,
+          files: ["src/change.ts"],
+        }),
+        refreshCandidate: async (_package, options) => {
+          refreshOptions = options;
+          return {
+            targetRevision: fixedRevision,
+            headRevision: replayedHead,
+            files: ["src/change.ts"],
+          };
+        },
+      },
+    });
+
+    await orchestrator.restartImplementationFromTarget(task.id);
+    const restarted = await store.get(task.id);
+    assert.deepEqual(refreshOptions, { targetRevision: fixedRevision });
+    assert.equal(restarted.status, "ready-for-implementation");
+    assert.equal(restarted.blocker, null);
+    assert.equal(restarted.repositoryAuthority.selectedRevision, fixedRevision);
+    assert.equal(restarted.workPackages[0].baseRevision, fixedRevision);
+    assert.equal(restarted.workPackages[0].headRevision, replayedHead);
+    assert.equal(restarted.workPackages[0].retainedForRequalification, true);
+    assert.match(restarted.events.at(-1).detail, /unchanged baseline failure/i);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("refuses a baseline recheck when the repository has not advanced past the failing revision", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-baseline-recheck-stale-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Recheck a still-broken baseline",
+      description: "The repository baseline command has not changed since it was recorded.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "high",
+    });
+    const stuckRevision = "a".repeat(40);
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "implement";
+      draft.error = "Repository baseline verification failed for test.";
+      draft.blocker = {
+        code: "repository-baseline-verification",
+        detail: "The same command fails before S1's changes.",
+        detectedAt: new Date().toISOString(),
+        workPackageId: "S1",
+      };
+      draft.repositoryAuthority = { selectedRevision: stuckRevision, id: "authority-stale" };
+      draft.workPackages = [
+        {
+          id: "S1",
+          title: "Retained slice",
+          description: "Still blocked on the same commit.",
+          dependencies: [],
+          batch: 1,
+          ownedPaths: ["src/change.ts"],
+          verificationCommandIds: ["test"],
+          status: "failed",
+          attempts: 1,
+          baseRevision: stuckRevision,
+          branch: "agent-harness/old-slice",
+          worktreePath: directory,
+          headRevision: "b".repeat(40),
+          files: ["src/change.ts"],
+          error: draft.error,
+          verificationRuns: [{ status: "failed" }],
+        },
+      ];
+    });
+    const orchestrator = new TaskOrchestrator(store, {
+      repositoryAuthorityService: {
+        capture: async () => ({
+          id: "authority-still-stuck",
+          selectedRevision: stuckRevision,
+          checkoutBranch: "main",
+          targetRef: "refs/heads/main",
+          capturedAt: new Date().toISOString(),
+          upstreamRef: null,
+          remoteVerification: { status: "not-configured", error: null },
+        }),
+      },
+    });
+
+    await assert.rejects(
+      orchestrator.restartImplementationFromTarget(task.id),
+      /has not advanced past/i,
+    );
+    const unchanged = await store.get(task.id);
+    assert.equal(unchanged.status, "blocked");
+    assert.equal(unchanged.blocker.code, "repository-baseline-verification");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 for (const scenario of [
   { name: "timed-out", error: "Codex run exceeded 900 seconds.", failsCommit: false },
 ]) {
