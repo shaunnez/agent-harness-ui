@@ -41,7 +41,12 @@ export class RetainedPackageOrchestrator {
       workPackageId,
       attempt,
       headRevision: retained.headRevision,
-      baselineRevision: workPackage.baseRevision,
+      // Not `workPackage.baseRevision` — that's frozen at the package's original base and
+      // never advances across a plan revalidation. Checking baseline there means a fix
+      // merged after the package was first implemented can never clear the retained
+      // package's baseline block, no matter how far the repository moves. This must match
+      // the revision the corrected plan actually verifies against.
+      baselineRevision: manifestSourceRevision,
       signal,
       manifest,
     });

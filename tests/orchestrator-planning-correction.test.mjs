@@ -4,6 +4,7 @@ import {
   assert,
   JsonTaskStore,
   makeFocusedTestSummary,
+  makeTestRow,
   mkdtemp,
   os,
   path,
@@ -389,6 +390,178 @@ test("revalidates the plan after a fixed repository baseline and requalifies the
     assert.equal(ready.repositoryAuthority.selectedRevision, fixedRevision);
     const retainedRun = ready.runs.find((run) => run.source === "harness-requalification");
     assert.equal(retainedRun.status, "completed");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("requalifies a retained package against the current plan base, not its stale original base", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-requalify-current-base-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Requalify against the current base",
+      description: "A fix landed on main after this package's original base was recorded.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "high",
+    });
+    const staleRevision = "a".repeat(40);
+    const packageHead = "b".repeat(40);
+    const fixedRevision = "c".repeat(40);
+    const candidateRevision = "d".repeat(40);
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "implement";
+      draft.error =
+        "Repository baseline verification failed for test at aaaaaaaaaaaa. The same command fails before S1's changes, so retrying the retained slice cannot repair it.";
+      draft.blocker = {
+        code: "repository-baseline-verification",
+        detail: draft.error,
+        detectedAt: new Date().toISOString(),
+        workPackageId: "S1",
+        baselineVerification: { revision: staleRevision, commandIds: ["test"] },
+      };
+      draft.repositoryAuthority = {
+        id: "authority-stale",
+        selectedRevision: staleRevision,
+        checkoutBranch: "main",
+        targetRef: "refs/heads/main",
+      };
+      draft.planResult = {
+        artifactId: "implementation-plan.md",
+        disposition: "changes-required",
+        changesRemainNecessary: true,
+        repositoryAuthorityId: "authority-stale",
+        repositoryRevision: staleRevision,
+        repositoryTargetRef: "refs/heads/main",
+      };
+      draft.workPackages = [
+        {
+          id: "S1",
+          title: "Retained slice",
+          description: "Requalify this exact committed change once the baseline is fixed.",
+          dependencies: [],
+          batch: 1,
+          ownedPaths: ["src/change.ts"],
+          verification: [],
+          verificationCommandIds: ["test"],
+          verificationRuns: [{ status: "failed" }],
+          status: "failed",
+          attempts: 1,
+          branch: "agent-harness/old-slice",
+          worktreePath: directory,
+          // The package's own base predates the fix on main. Requalification must not
+          // check the repository baseline here — it must use the current plan's base.
+          baseRevision: staleRevision,
+          headRevision: packageHead,
+          files: ["src/change.ts"],
+          error: draft.error,
+        },
+      ];
+    });
+    const revisedOutput = `<work-packages>{"packages":[{"id":"S1","title":"Retained slice","description":"Requalify this exact committed change once the baseline is fixed.","dependencies":[],"ownedPaths":["src/change.ts"],"verificationCommandIds":["test"]}]}</work-packages>`;
+    const baselineCalls = [];
+    let modelCalls = 0;
+    const orchestrator = new TaskOrchestrator(store, {
+      repositoryAuthorityService: {
+        capture: async () => ({
+          id: "authority-fixed",
+          selectedRevision: fixedRevision,
+          checkoutBranch: "main",
+          targetRef: "refs/heads/main",
+          capturedAt: new Date().toISOString(),
+          upstreamRef: null,
+          remoteVerification: { status: "not-configured", error: null },
+        }),
+      },
+      readVerificationManifest: async () => ({
+        source: ".agent-harness/verification.json",
+        commands: [{ id: "test", command: ["npm", "test"] }],
+      }),
+      runCodex: async () => {
+        modelCalls += 1;
+        return {
+          finalText: revisedOutput,
+          model: "gpt-5.6-sol",
+          reasoning: "high",
+          usage: { inputTokens: 10, cachedInputTokens: 0, outputTokens: 5, totalTokens: 15 },
+        };
+      },
+      runPackageVerification: async (input) => {
+        if (input.headRevision === packageHead) {
+          return makeFocusedTestSummary({
+            candidateId: "S1",
+            candidateRevision: 2,
+            status: "failed",
+            rows: [makeTestRow({ id: "test", candidateId: "S1", candidateRevision: 2, status: "failed" })],
+          });
+        }
+        // This is the second, baseline-comparison call `_qualifyPackage` makes after the
+        // head run fails. Record which revision it actually checked.
+        baselineCalls.push(input.headRevision);
+        return makeFocusedTestSummary({
+          candidateId: "S1",
+          candidateRevision: 2,
+          status: "passed",
+          rows: [makeTestRow({ id: "test", candidateId: "S1", candidateRevision: 2, status: "passed" })],
+        });
+      },
+      worktreeManager: {
+        retainedPatchDisposition: async () => "pending",
+        base: async () => ({ repositoryRoot: directory, baseRevision: fixedRevision, baseBranch: "main" }),
+        inspectRetainedSlice: async () => ({
+          branch: "agent-harness/old-slice",
+          files: ["src/change.ts"],
+          headRevision: packageHead,
+          worktreePath: directory,
+          clean: true,
+        }),
+        prepareEvidence: async (_task, { selectedRevision }) => ({
+          worktreePath: directory,
+          repositoryRoot: directory,
+          selectedRevision,
+        }),
+        removeEvidence: async () => {},
+        removeWorktree: async () => [],
+        prepare: async (_task, candidateId, options) => ({
+          id: candidateId,
+          revisionNumber: 1,
+          baseRevision: options.baseRevision,
+          baseBranch: "main",
+          baseRef: "refs/heads/main",
+          headRevision: null,
+          branch: `agent-harness/${candidateId.toLowerCase()}`,
+          repositoryRoot: directory,
+          worktreePath: directory,
+          status: "assembling",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          revisions: [],
+        }),
+        assemble: async () => ({
+          headRevision: candidateRevision,
+          files: ["src/change.ts"],
+          summary: "1 file changed",
+          diff: "",
+        }),
+      },
+    });
+
+    assert.deepEqual(await orchestrator.revalidatePlan(task.id), { started: true });
+    await waitForStatus(store, task.id, "awaiting-plan-approval");
+    assert.equal(modelCalls, 1);
+
+    await orchestrator.approvePlan(task.id);
+    await orchestrator.start(task.id, "implementation");
+    const blocked = await waitForStatus(store, task.id, "blocked");
+
+    // The whole point: the baseline comparison must run at the current plan's base
+    // (fixedRevision), never the package's own stale original base.
+    assert.deepEqual(baselineCalls, [fixedRevision]);
+    assert.notEqual(blocked.blocker?.code, "repository-baseline-verification");
+    assert.match(blocked.workPackages[0].error, /did not qualify/i);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
