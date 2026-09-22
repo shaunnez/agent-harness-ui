@@ -72,6 +72,11 @@ test("a duplicate companion fails before interrupted-run recovery can rewrite li
     AGENT_HARNESS_DATA: dataPath,
     AGENT_HARNESS_PORT: String(port),
     AGENT_HARNESS_GITHUB_POLL_MS: "600000",
+    // This test is about duplicate-companion lock detection, not Linear intake. Without this
+    // override, a developer machine with real Linear config (AGENT_HARNESS_LINEAR_CONFIG in the
+    // environment) makes both spawned servers race for the same fixed Linear webhook port, and
+    // the second one fails on that instead of on the duplicate-lock check this test asserts.
+    AGENT_HARNESS_LINEAR_CONFIG: "",
   };
   const startServer = () =>
     spawn(process.execPath, ["server/index.mjs"], {
