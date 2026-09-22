@@ -47,6 +47,32 @@ export function createLinearClient({ clientId, clientSecret, fetchImpl = fetch }
     return result.data;
   }
   return {
+    async user(id) {
+      const result = await query(
+        `query HarnessReplyUser($id: String!) {
+        user(id: $id) { id name active app organization { id } }
+      }`,
+        { id },
+      );
+      return result.user;
+    },
+    async publishActivity(id, sessionId, content) {
+      // A stable client-generated UUID and a read-before-retry cover an uncertain HTTP result.
+      const existing = await query(
+        `query HarnessActivityReceipt($id: ID!) {
+        agentActivities(filter: { id: { eq: $id } }, first: 1) { nodes { id } }
+      }`,
+        { id },
+      );
+      if (existing.agentActivities.nodes.length) return;
+      const result = await query(
+        `mutation HarnessProgress($input: AgentActivityCreateInput!) {
+        agentActivityCreate(input: $input) { success }
+      }`,
+        { input: { id, agentSessionId: sessionId, content } },
+      );
+      if (!result.agentActivityCreate?.success) throw new Error("Linear could not publish the task update.");
+    },
     async identity() {
       const result = await query("query { viewer { id } organization { id } }");
       return { appUserId: result.viewer.id, organizationId: result.organization.id };

@@ -303,8 +303,8 @@ export function createApiServer({
         return;
       }
       if (url.pathname === "/api/integrations/linear/retry" && request.method === "POST" && linearIntake) {
-        const { sessionId } = await readJson(request);
-        linearIntake.retry(sessionId);
+        const { sessionId, messageId } = await readJson(request);
+        linearIntake.retry(messageId ?? sessionId);
         send(response, 202, { queued: true });
         return;
       }

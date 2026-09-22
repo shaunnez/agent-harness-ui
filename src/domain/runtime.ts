@@ -218,6 +218,7 @@ export interface RuntimeFocusedTestEvidence {
 export interface RuntimeDecision {
   id: string;
   grillQuestionId?: string;
+  linearReply?: RuntimeLinearGrillReply;
   question: string;
   answer: string;
   createdAt: string;
@@ -290,10 +291,21 @@ export type RuntimeGrillAnswerSource =
 
 export type RuntimeGrillCompletionSource =
   | "operator"
+  | "linear"
   | "automation-policy"
   | "no-questions"
   | "legacy-unverified"
   | null;
+
+export interface RuntimeLinearGrillReply {
+  eventId: string;
+  userId: string;
+  userName: string;
+  sessionId: string;
+  issueId: string;
+  organizationId: string;
+  reference: string;
+}
 
 export interface RuntimeGrillQuestion {
   id: string;
@@ -303,6 +315,7 @@ export interface RuntimeGrillQuestion {
   allowCustom: boolean;
   answer: string | null;
   answerSource: RuntimeGrillAnswerSource;
+  linearReply?: RuntimeLinearGrillReply;
   resolvedAt: string | null;
 }
 
@@ -313,6 +326,7 @@ export interface RuntimeGrillSession {
   completedAt: string | null;
   completionReason: string | null;
   completionSource?: RuntimeGrillCompletionSource;
+  linearCompletion?: RuntimeLinearGrillReply;
   policySnapshot?: RuntimeGrillPolicy;
   acceptedRecommendationCount?: number;
 }

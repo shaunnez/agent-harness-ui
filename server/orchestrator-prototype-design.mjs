@@ -1,4 +1,5 @@
 import path from "node:path";
+import { assertLinearGrillReply } from "./linear-grill-contract.mjs";
 import { activity, completeGrillSession, now, zeroUsage } from "./orchestrator-stage-support.mjs";
 
 const DIRECTIONS = [
@@ -74,8 +75,11 @@ export class PrototypeDesignOrchestrator {
     this._startSpecification = startSpecification;
   }
 
-  async startAfterGrill(id, { acceptRemaining = false, source = null } = {}) {
-    if (source !== "operator") throw new Error("Finishing Grill requires an explicit operator action.");
+  async startAfterGrill(id, { acceptRemaining = false, source = null, linear = null } = {}) {
+    if (!["operator", "linear"].includes(source))
+      throw new Error("Finishing Grill requires an explicit operator action.");
+    if (source === "linear" && (!linear || acceptRemaining))
+      throw new Error("Linear continuation requires explicit answers and reply provenance.");
     if (this._active.has(id)) throw new Error("Task is already running.");
     const controller = new AbortController();
     const reservation = { controller, kind: "design", promise: null };
@@ -84,6 +88,7 @@ export class PrototypeDesignOrchestrator {
       const reserved = await this._store.transition(
         id,
         (draft) => {
+          if (source === "linear") assertLinearGrillReply(draft, linear);
           if (draft.status !== "awaiting-grill" || draft.grillSession?.status !== "open") {
             throw new Error("This task does not have an open Grill Me session.");
           }
@@ -93,7 +98,8 @@ export class PrototypeDesignOrchestrator {
           return draft.designRequest?.requested === true;
         },
         (draft) => {
-          completeGrillSession(draft, { source: "operator", acceptRemaining });
+          completeGrillSession(draft, { source, acceptRemaining });
+          if (source === "linear") draft.grillSession.linearCompletion = linear;
           this._reserve(draft);
         },
       );
