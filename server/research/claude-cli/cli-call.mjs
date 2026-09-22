@@ -65,9 +65,32 @@ export async function runClaudeCall({
   maxUsd = null,
   timeoutMs,
   signal,
+  // The budget lines this call is held to while it runs. The CLI enforces none of them: the
+  // Deep Agents worker had them as graph middleware, and here they are counted off the stream
+  // and reported once, the first time one is crossed, so the caller can stop the child.
+  ceilings = null,
+  onCeiling = () => {},
   onEvent = () => {},
   onRawLine = () => {},
 }) {
+  const modelMessages = new Set();
+  let ceilingReported = false;
+  const checkCeilings = () => {
+    if (!ceilings || ceilingReported) return;
+    const crossed =
+      ceilings.maxModelCalls && modelMessages.size > ceilings.maxModelCalls
+        ? "maxModelCalls"
+        : ceilings.maxSearchCalls && state.searchCallCount > ceilings.maxSearchCalls
+          ? "maxSearchCalls"
+          : null;
+    if (!crossed) return;
+    ceilingReported = true;
+    onCeiling(crossed, {
+      modelCalls: modelMessages.size,
+      searchCalls: state.searchCallCount,
+      limit: ceilings[crossed],
+    });
+  };
   const state = {
     toolCalls: new Map(),
     toolCallCount: 0,
@@ -90,6 +113,10 @@ export async function runClaudeCall({
       return;
     }
     if (parsed.type === "result") state.resultLine = parsed;
+    // One model response can arrive as several `assistant` lines, one per content block, all
+    // carrying the same message id; counting lines would count blocks, not calls.
+    if (parsed.type === "assistant")
+      modelMessages.add(parsed.message?.id ?? `line-${modelMessages.size + 1}`);
     for (const event of translateStreamLine(parsed, { toolCalls: state.toolCalls })) {
       if (event.type === "tool.called") {
         state.toolCallCount += 1;
@@ -109,6 +136,7 @@ export async function runClaudeCall({
       if (event.type === "run.completed" || event.type === "run.failed") continue;
       onEvent(event.type, event.data);
     }
+    checkCeilings();
   };
 
   let outcome = null;

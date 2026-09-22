@@ -87,6 +87,8 @@ async function runOnce({
     notEstablished: costBand?.notEstablished ?? [],
     costUsd: status.usage?.estimatedCostUsd ?? null,
     turns: status.usage?.modelCalls ?? null,
+    // How the band's citations checked out. Null from a runtime that does not check them.
+    citations: runtime.citationSummary?.(id) ?? null,
     ...(status.error ? { error: status.error } : {}),
   };
 }

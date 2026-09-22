@@ -11,6 +11,17 @@
 // verifier agent — whether a verifier beats that is phase 2's question, and answering it early
 // by building one here would have meant never finding out.
 //
+// What the Deep Agents runtime got right lives here now, and nowhere else:
+//
+// - Host-owned tools. The agent reads a web page only through `fetch_source`, which the
+//   parent process runs (`host-tools/`), so the page is retained and a figure quoted from it
+//   can be checked. The CLI's process tree holds no provider credential.
+// - Checked citations. Every row id and web quote in the final answer is checked against the
+//   capture or the retained page after the run (`citations.mjs`).
+// - Tool errors as feedback, stopped when the model repeats the same failing call.
+// - Budget ceilings enforced while the run is live, not only reported after it.
+// - A provider outage kept apart from a research failure, so it can be scored as unassessed.
+//
 // Two things this file does that the shell script could not, both required by the contract:
 // `--output-format stream-json --verbose` in place of `json`, so `events()` has intermediate
 // lines to translate; and a concurrency cap, because eight parallel CLI spawns produced six
@@ -24,16 +35,23 @@ import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { runProcess } from "../../process-runtime.mjs";
+import { DEFAULT_RESEARCH_SOURCE_DIRECTORY } from "../research-web-tools.mjs";
 import { assertSubscriptionAuth } from "./auth.mjs";
+import { checkCostBandCitations } from "./citations.mjs";
 import { buildClaudeEnvironment, classifyCall, runClaudeCall } from "./cli-call.mjs";
+import { hostToolOf } from "./host-tools/definitions.mjs";
+import { openHostToolSession } from "./host-tools/session.mjs";
 import {
   findingsFromCostBand,
   parseCostBand,
   QV_ALLOWED_TOOLS,
+  QV_HOST_TOOLS,
   QV_SYSTEM_PROMPT_PATH,
   qvMcpConfig,
   resolveCorpusIndexPath,
 } from "./qv-recipe.mjs";
+import { loadQvRows } from "./qv-rows.mjs";
+import { redactSecretsInFile, scannedNeedles } from "./secret-scan.mjs";
 
 export const CLAUDE_CLI_RESEARCH_RUNTIME_ID = "claude-cli";
 
@@ -70,6 +88,10 @@ export class ClaudeCliResearchRuntime {
   #now;
   #run;
   #assertAuth;
+  #hostTools;
+  #sourceSnapshotDirectory;
+  #captureProvider;
+  #webToolsOptions;
 
   constructor({
     id = CLAUDE_CLI_RESEARCH_RUNTIME_ID,
@@ -87,6 +109,15 @@ export class ClaudeCliResearchRuntime {
     // the machine. Nothing else in this class is swappable: the flags are the point.
     run = runProcess,
     assertAuth = assertSubscriptionAuth,
+    // The host tools the agent may call. Empty turns them off, which is what reproducing the
+    // recorded baseline exactly would need: those 90 runs had no way to fetch a page.
+    hostTools = QV_HOST_TOOLS,
+    sourceSnapshotDirectory = DEFAULT_RESEARCH_SOURCE_DIRECTORY,
+    // Local fetching by default. A paid capture provider is opt-in, and its failures are the
+    // only ones classified as a provider outage rather than one website failing.
+    captureProvider = null,
+    // For tests: `fetchImpl` and `lookup` reach `ResearchWebTools` so no test touches the network.
+    webToolsOptions = {},
   } = {}) {
     this.#id = id;
     this.#env = env;
@@ -101,6 +132,11 @@ export class ClaudeCliResearchRuntime {
     this.#now = now;
     this.#run = run;
     this.#assertAuth = assertAuth;
+    this.#hostTools = [...hostTools];
+    this.#sourceSnapshotDirectory = sourceSnapshotDirectory;
+    this.#captureProvider = captureProvider;
+    this.#webToolsOptions = webToolsOptions;
+    if (!this.#hostTools.length) this.#allowedTools = this.#allowedTools.filter((tool) => !hostToolOf(tool));
   }
 
   get id() {
@@ -145,6 +181,13 @@ export class ClaudeCliResearchRuntime {
       transcriptPath: null,
       workingDirectory: null,
       sawCeiling: false,
+      // Why the host stopped the run, when it did: a ceiling crossed, a repeated failing tool
+      // call, a provider outage. Set before the child is signalled, read when it has exited.
+      stopped: null,
+      truncatedBy: null,
+      citations: null,
+      unresolvedWarnings: [],
+      providerUsage: [],
     };
     this.#runs.set(request.id, run);
     this.#enqueue(() => this.#spawn(run, { binary, corpusIndexPath, systemPrompt }));
@@ -178,7 +221,7 @@ export class ClaudeCliResearchRuntime {
         // so the ceiling ledger reads the same shape as every other runtime's.
         researchersStarted: run.state === "queued" ? 0 : 1,
         elapsedMs: Math.max(0, this.#now() - run.startedAtMs),
-        ...(run.sawCeiling ? { ceilingHit: "maxRuntimeMs" } : {}),
+        ...(truncationOf(run) ? { ceilingHit: truncationOf(run) } : {}),
       },
       ...(run.error ? { error: run.error } : {}),
     };
@@ -211,7 +254,8 @@ export class ClaudeCliResearchRuntime {
     const run = this.#require(runId);
     if (!run.closed) throw new Error(`Research run ${runId} has not finished.`);
     const usage = { ...(run.usage ?? {}), partial: run.state !== "completed" };
-    const findings = findingsFromCostBand(run.costBand, { runId });
+    const findings = findingsFromCostBand(run.costBand, { runId, citations: run.citations });
+    const truncatedBy = truncationOf(run);
     return {
       runId,
       model: { provider: this.#id, model: this.#model, live: true },
@@ -221,10 +265,17 @@ export class ClaudeCliResearchRuntime {
       usage,
       unresolvedQuestions: [
         ...(run.costBand?.notEstablished ?? []),
+        ...run.unresolvedWarnings,
         ...(run.error && !run.costBand ? [run.error.message] : []),
       ],
-      ...(run.sawCeiling ? { truncatedBy: "maxRuntimeMs" } : {}),
+      ...(run.providerUsage.length ? { providerUsage: run.providerUsage } : {}),
+      ...(truncatedBy ? { truncatedBy } : {}),
     };
+  }
+
+  /** How the run's citations checked out, for a benchmark reporting it next to the band. */
+  citationSummary(runId) {
+    return this.#require(runId).citations?.summary ?? null;
   }
 
   /** The parsed cost band, for a caller computing three-run agreement. Outside the neutral
@@ -267,17 +318,42 @@ export class ClaudeCliResearchRuntime {
     const transcriptDirectory = path.join(this.#transcriptDirectory, this.#id, request.id);
     await mkdir(transcriptDirectory, { recursive: true });
     run.transcriptPath = path.join(transcriptDirectory, "stream.jsonl");
-
-    const mcpConfigPath = path.join(workingDirectory, "mcp.json");
-    await writeFile(
-      mcpConfigPath,
-      JSON.stringify(qvMcpConfig({ pythonBin: this.#pythonBin, indexPath: corpusIndexPath })),
-      "utf8",
-    );
+    let session = null;
     const transcript = createWriteStream(run.transcriptPath, { flags: "w" });
-
-    run.state = "running";
+    const stop = (verdict) => {
+      if (run.stopped || run.closed) return;
+      run.stopped = verdict;
+      run.controller.abort();
+    };
     try {
+      if (this.#hostTools.length)
+        session = await openHostToolSession({
+          runId: request.id,
+          budget: request.budget,
+          context: request.context ?? [],
+          directory: workingDirectory,
+          tools: this.#hostTools,
+          signal: run.controller.signal,
+          snapshotDirectory: this.#sourceSnapshotDirectory,
+          captureProvider: this.#captureProvider,
+          webToolsOptions: this.#webToolsOptions,
+          emit: (type, data) => this.#emit(run, type, data),
+          onTerminal: stop,
+        });
+      const mcpConfigPath = path.join(workingDirectory, "mcp.json");
+      await writeFile(
+        mcpConfigPath,
+        JSON.stringify(
+          qvMcpConfig({
+            pythonBin: this.#pythonBin,
+            indexPath: corpusIndexPath,
+            hostTools: session?.mcpEntry,
+          }),
+        ),
+        "utf8",
+      );
+
+      run.state = "running";
       const call = await runClaudeCall({
         run: this.#run,
         binary,
@@ -291,16 +367,64 @@ export class ClaudeCliResearchRuntime {
         maxUsd: request.budget?.maxUsd ?? null,
         timeoutMs: request.budget?.maxRuntimeMs ?? 30 * 60_000,
         signal: run.controller.signal,
+        ceilings: request.budget ?? null,
+        onCeiling: (ceiling, counts) =>
+          stop({
+            outcome: "terminal",
+            code: "research_ceiling_exceeded",
+            message: `The run crossed its ${ceiling} ceiling (${counts.limit}).`,
+            ceiling,
+          }),
         onRawLine: (line) => transcript.write(`${line}\n`),
-        onEvent: (type, data) => this.#emit(run, type, data),
+        onEvent: (type, data) => {
+          // A host tool's result is announced by the host, with the retained snapshot behind
+          // it. The stream's copy of the same result carries none of that, and persisting both
+          // would put an unverifiable duplicate of every fetched page in the sources table.
+          if (type === "source.retrieved" && hostToolOf(data?.source?.metadata?.tool)) return;
+          this.#emit(run, type, data);
+        },
       });
       await closeStream(transcript);
+      await this.#scanTranscript(run);
+      await this.#checkCitations(run, call, { session, corpusIndexPath });
       this.#finish(run, { call });
     } catch (error) {
       await closeStream(transcript);
       this.#finish(run, { call: { spawnError: error } });
     } finally {
+      if (session) {
+        run.providerUsage = await session.close().catch(() => []);
+      }
       await rm(workingDirectory, { recursive: true, force: true }).catch(() => undefined);
+    }
+  }
+
+  /** A credential in a transcript is redacted and reported by name, never by value. */
+  async #scanTranscript(run) {
+    const found = await redactSecretsInFile(run.transcriptPath, scannedNeedles(this.#env));
+    if (found.length)
+      this.#emit(run, "log", {
+        message: "A credential value appeared in the CLI transcript and was redacted.",
+        redacted: found,
+      });
+  }
+
+  /** Check the answer's citations while the run's retained sources are still open. */
+  async #checkCitations(run, call, { session, corpusIndexPath }) {
+    const costBand = parseCostBand(call.finalText ?? "");
+    if (!costBand) return;
+    try {
+      run.citations = await checkCostBandCitations(costBand, {
+        rows: await loadQvRows(corpusIndexPath),
+        webTools: session?.webTools ?? null,
+        snapshotDirectory: this.#sourceSnapshotDirectory,
+        emitSource: (data) => this.#emit(run, "source.retrieved", data),
+      });
+      run.unresolvedWarnings = session?.webTools.unresolvedCoverageWarnings() ?? [];
+    } catch (error) {
+      // A citation check that could not run leaves every citation unchecked, which the
+      // findings already say. It is not a reason to lose the band.
+      this.#emit(run, "log", { message: `Citation check failed: ${error?.message ?? error}` });
     }
   }
 
@@ -326,6 +450,18 @@ export class ClaudeCliResearchRuntime {
     if (cancelled || run.cancelRequested) {
       run.state = "cancelled";
       this.#emit(run, "run.cancelled", { reason: "operator" });
+    } else if (run.stopped) {
+      // The host stopped it, so the child's exit is a consequence rather than the cause.
+      run.error = {
+        code: run.stopped.outcome === "provider_unavailable" ? "provider_unavailable" : run.stopped.code,
+        message: run.stopped.message,
+      };
+      if (run.stopped.ceiling) run.truncatedBy = run.stopped.ceiling;
+      run.state = "failed";
+      this.#emit(run, "run.failed", {
+        ...run.error,
+        ...(run.truncatedBy ? { truncatedBy: run.truncatedBy } : {}),
+      });
     } else {
       const verdict = classifyCall(call ?? {}, { emptyOutputCode: EMPTY_OUTPUT_ERROR_CODE });
       if (verdict.timedOut) run.sawCeiling = true;
@@ -335,6 +471,7 @@ export class ClaudeCliResearchRuntime {
           band: run.costBand?.band ?? null,
           resolvedFrom: run.costBand?.resolvedFrom ?? null,
           findings: findingsFromCostBand(run.costBand, { runId: run.request.id }).length,
+          ...(run.citations ? { citations: run.citations.summary } : {}),
         });
       } else {
         run.error = verdict.error;
@@ -366,6 +503,12 @@ export class ClaudeCliResearchRuntime {
     if (!run) throw new Error(`Unknown research run ${runId}.`);
     return run;
   }
+}
+
+/** The ceiling a run stopped at, if any. A plan rate limit and a timeout have always been
+ *  reported as `maxRuntimeMs`; a ceiling the host enforced names itself. */
+function truncationOf(run) {
+  return run.truncatedBy ?? (run.sawCeiling ? "maxRuntimeMs" : null);
 }
 
 function closeStream(stream) {

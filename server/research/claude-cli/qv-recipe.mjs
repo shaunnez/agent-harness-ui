@@ -15,20 +15,31 @@
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { allowedToolName, HOST_TOOL_SERVER_NAME } from "./host-tools/definitions.mjs";
 import { parseFinalJsonFence } from "./stream.mjs";
 
 export const QV_SYSTEM_PROMPT_PATH = fileURLToPath(new URL("./qv-system-prompt.txt", import.meta.url));
 export const QV_CORPUS_SERVER_PATH = fileURLToPath(new URL("./qv-corpus-server.py", import.meta.url));
 
-/** The four tools, in the order `14c-run-research.sh` lists them. `--allowed-tools` is the
- *  only gate on what the agent may reach: everything absent from this list is unavailable
- *  regardless of what else the operator has configured. */
+/** The host tools this recipe exposes: enough to retain a web page and quote it, and no
+ *  more. `web_search` is absent because the CLI's own `WebSearch` already discovers pages on
+ *  the subscription; `submit_finding` is absent because this recipe's answer is the final
+ *  fence, and its citations are checked after the run (`citations.mjs`). */
+export const QV_HOST_TOOLS = ["fetch_source", "read_source"];
+
+/** The four tools `14c-run-research.sh` lists, in its order, then the two host tools.
+ *  `--allowed-tools` is the only gate on what the agent may reach: everything absent from this
+ *  list is unavailable regardless of what else the operator has configured. `WebFetch` is
+ *  absent on purpose — a page is read through `fetch_source`, which retains it, or not at all. */
 export const QV_ALLOWED_TOOLS = [
   "mcp__qv__search_qv",
   "mcp__qv__get_qv_table",
   "mcp__qv__list_qv_sections",
   "WebSearch",
+  ...QV_HOST_TOOLS.map(allowedToolName),
 ];
+
+export const HOST_TOOL_RELAY_PATH = fileURLToPath(new URL("./host-tools/mcp-server.mjs", import.meta.url));
 
 export const QV_INDEX_ENV_VAR = "RESEARCH_QV_INDEX";
 
@@ -45,10 +56,22 @@ export function resolveCorpusIndexPath(env = process.env, override = null) {
   return path.resolve(configured);
 }
 
-/** The `--mcp-config` document. One stdio server, dependency-free, reading the capture path
- *  from argv so nothing about it is baked into the file. */
-export function qvMcpConfig({ pythonBin = "python3", serverPath = QV_CORPUS_SERVER_PATH, indexPath }) {
-  return { mcpServers: { qv: { command: pythonBin, args: [serverPath, indexPath] } } };
+/** The `--mcp-config` document. The corpus server, dependency-free, reading the capture path
+ *  from argv so nothing about it is baked into the file; and, when the run has a host tool
+ *  socket, the relay that reaches it. */
+export function qvMcpConfig({
+  pythonBin = "python3",
+  serverPath = QV_CORPUS_SERVER_PATH,
+  indexPath,
+  hostTools = null,
+}) {
+  const mcpServers = { qv: { command: pythonBin, args: [serverPath, indexPath] } };
+  if (hostTools)
+    mcpServers[HOST_TOOL_SERVER_NAME] = {
+      command: hostTools.nodeBin ?? process.execPath,
+      args: [hostTools.relayPath ?? HOST_TOOL_RELAY_PATH, hostTools.socketPath, hostTools.tools.join(",")],
+    };
+  return { mcpServers };
 }
 
 // --- reading the answer back ----------------------------------------------------------------
@@ -92,6 +115,11 @@ function readComponent(raw) {
     role: stringOrNull(raw?.role),
     rowId: stringOrNull(raw?.row_id),
     source: stringOrNull(raw?.source),
+    // What makes a web figure checkable: the id `fetch_source` retained its page under, and the
+    // sentence on that page that states it. Absent from every recorded run, which predates them.
+    sourceId: stringOrNull(raw?.source_id),
+    excerpt: stringOrNull(raw?.excerpt),
+    page: Number.isInteger(raw?.page) && raw.page > 0 ? raw.page : null,
     unit: stringOrNull(raw?.unit),
     low: numberOrNull(amount.low),
     high: numberOrNull(amount.high),
@@ -107,42 +135,34 @@ function readComponent(raw) {
  * runs agreeing means the scope was specified well enough to reproduce, not that the answer is
  * right, and no quantity surveyor has reviewed any of these bands. A finding that carried no
  * such marker would read, downstream, as a checked number.
+ *
+ * `citations` is `checkCostBandCitations`' output. With it, each component's evidence is what
+ * the host actually checked, and every citation that did not check out is named in the notes.
+ * Without it — a caller with no capture to check against — the citations are carried as the
+ * model stated them, all `quoteVerified: false`.
  */
-export function findingsFromCostBand(costBand, { runId, retrievedAt = new Date().toISOString() } = {}) {
+export function findingsFromCostBand(
+  costBand,
+  { runId, retrievedAt = new Date().toISOString(), citations = null } = {},
+) {
   if (!costBand) return [];
   const findings = [];
-  const unreviewed = (stated) =>
-    `Model-stated confidence: ${stated ?? "unstated"}. Unreviewed: no quantity surveyor has checked this.`;
+  const unreviewed = (stated, problems = []) =>
+    [
+      `Model-stated confidence: ${stated ?? "unstated"}. Unreviewed: no quantity surveyor has checked this.`,
+      ...problems,
+    ].join(" ");
 
   for (const [index, component] of costBand.components.entries()) {
-    const evidence = [];
-    if (component.rowId)
-      evidence.push({
-        sourceId: component.rowId,
-        sourceType: "internal_record",
-        title: `Priced-rate row ${component.rowId}`,
-        retrievedAt,
-        quoteVerified: false,
-        authority: "primary",
-        ...(component.caveat ? { excerpt: component.caveat } : {}),
-      });
-    if (component.source)
-      evidence.push({
-        sourceId: component.source,
-        sourceType: "web",
-        url: component.source,
-        title: component.role ?? component.source,
-        retrievedAt,
-        quoteVerified: false,
-        authority: "secondary",
-      });
+    const checked = citations?.components?.[index] ?? null;
+    const evidence = checked ? checked.evidence : statedEvidence(component, retrievedAt);
     findings.push({
       id: `${runId}#component-${index + 1}`,
       claim: componentClaim(component),
       evidence,
       ...(component.caveat ? { assumptions: [component.caveat] } : {}),
       producedBy: "researcher",
-      verification: { status: "unverified", notes: unreviewed(costBand.confidence) },
+      verification: { status: "unverified", notes: unreviewed(costBand.confidence, checked?.problems) },
     });
   }
 
@@ -159,6 +179,32 @@ export function findingsFromCostBand(costBand, { runId, retrievedAt = new Date()
     verification: { status: "unverified", notes: unreviewed(costBand.confidence) },
   });
   return findings;
+}
+
+/** The citations as the model stated them, none checked. */
+function statedEvidence(component, retrievedAt) {
+  const evidence = [];
+  if (component.rowId)
+    evidence.push({
+      sourceId: component.rowId,
+      sourceType: "internal_record",
+      title: `Priced-rate row ${component.rowId}`,
+      retrievedAt,
+      quoteVerified: false,
+      authority: "primary",
+      ...(component.caveat ? { excerpt: component.caveat } : {}),
+    });
+  if (component.source)
+    evidence.push({
+      sourceId: component.source,
+      sourceType: "web",
+      url: component.source,
+      title: component.role ?? component.source,
+      retrievedAt,
+      quoteVerified: false,
+      authority: "secondary",
+    });
+  return evidence;
 }
 
 function componentClaim(component) {

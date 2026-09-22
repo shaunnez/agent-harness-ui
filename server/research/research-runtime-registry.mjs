@@ -1,6 +1,5 @@
 // Resolve a research runtime by identifier. Deliberately the smallest thing that works: a
-// lookup and a shape check. `fake` is the only entry until slice 2 registers the Deep Agents
-// adapter, and registering it is the whole of that wiring change.
+// lookup and a shape check. Registering a runtime is the whole of the wiring change.
 
 const REQUIRED_METHODS = ["start", "status", "cancel", "events", "result"];
 

@@ -1,22 +1,21 @@
-import { createLinearClient } from "./integrations/linear-client.mjs";
-import { LinearIntake, readLinearConfig } from "./integrations/linear-intake.mjs";
-import { createLinearWebhookServer } from "./integrations/linear-webhook.mjs";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { createApiServer } from "./api.mjs";
+import { createLinearClient } from "./integrations/linear-client.mjs";
+import { LinearIntake, readLinearConfig } from "./integrations/linear-intake.mjs";
+import { createLinearWebhookServer } from "./integrations/linear-webhook.mjs";
 import { TaskOrchestrator } from "./orchestrator.mjs";
 import { startPullRequestPolling } from "./pull-request-poller.mjs";
 import { ClaudeCliRolesResearchRuntime } from "./research/claude-cli/roles-runtime.mjs";
 import { ClaudeCliResearchRuntime } from "./research/claude-cli/runtime.mjs";
-import { DeepAgentsResearchRuntime } from "./research/deepagents/adapter.mjs";
 import { FakeResearchRuntime } from "./research/fake-research-runtime.mjs";
 import { createResearchRuntimeRegistry } from "./research/research-runtime-registry.mjs";
 import { ResearchService } from "./research/research-service.mjs";
 import { ResearchStore } from "./research/research-store.mjs";
-import { JsonTaskStore } from "./store.mjs";
-import { SqliteTaskStore } from "./sqlite-store.mjs";
 import { acquireRuntimeLock } from "./runtime-lock.mjs";
+import { SqliteTaskStore } from "./sqlite-store.mjs";
+import { JsonTaskStore } from "./store.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dataPath = process.env.AGENT_HARNESS_DATA ?? path.join(root, ".data", "tasks.json");
@@ -76,13 +75,14 @@ try {
 // `claude-cli` is registered and deliberately not made the default. It is the runtime with 28
 // cost bands behind it, but it is not the default until phase 2 has measured whether one agent
 // or four roles wins, and until it has served real reviewed work (consolidation plan, phase 4).
+// It is also the only live research engine: the Deep Agents runtime was retired on 23 September
+// 2026 and what it did well moved into `claude-cli` (host-owned tools, checked citations).
 const researchService = jsonStore
   ? null
   : new ResearchService({
       store: new ResearchStore(store.databaseHandle()),
       registry: createResearchRuntimeRegistry([
         new FakeResearchRuntime(),
-        new DeepAgentsResearchRuntime(),
         new ClaudeCliResearchRuntime(),
         new ClaudeCliRolesResearchRuntime(),
       ]),

@@ -12,7 +12,7 @@
 // telling us about the runs, not about the arithmetic.
 
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -68,7 +68,7 @@ const COST_BAND_ANSWER = {
   components: [
     {
       role: "Proprietary channel and grate",
-      row_id: "abc:t1:r4",
+      row_id: `${"a".repeat(64)}:t1:r4`,
       source: null,
       unit: "m",
       amount: { low: 300, high: 360 },
@@ -162,8 +162,19 @@ const AUTHORISED = async () => ({
   probe: { loggedIn: true, authMethod: REQUIRED_AUTH_METHOD },
 });
 
+/** One priced row, under the id `COST_BAND_ANSWER` cites, so a citation check has something
+ *  real to find. */
+const CAPTURE_ROW = {
+  id: `${"a".repeat(64)}:t1:r4`,
+  description: "Proprietary channel and grate, 150mm",
+  headings: [{ text: "Drainage" }, { text: "Channel drains" }],
+  unit_normalised: "m",
+  regional_values: { Auckland: { scalar: "330.00" } },
+};
+
 async function withRuntime(body, overrides = {}) {
   const directory = await mkdtemp(path.join(os.tmpdir(), "research-claude-cli-test-"));
+  await writeFile(path.join(directory, "capture.jsonl"), `${JSON.stringify(CAPTURE_ROW)}\n`);
   const runtime = new ClaudeCliResearchRuntime({
     env: {
       PATH: process.env.PATH,
@@ -171,6 +182,7 @@ async function withRuntime(body, overrides = {}) {
       RESEARCH_QV_INDEX: path.join(directory, "capture.jsonl"),
     },
     transcriptDirectory: path.join(directory, "transcripts"),
+    sourceSnapshotDirectory: path.join(directory, "sources"),
     assertAuth: AUTHORISED,
     ...overrides,
   });
@@ -301,8 +313,13 @@ test("the spawn is the six-flag configuration the 90 recorded runs used", async 
       assert.ok(args.includes("--verbose"));
       assert.equal(args[at(args, "--max-budget-usd") + 1], "7.5");
       const config = JSON.parse(await readFile(args[at(args, "--mcp-config") + 1], "utf8"));
-      assert.deepEqual(Object.keys(config.mcpServers), ["qv"]);
+      assert.deepEqual(Object.keys(config.mcpServers), ["qv", "research"]);
       assert.match(config.mcpServers.qv.args[0], /qv-corpus-server\.py$/);
+      // The relay the CLI spawns knows the run's socket and the tools it may list, nothing else.
+      const [relay, socketPath, tools] = config.mcpServers.research.args;
+      assert.match(relay, /host-tools\/mcp-server\.mjs$/);
+      assert.match(socketPath, /host\.sock$/);
+      assert.equal(tools, "fetch_source,read_source");
     },
     { run: replayRunner(streamLines(), { calls }) },
   );
@@ -426,7 +443,7 @@ test("findings carry their evidence and say plainly that nobody has reviewed the
   const costBand = parseCostBand(`\`\`\`json\n${JSON.stringify(COST_BAND_ANSWER)}\n\`\`\``);
   const findings = findingsFromCostBand(costBand, { runId: "RSCH-1" });
   assert.equal(findings.length, 3);
-  assert.equal(findings[0].evidence[0].sourceId, "abc:t1:r4");
+  assert.equal(findings[0].evidence[0].sourceId, COST_BAND_ANSWER.components[0].row_id);
   assert.equal(findings[0].evidence[0].sourceType, "internal_record");
   assert.equal(findings[0].evidence[0].quoteVerified, false);
   assert.equal(findings[1].evidence[0].url, "https://supplier.example.test/connection");
@@ -460,12 +477,14 @@ test("a successful run completes with findings, usage and a transcript artifact"
           "source.retrieved",
           "log",
           "finding.created",
+          // The cited QV row, retained so its citation can be verified like a fetched page.
+          "source.retrieved",
           "run.completed",
         ],
       );
       assert.deepEqual(
         events.map((event) => event.ordinal),
-        [1, 2, 3, 4, 5, 6, 7, 8],
+        [1, 2, 3, 4, 5, 6, 7, 8, 9],
       );
 
       const status = await runtime.status("RSCH-CLI-OK");

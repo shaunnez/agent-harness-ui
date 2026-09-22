@@ -306,7 +306,7 @@ test("a runtime cannot mark its own evidence verified", async () => {
 test("the host marks evidence verified only after re-reading the matching retained snapshot", async () => {
   await withResearchStore(async ({ store, sourceSnapshotDirectory }) => {
     const run = await store.createRun({
-      runtimeId: "deepagents",
+      runtimeId: "claude-cli",
       request: requestFor("Verify retained evidence"),
       budget: resolveResearchBudget("standard"),
     });
@@ -367,7 +367,7 @@ test("the host marks evidence verified only after re-reading the matching retain
 test("the store verifies PDF excerpts only on the cited physical page", async () => {
   await withResearchStore(async ({ store, sourceSnapshotDirectory }) => {
     const run = await store.createRun({
-      runtimeId: "deepagents",
+      runtimeId: "claude-cli",
       request: requestFor("Verify a PDF page"),
       budget: resolveResearchBudget("standard"),
     });

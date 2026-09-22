@@ -11,6 +11,10 @@
 //
 // If the counts do not reproduce, the port is wrong. Do not proceed to phase 2 and do not tune
 // the thresholds to fit.
+//
+// By default the agent has the host tools (`fetch_source`, `read_source`) and every citation
+// is checked; the recorded runs had neither. `--no-host-tools` runs the recorded configuration
+// exactly, which is the run to use when the question is whether the port itself is faithful.
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -53,6 +57,10 @@ const budget = resolveResearchBudget("standard", {
 const runtime = new ClaudeCliResearchRuntime({
   maxConcurrentRuns: options.concurrency,
   ...(options.model ? { model: options.model } : {}),
+  // `--no-host-tools` is the recorded configuration exactly: no way to fetch a page. Without it
+  // the agent can retain and quote web pages, which is a different recipe from the one the
+  // 90 recorded runs used — so the exit test below becomes a regression check, not a port check.
+  ...(options.hostTools ? {} : { hostTools: [] }),
 });
 
 const startedAt = Date.now();
@@ -86,6 +94,8 @@ const report = {
   concurrency: options.concurrency,
   elapsedMs: Date.now() - startedAt,
   aborted,
+  hostTools: options.hostTools,
+  citations: sumCitations(records),
   mergedFrom: options.merge ?? null,
   scenariosRunNow: fresh.map((record) => record.scenarioId),
   comparison,
@@ -102,6 +112,16 @@ if (exitTest.applicable && !exitTest.passed) process.exitCode = 1;
 // 2, not 1: "the run did not finish" and "the port is wrong" are different answers, and a
 // caller that cannot tell them apart will read a quota wall as a failed port.
 if (aborted) process.exitCode = 2;
+
+/** Every run's citation check, added up. Null when no run reported one. */
+function sumCitations(records) {
+  const runs = records.flatMap((record) => record.runs ?? []).filter((run) => run.citations);
+  if (!runs.length) return null;
+  const total = {};
+  for (const run of runs)
+    for (const [key, value] of Object.entries(run.citations)) total[key] = (total[key] ?? 0) + value;
+  return { runs: runs.length, ...total };
+}
 
 /** New runs win. A scenario re-run after a quota wall replaces whatever the aborted run left. */
 function mergeRecords(previous, current) {
@@ -132,6 +152,12 @@ function renderSummary(report) {
     `status bucket match  ${report.comparison.statusMatches} of ${counts.scenarios}`,
     `plan usage           $${report.comparison.planUsd} ($${report.comparison.planUsdPerScenario}/scenario, recorded $${RECORDED_BASELINE.planUsdPerScenario})`,
   ];
+  const c = report.citations;
+  if (c)
+    lines.push(
+      `QV rows cited        ${c.rowsCited} (${c.rowsFound} found, ${c.rowsMissing} not in the capture, ${c.rowsUnpriced} unpriced)`,
+      `web figures cited    ${c.webCited} (${c.webVerified} quote verified, ${c.webNotFetched} never fetched, ${c.webExcerptRejected} quote not on the page)`,
+    );
   if (report.aborted)
     lines.push(
       "",
@@ -150,7 +176,11 @@ function renderSummary(report) {
   if (!report.exitTest.passed)
     lines.push(
       "",
-      "The port is wrong. Do not proceed to phase 2, and do not tune the agreement thresholds to fit.",
+      report.hostTools
+        ? "The counts moved. Host tools were on, so this recipe is not the recorded one: read it as a " +
+            "regression against the baseline, rerun with --no-host-tools to check the port itself, and " +
+            "do not tune the agreement thresholds to fit."
+        : "The port is wrong. Do not proceed to phase 2, and do not tune the agreement thresholds to fit.",
     );
   return lines.join("\n");
 }
@@ -163,9 +193,14 @@ function readOptions(argv) {
     model: null,
     maxUsd: null,
     merge: null,
+    hostTools: true,
     out: path.resolve(".data", "research-claude-cli", "phase-1-benchmark.json"),
   };
   for (let index = 0; index < argv.length; index += 1) {
+    if (argv[index] === "--no-host-tools") {
+      options.hostTools = false;
+      continue;
+    }
     const [flag, inline] = argv[index].split("=");
     const value = inline ?? argv[++index];
     if (flag === "--scopes")
