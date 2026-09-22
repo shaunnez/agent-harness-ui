@@ -1,0 +1,32 @@
+SCENARIO
+id: retaining-wall-construction-pinned
+title: Retaining wall construction
+family: civil
+catalogue unit: m2 (per m2 of retained face)
+
+SCOPE - FIXED. Do not substitute your own.
+  wall type:        timber pole and timber lagging (the commonest NZ commercial low wall)
+  retained height:  1.8m
+  nominal length:   15m continuous, so face area = 27 m2
+  surcharge:        none - level ground behind, no vehicle loading within the zone of influence
+  ground:           firm clay, no rock, no dewatering
+  surface finish:   none to the wall face; topsoil and grass to the batter above
+
+INCLUDED, amortised over the 27 m2 where not already per-m2:
+  - excavation for poles and wall line, and cart spoil
+  - poles, concrete pole footings, timber lagging
+  - free-draining backfill behind the wall
+  - subsoil drain at the base, discharging to an existing outfall within 5m
+  - backfill and compaction
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin
+  - specific engineering design, PS1, producer statements, consent fees
+  - handrail or barrier to the top
+  - any surcharge, tieback or anchor
+  - contaminated spoil, dewatering, traffic management
+
+Give the band as $/m2 of retained face for this exact scope, and state the total for
+the 27 m2 so the amortisation is auditable.
+
+Price it, or tell us honestly why you cannot.

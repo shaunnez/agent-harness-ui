@@ -1,0 +1,34 @@
+SCENARIO
+id: solar-mounting-structural-design-pinned
+title: Solar array mounting structural support
+family: structure
+catalogue unit: sum (for the whole array)
+
+SCOPE - FIXED. Do not substitute your own.
+  array:            30 kWp, approximately 60 panels, roughly 120 m2 of panel area
+  roof:             existing steel portal warehouse, trapezoidal 0.55mm steel sheet
+                    on steel purlins at 1200mm centres, 8 degree pitch
+  mounting:         proprietary rail system on non-penetrating or clamped brackets
+                    to the sheet ribs
+  strengthening:    assume supplementary purlins to one third of the array footprint
+  design:           PS1 producer statement and wind/uplift calculation to AS/NZS 1170
+                    for an Auckland site, high wind zone
+
+INCLUDED:
+  - proprietary rails, clamps, brackets and fixings
+  - installation labour for the mounting system only
+  - supplementary purlins to one third of the footprint, supplied and fixed
+  - structural engineer's design and PS1
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin
+  - the PV modules, inverters, cabling or any electrical work
+  - roof sheet replacement, repair or recoating
+  - scaffolding, edge protection or roof access systems
+  - consent fees
+
+Give the band as a lump sum for this exact scope, broken into the mounting system,
+the strengthening and the design fee so a reviewer can reject one part without the
+others.
+
+Price it, or tell us honestly why you cannot.
