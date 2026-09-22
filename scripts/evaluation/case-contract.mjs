@@ -36,6 +36,20 @@ const definitions = {
       "actual-policy-editor",
     ],
   },
+  H06: {
+    workflowProfile: "standard",
+    grader: "evaluations/graders/h06.mjs",
+    graderOutput: "directory",
+    checkIds: [
+      "api-persistence-and-boundary",
+      "off-pauses-intake-and-on-resumes",
+      "off-waits-for-current-receipt",
+      "off-pauses-publication",
+      "off-pauses-linear-replies-but-local-grill-works",
+      "unconfigured-fails-closed-and-local-continues",
+      "frontier-integrations-control",
+    ],
+  },
 };
 
 export async function loadEvaluationCase(caseId = "H02") {
@@ -51,6 +65,11 @@ export async function loadEvaluationCase(caseId = "H02") {
     rubric.version = "delivery-rubric-h05-v1";
     rubric.criteria[1] =
       "Existing behavior remains compatible except the explicitly requested catalog projection correction.";
+  }
+  if (caseId === "H06") {
+    rubric.version = "delivery-rubric-h06-v1";
+    rubric.criteria[1] =
+      "Existing behavior remains compatible except the explicitly requested Linear pause/resume control.";
   }
   return { ...structuredClone(definition), item, contract, rubric };
 }

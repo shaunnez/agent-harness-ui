@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "status": "13 selected cases; H05 is the proposed small Harness alternative; per-case qualification gates remain authoritative",
+  "status": "14 selected cases; H06 is the qualified medium development comparison; per-case qualification gates remain authoritative",
   "cases": [
     {
       "id": "H01",
@@ -404,6 +404,37 @@
           "Dispatch preflight and explicit single-trial run instruction"
         ],
         "privateEvidence": "cross-project-prep-v1/H05/qualification.json"
+      }
+    },
+    {
+      "id": "H06",
+      "version": 1,
+      "repository": "harness",
+      "baseSha": "1358af6d37013392d6b6b16610f07ead7da342c5",
+      "referenceSha": "96eb276170d4952ff5b20f7e5442e60809eb9da5",
+      "difficulty": "medium",
+      "risk": "medium",
+      "split": "development",
+      "title": "Add a persistent Linear integration switch in Frontier Settings",
+      "brief": "Operators need a switch in Frontier Settings → World & connection → Integrations to pause and resume the existing Linear integration. Off must persist across restart, finish an in-flight receipt, then pause new intake, manual Grill replies and publication. Queued work must resume on re-enable. Ordinary local tasks and manual Grill remain available. Keep the existing signed-webhook and workflow approval boundaries.",
+      "acceptanceCriteria": [
+        "Configured Linear integration starts On and persists Off/On across restart",
+        "Frontier Settings shows and controls the real integration state",
+        "Off finishes an in-flight receipt then admits no new intake",
+        "Off pauses queued intake, Linear replies and outbound updates; On resumes queued work",
+        "Unconfigured integrations fail closed while local tasks and manual Grill remain usable",
+        "Mutation requires the existing operator API boundary; no approval or webhook security bypass"
+      ],
+      "qualification": "behavior-browser-and-baseline-qualified",
+      "referenceScope": "Task changes in the reviewed source commit; exclude docs and AGENTS.md from agent inputs",
+      "qualificationEvidence": {
+        "independentChecks": 7,
+        "basePasses": 0,
+        "referencePasses": 7,
+        "alwaysEnabledMutantPasses": 5,
+        "baseAndReferenceManifest": "all six commands and format check passed",
+        "privateEvidence": "20260923/h06-qualification-v1",
+        "inferenceCalls": 0
       }
     }
   ]

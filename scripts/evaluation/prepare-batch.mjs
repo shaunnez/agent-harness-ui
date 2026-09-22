@@ -9,6 +9,7 @@ import { formatArgv, parseVerificationManifest } from "../../server/verification
 import { DEFAULT_REPAIR_LIMITS } from "../../src/repair-limits.ts";
 import { loadEvaluationCase } from "./case-contract.mjs";
 import { CODEX_6_IMPLEMENT_COMPARISON, H05_CODEX_COMPARISON } from "./h05-codex-comparison.mjs";
+import { H06_MEDIUM_PROVIDER_COMPARISON } from "./medium-provider-comparison.mjs";
 
 const exec = promisify(execFile);
 const root = fileURLToPath(new URL("../../", import.meta.url));
@@ -17,23 +18,48 @@ if (
   !campaignRoot ||
   !publicRoot ||
   !sourceRepository ||
-  !["prepare", "dry-run", "feasibility", "codex-comparison", "codex-6-comparison"].includes(mode)
+  ![
+    "prepare",
+    "dry-run",
+    "feasibility",
+    "codex-comparison",
+    "codex-6-comparison",
+    "medium-provider-comparison",
+  ].includes(mode)
 )
   throw new Error(
-    "Usage: prepare-batch.mjs <new-private-root> <new-public-root> <source-repository> [dry-run|feasibility|codex-comparison|codex-6-comparison] [H02|H05]",
+    "Usage: prepare-batch.mjs <new-private-root> <new-public-root> <source-repository> [dry-run|feasibility|codex-comparison|codex-6-comparison|medium-provider-comparison] [H02|H05|H06]",
   );
 const read = (relative) => readFile(path.join(root, relative), "utf8");
 const git = (cwd, args) => exec("git", args, { cwd, maxBuffer: 30_000_000 });
 const sha = (text) => createHash("sha256").update(text).digest("hex");
 const selectedCase = await loadEvaluationCase(caseId);
 const { item, contract, rubric } = selectedCase;
-const codexComparison = mode === "codex-comparison" || mode === "codex-6-comparison";
-const comparison = mode === "codex-6-comparison" ? CODEX_6_IMPLEMENT_COMPARISON : H05_CODEX_COMPARISON;
+const comparisonMode = ["codex-comparison", "codex-6-comparison", "medium-provider-comparison"].includes(
+  mode,
+);
+const comparison =
+  mode === "medium-provider-comparison"
+    ? H06_MEDIUM_PROVIDER_COMPARISON
+    : mode === "codex-6-comparison"
+      ? CODEX_6_IMPLEMENT_COMPARISON
+      : H05_CODEX_COMPARISON;
 if (mode === "codex-comparison" && caseId !== "H05")
   throw new Error("The historical Codex comparison is qualified only for H05.");
 if (mode === "codex-6-comparison" && !["H02", "H05"].includes(caseId))
   throw new Error("The GPT-6 Codex comparison is qualified only for H02 and H05.");
-if (caseId !== "H02" && !["dry-run", "feasibility", "codex-comparison", "codex-6-comparison"].includes(mode))
+if (mode === "medium-provider-comparison" && caseId !== "H06")
+  throw new Error("The medium provider comparison is qualified only for H06.");
+if (
+  caseId !== "H02" &&
+  ![
+    "dry-run",
+    "feasibility",
+    "codex-comparison",
+    "codex-6-comparison",
+    "medium-provider-comparison",
+  ].includes(mode)
+)
   throw new Error("New cases support one trial only; no automatic comparison campaign.");
 const incumbent = JSON.parse(await read("evaluations/incumbent-settings-snapshot.json"));
 const policy = (model, reasoning = "high") => ({ model, reasoning });
@@ -50,8 +76,8 @@ const balanced = {
   "final-review": policy("gpt-5.6-sol"),
 };
 const feasibility = mode === "feasibility" || caseId === "H05";
-// Pin the incumbent's real high-risk profile because every arm uses that assurance level.
-const policies = codexComparison
+// Comparison arms pin their complete role matrix; the case fixes workflow depth.
+const policies = comparisonMode
   ? comparison.policies
   : feasibility
     ? { balanced }
@@ -83,7 +109,7 @@ const harnessVersion = (await git(root, ["rev-parse", "HEAD"])).stdout.trim();
 // Retained campaigns keep their frozen limits; preparation never edits them.
 const budget = {
   maxWallTimeMs: 7200000,
-  maxTotalTokens: feasibility || codexComparison ? 200000000 : 30000000,
+  maxTotalTokens: feasibility || comparisonMode ? 200000000 : 30000000,
 };
 const repairLimits = structuredClone(DEFAULT_REPAIR_LIMITS);
 const stageTimeoutOverridesMs = Object.fromEntries(
@@ -101,7 +127,7 @@ const stageTimeoutOverridesMs = Object.fromEntries(
   ].map((stage) => [stage, 3600000]),
 );
 const limits = { maxAgentRuns: 100, maxProviderInvocations: 1000 };
-const order = codexComparison
+const order = comparisonMode
   ? comparison.trials.map((trial) => trial.variant)
   : feasibility
     ? ["balanced"]
@@ -125,7 +151,7 @@ const playwrightVersion = playwrightModule
   ? JSON.parse(await readFile(path.join(path.dirname(playwrightModule), "package.json"), "utf8")).version
   : "not-used-in-preflight";
 const executable = async (name) => (await exec("which", [name])).stdout.trim();
-const allowedProviders = codexComparison ? [...comparison.allowedProviders] : ["codex", "claude"];
+const allowedProviders = comparisonMode ? [...comparison.allowedProviders] : ["codex", "claude"];
 const executables = Object.fromEntries(
   await Promise.all(allowedProviders.map(async (provider) => [provider, await executable(provider)])),
 );
@@ -146,7 +172,7 @@ const environment = {
   providers: versions,
   allowedProviders,
   packageConcurrency: 1,
-  trialConcurrency: codexComparison ? comparison.trialConcurrency : 1,
+  trialConcurrency: comparisonMode ? comparison.trialConcurrency : 1,
   gitSigning: "disabled only in isolated process/repositories",
   workflowProfile: selectedCase.workflowProfile,
   grill: "manual with frozen benchmark-user answers",
@@ -178,7 +204,7 @@ if (
   throw new Error("EVAL_PLAYWRIGHT_MODULE must be outside paths denied to the independent grader.");
 await mkdir(campaignRoot);
 await mkdir(publicRoot);
-const trials = codexComparison
+const trials = comparisonMode
   ? comparison.trials.map((trial) => ({ ...trial }))
   : order.map((variant, index) => ({
       id: `${feasibility ? "F" : "A"}${index + 1}`,
@@ -194,8 +220,10 @@ const freeze = {
   graderVersion: `${caseId.toLowerCase()}-${sha(await read(selectedCase.grader))}`,
   rubricVersion: `${rubric.version}-${sha(JSON.stringify(rubric))}`,
   environmentVersion: sha(JSON.stringify(environment)),
-  executionVersion: codexComparison
-    ? "fixed-policy-native-permissions-v4-codex-provider-lock"
+  executionVersion: comparisonMode
+    ? mode === "medium-provider-comparison"
+      ? "fixed-policy-native-permissions-v5-matched-provider-comparison"
+      : "fixed-policy-native-permissions-v4-codex-provider-lock"
     : "fixed-policy-native-permissions-v3-package-repair",
   environment,
   budget,
@@ -304,7 +332,7 @@ for (const trial of trials) {
     workerProfile,
     codexWrapper: wrappers.codex,
     claudeWrapper: wrappers.claude,
-    allowedModels: codexComparison ? [...comparison.allowedModels] : incumbent.allowedModels,
+    allowedModels: comparisonMode ? [...comparison.allowedModels] : incumbent.allowedModels,
     defaultModel: comparison.defaultModel,
     gatePolicies: incumbent.gatePolicies,
     answerSheet: contract,
