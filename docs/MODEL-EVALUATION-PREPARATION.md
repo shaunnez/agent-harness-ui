@@ -1,6 +1,6 @@
 # Next evaluation preparation — 22 September 2026
 
-**No new delivery or reviewer model calls were made. H05 is the proposed next single trial, but it is not ready for dispatch.** Wait for the retained-package failure activity/repair-admission fix owned by the other agent, reconcile it with this source, then create a new committed freeze. This continuation authorized preparation; a clear instruction to run the prepared trial is still required.
+**No new delivery or reviewer model calls were made during preparation.** The latest agreement is recorded in [MODEL-EVALUATION-CODEX-COMPARISON.md](MODEL-EVALUATION-CODEX-COMPARISON.md): after compaction, two parallel H05 trials using Codex only, coordinated by Sol. This supersedes the single mixed-provider proposal and the unnecessary requirement to wait for the separate retained-package follow-up. Qualification evidence below remains valid; the old resume sequence is historical.
 
 ## Source and ownership
 
@@ -44,7 +44,7 @@ Do not describe this replay as proven backend/database implementation coverage: 
 
 Base `56524724e31d17968383d1e24a2b1c70a0a46ca9`; reviewed source `f105a0b8a0498a3fc2c9b38a2f4bcf2f89cb2908`. Reconstruct only `server/model-catalog.mjs` and `tests/claude-runtime.test.mjs`; exclude onboarding-provider routing from that source commit.
 
-The task keeps a discovered Claude entry selectable when defaults, allowlists or stage policies reference it. It must preserve discovered Codex behavior, unknown configured models as visible/non-editable, catalog metadata, uniqueness and input immutability. The complete public brief is `evaluations/cases/h05-public-contract.md`.
+The task keeps a discovered Claude entry selectable when defaults, allowlists or stage policies reference it. It must preserve discovered Codex behavior, unknown configured models as visible/non-editable, catalog metadata, uniqueness and input immutability. This behavior is exercised with synthetic catalog data and needs no Claude inference. The complete public brief is `evaluations/cases/h05-public-contract.md`.
 
 All five historical verification-manifest commands passed on both fresh base and reference: lint, types, repository tests, build and Sites tests. Repository counts were **282 base / 283 reference**, plus four Sites tests each. This historical manifest has no separate formatting command.
 
@@ -80,7 +80,7 @@ Before the final evaluation-only edits, Frontier tests **167/167**, Frontier API
 
 Private `harness-post-rebase/harness-checks.json` records the final committed-source core/static checks. Its initial focused command accidentally included a nonexistent extra filename; Node ran the 11 planning tests, and the subsequent complete 874-test run supplied the full core coverage. Earlier `harness-final/`, `harness-bounded/` and `runner-integration-tests-v2.log` retain their original commands/results against the parent revision plus the then-uncommitted preparation patch. The next live campaign still requires a new clean committed freeze after the pending fix.
 
-## Resume in order
+## Historical single-trial sequence — superseded
 
 1. Inspect the current branch, dirty state, origin/main, processes and durable task/ledger state. Preserve all receipts and retained candidates; never infer inactivity solely from a missing terminal.
 2. Confirm the other agent's retained-package failure event/repair-admission fix has merged. Inspect the actual diff and regression coverage. Rebase this preparation branch onto it; do not duplicate its implementation or mistake `09737b7` for that separate fix.

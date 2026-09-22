@@ -1,6 +1,6 @@
 # Model evaluation continuation after H02 v7
 
-**Current continuation:** [MODEL-EVALUATION-PREPARATION.md](MODEL-EVALUATION-PREPARATION.md) records the completed zero-inference preparation on `codex/model-evaluation-cross-project-prep`. M01 and P03 are blocked by historical baseline failures. H05 is qualified as the proposed small Harness alternative, pending the other agent's retained-package failure-routing fix, a new source freeze and dispatch instruction. No new model run was launched. The original plan below is retained as history; use the preparation handoff for current checkout state and next actions.
+**Current continuation:** [MODEL-EVALUATION-CODEX-COMPARISON.md](MODEL-EVALUATION-CODEX-COMPARISON.md) supersedes the old single-trial plan. After compaction, run the agreed two parallel H05 trials using Codex only: Sol High versus Luna High for Implement/Repair. Use Sol to coordinate. The separate retained-package failure-routing follow-up is not a prerequisite. No new model run was launched while writing the handoff. The original plan below is retained as history.
 
 Updated 22 September 2026. Read this before older execution briefs. **No evaluation worker or reviewer is running.** This handoff prepares the next unit; it does not authorize a new paid campaign merely by being read.
 
