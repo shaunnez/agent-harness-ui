@@ -1,5 +1,7 @@
 # Fresh H02 baseline — 22 September 2026
 
+> Current result (22 September 2026): [H02 v7 closeout](MODEL-EVALUATION-H02-V7.md) supersedes the execution status below. Delivery completed in 36m41s with zero repairs; corrected independent behavior 11/11; one blind review rejected a Settings save-scope defect confirmed in the browser. No worker or grader remains active. The sections below retain historical evidence, not authority to relaunch.
+
 **Fresh `feasibility-v6/F1` finished after 27m54s. The implementation call completed, but package qualification failed four API validation tests. No integrated candidate or blind review. All provider calls are settled. The cancelled v5 attempt remains untouched; no cancellation/resume handling was implemented.**
 
 Shaun explicitly requested this fresh run instead of cancellation/resume handling. Source freeze `a1ecaa9` differs from prior executable freeze `a8bfd00` only in documentation. Private evidence is `/Users/shaun/.codex/model-evaluation/20260922/feasibility-v6`, and isolated delivery files are under `/private/tmp/h-eval-f6/F1`. All five exact-base manifest commands, API admission, persisted stage allowances and native permission checks passed before dispatch. Claude's built-in usage check showed 3% used in the current five-hour window. The run started at `03:00:17.474Z` and ended at `03:28:11.633Z` (15:00–15:28 Pacific/Auckland). Worker exec session `88663` is complete; never restart it.
