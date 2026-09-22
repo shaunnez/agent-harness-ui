@@ -117,3 +117,60 @@ already carries `runtimeId`, so which one answered is recorded per run.
 `19-RESEARCH-PROJECT-PROTOTYPE-PROMPT.md` said the research runtime "takes
 `RESEARCH_MODEL_API_KEY` and bills the API". True as far as it goes, and it missed the
 more important half: with no key at all it does not fail, it fakes.
+
+---
+
+## Then where did the existing findings come from?
+
+Fair question, and the answer clears up an implication the section above leaves
+hanging. **None of the findings you have seen are fake, and none came from the harness
+research runtime.** There are three separate paths and they have been easy to confuse:
+
+### 1. The live-model pilot — real models, metered API key
+
+`scripts/research-model-pilot.mjs` is a standalone script, not the harness runtime. Its
+preflight (`scripts/research-model-pilot/preflight.mjs`) *requires* a credential and
+refuses to start without one:
+
+> "The selected {provider} model has no credential; set RESEARCH_MODEL_API_KEY in
+> {envFile}."
+
+It also demands the owner-only `.env.research.local` at mode 0600 and fails if the file
+is world-readable. There is no fake fallback on this path by design.
+
+Twelve sessions are on disk under `.data/research-model-pilots/`. Their `preflight.json`
+records what each one actually used:
+
+| sessions | mode | provider | model |
+|---:|---|---|---|
+| 5 | dry-run | — | — |
+| 5 | **live** | anthropic | claude-opus-5 |
+| 1 | **live** | anthropic | claude-haiku-4-5 |
+| 1 | **live** | anthropic | claude-sonnet-5 |
+
+Real models, real key, real spend. Those are the pilot findings.
+
+### 2. Today's work — real models, your subscription
+
+The 90 runs behind `17-TOP-30.md` and the three questions in `18c-ask-feed.json` came
+from `14c-run-research.sh` and `18d-ask.sh`, which spawn the `claude` CLI on the
+claude.ai subscription with the QV MCP server attached. These never touched the harness
+either — they are scripts in this pack.
+
+### 3. The harness research runtime — has never run
+
+`research_runs` is **empty in every database on this machine**: the main
+`.data/tasks.sqlite3` and every worktree. Zero runs, zero events, zero findings, zero
+sources.
+
+So the fake has never actually produced anything you have looked at. It is a trap that
+has not been sprung yet, because nobody has run the harness research runtime. The
+hazard is real and worth closing before someone does — but it has not silently
+contaminated any existing result.
+
+### What this changes about the plan
+
+Nothing in the sizing above. It does sharpen the ordering: the harness runtime is
+genuinely unproven rather than lightly used, so a CLI-backed runtime registered beside
+it is not replacing something that works, it is giving the registry its first entry
+that has ever produced a finding end to end.
