@@ -119,8 +119,8 @@ test("a provider preset snapshots profile-aware inheritance and rejects cross-pr
     assert.equal(task.agentConfig.policySnapshotVersion, 3);
     assert.equal(task.agentConfig.rolePolicySources.triage, "provider-preset");
     assert.notDeepEqual(
-      task.agentConfig.profileStagePolicies.fast.triage,
-      task.agentConfig.profileStagePolicies.standard.triage,
+      task.agentConfig.profileStagePolicies.fast.plan,
+      task.agentConfig.profileStagePolicies.standard.plan,
     );
     for (const matrix of Object.values(task.agentConfig.profileStagePolicies)) {
       assert.ok(Object.values(matrix).every((policy) => policy.model.startsWith("claude-")));

@@ -1,5 +1,6 @@
 import {
   defaultProfileStagePolicies,
+  defaultRepairEscalationPolicy,
   normalizeModelId,
   POLICY_IDS,
   providerForModelId,
@@ -104,7 +105,7 @@ function repairEscalationPolicies(profileStagePolicies, settings, knownModels, p
       const selected = profileStagePolicies[profile]?.repair;
       const provider = providerForModelId(selected?.model);
       if (!provider || (providerConstraint && provider !== providerConstraint)) return [];
-      const stronger = defaultProfileStagePolicies(provider)[profile]?.plan;
+      const stronger = defaultRepairEscalationPolicy(provider, profile);
       if (!stronger || (stronger.model === selected.model && stronger.reasoning === selected.reasoning))
         return [];
       try {

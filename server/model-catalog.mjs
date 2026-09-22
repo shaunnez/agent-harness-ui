@@ -8,6 +8,7 @@ import {
   DEFAULT_RUNTIME_MODEL,
   DEFAULT_RUNTIME_REASONING,
   defaultProfileStagePolicies,
+  defaultRepairEscalationPolicy,
   defaultStagePolicies,
   PROVIDER_RUNTIME_DEFAULTS,
   providerRuntimeDefaults,
@@ -261,6 +262,7 @@ export {
   DEFAULT_RUNTIME_MODEL,
   DEFAULT_RUNTIME_REASONING,
   defaultProfileStagePolicies,
+  defaultRepairEscalationPolicy,
   defaultStagePolicies,
   PROVIDER_RUNTIME_DEFAULTS,
   providerRuntimeDefaults,
@@ -308,7 +310,15 @@ export function defaultRuntimeSettings() {
     // against this list and a Claude task's policies must name Claude models. The
     // selected provider, not this list, decides which runtime executes.
     allowedModels: [
-      ...new Set([defaultModel, "gpt-6-sol", "gpt-6-luna", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", ...CLAUDE_MODEL_IDS]),
+      ...new Set([
+        defaultModel,
+        "gpt-6-sol",
+        "gpt-6-luna",
+        "gpt-5.6-sol",
+        "gpt-5.6-terra",
+        "gpt-5.6-luna",
+        ...CLAUDE_MODEL_IDS,
+      ]),
     ],
     defaultModel,
     defaultReasoning,

@@ -5,11 +5,11 @@ import { DEFAULT_EXECUTION_PROVIDER } from "./run-activity.mjs";
  * runtime both resolve their defaults from here so runtime status, allowed models,
  * and spawned agents cannot advertise different models.
  */
-export const DEFAULT_RUNTIME_MODEL = "gpt-6-luna";
-export const DEFAULT_RUNTIME_REASONING = "xhigh";
+export const DEFAULT_RUNTIME_MODEL = "gpt-6-sol";
+export const DEFAULT_RUNTIME_REASONING = "high";
 
 /** Codex's own default, which is not the global one and must not follow it. */
-export const DEFAULT_CODEX_MODEL = "gpt-6-luna";
+export const DEFAULT_CODEX_MODEL = "gpt-6-sol";
 
 /**
  * Provider-specific default stage policies, in a module with no Node built-in
@@ -28,33 +28,68 @@ export function defaultProfileStagePolicies(provider = DEFAULT_EXECUTION_PROVIDE
     const sonnetHigh = { model: "claude-sonnet-5", reasoning: "high" };
     const sonnetXHigh = { model: "claude-sonnet-5", reasoning: "xhigh" };
     return {
-      fast: profilePolicy(sonnetMedium, opusHigh, sonnetHigh, sonnetHigh, sonnetMedium),
-      standard: profilePolicy(sonnetXHigh, opusHigh, sonnetXHigh, sonnetXHigh, sonnetMedium),
-      "high-risk": profilePolicy(sonnetXHigh, opusHigh, sonnetXHigh, sonnetXHigh, sonnetMedium),
+      fast: profilePolicy(
+        sonnetMedium,
+        sonnetHigh,
+        sonnetHigh,
+        sonnetHigh,
+        sonnetHigh,
+        sonnetMedium,
+        sonnetMedium,
+      ),
+      standard: profilePolicy(
+        sonnetMedium,
+        sonnetHigh,
+        opusHigh,
+        sonnetXHigh,
+        sonnetXHigh,
+        sonnetMedium,
+        sonnetMedium,
+      ),
+      "high-risk": profilePolicy(
+        sonnetHigh,
+        sonnetHigh,
+        opusHigh,
+        sonnetXHigh,
+        sonnetXHigh,
+        sonnetMedium,
+        sonnetMedium,
+      ),
     };
   }
   const lunaMedium = { model: "gpt-6-luna", reasoning: "medium" };
   const lunaHigh = { model: "gpt-6-luna", reasoning: "high" };
-  const lunaXHigh = { model: "gpt-6-luna", reasoning: "xhigh" };
   const solHigh = { model: "gpt-6-sol", reasoning: "high" };
   return {
-    fast: profilePolicy(lunaMedium, solHigh, lunaHigh, lunaHigh, lunaMedium),
-    standard: profilePolicy(lunaXHigh, solHigh, lunaXHigh, lunaXHigh, lunaMedium),
-    "high-risk": profilePolicy(lunaXHigh, solHigh, lunaXHigh, lunaXHigh, lunaMedium),
+    fast: profilePolicy(lunaMedium, solHigh, solHigh, lunaHigh, lunaHigh, lunaMedium, solHigh),
+    standard: profilePolicy(lunaHigh, solHigh, solHigh, solHigh, solHigh, lunaMedium, solHigh),
+    "high-risk": profilePolicy(lunaHigh, solHigh, solHigh, solHigh, solHigh, lunaMedium, solHigh),
   };
 }
 
-function profilePolicy(gathering, planning, implementation, repair, finalReview) {
+// A verified candidate defect may step up without changing the policy used for
+// the original Plan run. Task creation snapshots this choice for reproducibility.
+export function defaultRepairEscalationPolicy(provider = "codex", profile = "standard") {
+  if (provider === "claude")
+    return profile === "fast"
+      ? { model: "claude-sonnet-5", reasoning: "xhigh" }
+      : { model: "claude-opus-5-5", reasoning: "high" };
+  return profile === "fast"
+    ? { model: "gpt-6-sol", reasoning: "high" }
+    : { model: "gpt-6-sol", reasoning: "xhigh" };
+}
+
+function profilePolicy(gathering, decisions, planning, implementation, repair, test, finalReview) {
   return {
     triage: { ...gathering },
     scouts: { ...gathering },
-    grill: { ...gathering },
-    specification: { ...gathering },
+    grill: { ...decisions },
+    specification: { ...decisions },
     plan: { ...planning },
     implement: { ...implementation },
     repair: { ...repair },
     "dev-review": { ...planning },
-    test: { ...gathering },
+    test: { ...test },
     "final-review": { ...finalReview },
   };
 }

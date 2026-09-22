@@ -222,7 +222,8 @@ test("selects deterministic profiles and escalates fast at explicit boundaries",
   const policies = defaultProfileStagePolicies();
   assert.deepEqual(policies.fast.triage, { model: "gpt-6-luna", reasoning: "medium" });
   assert.deepEqual(policies.fast.implement, { model: "gpt-6-luna", reasoning: "high" });
-  assert.deepEqual(policies.standard.implement, { model: "gpt-6-luna", reasoning: "xhigh" });
+  assert.deepEqual(policies.standard.implement, { model: "gpt-6-sol", reasoning: "high" });
+  assert.deepEqual(policies["high-risk"].repair, { model: "gpt-6-sol", reasoning: "high" });
   assert.deepEqual(policies["high-risk"].plan, { model: "gpt-6-sol", reasoning: "high" });
 });
 

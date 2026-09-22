@@ -111,17 +111,45 @@ test("verified material repair escalation stays inside an inherited provider con
   assert.match(policy.escalationReason, /Verified P1 candidate defect/);
 });
 
+test("the Sol baseline snapshots a higher-effort repair after a verified candidate defect", () => {
+  const settings = defaultRuntimeSettings();
+  const knownModels = new Map(
+    ["gpt-6-luna", "gpt-6-sol"].map((id) => [
+      id,
+      { id, label: id, reasoningLevels: ["medium", "high", "xhigh"] },
+    ]),
+  );
+  const snapshot = snapshotTaskPolicies({}, settings, knownModels, { selected: "standard" }, null);
+  assert.deepEqual(snapshot.stagePolicies.implement, { model: "gpt-6-sol", reasoning: "high" });
+  assert.deepEqual(snapshot.stagePolicies.repair, { model: "gpt-6-sol", reasoning: "high" });
+  assert.deepEqual(snapshot.repairEscalationPolicies.standard, {
+    model: "gpt-6-sol",
+    reasoning: "xhigh",
+  });
+  assert.deepEqual(snapshot.repairEscalationPolicies.fast, {
+    model: "gpt-6-sol",
+    reasoning: "high",
+  });
+  const evidence = materialRepairEvidence();
+  const current = task({ candidates: [evidence.candidate], runs: [evidence.run] });
+  current.agentConfig = snapshot;
+  const policy = resolveEffectiveRunPolicy(current, "repair");
+  assert.equal(policy.selectedReasoning, "high");
+  assert.equal(policy.reasoning, "xhigh");
+  assert.match(policy.escalationReason, /Verified P1 candidate defect/);
+});
+
 test("infrastructure failures and pinned roles never trigger reasoning escalation", () => {
   const evidence = materialRepairEvidence();
   const infrastructure = task({
     candidates: [evidence.candidate],
     runs: [{ ...evidence.run, gateResult: null, status: "failed" }],
   });
-  assert.equal(resolveEffectiveRunPolicy(infrastructure, "repair").model, "gpt-6-luna");
+  assert.equal(resolveEffectiveRunPolicy(infrastructure, "repair").model, "gpt-6-sol");
 
   const pinned = task({ candidates: [evidence.candidate], runs: [evidence.run] });
   pinned.agentConfig.rolePolicySources.repair = "future-role-override";
-  assert.equal(resolveEffectiveRunPolicy(pinned, "repair").model, "gpt-6-luna");
+  assert.equal(resolveEffectiveRunPolicy(pinned, "repair").model, "gpt-6-sol");
 });
 
 test("provider presets remain profile-aware while individual roles stay pinned", () => {
@@ -157,7 +185,7 @@ test("provider presets remain profile-aware while individual roles stay pinned",
   };
   assert.equal(recordWorkflowProfile(profiledTask, "standard", "Material scope discovered."), true);
   assert.deepEqual(profiledTask.agentConfig.stagePolicies.grill, pinned);
-  assert.ok(profiledTask.workflowProfile.policyImpact.changedRoles.includes("triage"));
+  assert.ok(profiledTask.workflowProfile.policyImpact.changedRoles.includes("plan"));
   assert.deepEqual(profiledTask.workflowProfile.policyImpact.pinnedRoles, ["grill"]);
 });
 
