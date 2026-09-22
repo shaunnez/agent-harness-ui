@@ -8,7 +8,7 @@ import { readExecutionProviderCatalog } from "../../server/model-catalog.mjs";
 import { formatArgv, parseVerificationManifest } from "../../server/verification.mjs";
 import { DEFAULT_REPAIR_LIMITS } from "../../src/repair-limits.ts";
 import { loadEvaluationCase } from "./case-contract.mjs";
-import { H05_CODEX_COMPARISON, H05_CODEX_COMPARISON_6 } from "./h05-codex-comparison.mjs";
+import { CODEX_6_IMPLEMENT_COMPARISON, H05_CODEX_COMPARISON } from "./h05-codex-comparison.mjs";
 
 const exec = promisify(execFile);
 const root = fileURLToPath(new URL("../../", import.meta.url));
@@ -28,9 +28,11 @@ const sha = (text) => createHash("sha256").update(text).digest("hex");
 const selectedCase = await loadEvaluationCase(caseId);
 const { item, contract, rubric } = selectedCase;
 const codexComparison = mode === "codex-comparison" || mode === "codex-6-comparison";
-const comparison = mode === "codex-6-comparison" ? H05_CODEX_COMPARISON_6 : H05_CODEX_COMPARISON;
-if (codexComparison && caseId !== "H05")
-  throw new Error("The bounded Codex comparison is qualified only for H05.");
+const comparison = mode === "codex-6-comparison" ? CODEX_6_IMPLEMENT_COMPARISON : H05_CODEX_COMPARISON;
+if (mode === "codex-comparison" && caseId !== "H05")
+  throw new Error("The historical Codex comparison is qualified only for H05.");
+if (mode === "codex-6-comparison" && !["H02", "H05"].includes(caseId))
+  throw new Error("The GPT-6 Codex comparison is qualified only for H02 and H05.");
 if (caseId !== "H02" && !["dry-run", "feasibility", "codex-comparison", "codex-6-comparison"].includes(mode))
   throw new Error("New cases support one trial only; no automatic comparison campaign.");
 const incumbent = JSON.parse(await read("evaluations/incumbent-settings-snapshot.json"));
@@ -79,7 +81,10 @@ if (mode !== "dry-run" && changed.trim())
 const harnessVersion = (await git(root, ["rev-parse", "HEAD"])).stdout.trim();
 // User-selected quality-first allowances apply to every new evaluation mode.
 // Retained campaigns keep their frozen limits; preparation never edits them.
-const budget = { maxWallTimeMs: 7200000, maxTotalTokens: feasibility ? 200000000 : 30000000 };
+const budget = {
+  maxWallTimeMs: 7200000,
+  maxTotalTokens: feasibility || codexComparison ? 200000000 : 30000000,
+};
 const repairLimits = structuredClone(DEFAULT_REPAIR_LIMITS);
 const stageTimeoutOverridesMs = Object.fromEntries(
   [

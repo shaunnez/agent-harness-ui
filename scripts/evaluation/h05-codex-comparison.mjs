@@ -46,7 +46,7 @@ const shared6 = Object.freeze({
   "final-review": policy(sol6),
 });
 
-export const H05_CODEX_COMPARISON_6 = Object.freeze({
+export const CODEX_6_IMPLEMENT_COMPARISON = Object.freeze({
   policies: Object.freeze({
     "sol-implement": Object.freeze({
       ...shared6,
@@ -65,3 +65,5 @@ export const H05_CODEX_COMPARISON_6 = Object.freeze({
   trialConcurrency: 2,
   defaultModel: luna6,
 });
+
+export const H05_CODEX_COMPARISON_6 = CODEX_6_IMPLEMENT_COMPARISON;
