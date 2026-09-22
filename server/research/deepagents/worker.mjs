@@ -14,6 +14,7 @@
 // stated security requirement, not an incidental one.
 
 import process from "node:process";
+import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { BaseChatModel } from "@langchain/core/language_models/chat_models";
@@ -24,9 +25,59 @@ import { createDeepAgent, createSubAgentMiddleware, StateBackend } from "deepage
 import { modelCallLimitMiddleware, tool } from "langchain";
 import { graphRecursionLimitForBudget } from "../../../src/research-budget-policy.ts";
 import { encodeWorkerMessage } from "./event-protocol.mjs";
+import { modelConstructorOptions } from "./model-config.mjs";
 import { openHostToolChannel } from "./host-tool-client.mjs";
 
 const startedAtMs = Date.now();
+
+/** Host tool errors a model can correct on its own: malformed input it chose, and the two
+ *  discovery ceilings that leave the run otherwise viable. Everything absent from this set —
+ *  cancellation, deadline expiry, aggregate tool-call exhaustion, provider and protocol
+ *  failures — still terminates the run, because no reply from the model can resolve it. */
+const RECOVERABLE_TOOL_ERROR_CODES = new Set([
+  "invalid_tool_input",
+  "invalid_finding",
+  "evidence_required",
+  "too_much_evidence",
+  "source_not_in_run",
+  "pdf_page_required",
+  "invalid_locator",
+  "excerpt_not_found",
+  "source_page_not_retained",
+  "source_offset_out_of_range",
+  "source_empty",
+  "policy_rejected",
+  // Facts about one URL rather than about the provider: the page would not load, returned a
+  // type this run cannot read, or arrived truncated. A model answers those by choosing a
+  // different source, which is the same move as picking a page that exists. Provider-wide
+  // conditions — rate limits, timeouts, transient outages, quota and authentication — stay
+  // terminal, so an outage is never quietly rescored as model behaviour.
+  "source_http_error",
+  "unsupported_media_type",
+  "source_incomplete",
+  "unknown_research_tool",
+  "capture_ceiling_exceeded",
+  "search_call_ceiling_exceeded",
+]);
+
+/** How many times one error code may be returned to the model before the run gives up on it.
+ *  Counted per code, so unrelated corrections never consume each other's budget. */
+const MAX_RECOVERABLE_STRIKES_PER_CODE = 2;
+
+/** Provider conditions that say nothing about the model or its research: the service is down,
+ *  throttling, out of quota, or not set up. These end the run — no reply from the model
+ *  resolves them — but they are reported separately from a research failure so a scorer can
+ *  record the case as unassessed rather than failed. Content-level problems with one URL are
+ *  deliberately absent: those are in `RECOVERABLE_TOOL_ERROR_CODES`, where the model routes
+ *  around them. */
+const PROVIDER_UNAVAILABLE_CODES = new Set([
+  "transient",
+  "timeout",
+  "rate_limit",
+  "quota",
+  "authentication",
+  "configuration",
+]);
 
 function send(message) {
   process.stdout.write(encodeWorkerMessage(message));
@@ -105,6 +156,28 @@ class FakeToolCallingModel extends BaseChatModel {
       message = new AIMessage({
         content: "",
         tool_calls: [{ name: "submit_finding", args: { claim: 12345 }, id: "fake-bad-1", type: "tool_call" }],
+        usage_metadata,
+        response_metadata,
+      });
+    } else if (this.misbehavior === "host_rejected_finding" && !this.misbehaviorHandled) {
+      this.misbehaviorHandled = true;
+      // Passes `submitFindingTool`'s zod schema and is rejected by the *host* instead, for
+      // citing a source that never belonged to this run. This is a different boundary from
+      // `invalid_finding`: a schema failure never leaves the child, while a host rejection
+      // crosses the tool channel, and used to abort the graph rather than reach the model.
+      message = new AIMessage({
+        content: "",
+        tool_calls: [
+          {
+            name: "submit_finding",
+            args: {
+              claim: "A claim citing a source this run never retained.",
+              evidence: [{ sourceId: "source-not-in-this-run", excerpt: "unverifiable excerpt" }],
+            },
+            id: "fake-host-reject-1",
+            type: "tool_call",
+          },
+        ],
         usage_metadata,
         response_metadata,
       });
@@ -243,26 +316,18 @@ function latestToolJson(messages) {
   return null;
 }
 
-async function buildModel(modelConfig) {
-  if (modelConfig.provider === "anthropic") {
-    const apiKey = process.env[modelConfig.apiKeyEnvVar];
+/** Exported so a test can prove that a live constructor receives the configured maximum
+ *  output token count without a network call. The constructor arguments themselves are owned
+ *  by `model-config.mjs`; this function only decides which class they are handed to. */
+export async function buildModel(modelConfig, env = process.env) {
+  if (modelConfig.provider === "anthropic" || modelConfig.provider === "openai-compatible") {
+    const apiKey = env[modelConfig.apiKeyEnvVar];
     if (!apiKey)
       throw new Error(
-        `Anthropic model requested but ${modelConfig.apiKeyEnvVar} was not provided to the child.`,
+        `A ${modelConfig.provider} model was requested but ${modelConfig.apiKeyEnvVar} was not provided to the child.`,
       );
-    return new ChatAnthropic({ model: modelConfig.model, apiKey });
-  }
-  if (modelConfig.provider === "openai-compatible") {
-    const apiKey = process.env[modelConfig.apiKeyEnvVar];
-    if (!apiKey)
-      throw new Error(
-        `OpenAI-compatible model requested but ${modelConfig.apiKeyEnvVar} was not provided to the child.`,
-      );
-    return new ChatOpenAI({
-      model: modelConfig.model,
-      apiKey,
-      configuration: { baseURL: modelConfig.baseURL },
-    });
+    const { provider, options } = modelConstructorOptions(modelConfig, apiKey);
+    return provider === "anthropic" ? new ChatAnthropic(options) : new ChatOpenAI(options);
   }
   return new FakeToolCallingModel({
     label: modelConfig.model,
@@ -352,6 +417,11 @@ function classifyError(error, { cancelled }) {
       truncatedBy: "maxRuntimeMs",
     };
   }
+  // A provider that is down, rate-limited, out of quota or misconfigured has not told us
+  // anything about the model. Reporting it as `model_or_tool_error` makes a Firecrawl outage
+  // read as a research-quality failure, which is measuring the provider's uptime rather than
+  // the model's work. It keeps its own code so a scorer can leave the case unassessed.
+  if (PROVIDER_UNAVAILABLE_CODES.has(error?.code)) return { code: "provider_unavailable", message };
   return { code: "model_or_tool_error", message };
 }
 
@@ -368,6 +438,16 @@ async function main() {
   const findings = [];
   let hostBudgetState = null;
 
+  // A tool error the model can act on is feedback, not a crash. Throwing it aborts the graph
+  // and discards work the model has already done correctly — a malformed locator on an
+  // otherwise correct finding used to destroy a run that had already retained the right
+  // source. Those errors come back as a tool result the model can read and correct instead.
+  //
+  // The strike limit is what keeps that from becoming an infinite apology loop: a model that
+  // ignores the same correction twice would otherwise spend its whole model-call allowance
+  // re-making one mistake, so the second occurrence of a code is terminal after all.
+  const toolErrorStrikes = new Map();
+
   const callHostTool = async (toolName, input) => {
     try {
       const response = await host.invoke(toolName, input);
@@ -375,6 +455,15 @@ async function main() {
       return response.result;
     } catch (error) {
       if (error?.budgetState) hostBudgetState = error.budgetState;
+      const code = error?.code;
+      if (code && RECOVERABLE_TOOL_ERROR_CODES.has(code)) {
+        const strikes = (toolErrorStrikes.get(code) ?? 0) + 1;
+        toolErrorStrikes.set(code, strikes);
+        if (strikes <= MAX_RECOVERABLE_STRIKES_PER_CODE) {
+          sendLog(`recoverable tool error returned to the model: ${code} (strike ${strikes})`);
+          return { error: { code, message: error.message, recoverable: true } };
+        }
+      }
       throw error;
     }
   };
@@ -422,13 +511,18 @@ async function main() {
   const submitFindingTool = tool(
     async (input) => {
       const finding = await callHostTool("submit_finding", input);
+      // A recoverable rejection comes back as an error envelope, not a finding. Pushing it
+      // would enter an unaccepted claim into the run's evidence.
+      if (finding?.error) return JSON.stringify(finding);
       findings.push(finding);
       return JSON.stringify({ findingId: finding.id, accepted: true });
     },
     {
       name: "submit_finding",
       description:
-        "Submit one finding with exact excerpts from sources retained by fetch_source. The host verifies every excerpt.",
+        "Submit one finding with exact excerpts from sources retained by fetch_source. The host verifies every excerpt. " +
+        "For evidence from a PDF the locator must be exactly {page: <physical page number>} and nothing else — any " +
+        "additional locator field is rejected. For HTML or text evidence the locator must omit `page`.",
       schema: z
         .object({
           claim: z.string().min(1).max(2_000),
@@ -558,14 +652,19 @@ async function main() {
   host.close();
 }
 
-main()
-  .then(() => {
-    process.exitCode = 0;
-  })
-  .catch((error) => {
-    // A structural failure — bad config, a model/checkpoint that could not even be
-    // constructed — before any graph ever ran. Nothing partial to preserve.
-    sendError({ code: "worker_startup_failed", message: error?.message ?? String(error) });
-    process.stdin.destroy();
-    process.exitCode = 1;
-  });
+// Only when spawned as the child entrypoint. Importing this module — which a constructor test
+// does, because this is the one file allowed to import a chat-model integration — must not
+// start a graph or read stdin.
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  main()
+    .then(() => {
+      process.exitCode = 0;
+    })
+    .catch((error) => {
+      // A structural failure — bad config, a model/checkpoint that could not even be
+      // constructed — before any graph ever ran. Nothing partial to preserve.
+      sendError({ code: "worker_startup_failed", message: error?.message ?? String(error) });
+      process.stdin.destroy();
+      process.exitCode = 1;
+    });
+}
