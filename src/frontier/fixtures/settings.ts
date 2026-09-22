@@ -17,7 +17,7 @@ export function fixtureSettings(): { settings: RuntimeSettings; catalog: Runtime
       grillPolicy: "manual",
       repairLimits: normalizeRepairLimits(null),
       gatePolicies: {},
-      allowedModels: ["gpt-5.6-luna", "gpt-5.6-sol", "claude-opus-5"],
+      allowedModels: ["gpt-5.6-luna", "gpt-5.6-sol", "claude-opus-5-5"],
       defaultModel: "gpt-5.6-luna",
       defaultReasoning: "xhigh",
       stagePolicies,
@@ -28,7 +28,7 @@ export function fixtureSettings(): { settings: RuntimeSettings; catalog: Runtime
       },
       designPolicies: {
         "codex-design": { provider: "codex", model: "gpt-5.6-sol", reasoning: "high" },
-        "claude-design": { provider: "claude", model: "claude-opus-5", reasoning: "high" },
+        "claude-design": { provider: "claude", model: "claude-opus-5-5", reasoning: "high" },
       },
       pricing: {
         version: "sample",
@@ -55,8 +55,8 @@ export function fixtureSettings(): { settings: RuntimeSettings; catalog: Runtime
           reasoningLevels: ["low", "medium", "high", "xhigh", "max", "ultra"],
         },
         {
-          id: "claude-opus-5",
-          label: "Opus 5",
+          id: "claude-opus-5-5",
+          label: "Opus 5.5",
           provider: "claude",
           reasoningLevels: ["low", "medium", "high", "xhigh", "max"],
         },

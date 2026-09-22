@@ -535,6 +535,7 @@ must not depend on network access and the model set changes slowly:
 
 | id | label | effort levels | default |
 |---|---|---|---|
+| `claude-opus-5-5` | Claude Opus 5.5 | low, medium, high, xhigh, max | xhigh |
 | `claude-opus-5` | Claude Opus 5 | low, medium, high, xhigh, max | xhigh |
 | `claude-sonnet-5` | Claude Sonnet 5 | low, medium, high, xhigh, max | xhigh |
 | `claude-fable-5` | Claude Fable 5 | low, medium, high, xhigh, max | xhigh |
@@ -570,6 +571,7 @@ usage from a real Claude Code session shows `ephemeral_1h_input_tokens: 13783` a
 |---|---|---|---|---|
 | `claude-fable-5` | 10 | 1 | 20 | 50 |
 | `claude-fable-5-1` | 10 | 1 | 20 | 50 (placeholder — reuses `claude-fable-5`'s rate pending real Anthropic Fable 5.1 billing data) |
+| `claude-opus-5-5` | 4 | 0.2 | 8 | 20 |
 | `claude-opus-5` | 5 | 0.5 | 10 | 25 |
 | `claude-sonnet-5` | 3 | 0.3 | 6 | 15 |
 | `claude-haiku-4-5` | 1 | 0.1 | 2 | 5 |

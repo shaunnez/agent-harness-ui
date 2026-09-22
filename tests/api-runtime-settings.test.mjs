@@ -7,7 +7,7 @@ test("new runtime settings default design generation to Opus High and Sol High",
   try {
     const settings = (await (await fetch(`${origin}/api/settings`)).json()).settings;
     assert.deepEqual(settings.designPolicies, {
-      "claude-design": { provider: "claude", model: "claude-opus-5", reasoning: "high" },
+      "claude-design": { provider: "claude", model: "claude-opus-5-5", reasoning: "high" },
       "codex-design": { provider: "codex", model: "gpt-5.6-sol", reasoning: "high" },
     });
   } finally {
@@ -84,7 +84,7 @@ test("persists an allowed Sol model policy and snapshots it on new tasks", async
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         grillPolicy: "auto-accept-recommendations",
-        allowedModels: ["gpt-5.6-sol", "gpt-5.6-luna", "claude-opus-5"],
+        allowedModels: ["gpt-5.6-sol", "gpt-5.6-luna", "claude-opus-5-5"],
         defaultModel: "gpt-5.6-sol",
         defaultReasoning: "xhigh",
       }),
@@ -99,7 +99,7 @@ test("persists an allowed Sol model policy and snapshots it on new tasks", async
       method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        allowedModels: ["gpt-5.6-sol", "gpt-5.6-luna", "claude-opus-5"],
+        allowedModels: ["gpt-5.6-sol", "gpt-5.6-luna", "claude-opus-5-5"],
         defaultModel: "gpt-5.6-sol",
         defaultReasoning: "xhigh",
       }),
@@ -129,7 +129,7 @@ test("persists an allowed Sol model policy and snapshots it on new tasks", async
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         grillPolicy: "always-automatic",
-        allowedModels: ["gpt-5.6-sol", "gpt-5.6-luna", "claude-opus-5"],
+        allowedModels: ["gpt-5.6-sol", "gpt-5.6-luna", "claude-opus-5-5"],
         defaultModel: "gpt-5.6-sol",
         defaultReasoning: "xhigh",
       }),
@@ -152,11 +152,11 @@ test("rejects a task model outside the configured allowlist", async () => {
       method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        allowedModels: ["gpt-5.6-luna", "claude-opus-5"],
+        allowedModels: ["gpt-5.6-luna", "claude-opus-5-5"],
         defaultModel: "gpt-5.6-luna",
         defaultReasoning: "medium",
         designPolicies: {
-          "claude-design": { provider: "claude", model: "claude-opus-5", reasoning: "high" },
+          "claude-design": { provider: "claude", model: "claude-opus-5-5", reasoning: "high" },
           "codex-design": { provider: "codex", model: "gpt-5.6-luna", reasoning: "high" },
         },
       }),
@@ -187,7 +187,7 @@ test("accepts an all-Claude default matrix, the shape the settings editor's prov
       method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        allowedModels: ["gpt-5.6-luna", "gpt-5.6-sol", "claude-opus-5", "claude-sonnet-5"],
+        allowedModels: ["gpt-5.6-luna", "gpt-5.6-sol", "claude-opus-5-5", "claude-sonnet-5"],
         defaultModel: "claude-sonnet-5",
         defaultReasoning: "xhigh",
         stagePolicies: claude.standard,
@@ -198,14 +198,14 @@ test("accepts an all-Claude default matrix, the shape the settings editor's prov
     const settings = (await response.json()).settings;
     assert.equal(settings.defaultModel, "claude-sonnet-5");
     assert.deepEqual(settings.profileStagePolicies.standard, claude.standard);
-    assert.equal(settings.stagePolicies.plan.model, "claude-opus-5");
+    assert.equal(settings.stagePolicies.plan.model, "claude-opus-5-5");
 
     // A mixed matrix stays valid: each stage runs on the runtime its own model belongs to.
     const mixed = await fetch(`${origin}/api/settings`, {
       method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        allowedModels: ["gpt-5.6-luna", "gpt-5.6-sol", "claude-opus-5", "claude-sonnet-5"],
+        allowedModels: ["gpt-5.6-luna", "gpt-5.6-sol", "claude-opus-5-5", "claude-sonnet-5"],
         defaultModel: "claude-sonnet-5",
         defaultReasoning: "xhigh",
         stagePolicies: { ...claude.standard, triage: { model: "gpt-5.6-luna", reasoning: "medium" } },

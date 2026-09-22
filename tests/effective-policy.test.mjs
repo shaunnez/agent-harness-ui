@@ -81,7 +81,7 @@ test("a custom repair pin is the exact policy persisted at reservation and execu
     escalationReason: null,
   });
 
-  current.agentConfig.stagePolicies.repair = { model: "claude-opus-5", reasoning: "high" };
+  current.agentConfig.stagePolicies.repair = { model: "claude-opus-5-5", reasoning: "high" };
   assert.deepEqual(effectivePolicyFromReservation(reservation, "repair"), reservation.effectivePolicy);
 });
 
@@ -106,7 +106,7 @@ test("verified material repair escalation stays inside an inherited provider con
 
   const policy = resolveEffectiveRunPolicy(current, "repair");
   assert.equal(policy.selectedModel, "claude-sonnet-5");
-  assert.equal(policy.model, "claude-opus-5");
+  assert.equal(policy.model, "claude-opus-5-5");
   assert.equal(policy.provider, "claude");
   assert.match(policy.escalationReason, /Verified P1 candidate defect/);
 });
@@ -131,11 +131,11 @@ test("provider presets remain profile-aware while individual roles stay pinned",
       ["gpt-5.6-luna", ["low", "medium", "high", "xhigh", "max"]],
       ["gpt-5.6-sol", ["low", "medium", "high", "xhigh", "max", "ultra"]],
       ["claude-sonnet-5", ["low", "medium", "high", "xhigh", "max"]],
-      ["claude-opus-5", ["low", "medium", "high", "xhigh", "max"]],
+      ["claude-opus-5-5", ["low", "medium", "high", "xhigh", "max"]],
     ].map(([id, reasoningLevels]) => [id, { id, label: id, reasoningLevels }]),
   );
   settings.allowedModels = [...knownModels.keys()];
-  const pinned = { model: "claude-opus-5", reasoning: "max" };
+  const pinned = { model: "claude-opus-5-5", reasoning: "max" };
   const snapshot = snapshotTaskPolicies(
     { providerConstraint: "claude", rolePolicyOverrides: { grill: pinned } },
     settings,

@@ -19,7 +19,7 @@ test("persists the design option and serves only the retained prototype asset", 
     assert.deepEqual(task.designRequest.policies, {
       "claude-design": {
         provider: "claude",
-        model: "claude-opus-5",
+        model: "claude-opus-5-5",
         reasoning: "high",
         provenance: "settings-default",
       },
@@ -131,7 +131,7 @@ test("validates exact design provider and reasoning selections server-side", asy
       workflow: "implement",
       designRequested: true,
       designPolicies: {
-        "claude-design": { provider: "claude", model: "claude-opus-5", reasoning: "ultra" },
+        "claude-design": { provider: "claude", model: "claude-opus-5-5", reasoning: "ultra" },
         "codex-design": { provider: "codex", model: "gpt-5.6-sol", reasoning: "high" },
       },
     });
@@ -172,7 +172,7 @@ test("changing design defaults does not alter an existing task snapshot", async 
     assert.equal(settingsResponse.status, 200);
 
     const retained = (await (await fetch(`${origin}/api/tasks/${created.id}`)).json()).task;
-    assert.equal(retained.designRequest.policies["claude-design"].model, "claude-opus-5");
+    assert.equal(retained.designRequest.policies["claude-design"].model, "claude-opus-5-5");
     assert.equal(retained.designRequest.policies["codex-design"].model, "gpt-5.6-sol");
   } finally {
     await cleanup(server, directory);

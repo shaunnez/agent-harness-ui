@@ -41,12 +41,14 @@ export const MODEL_PRICING = {
   // Placeholder — unconfirmed: reuses claude-fable-5's rate verbatim pending
   // real Anthropic Fable 5.1 billing data. Update once actual pricing is known.
   "claude-fable-5-1": rate(10, 1, 20, 50),
+  "claude-opus-5-5": rate(4, 0.2, 8, 20),
   "claude-opus-5": rate(5, 0.5, 10, 25),
   "claude-sonnet-5": rate(3, 0.3, 6, 15),
   "claude-haiku-4-5": rate(1, 0.1, 2, 5),
 };
 
 export const CLAUDE_MODEL_IDS = Object.freeze([
+  "claude-opus-5-5",
   "claude-opus-5",
   "claude-sonnet-5",
   "claude-fable-5",
@@ -125,9 +127,16 @@ export const NO_REASONING_EFFORT = "none";
 
 const CLAUDE_MODELS = [
   claudeModel(
+    "claude-opus-5-5",
+    "Claude Opus 5.5",
+    "Deepest Claude coding model for planning and gates.",
+    "xhigh",
+    CLAUDE_EFFORT_LEVELS,
+  ),
+  claudeModel(
     "claude-opus-5",
     "Claude Opus 5",
-    "Deepest Claude coding model for planning and gates.",
+    "Previous Opus release, kept for tasks that snapshotted it.",
     "xhigh",
     CLAUDE_EFFORT_LEVELS,
   ),
@@ -204,7 +213,7 @@ export function providerForModelId(value) {
 /**
  * Derive which execution provider a task's model selection implies.
  *
- * The provider follows from the models chosen, so picking `claude-opus-5` routes to
+ * The provider follows from the models chosen, so picking `claude-opus-5-5` routes to
  * the Claude CLI without anyone having to name the provider separately — and an
  * explicit provider that contradicts the chosen models is rejected rather than
  * silently sending one runtime's model to the other's CLI.
@@ -237,7 +246,7 @@ export {
 };
 
 export const DEFAULT_DESIGN_POLICIES = Object.freeze({
-  "claude-design": Object.freeze({ provider: "claude", model: "claude-opus-5", reasoning: "high" }),
+  "claude-design": Object.freeze({ provider: "claude", model: "claude-opus-5-5", reasoning: "high" }),
   "codex-design": Object.freeze({ provider: "codex", model: "gpt-5.6-sol", reasoning: "high" }),
 });
 

@@ -213,7 +213,7 @@ test("design comparison and inspector render the task-snapshotted model provenan
     const policies = {
       "claude-design": {
         provider: "claude",
-        model: "claude-opus-5",
+        model: "claude-opus-5-5",
         reasoning: "high",
         provenance: "task-selection",
       },
@@ -281,7 +281,7 @@ test("design comparison and inspector render the task-snapshotted model provenan
         onRetryDesigns: noop,
       }),
     );
-    assert.match(html, /claude-opus-5 · High · task selection/);
+    assert.match(html, /claude-opus-5-5 · High · task selection/);
     assert.match(html, /gpt-5\.6-sol · High · task selection/);
     assert.match(html, /Exact snapshot retained · no automatic substitution/);
   });

@@ -64,7 +64,7 @@ test("historical observations include Claude model runs and exclude synthetic ha
         runId: "run-claude-plan",
         stage: "plan",
         agentRole: "plan",
-        model: "claude-opus-5",
+        model: "claude-opus-5-5",
         reasoning: "xhigh",
         usage: {
           inputTokens: 100,
@@ -110,7 +110,7 @@ test("historical observations include Claude model runs and exclude synthetic ha
   const summary = buildEvaluationSummary([task]);
   assert.deepEqual(
     summary.observations.variants.map((variant) => variant.model),
-    ["claude-opus-5"],
+    ["claude-opus-5-5"],
   );
   assert.equal(summary.observations.variants[0].runs, 1);
   assert.equal(summary.observations.variants[0].cost, 0.12);

@@ -23,7 +23,7 @@ export function defaultStagePolicies(provider = DEFAULT_EXECUTION_PROVIDER) {
 
 export function defaultProfileStagePolicies(provider = DEFAULT_EXECUTION_PROVIDER) {
   if (provider === "claude") {
-    const opusHigh = { model: "claude-opus-5", reasoning: "high" };
+    const opusHigh = { model: "claude-opus-5-5", reasoning: "high" };
     const sonnetMedium = { model: "claude-sonnet-5", reasoning: "medium" };
     const sonnetHigh = { model: "claude-sonnet-5", reasoning: "high" };
     const sonnetXHigh = { model: "claude-sonnet-5", reasoning: "xhigh" };

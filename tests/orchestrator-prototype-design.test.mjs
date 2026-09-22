@@ -22,12 +22,12 @@ const GRILL = `<grill-questions>{"questions":[{"question":"How safe?","whyItMatt
 test("confines non-interactive Claude Design publication to DesignSync", () => {
   const args = claudeDesignArgs("session-123", {
     provider: "claude",
-    model: "claude-opus-5",
+    model: "claude-opus-5-5",
     reasoning: "high",
   });
   assert.deepEqual(args.slice(args.indexOf("--model"), args.indexOf("--model") + 2), [
     "--model",
-    "claude-opus-5",
+    "claude-opus-5-5",
   ]);
   assert.deepEqual(args.slice(args.indexOf("--effort"), args.indexOf("--effort") + 2), ["--effort", "high"]);
   assert.deepEqual(args.slice(args.indexOf("--tools"), args.indexOf("--tools") + 4), [
@@ -466,7 +466,7 @@ test("retry retains successful provider evidence and replaces only the failed di
     const originalPolicies = structuredClone(failed.designRequest.policies);
     assert.equal(
       failed.designRequest.variants.find((variant) => variant.status === "failed").model,
-      "claude-opus-5",
+      "claude-opus-5-5",
     );
     await store.updateSettings((draft) => {
       draft.designPolicies = {
