@@ -111,7 +111,9 @@ const order = codexComparison
         "incumbent",
         "balanced",
       ];
-const playwrightModule = process.env.EVAL_PLAYWRIGHT_MODULE;
+const playwrightModule = process.env.EVAL_PLAYWRIGHT_MODULE
+  ? await realpath(process.env.EVAL_PLAYWRIGHT_MODULE)
+  : undefined;
 if (mode !== "dry-run" && !playwrightModule)
   throw new Error("Freeze EVAL_PLAYWRIGHT_MODULE before preparing a campaign.");
 const playwrightVersion = playwrightModule
@@ -162,6 +164,13 @@ const protectedPaths = [
   "/Users/shaun/.codex/sessions",
   "/Users/shaun/.claude/projects",
 ];
+if (
+  playwrightModule &&
+  protectedPaths.some(
+    (entry) => playwrightModule === entry || playwrightModule.startsWith(`${entry}${path.sep}`),
+  )
+)
+  throw new Error("EVAL_PLAYWRIGHT_MODULE must be outside paths denied to the independent grader.");
 await mkdir(campaignRoot);
 await mkdir(publicRoot);
 const trials = codexComparison

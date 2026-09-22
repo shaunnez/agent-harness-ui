@@ -23,12 +23,15 @@ All commands run from the isolated harness source. Preparation refuses an existi
 ```text
 node scripts/evaluation/prepare-case.mjs CASE_ID SOURCE_REPOSITORY NEW_PRIVATE_CASE_DIRECTORY
 EVAL_PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node scripts/evaluation/prepare-batch.mjs NEW_PRIVATE_BATCH NEW_PUBLIC_ROOT SOURCE_REPOSITORY codex-comparison H05
+EVAL_PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node scripts/evaluation/prepare-batch.mjs NEW_PRIVATE_BATCH NEW_PUBLIC_ROOT SOURCE_REPOSITORY codex-6-comparison H05
 node scripts/evaluation/trial-worker.mjs PRIVATE_TRIAL/config.json
 node scripts/evaluation/finalize-trial.mjs PRIVATE_TRIAL
 node scripts/evaluation/report-batch.mjs PRIVATE_BATCH
 ```
 
 The optional final case argument defaults to H02. H05 supports its historical one-arm `dry-run` / `feasibility` preparation and the explicit two-arm `codex-comparison` mode. The comparison freezes Sol High versus Luna High for Implement and Repair while keeping every other role equal, permits only the Codex provider, and prepares both isolated trials before dispatch. `prepare-batch.mjs ... dry-run H05` prepares zero-inference task-creation checks; it does not demonstrate model delivery. Use `trial-worker.mjs PRIVATE_TRIAL/config.json --preflight` for task admission without dispatch. A plain worker invocation starts delivery and requires run authorization. Never promote a dirty-source dry-run bundle to live execution; prepare anew from clean committed source.
+
+`codex-6-comparison H05` is the separate GPT-6 migration policy; it leaves the historical 5.6 matrix intact. See [the GPT-6 result](../docs/MODEL-EVALUATION-CODEX-6-RESULT.md). The Playwright module must live outside all paths denied to the independent grader. Preparation rejects a module under the private model-evaluation evidence root; a byte-identical Playwright 1.61.1 copy is available at `/Users/shaun/.codex/evaluation-tools/playwright-1.61.1/node_modules/playwright/index.mjs`.
 
 Place new live campaigns directly under the established private date root, and verify the resulting protected paths cover all earlier private campaigns, references and public candidates. Nested preparation-only directories do not establish that containment. The worker must run directly with Node. Provider-native tool confinement is configured by the guard; verification runs in its own OS-confined child. Do not nest native provider sandboxes inside an outer `sandbox-exec` process.
 
