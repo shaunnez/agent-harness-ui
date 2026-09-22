@@ -1,5 +1,7 @@
 # H02 v7: delivery completed; independent review rejected the candidate
 
+> Latest continuation decision: Final Review is deferred to [ENG-977](https://linear.app/eversor-ai/issue/ENG-977/harness-make-final-review-assess-acceptance-independently-of-earlier). Start with [MODEL-EVALUATION-NEXT-RUN.md](MODEL-EVALUATION-NEXT-RUN.md) for compaction and new-case preparation. H02 is closed; no new model run has started.
+
 Updated 22 September 2026. **This bounded evaluation is closed. No worker or reviewer remains active.** The harness reached human approval on its first candidate in **36m40.552s**, with all internal gates passing and no repairs. Independent behavior checks passed after a qualified checker correction. The single blind reviewer found a Settings save-scope defect, subsequently reproduced in the browser. The final result is **not accepted**.
 
 ## Result and evidence

@@ -1,5 +1,7 @@
 # Model evaluation execution brief
 
+> Latest continuation decision: Final Review is deferred to [ENG-977](https://linear.app/eversor-ai/issue/ENG-977/harness-make-final-review-assess-acceptance-independently-of-earlier). Start with [MODEL-EVALUATION-NEXT-RUN.md](MODEL-EVALUATION-NEXT-RUN.md) for compaction and new-case preparation. H02 is closed; no new model run has started.
+
 > Current result (22 September 2026): [H02 v7 closeout](MODEL-EVALUATION-H02-V7.md) supersedes the execution status below. Delivery completed in 36m41s with zero repairs; corrected independent behavior 11/11; one blind review rejected a Settings save-scope defect confirmed in the browser. No worker or grader remains active. The sections below retain historical evidence, not authority to relaunch.
 
 Updated: 22 September 2026. **Bounded blind-review continuation closed; no active evaluations or graders. Start with [MODEL-EVALUATION-HANDOFF.md](MODEL-EVALUATION-HANDOFF.md) and [the closeout](MODEL-EVALUATION-BLIND-REVIEW.md).** The fresh larger-limit run reached human approval and passed corrected behavior checks, but the completed blind review rejected a context defect confirmed by a zero-inference diagnostic. Formal grading remains invalid after exceeding its allowance; do not retry automatically. This older programme brief is historical context, not dispatch authority. The handoff supersedes its execution order and starting-state snapshot.
