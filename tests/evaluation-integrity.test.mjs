@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { loadEvaluationCase } from "../scripts/evaluation/case-contract.mjs";
+import { H05_CODEX_COMPARISON } from "../scripts/evaluation/h05-codex-comparison.mjs";
 import {
   buildEvaluationSummary,
   normalizeEvaluationInput,
@@ -50,6 +51,47 @@ test("selected but unqualified cases cannot enter the Harness-only runner", asyn
   for (const id of ["M01", "P03", "H01", "H03", "unknown", "../H05"]) {
     await assert.rejects(loadEvaluationCase(id), /no qualified runner integration/);
   }
+});
+
+test("H05 Codex comparison changes only Implement and Repair between its two arms", () => {
+  const { policies, trials, allowedModels, allowedProviders, trialConcurrency } = H05_CODEX_COMPARISON;
+  assert.deepEqual(
+    trials.map(({ id, variant }) => ({ id, variant })),
+    [
+      { id: "A", variant: "sol-implement" },
+      { id: "B", variant: "luna-implement" },
+    ],
+  );
+  assert.equal(trialConcurrency, 2);
+  assert.deepEqual(allowedProviders, ["codex"]);
+  assert.deepEqual(allowedModels, ["gpt-5.6-sol", "gpt-5.6-luna"]);
+  assert.deepEqual(policies["sol-implement"].implement, {
+    model: "gpt-5.6-sol",
+    reasoning: "high",
+  });
+  assert.deepEqual(policies["sol-implement"].repair, policies["sol-implement"].implement);
+  assert.deepEqual(policies["luna-implement"].implement, {
+    model: "gpt-5.6-luna",
+    reasoning: "high",
+  });
+  assert.deepEqual(policies["luna-implement"].repair, policies["luna-implement"].implement);
+  for (const stage of [
+    "triage",
+    "scouts",
+    "grill",
+    "specification",
+    "plan",
+    "dev-review",
+    "test",
+    "final-review",
+  ])
+    assert.deepEqual(policies["sol-implement"][stage], policies["luna-implement"][stage]);
+  assert.deepEqual(policies["sol-implement"].test, {
+    model: "gpt-5.6-luna",
+    reasoning: "medium",
+  });
+  for (const matrix of Object.values(policies))
+    assert.ok(Object.values(matrix).every(({ model }) => !model.startsWith("claude-")));
 });
 
 test("external provider receipts count helper calls once and preserve unknown consumption", () => {

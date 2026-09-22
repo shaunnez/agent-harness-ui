@@ -8,6 +8,7 @@ import { readExecutionProviderCatalog } from "../../server/model-catalog.mjs";
 import { formatArgv, parseVerificationManifest } from "../../server/verification.mjs";
 import { DEFAULT_REPAIR_LIMITS } from "../../src/repair-limits.ts";
 import { loadEvaluationCase } from "./case-contract.mjs";
+import { H05_CODEX_COMPARISON } from "./h05-codex-comparison.mjs";
 
 const exec = promisify(execFile);
 const root = fileURLToPath(new URL("../../", import.meta.url));
@@ -16,17 +17,20 @@ if (
   !campaignRoot ||
   !publicRoot ||
   !sourceRepository ||
-  !["prepare", "dry-run", "feasibility"].includes(mode)
+  !["prepare", "dry-run", "feasibility", "codex-comparison"].includes(mode)
 )
   throw new Error(
-    "Usage: prepare-batch.mjs <new-private-root> <new-public-root> <source-repository> [dry-run|feasibility] [H02|H05]",
+    "Usage: prepare-batch.mjs <new-private-root> <new-public-root> <source-repository> [dry-run|feasibility|codex-comparison] [H02|H05]",
   );
 const read = (relative) => readFile(path.join(root, relative), "utf8");
 const git = (cwd, args) => exec("git", args, { cwd, maxBuffer: 30_000_000 });
 const sha = (text) => createHash("sha256").update(text).digest("hex");
 const selectedCase = await loadEvaluationCase(caseId);
 const { item, contract, rubric } = selectedCase;
-if (caseId !== "H02" && !["dry-run", "feasibility"].includes(mode))
+const codexComparison = mode === "codex-comparison";
+if (codexComparison && caseId !== "H05")
+  throw new Error("The bounded Codex comparison is qualified only for H05.");
+if (caseId !== "H02" && !["dry-run", "feasibility", "codex-comparison"].includes(mode))
   throw new Error("New cases support one trial only; no automatic comparison campaign.");
 const incumbent = JSON.parse(await read("evaluations/incumbent-settings-snapshot.json"));
 const policy = (model, reasoning = "high") => ({ model, reasoning });
@@ -44,13 +48,15 @@ const balanced = {
 };
 const feasibility = mode === "feasibility" || caseId === "H05";
 // Pin the incumbent's real high-risk profile because every arm uses that assurance level.
-const policies = feasibility
-  ? { balanced }
-  : {
-      incumbent: incumbent.profileStagePolicies["high-risk"],
-      balanced,
-      "astra-plan": { ...balanced, plan: policy("gpt-6-astra") },
-    };
+const policies = codexComparison
+  ? H05_CODEX_COMPARISON.policies
+  : feasibility
+    ? { balanced }
+    : {
+        incumbent: incumbent.profileStagePolicies["high-risk"],
+        balanced,
+        "astra-plan": { ...balanced, plan: policy("gpt-6-astra") },
+      };
 const catalog = await readExecutionProviderCatalog();
 for (const matrix of Object.values(policies))
   for (const selected of Object.values(matrix)) {
@@ -89,19 +95,21 @@ const stageTimeoutOverridesMs = Object.fromEntries(
   ].map((stage) => [stage, 3600000]),
 );
 const limits = { maxAgentRuns: 100, maxProviderInvocations: 1000 };
-const order = feasibility
-  ? ["balanced"]
-  : [
-      "incumbent",
-      "balanced",
-      "astra-plan",
-      "balanced",
-      "astra-plan",
-      "incumbent",
-      "astra-plan",
-      "incumbent",
-      "balanced",
-    ];
+const order = codexComparison
+  ? H05_CODEX_COMPARISON.trials.map((trial) => trial.variant)
+  : feasibility
+    ? ["balanced"]
+    : [
+        "incumbent",
+        "balanced",
+        "astra-plan",
+        "balanced",
+        "astra-plan",
+        "incumbent",
+        "astra-plan",
+        "incumbent",
+        "balanced",
+      ];
 const playwrightModule = process.env.EVAL_PLAYWRIGHT_MODULE;
 if (mode !== "dry-run" && !playwrightModule)
   throw new Error("Freeze EVAL_PLAYWRIGHT_MODULE before preparing a campaign.");
@@ -109,7 +117,10 @@ const playwrightVersion = playwrightModule
   ? JSON.parse(await readFile(path.join(path.dirname(playwrightModule), "package.json"), "utf8")).version
   : "not-used-in-preflight";
 const executable = async (name) => (await exec("which", [name])).stdout.trim();
-const executables = { codex: await executable("codex"), claude: await executable("claude") };
+const allowedProviders = codexComparison ? [...H05_CODEX_COMPARISON.allowedProviders] : ["codex", "claude"];
+const executables = Object.fromEntries(
+  await Promise.all(allowedProviders.map(async (provider) => [provider, await executable(provider)])),
+);
 const python = await executable("python3");
 const versions = Object.fromEntries(
   await Promise.all(
@@ -125,8 +136,9 @@ const environment = {
   platform: process.platform,
   arch: process.arch,
   providers: versions,
+  allowedProviders,
   packageConcurrency: 1,
-  trialConcurrency: 1,
+  trialConcurrency: codexComparison ? H05_CODEX_COMPARISON.trialConcurrency : 1,
   gitSigning: "disabled only in isolated process/repositories",
   workflowProfile: selectedCase.workflowProfile,
   grill: "manual with frozen benchmark-user answers",
@@ -151,11 +163,13 @@ const protectedPaths = [
 ];
 await mkdir(campaignRoot);
 await mkdir(publicRoot);
-const trials = order.map((variant, index) => ({
-  id: `${feasibility ? "F" : "A"}${index + 1}`,
-  variant,
-  repetition: order.slice(0, index + 1).filter((value) => value === variant).length,
-}));
+const trials = codexComparison
+  ? H05_CODEX_COMPARISON.trials.map((trial) => ({ ...trial }))
+  : order.map((variant, index) => ({
+      id: `${feasibility ? "F" : "A"}${index + 1}`,
+      variant,
+      repetition: order.slice(0, index + 1).filter((value) => value === variant).length,
+    }));
 const freeze = {
   version: path.basename(campaignRoot),
   harnessVersion,
@@ -165,7 +179,9 @@ const freeze = {
   graderVersion: `${caseId.toLowerCase()}-${sha(await read(selectedCase.grader))}`,
   rubricVersion: `${rubric.version}-${sha(JSON.stringify(rubric))}`,
   environmentVersion: sha(JSON.stringify(environment)),
-  executionVersion: "fixed-policy-native-permissions-v3-package-repair",
+  executionVersion: codexComparison
+    ? "fixed-policy-native-permissions-v4-codex-provider-lock"
+    : "fixed-policy-native-permissions-v3-package-repair",
   environment,
   budget,
   limits,
@@ -229,6 +245,7 @@ for (const trial of trials) {
     JSON.stringify(
       {
         executables,
+        allowedProviders,
         ledger,
         confinement: "native-provider",
         deniedReadPaths: [
@@ -272,7 +289,7 @@ for (const trial of trials) {
     workerProfile,
     codexWrapper: wrappers.codex,
     claudeWrapper: wrappers.claude,
-    allowedModels: incumbent.allowedModels,
+    allowedModels: codexComparison ? [...H05_CODEX_COMPARISON.allowedModels] : incumbent.allowedModels,
     gatePolicies: incumbent.gatePolicies,
     answerSheet: contract,
     taskInput: {

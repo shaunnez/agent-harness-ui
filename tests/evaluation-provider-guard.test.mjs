@@ -10,7 +10,7 @@ const exec = promisify(execFile);
 const guard = new URL("../scripts/evaluation/provider-guard.py", import.meta.url).pathname;
 const mac = process.platform === "darwin";
 
-async function fixture(body, script, { deadline = 60, count = 3, tokens = 100 } = {}) {
+async function fixture(body, script, { deadline = 60, count = 3, tokens = 100, allowedProviders } = {}) {
   const root = await realpath(await mkdtemp(path.join(os.tmpdir(), "provider-guard-")));
   const cli = path.join(root, "fake-cli");
   const configPath = path.join(root, "config.json");
@@ -29,6 +29,7 @@ async function fixture(body, script, { deadline = 60, count = 3, tokens = 100 } 
     configPath,
     JSON.stringify({
       executables: { codex: cli, claude: cli },
+      ...(allowedProviders ? { allowedProviders } : {}),
       confinement: "command-only",
       ledger,
       profile,
@@ -91,6 +92,17 @@ test("missing usage remains unknown and stops further dispatch", { skip: !mac },
     assert.equal((await ledger()).invocations[0].totalTokens, null);
     await assert.rejects(run(), /Missing prior provider usage/);
   }, 'print("no usage")'),
+);
+
+test("provider allowlist rejects Claude before reserving a call", { skip: !mac }, () =>
+  fixture(
+    async ({ run, ledger }) => {
+      await assert.rejects(run("claude"), /Provider claude is not allowed/);
+      assert.equal((await ledger()).invocations.length, 0);
+    },
+    'print("should not run")',
+    { allowedProviders: ["codex"] },
+  ),
 );
 
 test("the command fixture cannot read a protected reference", { skip: !mac }, () =>

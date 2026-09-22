@@ -16,6 +16,10 @@ import uuid
 
 config_path, provider, *args = sys.argv[1:]
 config = json.loads(Path(config_path).read_text())
+allowed_providers = config.get("allowedProviders", list(config.get("executables", {})))
+if provider not in allowed_providers:
+    print(f"Provider {provider} is not allowed for this evaluation", file=sys.stderr)
+    sys.exit(75)
 cli = config["executables"][provider]
 model = args[args.index("--model") + 1] if "--model" in args else None
 if not model:
