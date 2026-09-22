@@ -2,7 +2,7 @@
 
 Against `23-BUILD-BRIEF-PHASES-0-2.md`. Stopped after phase 2, as instructed.
 
-`npm test`: 863 pass, 0 fail (826 before). `npm run typecheck` and Biome lint/format clean.
+`npm test`: 870 pass, 0 fail (826 before). `npm run typecheck` and Biome lint/format clean.
 
 ---
 
@@ -54,8 +54,7 @@ so a test that forgets gets the same failure a real operator would.
 
 ## Phase 1 — the port
 
-**Built and verified on one scenario. The full 30-scope exit test has not been run — it costs
-about $150 of plan usage and roughly 75 minutes.**
+**Built, and the full 30-scope exit test passes.**
 
 `server/research/claude-cli/` implements `ResearchRuntime` over the six proven flags:
 
@@ -129,19 +128,61 @@ Status bucket, run count and source of resort match. Consensus is about 9% highe
 the expected variation between model runs and is why the exit test asserts buckets and counts
 rather than cents.
 
-### Outstanding
+### The exit test — passed
 
-The full exit test. One command, about $150 and 75 minutes:
+30 pinned scopes, 3 runs each, 90 of 90 runs completed:
+
+| check | got | required |
+|---|---|---|
+| scenarios with a cost band | **28** | 28 |
+| three-run agreement (1.25x low, 1.35x high) | **18** | 18 |
+| the two that correctly produce no band | `network-supply-connection-hv-metering`, `switchboard-fault-rating-protection` | the same two |
+
+Plan usage $137.13, $4.57 per scenario against the recorded $4.97. Nothing was tuned.
+
+Status bucket match is 20 of 30, and the ten differences split five each way — five recorded
+`agreed` came out `disputed` and five recorded `disputed` came out `agreed`. That is run-to-run
+variation in a model rather than drift in one direction, and it is why the exit test asserts
+counts rather than per-scenario buckets: the aggregate lands exactly on 28 and 18.
+
+### The first run of this test failed, and the failure was the harness, not the port
+
+The first attempt hit the claude.ai five-hour session limit at scenario 26. Fifteen runs across
+five scenarios were rejected — twelve of them at $0.00 and one turn — and the harness scored
+every one as `not_established`, printed `EXIT TEST FAILED`, and named six no-band scenarios
+instead of two.
+
+One of the five was `switchboard-fault-rating-protection`, which the exit test *requires* to
+produce no band. It passed its load-bearing check by never having run.
+
+Two defects, both now fixed and tested:
+
+- **`agreementForRuns` read only the band**, so a run that died and a run that researched the
+  scope and found nothing defensible scored identically. A scenario with any failed run is now
+  `incomplete` — a status of its own — and `agreementCounts` counts `agreed` and `disputed` by
+  name rather than everything that is not `not_established`. `evaluateExitTest` and
+  `comparePhases` both refuse a verdict when any scenario is incomplete.
+- **The benchmark ran on after the wall**, spending its remaining wall clock writing failures
+  into a results file that reads as research. `classifyCall` now names an exhausted plan window
+  as `claude_cli_plan_limit_reached`, `runBenchmark` returns `{records, aborted}` and stops at
+  the first one, and the scripts exit 2 rather than 1 — "the run did not finish" and "the port
+  is wrong" are different answers.
+
+`--merge <report.json>` carries an earlier report's completed scenarios forward so a truncated
+run can be finished rather than repeated. It filters run by run rather than on scenario status,
+because a report written before `incomplete` existed records its crashed scenarios as
+`not_established` — the exact conflation it must not carry forward. That is how this test was
+completed: 25 scenarios carried, 5 re-run, $25 rather than another $150.
+
+The 90 recorded runs still reproduce 28 bands and 18 tight agreements exactly, offline, as a
+test. The recorded rows carry no run status, so none of them can be mistaken for a crash.
+
+To run it again:
 
 ```bash
 RESEARCH_QV_INDEX=/path/to/indexed-items.jsonl RUN_CLAUDE_CLI_BENCHMARK=1 \
   npm run research:claude-cli-benchmark
 ```
-
-It passes on 28 bands, 18 tight, and those two scenarios producing none, and it prints
-`EXIT TEST FAILED` plus "the port is wrong — do not proceed to phase 2, and do not tune the
-agreement thresholds to fit" otherwise. A partial run (`--scopes`, `--limit`) reports the
-comparison and explicitly declines a verdict.
 
 ---
 
