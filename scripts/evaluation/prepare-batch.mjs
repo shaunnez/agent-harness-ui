@@ -8,7 +8,7 @@ import { readExecutionProviderCatalog } from "../../server/model-catalog.mjs";
 import { formatArgv, parseVerificationManifest } from "../../server/verification.mjs";
 import { DEFAULT_REPAIR_LIMITS } from "../../src/repair-limits.ts";
 import { loadEvaluationCase } from "./case-contract.mjs";
-import { H05_CODEX_COMPARISON } from "./h05-codex-comparison.mjs";
+import { H05_CODEX_COMPARISON, H05_CODEX_COMPARISON_6 } from "./h05-codex-comparison.mjs";
 
 const exec = promisify(execFile);
 const root = fileURLToPath(new URL("../../", import.meta.url));
@@ -17,20 +17,21 @@ if (
   !campaignRoot ||
   !publicRoot ||
   !sourceRepository ||
-  !["prepare", "dry-run", "feasibility", "codex-comparison"].includes(mode)
+  !["prepare", "dry-run", "feasibility", "codex-comparison", "codex-6-comparison"].includes(mode)
 )
   throw new Error(
-    "Usage: prepare-batch.mjs <new-private-root> <new-public-root> <source-repository> [dry-run|feasibility|codex-comparison] [H02|H05]",
+    "Usage: prepare-batch.mjs <new-private-root> <new-public-root> <source-repository> [dry-run|feasibility|codex-comparison|codex-6-comparison] [H02|H05]",
   );
 const read = (relative) => readFile(path.join(root, relative), "utf8");
 const git = (cwd, args) => exec("git", args, { cwd, maxBuffer: 30_000_000 });
 const sha = (text) => createHash("sha256").update(text).digest("hex");
 const selectedCase = await loadEvaluationCase(caseId);
 const { item, contract, rubric } = selectedCase;
-const codexComparison = mode === "codex-comparison";
+const codexComparison = mode === "codex-comparison" || mode === "codex-6-comparison";
+const comparison = mode === "codex-6-comparison" ? H05_CODEX_COMPARISON_6 : H05_CODEX_COMPARISON;
 if (codexComparison && caseId !== "H05")
   throw new Error("The bounded Codex comparison is qualified only for H05.");
-if (caseId !== "H02" && !["dry-run", "feasibility", "codex-comparison"].includes(mode))
+if (caseId !== "H02" && !["dry-run", "feasibility", "codex-comparison", "codex-6-comparison"].includes(mode))
   throw new Error("New cases support one trial only; no automatic comparison campaign.");
 const incumbent = JSON.parse(await read("evaluations/incumbent-settings-snapshot.json"));
 const policy = (model, reasoning = "high") => ({ model, reasoning });
@@ -49,7 +50,7 @@ const balanced = {
 const feasibility = mode === "feasibility" || caseId === "H05";
 // Pin the incumbent's real high-risk profile because every arm uses that assurance level.
 const policies = codexComparison
-  ? H05_CODEX_COMPARISON.policies
+  ? comparison.policies
   : feasibility
     ? { balanced }
     : {
@@ -96,7 +97,7 @@ const stageTimeoutOverridesMs = Object.fromEntries(
 );
 const limits = { maxAgentRuns: 100, maxProviderInvocations: 1000 };
 const order = codexComparison
-  ? H05_CODEX_COMPARISON.trials.map((trial) => trial.variant)
+  ? comparison.trials.map((trial) => trial.variant)
   : feasibility
     ? ["balanced"]
     : [
@@ -117,7 +118,7 @@ const playwrightVersion = playwrightModule
   ? JSON.parse(await readFile(path.join(path.dirname(playwrightModule), "package.json"), "utf8")).version
   : "not-used-in-preflight";
 const executable = async (name) => (await exec("which", [name])).stdout.trim();
-const allowedProviders = codexComparison ? [...H05_CODEX_COMPARISON.allowedProviders] : ["codex", "claude"];
+const allowedProviders = codexComparison ? [...comparison.allowedProviders] : ["codex", "claude"];
 const executables = Object.fromEntries(
   await Promise.all(allowedProviders.map(async (provider) => [provider, await executable(provider)])),
 );
@@ -138,7 +139,7 @@ const environment = {
   providers: versions,
   allowedProviders,
   packageConcurrency: 1,
-  trialConcurrency: codexComparison ? H05_CODEX_COMPARISON.trialConcurrency : 1,
+  trialConcurrency: codexComparison ? comparison.trialConcurrency : 1,
   gitSigning: "disabled only in isolated process/repositories",
   workflowProfile: selectedCase.workflowProfile,
   grill: "manual with frozen benchmark-user answers",
@@ -156,7 +157,7 @@ const protectedPaths = [
     .filter((entry) => entry !== "tools")
     .map((entry) => path.join(path.dirname(campaignRoot), entry)),
   "/Users/shaun/projects",
-  "/Users/shaun/.codex/model-evaluation/20260922/evaluator",
+  "/Users/shaun/.codex/model-evaluation",
   "/Users/shaun/.codex/memories",
   "/Users/shaun/.codex/sessions",
   "/Users/shaun/.claude/projects",
@@ -164,7 +165,7 @@ const protectedPaths = [
 await mkdir(campaignRoot);
 await mkdir(publicRoot);
 const trials = codexComparison
-  ? H05_CODEX_COMPARISON.trials.map((trial) => ({ ...trial }))
+  ? comparison.trials.map((trial) => ({ ...trial }))
   : order.map((variant, index) => ({
       id: `${feasibility ? "F" : "A"}${index + 1}`,
       variant,
@@ -289,7 +290,8 @@ for (const trial of trials) {
     workerProfile,
     codexWrapper: wrappers.codex,
     claudeWrapper: wrappers.claude,
-    allowedModels: codexComparison ? [...H05_CODEX_COMPARISON.allowedModels] : incumbent.allowedModels,
+    allowedModels: codexComparison ? [...comparison.allowedModels] : incumbent.allowedModels,
+    defaultModel: comparison.defaultModel,
     gatePolicies: incumbent.gatePolicies,
     answerSheet: contract,
     taskInput: {

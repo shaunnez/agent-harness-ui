@@ -22,7 +22,7 @@ const store = new SqliteTaskStore(path.join(config.privateRoot, "tasks.sqlite3")
 await store.init();
 await store.updateSettings((settings) => {
   settings.allowedModels = config.allowedModels;
-  settings.defaultModel = "gpt-5.6-sol";
+  settings.defaultModel = config.defaultModel ?? "gpt-5.6-sol";
   settings.defaultReasoning = "high";
   settings.grillPolicy = "manual";
   settings.gatePolicies = config.gatePolicies;

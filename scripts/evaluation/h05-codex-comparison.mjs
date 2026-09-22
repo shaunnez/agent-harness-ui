@@ -32,3 +32,36 @@ export const H05_CODEX_COMPARISON = Object.freeze({
   allowedProviders: Object.freeze(["codex"]),
   trialConcurrency: 2,
 });
+
+const sol6 = "gpt-6-sol";
+const luna6 = "gpt-6-luna";
+const shared6 = Object.freeze({
+  triage: policy(luna6),
+  scouts: policy(luna6),
+  grill: policy(sol6),
+  specification: policy(sol6),
+  plan: policy(sol6),
+  "dev-review": policy(sol6),
+  test: policy(luna6, "medium"),
+  "final-review": policy(sol6),
+});
+
+export const H05_CODEX_COMPARISON_6 = Object.freeze({
+  policies: Object.freeze({
+    "sol-implement": Object.freeze({
+      ...shared6,
+      implement: policy(sol6),
+      repair: policy(sol6),
+    }),
+    "luna-implement": Object.freeze({
+      ...shared6,
+      implement: policy(luna6),
+      repair: policy(luna6),
+    }),
+  }),
+  trials: H05_CODEX_COMPARISON.trials,
+  allowedModels: Object.freeze([sol6, luna6]),
+  allowedProviders: Object.freeze(["codex"]),
+  trialConcurrency: 2,
+  defaultModel: luna6,
+});

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { loadEvaluationCase } from "../scripts/evaluation/case-contract.mjs";
-import { H05_CODEX_COMPARISON } from "../scripts/evaluation/h05-codex-comparison.mjs";
+import { H05_CODEX_COMPARISON, H05_CODEX_COMPARISON_6 } from "../scripts/evaluation/h05-codex-comparison.mjs";
 import {
   buildEvaluationSummary,
   normalizeEvaluationInput,
@@ -92,6 +92,24 @@ test("H05 Codex comparison changes only Implement and Repair between its two arm
   });
   for (const matrix of Object.values(policies))
     assert.ok(Object.values(matrix).every(({ model }) => !model.startsWith("claude-")));
+});
+
+test("H05 GPT-6 migration comparison keeps the same roles and excludes earlier models", () => {
+  const { policies, trials, allowedModels, allowedProviders, defaultModel } = H05_CODEX_COMPARISON_6;
+  assert.deepEqual(trials, H05_CODEX_COMPARISON.trials);
+  assert.deepEqual(allowedModels, ["gpt-6-sol", "gpt-6-luna"]);
+  assert.deepEqual(allowedProviders, ["codex"]);
+  assert.equal(defaultModel, "gpt-6-luna");
+  for (const stage of Object.keys(policies["sol-implement"])) {
+    const sol = policies["sol-implement"][stage];
+    const luna = policies["luna-implement"][stage];
+    assert.deepEqual(
+      sol,
+      stage === "implement" || stage === "repair" ? { model: "gpt-6-sol", reasoning: "high" } : luna,
+    );
+    assert.ok(allowedModels.includes(sol.model));
+    assert.ok(allowedModels.includes(luna.model));
+  }
 });
 
 test("external provider receipts count helper calls once and preserve unknown consumption", () => {

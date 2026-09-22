@@ -803,7 +803,14 @@ test("publishes a bundled Claude catalogue attributed to its provider", async ()
   assert.equal(catalog.fetchedAt, null);
   assert.deepEqual(
     catalog.models.map((model) => model.id),
-    ["claude-opus-5-5", "claude-opus-5", "claude-sonnet-5", "claude-fable-5", "claude-fable-5-1", "claude-haiku-4-5"],
+    [
+      "claude-opus-5-5",
+      "claude-opus-5",
+      "claude-sonnet-5",
+      "claude-fable-5",
+      "claude-fable-5-1",
+      "claude-haiku-4-5",
+    ],
   );
   for (const model of catalog.models) {
     assert.equal(model.provider, "claude", model.id);
