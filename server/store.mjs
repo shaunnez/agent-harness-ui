@@ -267,7 +267,18 @@ export class JsonTaskStore {
   }
 
   async create(input) {
-    return this.#mutate((state) => createTaskRecord(state, input));
+    return this.#mutate((state) => {
+      const source = input.externalSource;
+      const existing =
+        source &&
+        state.tasks.find(
+          (task) =>
+            task.externalSource?.provider === source.provider &&
+            task.externalSource?.organizationId === source.organizationId &&
+            task.externalSource?.issueId === source.issueId,
+        );
+      return existing ?? createTaskRecord(state, input);
+    });
   }
 
   async createContinuation(sourceId, input, { expectedUpdatedAt = null } = {}) {
@@ -690,6 +701,7 @@ export function createTaskRecord(state, input) {
     id: `AH-${String(state.nextId).padStart(3, "0")}`,
     title: input.title,
     description: input.description,
+    externalSource: clone(input.externalSource ?? null),
     repositoryPath: input.repositoryPath,
     workflow: input.workflow,
     continuedFromTaskId: continuation?.sourceTaskId ?? null,
