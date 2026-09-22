@@ -1,6 +1,10 @@
 # Fresh H02 baseline — 22 September 2026
 
-**Cancelled by Shaun during implementation after he reported reaching his Claude five-hour allowance. No evaluation or review is active. Do not restart or substitute a model without a new instruction.**
+**The authorized 14:50 NZ continuation was checked on 22 September. Claude allowance was available again, but safe resumption is blocked by retained-work admission and missing usage from the cancelled call. No evaluation or review resumed.**
+
+Shaun authorized this one-time continuation after cancellation, with instructions to report a blocker if safe resumption was unavailable. The built-in Claude `/usage` check showed 3% of the five-hour session used, resetting at 19:50 Pacific/Auckland; the check session recorded zero model tokens and zero API seconds, and exited. The task remains cancelled with no active runs or provider calls. Its retained continuation action is denied: the supported path covers failed/blocked tasks with interruption, timeout or qualification errors, excluding explicit cancellation. Ordinary retry attempts cleanup of the retained worktree and prepares a new package attempt, so it is not a safe continuation of the partial work.
+
+Separately, the cancelled Sonnet ledger entry has unknown usage; the provider guard refuses any subsequent invocation when prior usage is missing. No status, ledger, candidate code or allowance was changed to bypass these checks. Original receipts and the seven-file partial implementation remain preserved. The separate private receipt is `feasibility-v5/resume-check-20260922T0250Z.json`. A bounded cancellation-continuation and accounting repair is needed before this evaluation can proceed; no replacement campaign or blind review was launched. Any eventual continuation must remain labelled interrupted/resumed, not a fresh autonomous pass.
 
 Shaun explicitly authorized the next unit with “Do it”: qualify the missing independent handoff check, then run one fresh balanced baseline and at most one blind review. No repeat or model comparison is part of this unit.
 
