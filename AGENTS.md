@@ -1,5 +1,7 @@
 # Prototype Instructions
 
+- On 22 September 2026 Shaun requested a new rebased PR for unpublished Linear workflow changes and confirmed that Linear must be switchable off. Frontier Settings → World & connection → Integrations owns the persisted integration switch. Off pauses Linear intake, replies and publication after the current receipt settles; normal local tasks and manual Grill remain usable.
+
 - On 22 September 2026 Shaun requested a Linear tagging integration in an isolated worktree. Import the issue title, description, project and relevant metadata into a Harness task. Use explicit project-to-repository mapping and retain source provenance; duplicate deliveries must reuse the same task. Task creation alone does not authorize task execution.
 - Shaun then approved creating the private Harness Linear app and using his local Harness for now; an internal URL is planned later. The local activation uses a dedicated signed-webhook tunnel, with the operator interface kept local. Live verification and restart/hosting details are recorded in `docs/integrations/linear.md`.
 - Later on 22 September Shaun approved posting relevant specification/plan, blocker/decision, review/test and delivery outcomes back to Linear, and answering manual Grill questions through human Linear replies that mention Harness. Bind each reply to the exact open question or completed answer set, retain responder provenance, and preserve the existing workflow approval controls. Teams channel setup and forwarding remain deferred.

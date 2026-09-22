@@ -14,6 +14,9 @@ test("execution defaults round-trip through the real API without rewriting exist
     };
     const send = (url, body = {}, method = "POST") =>
       fetch(`${api.origin}${url}`, { method, headers, body: JSON.stringify(body) });
+    const linear = await (await fetch(`${api.origin}/api/integrations/linear`)).json();
+    assert.deepEqual(linear, { configured: false, enabled: false, changing: false });
+    assert.equal((await send("/api/integrations/linear", { enabled: true }, "PUT")).status, 409);
     const draft = {
       title: "Settings snapshot",
       description: "Investigate revision comparison without changes",

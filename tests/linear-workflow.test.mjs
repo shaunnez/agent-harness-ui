@@ -356,3 +356,69 @@ test("inactive or cross-workspace humans, auto-Grill tasks and unsupported comma
   assert.equal((await f.store.get(f.task.id)).decisions.length, 0);
   assert.deepEqual(f.started, []);
 });
+
+test("Off pauses incoming answers and outbound milestones while local manual Grill still works", async (t) => {
+  const f = await setup(t);
+  const intake = new LinearIntake({ store: f.store, client: f.client, config, orchestrator: f.orchestrator });
+  intake.setTaskCreator(() => {
+    throw new Error("Must not import a task");
+  });
+  t.after(() => intake.stop());
+  const task = await f.store.get(f.task.id);
+  const reply = prompt(`answer ${linearGrillReference(task, task.grillSession.questions[0])}: 1`);
+  assert.equal(intake.accept(reply).accepted, true);
+  await intake.setEnabled(false);
+  await intake.drain();
+  assert.equal(f.sent.size, 0);
+  assert.deepEqual(await f.store.get(f.task.id), task);
+  assert.equal(intake.accept(prompt("continue ignored", "while-off")).accepted, false);
+  await f.orchestrator.answerGrillQuestion(f.task.id, {
+    source: "operator",
+    questionId: "Q1",
+    answer: "Local operator decision",
+  });
+  assert.equal((await f.store.get(f.task.id)).grillSession.questions[0].answer, "Local operator decision");
+  await intake.drain();
+  assert.equal(f.sent.size, 0);
+  await intake.setEnabled(true);
+  await intake.drain();
+  assert.equal((await f.store.get(f.task.id)).grillSession.questions[0].answer, "Local operator decision");
+  assert.ok(f.sent.size > 0);
+  assert.equal(f.started.length, 0);
+  await intake.stop();
+});
+
+test("Off lets the current outbound request settle but pauses the next activity", async (t) => {
+  const f = await setup(t);
+  const intake = new LinearIntake({ store: f.store, client: f.client, config, orchestrator: f.orchestrator });
+  intake.setTaskCreator(() => {});
+  const task = await f.store.get(f.task.id);
+  f.workflow.enqueue(task, "session", "first-message", { type: "response", body: "First" });
+  f.workflow.enqueue(task, "session", "second-message", { type: "response", body: "Second" });
+  let release;
+  let enter;
+  const started = new Promise((resolve) => {
+    enter = resolve;
+  });
+  let calls = 0;
+  f.client.publishActivity = async () => {
+    calls++;
+    enter();
+    await new Promise((resolve) => {
+      release = resolve;
+    });
+  };
+  intake.kick();
+  await started;
+  let confirmed = false;
+  const off = intake.setEnabled(false).then(() => {
+    confirmed = true;
+  });
+  assert.equal(confirmed, false);
+  release();
+  await off;
+  await intake.drain();
+  assert.equal(calls, 1);
+  assert.ok(intake.status().workflow.recent.some((row) => row.status === "queued"));
+  await intake.stop();
+});

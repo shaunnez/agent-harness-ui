@@ -22,7 +22,8 @@ function invalidReply() {
 }
 
 export class LinearWorkflow {
-  constructor({ store, client, config, orchestrator }) {
+  constructor({ store, client, config, orchestrator, isEnabled = () => true }) {
+    this.isEnabled = isEnabled;
     this.store = store;
     this.db = store.databaseHandle();
     this.client = client;
@@ -110,6 +111,7 @@ export class LinearWorkflow {
       );
   }
   async drain() {
+    if (!this.isEnabled()) return;
     await this.process("in", async (row) => {
       await this.applyReply(row);
       const reply = JSON.parse(row.payload_json);
@@ -127,6 +129,7 @@ export class LinearWorkflow {
         this.enqueue(task, reply.sessionId, `${row.event_key}:reminder`, pending.content, pending.reference);
       }
     });
+    if (!this.isEnabled()) return;
     const rows = this.db
       .prepare(`SELECT id, revision FROM tasks
       WHERE json_extract(core_json, '$.externalSource.provider') = 'linear'
@@ -134,6 +137,7 @@ export class LinearWorkflow {
       AND revision != COALESCE((SELECT revision FROM linear_workflow_cursors WHERE task_id = tasks.id), -1)`)
       .all(this.config.organizationId);
     for (const row of rows) {
+      if (!this.isEnabled()) return;
       const task = await this.store.get(row.id);
       const sessionId = task.externalSource.sessionId;
       for (const update of taskUpdates(task, this.config))
@@ -164,6 +168,7 @@ export class LinearWorkflow {
     if (!rows.length) return;
     let identityChecked = false;
     for (const row of rows) {
+      if (!this.isEnabled()) return;
       try {
         if (!identityChecked) {
           const identity = await this.client.identity();
