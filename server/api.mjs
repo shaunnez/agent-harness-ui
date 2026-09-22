@@ -299,12 +299,19 @@ export function createApiServer({
     try {
       assertHttpBoundary(request, csrfToken);
       if (url.pathname === "/api/integrations/linear" && request.method === "GET") {
-        send(response, 200, linearIntake?.status() ?? { enabled: false });
+        send(response, 200, linearIntake?.status() ?? { configured: false, enabled: false, changing: false });
+        return;
+      }
+      if (url.pathname === "/api/integrations/linear" && request.method === "PUT") {
+        if (!linearIntake)
+          throw Object.assign(new Error("Linear is not configured on this companion."), { statusCode: 409 });
+        const { enabled } = await readJson(request);
+        send(response, 200, await linearIntake.setEnabled(enabled));
         return;
       }
       if (url.pathname === "/api/integrations/linear/retry" && request.method === "POST" && linearIntake) {
-        const { sessionId } = await readJson(request);
-        linearIntake.retry(sessionId);
+        const { sessionId, messageId } = await readJson(request);
+        linearIntake.retry(messageId ?? sessionId);
         send(response, 202, { queued: true });
         return;
       }

@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { LinearWorkflow } from "./linear-workflow.mjs";
 
 export async function readLinearConfig(filePath) {
   if (!filePath) return null;
@@ -35,23 +36,61 @@ export class LinearIntake {
   #running = null;
   #timer = null;
   #stopped = false;
-  constructor({ store, client, config }) {
+  #workflow;
+  #enabled = true;
+  #changing = false;
+  constructor({ store, client, config, orchestrator = null }) {
     if (!store.databaseHandle) throw new Error("Linear intake requires the SQLite task store.");
     this.#store = store;
     this.#db = store.databaseHandle();
     this.#client = client;
     this.#config = config;
+    this.#workflow = orchestrator
+      ? new LinearWorkflow({
+          store,
+          client,
+          config,
+          orchestrator,
+          isEnabled: () => this.#enabled && !this.#stopped,
+        })
+      : null;
     this.#db.exec(`CREATE TABLE IF NOT EXISTS linear_intake (
       session_id TEXT PRIMARY KEY, issue_id TEXT NOT NULL, payload_json TEXT NOT NULL,
       status TEXT NOT NULL DEFAULT 'queued', task_id TEXT, attempts INTEGER NOT NULL DEFAULT 0,
       next_attempt_at INTEGER NOT NULL DEFAULT 0, last_error TEXT,
       received_at TEXT NOT NULL, completed_at TEXT
-    )`);
+    );
+    CREATE TABLE IF NOT EXISTS linear_integration_settings (
+      id INTEGER PRIMARY KEY CHECK (id = 1), enabled INTEGER NOT NULL CHECK (enabled IN (0, 1))
+    );
+    INSERT OR IGNORE INTO linear_integration_settings (id, enabled) VALUES (1, 1);`);
+    this.#enabled =
+      this.#db.prepare("SELECT enabled FROM linear_integration_settings WHERE id = 1").get().enabled === 1;
+  }
+  async setEnabled(enabled) {
+    if (typeof enabled !== "boolean")
+      throw Object.assign(new Error("Choose true or false for Linear enabled."), { statusCode: 400 });
+    if (this.#changing)
+      throw Object.assign(new Error("Linear setting change is still completing."), { statusCode: 409 });
+    this.#changing = true;
+    try {
+      this.#db
+        .prepare("UPDATE linear_integration_settings SET enabled = ? WHERE id = 1")
+        .run(Number(enabled));
+      this.#enabled = enabled;
+      // Finish the receipt already in flight before confirming Off; do not start another.
+      if (!enabled) await this.#running;
+      else this.kick();
+    } finally {
+      this.#changing = false;
+    }
+    return this.status();
   }
   setTaskCreator(createTask) {
     this.#createTask = createTask;
   }
   accept(payload) {
+    if (!this.#enabled) return { accepted: false, reason: "Linear integration is off." };
     if (
       payload.organizationId !== this.#config.organizationId ||
       payload.appUserId !== this.#config.appUserId ||
@@ -61,7 +100,7 @@ export class LinearIntake {
         statusCode: 403,
       });
     }
-    if (payload.type !== "AgentSessionEvent" || payload.action !== "created") {
+    if (payload.type !== "AgentSessionEvent" || !["created", "prompted"].includes(payload.action)) {
       return { accepted: false, reason: "Only new issue agent sessions create tasks." };
     }
     const session = payload.agentSession;
@@ -75,6 +114,9 @@ export class LinearIntake {
       throw Object.assign(new Error("Linear session identity does not match its event."), {
         statusCode: 403,
       });
+    }
+    if (payload.action === "prompted") {
+      return { accepted: this.#workflow?.accept(payload) ?? false };
     }
     const existing = this.#db
       .prepare("SELECT session_id FROM linear_intake WHERE session_id = ?")
@@ -93,10 +135,13 @@ export class LinearIntake {
   }
   status() {
     return {
-      enabled: true,
+      configured: true,
+      enabled: this.#enabled,
+      changing: this.#changing,
       mode: "create-for-review",
       organizationId: this.#config.organizationId,
       projectMappings: this.#config.projectMappings,
+      workflow: this.#workflow?.status() ?? null,
       counts: this.#db.prepare("SELECT status, count(*) AS count FROM linear_intake GROUP BY status").all(),
       recent: this.#db
         .prepare(`SELECT session_id AS sessionId, issue_id AS issueId, status,
@@ -111,7 +156,8 @@ export class LinearIntake {
       .prepare(`UPDATE linear_intake SET status = 'queued', attempts = 0,
       next_attempt_at = 0, last_error = NULL WHERE session_id = ? AND status = 'blocked'`)
       .run(sessionId);
-    if (!result.changes) throw new Error("No blocked Linear intake receipt found.");
+    if (!result.changes && !this.#workflow?.retry(sessionId))
+      throw new Error("No blocked Linear receipt or workflow message found.");
     this.kick();
   }
   start() {
@@ -121,9 +167,10 @@ export class LinearIntake {
     this.kick();
   }
   kick() {
-    if (this.#running || this.#stopped || !this.#createTask) return;
+    if (this.#running || this.#stopped || !this.#enabled || !this.#createTask) return;
     // Catch infrastructure failures here as well: no unhandled rejection from a timer.
     this.#running = this.#drain()
+      .then(() => this.#enabled && !this.#stopped && this.#workflow?.drain())
       .catch(() => {
         console.error(
           "Linear intake could not process its durable queue; inspect the local integration status.",
@@ -145,7 +192,7 @@ export class LinearIntake {
     await this.#running;
   }
   async #drain() {
-    while (!this.#stopped) {
+    while (!this.#stopped && this.#enabled) {
       const row = this.#db
         .prepare(`SELECT * FROM linear_intake WHERE status = 'queued'
         AND next_attempt_at <= ? ORDER BY received_at, session_id LIMIT 1`)
@@ -185,7 +232,9 @@ export class LinearIntake {
           row.session_id,
           `${this.#config.harnessUrl.replace(/\/$/, "")}#task/${encodeURIComponent(task.id)}`,
         );
-        await this.#client.completeSession(row.session_id, task.id);
+        if (!this.#workflow?.accept(JSON.parse(row.payload_json))) {
+          await this.#client.completeSession(row.session_id, task.id);
+        }
         this.#db
           .prepare(`UPDATE linear_intake SET status = 'completed', attempts = ?,
           last_error = NULL, completed_at = ? WHERE session_id = ?`)

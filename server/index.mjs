@@ -84,6 +84,7 @@ let stopPullRequestPolling = () => {};
 const linearIntake = linearConfig
   ? new LinearIntake({
       store,
+      orchestrator,
       config: linearConfig,
       client: createLinearClient({
         clientId: linearConfig.clientId,

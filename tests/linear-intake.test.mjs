@@ -358,3 +358,82 @@ test("archived mappings and wrong app credentials never create a task", async (t
   assert.match(f.intake.status().recent[0].error, /different workspace/);
   assert.equal((await f.store.list()).length, 0);
 });
+
+test("Linear switch persists, ignores signed deliveries while off, and preserves ordinary task creation", async (t) => {
+  const f = await setup(t);
+  const url = `${f.apiUrl}/api/integrations/linear`;
+  const put = (enabled, csrf = "csrf-test") =>
+    fetch(url, {
+      method: "PUT",
+      headers: { "content-type": "application/json", "x-agent-harness-csrf": csrf },
+      body: JSON.stringify({ enabled }),
+    });
+  assert.equal((await put(false, "incorrect")).status, 403);
+  assert.equal((await put("false")).status, 400);
+  f.intake.accept(event("previously-queued"));
+  assert.equal((await put(false)).status, 200);
+  assert.equal((await (await fetch(url)).json()).enabled, false);
+  const ignored = await fetch(`${f.webhookUrl}/linear/webhook`, signed(event("while-off")));
+  assert.equal(ignored.status, 200);
+  assert.equal((await ignored.json()).accepted, false);
+  await f.intake.drain();
+  assert.equal(f.calls.length, 0);
+  assert.equal((await f.store.list()).length, 0);
+  assert.equal(f.intake.status().recent.length, 1);
+  const reopened = new LinearIntake({ store: f.store, client: f.client, config: f.config });
+  assert.equal(reopened.status().enabled, false);
+  await reopened.stop();
+  const input = linearTaskInput(issue, event(), f.project);
+  const created = await fetch(`${f.apiUrl}/api/tasks`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-agent-harness-csrf": "csrf-test" },
+    body: JSON.stringify(input),
+  });
+  assert.equal(created.status, 201, await created.clone().text());
+  const ordinary = (await created.json()).task;
+  assert.equal(ordinary.externalSource, null);
+  assert.equal(ordinary.status, "queued");
+  assert.equal(ordinary.runs.length, 0);
+  const beforeEnable = await f.store.get(ordinary.id);
+  assert.equal((await put(true)).status, 200);
+  await f.intake.drain();
+  assert.equal(f.intake.status().recent[0].status, "completed");
+  assert.equal((await f.store.list()).length, 2);
+  assert.deepEqual(await f.store.get(ordinary.id), beforeEnable);
+});
+
+test("Off waits for an in-flight receipt, then leaves later receipts queued without more network work", async (t) => {
+  const f = await setup(t);
+  let release;
+  let entered;
+  const started = new Promise((resolve) => {
+    entered = resolve;
+  });
+  f.client.identity = async () => {
+    entered();
+    await new Promise((resolve) => {
+      release = resolve;
+    });
+    return config;
+  };
+  f.intake.accept(event("first"));
+  f.intake.accept(event("second"));
+  f.intake.kick();
+  await started;
+  let confirmed = false;
+  const off = f.intake.setEnabled(false).then(() => {
+    confirmed = true;
+  });
+  await assert.rejects(f.intake.setEnabled(true), /still completing/);
+  assert.equal(confirmed, false);
+  assert.equal(f.intake.accept(event("during-disable")).accepted, false);
+  release();
+  await off;
+  assert.equal(confirmed, true);
+  const states = Object.fromEntries(f.intake.status().recent.map((row) => [row.sessionId, row.status]));
+  assert.equal(states.first, "completed");
+  assert.equal(states.second, "queued");
+  const calls = f.calls.length;
+  await f.intake.drain();
+  assert.equal(f.calls.length, calls);
+});

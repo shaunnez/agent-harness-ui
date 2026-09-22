@@ -548,3 +548,18 @@ export async function promoteTaskThroughGate(
 ) {
   return runTaskAction(id, action, note, candidateScope, { retryOnCsrf: false });
 }
+
+export interface LinearIntegrationStatus {
+  configured: boolean;
+  enabled: boolean;
+  changing: boolean;
+}
+export function getLinearIntegration(options?: ReadRequestOptions) {
+  return request<LinearIntegrationStatus>("/api/integrations/linear", options);
+}
+export function setLinearIntegration(enabled: boolean) {
+  return request<LinearIntegrationStatus>("/api/integrations/linear", {
+    method: "PUT",
+    body: JSON.stringify({ enabled }),
+  });
+}

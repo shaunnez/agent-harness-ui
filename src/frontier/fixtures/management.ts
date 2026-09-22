@@ -35,9 +35,17 @@ export function fixtureManagement(
     | "closeTask"
     | "archiveTask"
     | "saveSettings"
+    | "linearIntegration"
+    | "setLinearIntegration"
     | "worktrees"
     | "removeWorktree"
   > = {
+    async linearIntegration() {
+      return { configured: false, enabled: false, changing: false };
+    },
+    async setLinearIntegration() {
+      throw new Error("Linear is unavailable in the sample world.");
+    },
     async saveSettings(input) {
       online();
       const issue = settingsIssue(input, {
