@@ -154,11 +154,14 @@ unless `claude auth status` reports `claude.ai`, and strip `ANTHROPIC_API_KEY`,
 `server/claude-runtime.mjs`. `14a-qv-mcp-server.py` is a dependency-free MCP stdio
 server over the local QV capture.
 
-Note the asymmetry: the SDLC agents run on the subscription through the CLI, while the
-existing research runtime in `server/research/` takes `RESEARCH_MODEL_API_KEY` and
-bills the API. If a research project should draw on the plan like everything else, that
-is a real decision to make, and it means the research runtime spawns the CLI rather
-than calling the Messages API.
+Note the asymmetry, and read `20-RESEARCH-ON-THE-SUBSCRIPTION.md` before planning
+around it. The SDLC agents run on the subscription through the CLI. The research
+runtime in `server/research/` calls the Messages API through LangChain's
+`ChatAnthropic` and needs `RESEARCH_MODEL_API_KEY` — and with no credential at all it
+does not fail, it silently selects a deterministic fake, which the UI does not
+distinguish from a live run. Moving research onto the subscription means registering a
+CLI-backed runtime beside the existing one, which the registry is built for; that note
+sizes it at one to two days.
 
 ## Honest state of the numbers
 
