@@ -10,6 +10,7 @@ const load = (file) => import(pathToFileURL(path.resolve(repository, file)).href
 const { SqliteTaskStore } = await load("server/sqlite-store.mjs");
 const { TaskOrchestrator } = await load("server/orchestrator.mjs");
 const { createApiServer } = await load("server/api.mjs");
+const { buildStageRequest } = await load("server/prompts.mjs");
 const { readExecutionProviderCatalog } = await load("server/model-catalog.mjs");
 const results = [];
 // The brief requires a task snapshot, not a particular nesting within the task.
@@ -27,16 +28,21 @@ async function fixture(body, { policy, noQuestions = false } = {}) {
   let store = new SqliteTaskStore(databasePath);
   await store.init();
   if (policy) await store.updateSettings((settings) => { settings.grillPolicy = policy; });
+  const specificationPrompts = [];
   const orchestrator = new TaskOrchestrator(store, {
     getStatus: async () => ({ available: true, authenticated: true, authMethod: "fixture", catalog: await readExecutionProviderCatalog() }),
-    runCodex: async ({ prompt }) => ({ finalText: prompt.includes("<scout-report>") ? scout : prompt.includes("<grill-questions>") ? noQuestions ? '<grill-questions>{"questions":[]}</grill-questions>' : questions : "## Grounded handoff\nPreserve the existing contract.", usage: { inputTokens: 10, outputTokens: 5, cachedInputTokens: 0, totalTokens: 15 } }),
+    runCodex: async ({ prompt }) => {
+      const specification = prompt.startsWith("You are the Task specification agent");
+      if (specification) specificationPrompts.push(prompt);
+      return { finalText: specification ? "## Grounded handoff\nApply the recorded decision." : prompt.includes("<scout-report>") ? scout : prompt.includes("<grill-questions>") ? noQuestions ? '<grill-questions>{"questions":[]}</grill-questions>' : questions : "## Grounded handoff\nPreserve the existing contract.", usage: { inputTokens: 10, outputTokens: 5, cachedInputTokens: 0, totalTokens: 15 } };
+    },
   });
   const server = createApiServer({ store, orchestrator, suggestedRepository: repository, csrfToken: "eval-h02" });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const origin = `http://127.0.0.1:${server.address().port}`;
   const request = (route, method = "GET", data) => fetch(`${origin}${route}`, { method, headers: { "content-type": "application/json", "x-agent-harness-csrf": "eval-h02" }, ...(data ? { body: JSON.stringify(data) } : {}) });
   const create = () => store.create({ title: "Preserve the public contract", description: "Investigate an explicit compatibility decision.", repositoryPath: repository, workflow: "investigate", priority: "medium" });
-  try { await body({ store, databasePath, directory, origin, request, create, orchestrator, reopen: async () => { store.close(); store = new SqliteTaskStore(databasePath); await store.init(); return store; } }); }
+  try { await body({ store, databasePath, directory, origin, request, create, orchestrator, specificationPrompts, reopen: async () => { store.close(); store = new SqliteTaskStore(databasePath); await store.init(); return store; } }); }
   finally {
     if (orchestrator.shutdown) await orchestrator.shutdown();
     else {
@@ -109,6 +115,47 @@ await check("automatic-provenance", () => fixture(async ({ store, create, orches
   assert.equal(done.grillSession.questions[0].answerSource, "automation-policy");
   assert.equal(done.grillSession.questions[0].answer, "Preserve compatibility");
 }, { policy: "auto-accept-recommendations" }));
+// Trace the actual dispatch, then vary only resolved decision records. Merely
+// forwarding the original question/recommendation artifact cannot satisfy this.
+function assertDecisionHandoff(task, prompts, expectedSource) {
+  assert.equal(prompts.length, 1, "Expected one captured specification dispatch");
+  const answer = task.grillSession.questions[0].answer;
+  assert.ok(prompts[0].includes(answer), "Dispatched specification omitted the selected answer");
+  assert.ok(prompts[0].includes(expectedSource), "Dispatched specification omitted the recorded answer source");
+  const artifact = task.artifacts.find((item) => item.stage === "specification");
+  assert.ok(artifact?.contextManifest?.sources.some((source) => source.includedCharacters > 0 && /decision|grill|answer/i.test(`${source.kind} ${source.id} ${source.label}`)), "Specification manifest omitted supplied Grill decision context");
+  if (expectedSource === "automation-policy") {
+    assert.doesNotMatch(prompts[0], /Recorded human decisions/i);
+    assert.ok(!artifact.contextManifest.sources.some((source) => source.kind === "decisions" && /human/i.test(source.label)), "Manifest misattributes automatic answers to a human");
+  }
+  const altered = structuredClone(task);
+  const marker = "RESOLVED_SELECTION_COUNTERFACTUAL_8c5a";
+  for (const question of altered.grillSession.questions) question.answer = marker;
+  for (const decision of altered.decisions ?? []) {
+    if (decision.grillQuestionId === task.grillSession.questions[0].id || decision.answer === answer) decision.answer = marker;
+  }
+  const originalRequest = buildStageRequest(task, "specification");
+  const alteredRequest = buildStageRequest(altered, "specification");
+  assert.ok(!originalRequest.prompt.includes(marker));
+  assert.ok(alteredRequest.prompt.includes(marker), "Specification ignores resolved answers and only sees proposed recommendations");
+}
+
+await check("automatic-specification-context", () => fixture(async ({ store, create, orchestrator, specificationPrompts }) => {
+  const task = await create();
+  await orchestrator.start(task.id);
+  const done = await settled(store, task.id, "awaiting-spec-approval");
+  assertDecisionHandoff(done, specificationPrompts, "automation-policy");
+}, { policy: "auto-accept-recommendations" }));
+await check("manual-specification-context", () => fixture(async ({ store, create, orchestrator, specificationPrompts }) => {
+  const task = await create();
+  await orchestrator.start(task.id);
+  const paused = await settled(store, task.id, "awaiting-grill");
+  await orchestrator.answerGrillQuestion(task.id, { questionId: paused.grillSession.questions[0].id, answer: "Keep existing clients and document the boundary", source: "operator" });
+  await orchestrator.finishGrill(task.id, { source: "operator" });
+  const done = await settled(store, task.id, "awaiting-spec-approval");
+  assertDecisionHandoff(done, specificationPrompts, "operator-answer");
+}));
+
 await check("zero-questions", () => fixture(async ({ store, create, orchestrator }) => {
   const task = await create(); await orchestrator.start(task.id);
   const done = await settled(store, task.id, "awaiting-spec-approval");
@@ -163,6 +210,6 @@ await check("settings-browser", () => fixture(async ({ origin, store }) => {
     await page.screenshot({ path: outputPath.replace(/\.json$/, ".png"), fullPage: true });
   } finally { await browser?.close(); await vite.close(); }
 }));
-await writeFile(outputPath, JSON.stringify({ graderVersion: "h02-v2", repository, checks: results, passed: results.every((result) => result.passed), inferenceCalls: 0 }, null, 2) + "\n");
+await writeFile(outputPath, JSON.stringify({ graderVersion: "h02-v3", repository, checks: results, passed: results.every((result) => result.passed), inferenceCalls: 0 }, null, 2) + "\n");
 console.log(JSON.stringify(results));
 process.exitCode = results.every((result) => result.passed) ? 0 : 1;

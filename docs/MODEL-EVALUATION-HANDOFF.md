@@ -2,6 +2,8 @@
 
 ## Read this first
 
+Latest authority: Shaun said “Do it” and authorized one fresh baseline after checker qualification. Continue from [MODEL-EVALUATION-FRESH-BASELINE.md](MODEL-EVALUATION-FRESH-BASELINE.md). The older no-dispatch wording below describes the previous checkpoint and does not revoke this explicit authorization.
+
 Latest continuation: Shaun requested the Grill product correction, Frontier UI validation and generous evaluation allowances. **Those fixes are locally qualified; no evaluation or grader is running.** Read [the Grill fix and next-step record](MODEL-EVALUATION-GRILL-FIX.md) first. An isolated fixture-only preview is available on 5174 with its API on 4337. The earlier [blind review closeout](MODEL-EVALUATION-BLIND-REVIEW.md) remains historical evidence: its candidate is still rejected diagnostically and formally ungraded. Do not retry that completed review or rewrite its receipts.
 
 The original goal remains unfinished: establish reliable baseline model/effort groupings for tasks of different difficulty, then optimize cost and latency using repeated real-project tasks. We have demonstrated workflow completion on one Harness case, but the fresh candidate has a confirmed acceptance gap. We have not established an optimal policy, a dependable pass rate across task classes, or cross-project reliability. No production policy was promoted and no benchmark PR was published.

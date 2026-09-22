@@ -305,6 +305,8 @@ for (const trial of trials) {
             "task-snapshot",
             "manual-decisions",
             "automatic-provenance",
+            "automatic-specification-context",
+            "manual-specification-context",
             "zero-questions",
             "operator-api-boundary",
             "legacy-evidence",

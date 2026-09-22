@@ -39,7 +39,7 @@
     },
     {
       "id": "H02",
-      "version": 1,
+      "version": 2,
       "repository": "harness",
       "baseSha": "4b303a8da4fafd7a78149ddad40cbf714411d08b",
       "referenceSha": "a798c913988579149a77318db97faf7a850160bb",
@@ -47,7 +47,7 @@
       "risk": "medium",
       "split": "development",
       "title": "Make Grill manual by default with explicit automation opt-in",
-      "brief": "New tasks must pause when Grill finds material questions. Add a Settings choice between manual and automatically accepting recommendations. Persist the choice and snapshot it at task creation; changing Settings must not rewrite existing tasks. In manual mode retain answering one question and explicitly accepting remaining recommendations. In automatic mode orchestration accepts recommendations and records automation provenance, without impersonating an operator. Zero-question sessions may continue. Existing sessions with uncertain origins must retain their text and be labelled legacy-unverified. Operator answer/finish API calls must require explicit operator UI provenance.",
+      "brief": "New tasks must pause when Grill finds material questions. Add a Settings choice between manual and automatically accepting recommendations. Persist the choice and snapshot it at task creation; changing Settings must not rewrite existing tasks. In manual mode retain answering one question and explicitly accepting remaining recommendations. In automatic mode orchestration accepts recommendations and records automation provenance, without impersonating an operator. Zero-question sessions may continue. Existing sessions with uncertain origins must retain their text and be labelled legacy-unverified. Operator answer/finish API calls must require explicit operator UI provenance. Resolved answers and their true source must reach Specification and its supplied-context manifest.",
       "acceptanceCriteria": [
         "Default manual policy persists in SQLite",
         "Settings UI saves and reloads both modes",
@@ -56,12 +56,13 @@
         "Opt-in automation records accurate answer/completion provenance",
         "Zero-question Grill continues without a decision",
         "Operator endpoints reject missing interaction provenance",
-        "Legacy migration preserves evidence and marks uncertain origins"
+        "Legacy migration preserves evidence and marks uncertain origins",
+        "Resolved automatic and manual answers reach Specification with true attribution and a supplied-context manifest"
       ],
-      "qualification": "qualified-for-batch-a",
-      "referenceScope": "task changes in source commit; exclude historical documentation from agent inputs",
+      "qualification": "qualified-for-feasibility-v5",
+      "referenceScope": "Original reviewed feature plus isolated downstream decision-context correction; qualified private reference bfafc5e5e894899f338506cc39bbdb6f93bc72e1. Do not expose reference solutions to delivery agents.",
       "publicContract": "evaluations/cases/h02-public-contract.md",
-      "qualificationEvidence": {
+      "historicalQualificationEvidence": {
         "baseRegressionTests": 371,
         "referenceRegressionTests": 374,
         "independentChecks": 9,
@@ -74,6 +75,25 @@
         "rubricVersion": "delivery-rubric-v4",
         "referenceRubric": "passed",
         "snapshotMutantRubric": "rejected"
+      },
+      "qualificationEvidence": {
+        "graderVersion": "h02-v3",
+        "independentChecks": 11,
+        "baseExpectedFailures": 10,
+        "referencePasses": 11,
+        "qualifiedReferenceSha": "bfafc5e5e894899f338506cc39bbdb6f93bc72e1",
+        "contextLossMutantFailures": [
+          "automatic-specification-context",
+          "manual-specification-context"
+        ],
+        "retainedCandidateFailures": [
+          "automatic-specification-context",
+          "manual-specification-context"
+        ],
+        "referenceFullManifest": "passed",
+        "rubricVersion": "delivery-rubric-v5",
+        "rubricRunner": "synthetic usage/accounting qualification; prior live reference verdict retained as historical only",
+        "modelCalls": 0
       }
     },
     {
