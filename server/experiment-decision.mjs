@@ -6,7 +6,7 @@
 // policy matrix, acceptance criteria and verification commands.
 
 const MAX_WALL_TIME_MS = 24 * 60 * 60 * 1_000;
-const MAX_TOTAL_TOKENS = 100_000_000;
+const MAX_TOTAL_TOKENS = 200_000_000;
 
 function round(value, places = 6) {
   const factor = 10 ** places;

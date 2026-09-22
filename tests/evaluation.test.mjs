@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { buildEvaluationSummary } from "../server/evaluation.mjs";
+import { normalizeExperimentBudget } from "../server/experiment-decision.mjs";
+
+test("accepts the authorized two-hour 200M-token repair evaluation allowance", () => {
+  const budget = { maxWallTimeMs: 7_200_000, maxTotalTokens: 200_000_000 };
+  assert.deepEqual(normalizeExperimentBudget(budget), budget);
+  assert.throws(() => normalizeExperimentBudget({ ...budget, maxTotalTokens: 200_000_001 }));
+});
 
 function makeExperimentTask(overrides = {}) {
   return {

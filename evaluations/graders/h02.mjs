@@ -188,7 +188,9 @@ await check("settings-browser", () => fixture(async ({ origin, store }) => {
   if (!process.env.EVAL_PLAYWRIGHT_MODULE) throw new Error("EVAL_PLAYWRIGHT_MODULE is required for the UI check.");
   const { chromium } = await import(pathToFileURL(process.env.EVAL_PLAYWRIGHT_MODULE).href);
   const { createServer: createVite } = await load("node_modules/vite/dist/node/index.js");
-  const vite = await createVite({ root: repository, configFile: false, server: { host: "127.0.0.1", port: 0, proxy: { "/api": origin } } });
+  // The frozen historical API allows the preview origin. Never drift to an
+  // unapproved port when another local development server owns 5173.
+  const vite = await createVite({ root: repository, configFile: false, server: { host: "127.0.0.1", port: 4173, strictPort: true, proxy: { "/api": origin } } });
   await vite.listen();
   let browser;
   try {
@@ -210,6 +212,6 @@ await check("settings-browser", () => fixture(async ({ origin, store }) => {
     await page.screenshot({ path: outputPath.replace(/\.json$/, ".png"), fullPage: true });
   } finally { await browser?.close(); await vite.close(); }
 }));
-await writeFile(outputPath, JSON.stringify({ graderVersion: "h02-v3", repository, checks: results, passed: results.every((result) => result.passed), inferenceCalls: 0 }, null, 2) + "\n");
+await writeFile(outputPath, JSON.stringify({ graderVersion: "h02-v4", repository, checks: results, passed: results.every((result) => result.passed), inferenceCalls: 0 }, null, 2) + "\n");
 console.log(JSON.stringify(results));
 process.exitCode = results.every((result) => result.passed) ? 0 : 1;
