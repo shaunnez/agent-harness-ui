@@ -96,6 +96,8 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Durable workflow decisions
 
+- On 22 September 2026 Shaun requested bounded automatic correction of failed package checks and configurable repair attempts in Frontier Settings. Use the existing Repair manual/automatic choice for package and candidate fixes, snapshot numeric limits on new tasks, preserve every failed attempt and the exact retained package, and rerun qualification before integration. Candidate repair limits are shared across Dev Review, Test and Final Review; cancellation, baseline failures and invalid plans still require attention. This change does not authorize a new paid evaluation.
+
 - Grill is manual by default: when material questions exist, pause for operator answers while still offering a manual **accept all remaining recommendations** action. Automatic recommendation acceptance is opt-in in Settings, snapshots onto new tasks, runs inside orchestration rather than through operator endpoints, and records automation provenance. Zero-question Grill sessions may continue automatically.
 - Treat parallel implementation slices as isolated worktree units that become **ready for integration** after local qualification; never present a green slice as proof that the whole task passed.
 - Assemble the qualified slice commits into an explicit, versioned integration candidate inside Implement. Dev Review, Test, Final Review, and Human Approval are bound to the exact candidate revision.

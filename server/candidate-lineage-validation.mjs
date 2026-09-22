@@ -1,4 +1,5 @@
 import {
+  effectivePackageRuns,
   validCandidateAssemblyMembership,
   validInitialCandidateProducer,
   validPersistedTimestamp,
@@ -273,12 +274,14 @@ export function candidateRevisionProducerEvidence(task, candidate, lineage) {
   for (let number = 1; number <= candidate.revisionNumber; number += 1) {
     const revision = lineage.byNumber.get(number);
     if (revision.reason === "target-refresh") continue;
-    const revisionRuns = allRuns.filter(
+    let revisionRuns = allRuns.filter(
       (run) =>
         run.workflowReservationId === revision.sourceWorkflowReservationId &&
         run.workflowAttempt === revision.sourceWorkflowAttempt,
     );
     if (number === 1) {
+      revisionRuns = effectivePackageRuns(task, revisionRuns);
+      if (!revisionRuns) return null;
       const runScopes = revisionRuns.map((run) => run.workPackageId);
       const syntheticReservation = {
         id: revision.sourceWorkflowReservationId,

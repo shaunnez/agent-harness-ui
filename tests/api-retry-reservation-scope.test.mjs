@@ -68,6 +68,7 @@ test("persists every source run for a multi-package implementation reservation",
   try {
     const response = await createTask(origin, {
       title: "Multi-package implementation provenance",
+      workflowProfile: "standard",
       description: "An implementation retry retains every authorized slice run.",
       repositoryPath: directory,
       workflow: "implement",

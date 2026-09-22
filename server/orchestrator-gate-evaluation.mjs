@@ -19,6 +19,7 @@ import { buildTestInterpretationRequest, getStageMetadata } from "./prompts.mjs"
 import { RUNTIME_FRESHNESS_REASONS, runEventMetadata, stageRunLimitFor } from "./run-activity.mjs";
 import { parseGateEvidence, validateFocusedTestEvidence } from "./structured-output.mjs";
 import { fastEscalation, isArchitecturalRisk, recordWorkflowProfile } from "./workflow-profiles.mjs";
+import { resolveGatePolicy } from "./gate-policies.mjs";
 
 export class GateEvaluationOrchestrator {
   constructor({
@@ -44,6 +45,7 @@ export class GateEvaluationOrchestrator {
     const candidate = task.candidates?.at(-1);
     const repairCount = candidate?.revisions?.filter((revision) => revision.reason === "repair").length ?? 0;
     if (
+      resolveGatePolicy(await this._store.settings(), "repair") !== "auto-accept-recommendations" ||
       task.workflowProfile?.selected !== "fast" ||
       task.status !== "repair-required" ||
       task.currentStage !== "dev-review" ||

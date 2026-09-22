@@ -7,6 +7,7 @@ import {
 } from "@phosphor-icons/react";
 import { useState } from "react";
 import { providerRuntimeDefaults } from "../../../server/policy-defaults.mjs";
+import { MAX_REPAIR_ATTEMPTS } from "../../repair-limits";
 import { approvalGateStages, autoRunStages, repairGateStages } from "../../components/runtime/workflow";
 import type { AutoRunStage } from "../../runtime-activity";
 import type {
@@ -162,7 +163,9 @@ function SettingsEditor({
       <div className="settings-editor">
         <header>
           <h2>Execution defaults</h2>
-          <p>New tasks copy these settings. Existing task and run policies stay unchanged.</p>
+          <p>
+            New tasks copy model policies and repair limits. Gate auto-run choices apply at the next gate.
+          </p>
         </header>
         {stale && (
           <p role="alert" className="form-error">
@@ -325,10 +328,10 @@ function SettingsEditor({
                   unexecutable plan still stops the task.
                 </p>
                 <p className="quiet">
-                  Repair is the one gate that acts on a rejection rather than on a pass: automatic there
-                  rebuilds a candidate a gate turned down, without a person reading the findings first. It
-                  stays bounded — a repair spends an Implement attempt, and a candidate that exhausts the
-                  repair circuit breaker is blocked, which no policy can advance.
+                  Repair controls automatic fixes for failed package checks and rejections from Dev Review,
+                  Test and Final Review. Manual waits for you to request a fix. Auto-accept sends failures
+                  back to implementation, within the limits below. Cancellation, invalid plans and failures
+                  already present in the repository still stop for attention.
                 </p>
                 <ul className="gate-policy-list">
                   {autoRunStages.map((stage) => {
@@ -372,6 +375,78 @@ function SettingsEditor({
                     );
                   })}
                 </ul>
+              </section>
+              <section className="workflow-card">
+                <h3>Repair limits</h3>
+                <p className="quiet">
+                  These are additional fix attempts after the initial implementation. Zero disables repairs
+                  for that category. Limits are saved on new tasks; changing them does not reset attempts on
+                  existing tasks. Enable automatic fixes using the Repair choice above.
+                </p>
+                <label className="setting-row">
+                  <span>
+                    <strong>Automatic fixes per package</strong>
+                    <small>Retry failed package checks in the retained worktree before integration.</small>
+                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={MAX_REPAIR_ATTEMPTS}
+                    step={1}
+                    aria-label="Automatic fixes per package"
+                    disabled={busy}
+                    value={Number.isFinite(draft.repairLimits.package) ? draft.repairLimits.package : ""}
+                    onChange={(event) =>
+                      update({
+                        ...draft,
+                        repairLimits: {
+                          ...draft.repairLimits,
+                          package: event.target.valueAsNumber,
+                        },
+                      })
+                    }
+                  />
+                </label>
+                <p className="quiet">
+                  Candidate repairs share one allowance across Dev Review, Test and Final Review. Every
+                  changed candidate must earn fresh review and test results; the allowance does not reset when
+                  a different stage fails. It also bounds manually requested candidate repairs.
+                </p>
+                {(["fast", "standard", "high-risk"] as const).map((id) => (
+                  <label className="setting-row" key={id}>
+                    <span>
+                      <strong>
+                        {id === "high-risk" ? "High-risk" : id === "fast" ? "Fast" : "Standard"} candidate
+                        repairs
+                      </strong>
+                    </span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={MAX_REPAIR_ATTEMPTS}
+                      step={1}
+                      aria-label={`${id} candidate repairs`}
+                      disabled={busy}
+                      value={
+                        Number.isFinite(draft.repairLimits.candidate[id])
+                          ? draft.repairLimits.candidate[id]
+                          : ""
+                      }
+                      onChange={(event) =>
+                        update({
+                          ...draft,
+                          repairLimits: {
+                            ...draft.repairLimits,
+                            candidate: {
+                              ...draft.repairLimits.candidate,
+                              [id]: event.target.valueAsNumber,
+                            },
+                          },
+                        })
+                      }
+                    />
+                  </label>
+                ))}
               </section>
             </>
           )}

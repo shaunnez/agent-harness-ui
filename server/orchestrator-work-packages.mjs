@@ -15,6 +15,8 @@ import { packageQualificationFailure } from "./package-qualification-policy.mjs"
 import { buildWorkPackageRequest } from "./prompts.mjs";
 import { refreshGateFreshness } from "./run-activity.mjs";
 import { fastEscalation } from "./workflow-profiles.mjs";
+import { resolveGatePolicy } from "./gate-policies.mjs";
+import { normalizeRepairLimits } from "../src/repair-limits.ts";
 
 export class WorkPackageOrchestrator {
   constructor({
@@ -107,6 +109,10 @@ export class WorkPackageOrchestrator {
           (entry) => entry.outcome.reason?.code === "FAST_PROFILE_REPLAN_REQUIRED",
         );
         if (fastReplan) throw fastReplan.outcome.reason;
+        const baselineFailure = failures.find(
+          (entry) => entry.outcome.reason?.code === "REPOSITORY_BASELINE_FAILURE",
+        );
+        if (baselineFailure) throw baselineFailure.outcome.reason;
         throw new Error(
           failures
             .map(
@@ -225,6 +231,84 @@ export class WorkPackageOrchestrator {
     });
   }
 
+  async _reservePackageRepair(id, workPackageId, error, signal) {
+    if (signal.aborted || error.code !== "PACKAGE_QUALIFICATION_FAILED") return false;
+    // A command that could not start or timed out is not a demonstrated code defect.
+    if (!error.qualification?.rows?.some((row) => row.status === "failed" && row.exitCode > 0)) return false;
+    const task = await this._store.get(id);
+    if (task.status !== "running") return false;
+    if (resolveGatePolicy(await this._store.settings(), "repair") !== "auto-accept-recommendations")
+      return false;
+    const workPackage = task.workPackages.find((item) => item.id === workPackageId);
+    const priorRun = task.runs?.findLast(
+      (run) =>
+        run.workPackageId === workPackageId && run.workflowReservationId === task.activeRunReservationId,
+    );
+    if (priorRun?.status !== "completed" || priorRun.test?.status !== "failed") return false;
+    const limit = normalizeRepairLimits(task.repairLimits).package;
+    const used = workPackage.automaticRepairAttempts ?? 0;
+    if (used >= limit) {
+      error.message = `Automatic package repair limit reached (${used}/${limit}). ${error.message}`;
+      await this._store.update(id, (draft) => {
+        draft.events.push(
+          activity(
+            "implement",
+            `${workPackageId} automatic repair limit reached`,
+            `${used}/${limit} additional package repair attempts used. Review the retained failure before retrying manually.`,
+            "warning",
+            "decision",
+          ),
+        );
+      });
+      return false;
+    }
+    throwIfAborted(signal);
+    // Continue only the exact qualified commit. Never discard its code or a sibling's work.
+    await this._worktrees.inspectRetainedSlice(
+      { ...workPackage, baseRevision: workPackage.preparedRevision ?? workPackage.baseRevision },
+      { requireClean: true },
+    );
+    throwIfAborted(signal);
+    const reservationId = task.activeRunReservationId;
+    const reserved = await this._store.transition(
+      id,
+      (draft) => {
+        const current = draft.workPackages.find((item) => item.id === workPackageId);
+        return (
+          !signal.aborted &&
+          draft.status === "running" &&
+          draft.activeRunReservationId === reservationId &&
+          current?.attempts === workPackage.attempts &&
+          current.headRevision === workPackage.headRevision &&
+          current.worktreePath === workPackage.worktreePath &&
+          (current.automaticRepairAttempts ?? 0) === used
+        );
+      },
+      (draft) => {
+        const current = draft.workPackages.find((item) => item.id === workPackageId);
+        current.automaticRepairAttempts = used + 1;
+        current.retainedContinuation = {
+          requestedAt: now(),
+          files: current.files ?? [],
+          outsideOwnership: [],
+          qualificationFailure: error.message,
+          packageRepairOfRunId: priorRun.id,
+        };
+        current.error = error.message;
+        draft.events.push(
+          activity(
+            "implement",
+            `${workPackageId} automatic repair ${used + 1}/${limit}`,
+            "The failed package checks are returning to the implementation agent in its retained worktree. The corrected commit must pass qualification before integration.",
+            "warning",
+            "agent",
+          ),
+        );
+      },
+    );
+    return Boolean(reserved);
+  }
+
   async _runWorkPackage(id, workPackageId, baseRevision, signal) {
     let task = await this._store.get(id);
     const workPackage = task.workPackages.find((item) => item.id === workPackageId);
@@ -255,6 +339,7 @@ export class WorkPackageOrchestrator {
         ? {
             id: sliceId,
             baseRevision: workPackage.baseRevision,
+            preparedRevision: workPackage.preparedRevision,
             branch: workPackage.branch,
             worktreePath: workPackage.worktreePath,
             headRevision: workPackage.headRevision,
@@ -279,6 +364,7 @@ export class WorkPackageOrchestrator {
         target.branch = slice.branch;
         target.worktreePath = slice.worktreePath;
         target.baseRevision = slice.baseRevision;
+        target.preparedRevision = slice.preparedRevision ?? slice.baseRevision;
         target.error = null;
         draft.events.push(
           activity(
@@ -438,11 +524,24 @@ export class WorkPackageOrchestrator {
           ),
         );
       });
-    } catch (error) {
+    } catch (caughtError) {
+      let error = caughtError;
+      try {
+        if (await this._reservePackageRepair(id, workPackageId, error, signal)) {
+          return this._runWorkPackage(id, workPackageId, baseRevision, signal);
+        }
+      } catch (repairAdmissionError) {
+        error = repairAdmissionError;
+      }
       await this._store.update(id, (draft) => {
         const target = draft.workPackages.find((item) => item.id === workPackageId);
         target.status = "failed";
         target.error = error.message;
+        if (target.retainedContinuation) {
+          delete target.retainedContinuation.packageRepairOfRunId;
+          if (error.code === "PACKAGE_QUALIFICATION_FAILED")
+            target.retainedContinuation.qualificationFailure = error.message;
+        }
         // Surface the block immediately rather than waiting for every package in this
         // batch to settle. Sibling packages can keep running for a long time, and the
         // operator otherwise has no resume/retry action while the task still reads

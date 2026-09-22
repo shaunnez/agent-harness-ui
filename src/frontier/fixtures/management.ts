@@ -1,3 +1,4 @@
+import { normalizeRepairLimits } from "../../repair-limits.ts";
 import { defaultProfileStagePolicies } from "../../../server/policy-defaults.mjs";
 import { resolveRolePolicyLifecycleEligibility } from "../../../server/role-policy-eligibility.mjs";
 import type { RuntimeProject, RuntimeTask } from "../../domain.ts";
@@ -230,6 +231,7 @@ export function fixtureManagement(
       return {
         workflowProfile,
         grillPolicy: configuration.settings.grillPolicy,
+        repairLimits: normalizeRepairLimits(configuration.settings.repairLimits),
         agentConfig: {
           provider: draft.providerConstraint ?? "codex",
           model: draft.providerConstraint ? stagePolicies.triage.model : configuration.settings.defaultModel,
