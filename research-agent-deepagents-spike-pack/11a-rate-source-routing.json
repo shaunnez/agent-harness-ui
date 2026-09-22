@@ -1,0 +1,1397 @@
+[
+ {
+  "id": "retaining-wall-construction",
+  "route": "qv_capture",
+  "note": "QV publishes retaining wall rates by type and retained height (timber pole, crib, concrete/block cantilever) plus drainage and backfill - a capture gap, not a research one; specific PS1 design stays excluded.",
+  "claim_count": 29,
+  "title": "Retaining wall construction",
+  "family": "civil",
+  "coverage": "partial"
+ },
+ {
+  "id": "channel-drain-installation",
+  "route": "no_rate_needed",
+  "note": "Already flagged as covered - existing proprietary channel drain rate carries the cost, nothing further to source.",
+  "claim_count": 23,
+  "title": "Channel drain installation to paving",
+  "family": "drainage",
+  "coverage": "covered"
+ },
+ {
+  "id": "suspended-ceiling-tile-grid",
+  "route": "qv_capture",
+  "note": "QV carries exposed-grid tile ceilings; I am not certain seismic bracing is a separate published line rather than bundled in the grid rate, but checking the licensed reference first costs nothing.",
+  "claim_count": 19,
+  "title": "Suspended tile ceiling supply install",
+  "family": "fitout",
+  "coverage": "partial"
+ },
+ {
+  "id": "mains-and-feeder-cable-install",
+  "route": "qv_capture",
+  "note": "Mains/sub-main cable by size, tray and ladder containment and terminations are core QV electrical measured items - straight capture job.",
+  "claim_count": 17,
+  "title": "Mains and feeder cable installation",
+  "family": "electrical",
+  "coverage": "absent"
+ },
+ {
+  "id": "internal-doorset-supply-install",
+  "route": "qv_capture",
+  "note": "Hollow-core and solid-core doorsets in timber or steel frames, by leaf size, are standard QV joinery rates.",
+  "claim_count": 14,
+  "title": "Internal doorset supply and install",
+  "family": "joinery",
+  "coverage": "partial"
+ },
+ {
+  "id": "solar-mounting-structural-design",
+  "route": "web_research",
+  "note": "Proprietary PV rail/clamp/ballast mounting systems and PS1 structural design are vendor-specific and fee-based - QV will not publish these; research distributors and an engineer fee benchmark.",
+  "claim_count": 12,
+  "title": "Solar array mounting structural support",
+  "family": "structure",
+  "coverage": "partial"
+ },
+ {
+  "id": "acp-facade-cladding-install",
+  "route": "no_rate_needed",
+  "note": "Coverage already complete for ACP/sheet cladding per m2 - no missing rate to route.",
+  "claim_count": 10,
+  "title": "Aluminium composite panel cladding",
+  "family": "envelope",
+  "coverage": "covered"
+ },
+ {
+  "id": "switchboard-fault-rating-protection",
+  "route": "qv_capture",
+  "note": "Switchboards, distribution boards, busbar and MCB/MCCB/ACB devices are standard QV electrical items; note the fault level/arc-flash study itself is a consultant fee that QV will not carry and needs separate pricing.",
+  "claim_count": 9,
+  "title": "Switchboard fault rating and protection",
+  "family": "electrical",
+  "coverage": "absent"
+ },
+ {
+  "id": "solar-connection-switchboard-works",
+  "route": "qv_capture",
+  "note": "Boards, main switches and isolators are standard QV electrical capture; PV-specific supply switch/metering may not be listed, so treat the residual as web research only if the capture comes up short.",
+  "claim_count": 9,
+  "title": "Solar connection switchboard works",
+  "family": "electrical",
+  "coverage": "absent"
+ },
+ {
+  "id": "facade-coating-application",
+  "route": "qv_capture",
+  "note": "QV publishes exterior coating systems by substrate (precast, steel panel, soffit), water-blast preparation and scaffold access bands beyond 6m.",
+  "claim_count": 9,
+  "title": "Facade and soffit coating",
+  "family": "envelope",
+  "coverage": "partial"
+ },
+ {
+  "id": "glazed-vision-panel",
+  "route": "qv_capture",
+  "note": "Vision panel to door leaf (aperture, lipping, beads, safety or rated glass) is normal QV joinery/glazing measure; if not listed as a per-panel item it can be built from QV glazing and joinery labour.",
+  "claim_count": 8,
+  "title": "Glazed vision panel to door",
+  "family": "joinery",
+  "coverage": "partial"
+ },
+ {
+  "id": "site-establishment-relocation",
+  "route": "qv_capture",
+  "note": "QV preliminaries section carries temporary fencing/hoarding supply-erect-shift, site sheds and containers, temporary services and compound items for the main centres.",
+  "claim_count": 8,
+  "title": "Site establishment and compound relocation",
+  "family": "civil",
+  "coverage": "absent"
+ },
+ {
+  "id": "door-hardware-sets",
+  "route": "qv_capture",
+  "note": "Ironmongery - hinges, closers, panic hardware, pulls, seals, kick plates, electric strikes - is squarely within QV's published joinery hardware schedule.",
+  "claim_count": 8,
+  "title": "Door hardware set installation",
+  "family": "joinery",
+  "coverage": "partial"
+ },
+ {
+  "id": "concrete-paving-slab",
+  "route": "qv_capture",
+  "note": "Ground-bearing reinforced paving/yard slab with mesh, edge formwork and float or broom finish is a standard QV external works rate.",
+  "claim_count": 8,
+  "title": "External concrete paving and slabs",
+  "family": "civil",
+  "coverage": "partial"
+ },
+ {
+  "id": "metering-control-instrumentation-wiring",
+  "route": "qv_capture",
+  "note": "Small-gauge multicore, screened and Cat cabling plus 20-25mm conduit, tray and saddles are routine QV electrical measured items; field device terminations may need building up from QV labour.",
+  "claim_count": 7,
+  "title": "Metering and control wiring installation",
+  "family": "electrical",
+  "coverage": "absent"
+ },
+ {
+  "id": "garden-bed-planting",
+  "route": "qv_capture",
+  "note": "QV external works covers PB-size trees, groundcover planting per m2, imported garden topsoil by m3 and establishment maintenance periods.",
+  "claim_count": 7,
+  "title": "Garden bed planting installation",
+  "family": "external_works",
+  "coverage": "partial"
+ },
+ {
+  "id": "steel-connection-fabrication",
+  "route": "qv_capture",
+  "note": "QV publishes structural steel fabrication/connection items (cleats, gussets, bolted/welded joints) within its structural steel section - capture rather than research.",
+  "claim_count": 7,
+  "title": "Structural steel connection fabrication upgrades",
+  "family": "structure",
+  "coverage": "partial"
+ },
+ {
+  "id": "glass-kitchen-splashback",
+  "route": "qv_capture",
+  "note": "Toughened back-painted glass splashbacks are a standard QV fitout/glazing measured item; capture the m2 rate.",
+  "claim_count": 7,
+  "title": "Glass splashback supply install",
+  "family": "fitout",
+  "coverage": "partial"
+ },
+ {
+  "id": "internal-stud-partition-walls",
+  "route": "qv_capture",
+  "note": "Timber and steel stud framing to documented wall types is core QV internal-partitions coverage.",
+  "claim_count": 7,
+  "title": "Internal stud partition wall construction",
+  "family": "fitout",
+  "coverage": "partial"
+ },
+ {
+  "id": "deflection-head-acoustic-seal",
+  "route": "qv_capture",
+  "note": "Slip/deflection head track and acoustic head seal are standard QV partition accessory items measured per m; capture.",
+  "claim_count": 7,
+  "title": "Deflection head and acoustic seal",
+  "family": "envelope",
+  "coverage": "absent"
+ },
+ {
+  "id": "benchtop-and-laminate-panel",
+  "route": "qv_capture",
+  "note": "QV carries joinery benchtops (laminate/compact laminate) per lineal metre - capture the joinery section we skipped.",
+  "claim_count": 6,
+  "title": "Benchtop and laminate panel",
+  "family": "joinery",
+  "coverage": "absent"
+ },
+ {
+  "id": "network-supply-connection-hv-metering",
+  "route": "web_research",
+  "note": "Lines-company connection and metering fees are network-operator charges, not measured rates - research Vector/Powerco/Wellington Electricity published connection price lists.",
+  "claim_count": 6,
+  "title": "Network supply connection and metering",
+  "family": "electrical",
+  "coverage": "absent"
+ },
+ {
+  "id": "sprinkler-system-installation",
+  "route": "qv_capture",
+  "note": "QV publishes per-m2 sprinkler system rates plus valve sets and pipework in the fire services section; capture rather than research.",
+  "claim_count": 6,
+  "title": "Fire sprinkler system installation",
+  "family": "fire",
+  "coverage": "partial"
+ },
+ {
+  "id": "interior-finishes-to-schedule",
+  "route": "no_rate_needed",
+  "note": "Undefined 'feature finishes' is an unspecified allowance, not a measurable item - price once the finishes schedule selects a product family.",
+  "claim_count": 6,
+  "title": "Interior finishes to schedule",
+  "family": "fitout",
+  "coverage": "partial"
+ },
+ {
+  "id": "subgrade-prep-basecourse-replacement",
+  "route": "no_rate_needed",
+  "note": "Already covered by existing catalogue rate; nothing missing.",
+  "claim_count": 6,
+  "title": "Subgrade preparation and basecourse replacement",
+  "family": "ground",
+  "coverage": "covered"
+ },
+ {
+  "id": "industrial-roller-doors",
+  "route": "qv_capture",
+  "note": "QV covers industrial roller/shutter doors by opening size; likely stops short of high-speed fabric doors, but capture the standard range first - unsure of QV's upper size limit.",
+  "claim_count": 5,
+  "title": "Industrial roller and specialist doors",
+  "family": "joinery",
+  "coverage": "partial"
+ },
+ {
+  "id": "joinery-finishing-painting",
+  "route": "qv_capture",
+  "note": "Paint, stain and clear lacquer systems to timber joinery are standard QV painting/decorating items.",
+  "claim_count": 5,
+  "title": "Joinery finishing and painting",
+  "family": "joinery",
+  "coverage": "partial"
+ },
+ {
+  "id": "emergency-lighting-exit-signage",
+  "route": "qv_capture",
+  "note": "Emergency luminaires and exit signs are standard QV electrical fittings; the AS/NZS 2293 test certification line may not be there - capture what exists first.",
+  "claim_count": 5,
+  "title": "Emergency lighting and exit signage",
+  "family": "electrical",
+  "coverage": "absent"
+ },
+ {
+  "id": "site-electrical-reticulation",
+  "route": "qv_capture",
+  "note": "Cable supply and pulling, draw pits, distribution boards and external lighting are all standard QV electrical measured items.",
+  "claim_count": 5,
+  "title": "Site electrical reticulation and services",
+  "family": "electrical",
+  "coverage": "partial"
+ },
+ {
+  "id": "data-rack-and-network-hardware",
+  "route": "qv_capture",
+  "note": "QV carries comms racks, patch panels and structured cabling; active switches are vendor-priced, but capture the passive items - unsure of QV's depth on active hardware.",
+  "claim_count": 5,
+  "title": "Data rack and network hardware",
+  "family": "electrical",
+  "coverage": "absent"
+ },
+ {
+  "id": "perimeter-fencing-supply-install",
+  "route": "qv_capture",
+  "note": "Mesh and palisade perimeter fencing with posts, footings and pedestrian gates is core QV external works coverage.",
+  "claim_count": 5,
+  "title": "Perimeter security fencing supply install",
+  "family": "external_works",
+  "coverage": "absent"
+ },
+ {
+  "id": "landscape-irrigation-system",
+  "route": "qv_capture",
+  "note": "QV publishes landscape irrigation rates (pop-ups, dripline, solenoids, controller) in external works; capture.",
+  "claim_count": 5,
+  "title": "Landscape irrigation system installation",
+  "family": "external_works",
+  "coverage": "absent"
+ },
+ {
+  "id": "steel-framing-purlins-bracing",
+  "route": "no_rate_needed",
+  "note": "Coverage flagged complete with nothing missing - portal frame, purlin and bracing rates already held, so no new source required.",
+  "claim_count": 5,
+  "title": "Primary steel framing and purlins",
+  "family": "structure",
+  "coverage": "covered"
+ },
+ {
+  "id": "access-platforms-support-steel",
+  "route": "qv_capture",
+  "note": "Steel grating/checker plate walkway decking, handrails and unistrut/hanger support framing are standard measured secondary steelwork items QV publishes; proprietary roof walkway systems may need a later supplier check.",
+  "claim_count": 5,
+  "title": "Access platforms and support steel",
+  "family": "structure",
+  "coverage": "partial"
+ },
+ {
+  "id": "slab-redesign-reinforcement",
+  "route": "qv_capture",
+  "note": "Slab-on-grade with DPM, mesh/bar reinforcement per tonne, power float and under-slab rigid insulation are core QV substructure items.",
+  "claim_count": 5,
+  "title": "Slab redesign and reinforcement change",
+  "family": "structure",
+  "coverage": "partial"
+ },
+ {
+  "id": "polished-concrete-floor-finish",
+  "route": "qv_capture",
+  "note": "Grind/hone/polish, densifier and sealer are normal QV floor finishes items; integral dye may be thin in QV but checking the licensed reference first costs nothing.",
+  "claim_count": 5,
+  "title": "Polished concrete floor finish",
+  "family": "fitout",
+  "coverage": "absent"
+ },
+ {
+  "id": "locker-supply-install",
+  "route": "qv_capture",
+  "note": "Staff lockers sit in QV's fittings and furnishings section alongside vanities and shelving; I am not certain of the exact bank configurations carried, but capture is the cheap first check.",
+  "claim_count": 5,
+  "title": "Locker supply and installation",
+  "family": "fitout",
+  "coverage": "absent"
+ },
+ {
+  "id": "tenant-signage-fabrication",
+  "route": "supplier_quote",
+  "note": "Bespoke fabricated tenant ID and wayfinding signage is priced per design, not by measure - approach Speedy Signs, Marra Signs, Dominion Signs or Sign Foundry NZ.",
+  "claim_count": 5,
+  "title": "Tenant signage fabrication and installation",
+  "family": "fitout",
+  "coverage": "absent"
+ },
+ {
+  "id": "distribution-board-supply-install",
+  "route": "qv_capture",
+  "note": "Sub-boards, chassis, MCB/RCD and board wiring/labelling are bread-and-butter QV electrical measured items.",
+  "claim_count": 4,
+  "title": "Distribution board supply and install",
+  "family": "electrical",
+  "coverage": "absent"
+ },
+ {
+  "id": "led-high-bay-luminaire",
+  "route": "qv_capture",
+  "note": "QV carries luminaire supply and install rates including industrial high bay plus lighting circuit cabling; access allowance can be added from existing scaffold rates.",
+  "claim_count": 4,
+  "title": "LED high bay luminaire installation",
+  "family": "electrical",
+  "coverage": "absent"
+ },
+ {
+  "id": "drainage-point-relocation",
+  "route": "qv_capture",
+  "note": "Saw-cutting, breaking out and reinstating slab/hardstanding and capping redundant drainage are standard QV alteration and drainage items.",
+  "claim_count": 4,
+  "title": "Drainage point relocation and adjustment",
+  "family": "drainage",
+  "coverage": "partial"
+ },
+ {
+  "id": "telecom-pit-installation",
+  "route": "qv_capture",
+  "note": "Precast service pit chambers with trafficable lid and frame are published in QV's external services/drainage section; telecom-specific pit sizes may be thinner but capture first.",
+  "claim_count": 4,
+  "title": "Telecommunications pit installation",
+  "family": "civil",
+  "coverage": "partial"
+ },
+ {
+  "id": "sprinkler-hydraulic-design",
+  "route": "web_research",
+  "note": "Fire engineer and sprinkler designer fees are professional services priced by quotation or fee scale - QV measures installation only, so research published fee benchmarks or approach Holmes Fire/Beca/Aurecon.",
+  "claim_count": 4,
+  "title": "Sprinkler hydraulic design and calculation",
+  "family": "fire",
+  "coverage": "absent"
+ },
+ {
+  "id": "fire-alarm-panel-cabling",
+  "route": "qv_capture",
+  "note": "QV publishes fire detection and alarm rates including FIP/FACP, modules and alarm cabling per metre; addressable upgrade to an existing system may need a supplier sanity check afterwards.",
+  "claim_count": 4,
+  "title": "Fire alarm panel and cabling",
+  "family": "fire",
+  "coverage": "partial"
+ },
+ {
+  "id": "acoustic-baffle-ceiling",
+  "route": "qv_capture",
+  "note": "Suspended acoustic baffles/blades/rafts are increasingly in QV's ceiling finishes section; uncertain of depth, but check the paid reference before pricing Autex/Asona/Woven Image direct.",
+  "claim_count": 4,
+  "title": "Acoustic baffle ceiling installation",
+  "family": "fitout",
+  "coverage": "absent"
+ },
+ {
+  "id": "extract-supply-fan-ductwork",
+  "route": "qv_capture",
+  "note": "Galvanised ductwork, bends, transitions, flexibles, dampers, grilles, cowls and in-line/roof fans with curb are standard QV mechanical measured items.",
+  "claim_count": 4,
+  "title": "Fan and ductwork installation",
+  "family": "mechanical",
+  "coverage": "partial"
+ },
+ {
+  "id": "mechanical-plant-relocation",
+  "route": "qv_capture",
+  "note": "QV carries mechanical fitter labour rates, refrigerant pipework and commissioning allowances that build up a relocation; disconnect/reconnect will still need composite assembly from those rates.",
+  "claim_count": 4,
+  "title": "Relocation of mechanical plant",
+  "family": "mechanical",
+  "coverage": "absent"
+ },
+ {
+  "id": "fall-arrest-anchor-system",
+  "route": "supplier_quote",
+  "note": "Proprietary certified roof anchors/static lines with load testing are vendor-priced and installer-certified - approach Sayfa NZ, Kattsafe, Rooftek or Height Safety Systems NZ.",
+  "claim_count": 4,
+  "title": "Roof fall arrest anchor system",
+  "family": "roofing",
+  "coverage": "absent"
+ },
+ {
+  "id": "form-ventilation-opening-fabric",
+  "route": "qv_capture",
+  "note": "Cutting/forming openings in existing fabric, lintels/trimmers, folded flashings and make-good are standard alteration measured items QV publishes; not certain of the exact QV breakdown but checking the licensed reference first is free.",
+  "claim_count": 4,
+  "title": "Form ventilation opening in fabric",
+  "family": "mechanical",
+  "coverage": "partial"
+ },
+ {
+  "id": "settlement-monitoring-installation",
+  "route": "supplier_quote",
+  "note": "No published measured rate for settlement plates/instrumentation or periodic survey readings; approach Tonkin + Taylor, WSP, Geotechnics Ltd or Soil & Rock Consultants plus a local licensed cadastral surveyor.",
+  "claim_count": 3,
+  "title": "Settlement monitoring installation and surveys",
+  "family": "ground",
+  "coverage": "absent"
+ },
+ {
+  "id": "earthing-system-and-conductors",
+  "route": "qv_capture",
+  "note": "Earth conductors per m, earth rods/electrodes, earth bars and bonding are conventional QV electrical measured items we simply never captured.",
+  "claim_count": 3,
+  "title": "Earthing system and conductor installation",
+  "family": "electrical",
+  "coverage": "absent"
+ },
+ {
+  "id": "main-switchboard-transformer-works",
+  "route": "qv_capture",
+  "note": "QV carries main switchboard supply/install and LV submain cabling; unsure it covers transformer, HV changeover and shutdown attendance, so capture the switchboard base rate first and flag the HV element for a subcontract top-up.",
+  "claim_count": 3,
+  "title": "Main switchboard and transformer works",
+  "family": "electrical",
+  "coverage": "absent"
+ },
+ {
+  "id": "ev-charge-point-install",
+  "route": "web_research",
+  "note": "EV chargers are vendor-specific proprietary equipment (Evnex, Delta, ABB, Wallbox) with published NZ pricing; QV will not carry the unit, pedestal or load management, only the generic circuit.",
+  "claim_count": 3,
+  "title": "EV charge point installation",
+  "family": "electrical",
+  "coverage": "absent"
+ },
+ {
+  "id": "security-cctv-access-control",
+  "route": "qv_capture",
+  "note": "QV publishes security and data services rates (cameras, readers, controllers, cabling per point); I am not certain how granular its coverage is, but the licensed reference is the cheapest first check.",
+  "claim_count": 3,
+  "title": "Security CCTV and access control",
+  "family": "electrical",
+  "coverage": "partial"
+ },
+ {
+  "id": "turf-supply-installation",
+  "route": "no_rate_needed",
+  "note": "Already covered by existing ready lawn/hydroseed rates; nothing outstanding moves cost.",
+  "claim_count": 3,
+  "title": "Turf supply and installation",
+  "family": "external_works",
+  "coverage": "covered"
+ },
+ {
+  "id": "stormwater-line-upsizing",
+  "route": "qv_capture",
+  "note": "150/225/300mm drainage assemblies, larger fittings and junctions and tank penetrations are bread-and-butter QV drainage measured rates.",
+  "claim_count": 3,
+  "title": "Stormwater pipe and outlet resizing",
+  "family": "drainage",
+  "coverage": "partial"
+ },
+ {
+  "id": "stormwater-detention-tank",
+  "route": "supplier_quote",
+  "note": "Proprietary tank/modular cell supply dominates cost and is priced by quotation; approach Hynds, Humes, Stormwater360, Promax and Devan for tank, risers and cover slab options.",
+  "claim_count": 3,
+  "title": "Underground stormwater tank installation",
+  "family": "drainage",
+  "coverage": "partial"
+ },
+ {
+  "id": "slab-edge-joint-detailing",
+  "route": "qv_capture",
+  "note": "Edge rebate formwork, thickened edge beams and saw-cut/dowelled control joints per linear metre are standard QV in-situ concrete items.",
+  "claim_count": 3,
+  "title": "Slab edge and joint detailing",
+  "family": "structure",
+  "coverage": "partial"
+ },
+ {
+  "id": "fire-pump-set",
+  "route": "supplier_quote",
+  "note": "Diesel/electric fire pump sets with controller and flow testing are quoted, not measured; approach Wormald, Argus Fire, Fire Security Services, Brown Brothers Engineers and Grundfos NZ.",
+  "claim_count": 3,
+  "title": "Fire pump set and testing",
+  "family": "fire",
+  "coverage": "absent"
+ },
+ {
+  "id": "fire-pump-room-build",
+  "route": "qv_capture",
+  "note": "Slab-on-grade, footings, masonry/fire-rated walls, roof, doors, louvres and service terminations are all conventional QV building and services measured rates.",
+  "claim_count": 3,
+  "title": "Fire pump room construction",
+  "family": "fire",
+  "coverage": "partial"
+ },
+ {
+  "id": "fire-water-storage-tank",
+  "route": "supplier_quote",
+  "note": "Dedicated fire water tank (bolted steel/concrete/poly) with ring base, inlet/outlet and level controls is quotation-priced; approach Tasman Tanks, Kliptank, Promax, Devan and Hynds/Humes for concrete options.",
+  "claim_count": 3,
+  "title": "Fire water storage tank",
+  "family": "fire",
+  "coverage": "absent"
+ },
+ {
+  "id": "site-water-main-and-meter-connection",
+  "route": "qv_capture",
+  "note": "63/75/100mm PE and PVC mains, valves, hydrants, meter/backflow assemblies and disinfection/pressure testing are standard QV hydraulic items; the network authority connection fee itself would need separate lines-company confirmation.",
+  "claim_count": 3,
+  "title": "Site water main and meter",
+  "family": "hydraulic",
+  "coverage": "partial"
+ },
+ {
+  "id": "roof-flashings-and-gutter-trims",
+  "route": "qv_capture",
+  "note": "Folded flashings, ridge, apron, barge and cappings per linear metre plus strip-out of existing are routine QV roofing measured rates.",
+  "claim_count": 3,
+  "title": "Metal flashing and gutter fabrication",
+  "family": "roofing",
+  "coverage": "partial"
+ },
+ {
+  "id": "roof-access-walkways-ladders",
+  "route": "web_research",
+  "note": "Proprietary roof walkway/mesh systems, non-penetrating brackets, ladder cages and anchor/static line points are specialist height-safety products (Kattsafe, Altus, Safety Nets NZ, 3M) that QV will not carry; QV may still give a baseline steel ladder/handrail rate.",
+  "claim_count": 3,
+  "title": "Roof access walkway and ladder",
+  "family": "roofing",
+  "coverage": "partial"
+ },
+ {
+  "id": "condensate-drainage-works",
+  "route": "qv_capture",
+  "note": "Small-bore copper/PVC condensate pipe, trap, tundish and pipe insulation are standard QV hydraulic/mechanical measured items; unsure the tundish assembly is itemised separately, but check the licensed reference first.",
+  "claim_count": 3,
+  "title": "Condensate drainage and tundish",
+  "family": "mechanical",
+  "coverage": "partial"
+ },
+ {
+  "id": "coordination-of-others-installations",
+  "route": "qv_capture",
+  "note": "QV publishes preliminaries and general / main contractor attendance percentages; capture the P&G build-up rather than research it.",
+  "claim_count": 3,
+  "title": "Coordination of others' installations",
+  "family": "contractual",
+  "coverage": "absent"
+ },
+ {
+  "id": "protective-coating-structural",
+  "route": "qv_capture",
+  "note": "QV carries painting/protective coatings to concrete and steel including urethane topcoats; anti-carbonation systems may be thin in QV, so flag if not found.",
+  "claim_count": 3,
+  "title": "Protective coating to structural elements",
+  "family": "structure",
+  "coverage": "partial"
+ },
+ {
+  "id": "geotech-testing-compaction-certification",
+  "route": "supplier_quote",
+  "note": "Testing and certification is a consultant fee, not a measured rate - approach Geotechnics Ltd, Tonkin & Taylor, WSP or Babbage for a schedule of NDM/CBR/Scala and proof-roll charges.",
+  "claim_count": 2,
+  "title": "Geotechnical testing and compaction certification",
+  "family": "ground",
+  "coverage": "absent"
+ },
+ {
+  "id": "exterior-aluminium-joinery",
+  "route": "no_rate_needed",
+  "note": "Already covered by existing m2 aluminium joinery rate; nothing missing.",
+  "claim_count": 2,
+  "title": "Exterior window and door joinery",
+  "family": "joinery",
+  "coverage": "covered"
+ },
+ {
+  "id": "kitchen-bathroom-fixtures",
+  "route": "qv_capture",
+  "note": "QV publishes kitchen cabinetry, benchtops, sinks, tapware, cabinet hardware and bathroom accessories as standard measured items.",
+  "claim_count": 2,
+  "title": "Kitchen and bathroom fixture fitout",
+  "family": "joinery",
+  "coverage": "partial"
+ },
+ {
+  "id": "lighting-control-daylight-upgrade",
+  "route": "qv_capture",
+  "note": "Occupancy/daylight sensors and control cabling are standard QV electrical items; DALI controllers and commissioning may be sparse - check QV before paying for research.",
+  "claim_count": 2,
+  "title": "Lighting control system upgrade",
+  "family": "electrical",
+  "coverage": "absent"
+ },
+ {
+  "id": "generator-supply-test-commission",
+  "route": "supplier_quote",
+  "note": "Standby/temporary generator plus load-bank testing is quoted, not measured - ask Cummins NZ, Power Equipment (Kohler), Eurotec or Hirepool/Kennards for hire and commissioning pricing.",
+  "claim_count": 2,
+  "title": "Generator provision testing and commissioning",
+  "family": "electrical",
+  "coverage": "absent"
+ },
+ {
+  "id": "led-strip-lighting",
+  "route": "qv_capture",
+  "note": "LED battens/strip luminaires with suspension and final connection are bread-and-butter QV electrical rates we simply never captured.",
+  "claim_count": 2,
+  "title": "LED strip lighting supply install",
+  "family": "electrical",
+  "coverage": "absent"
+ },
+ {
+  "id": "general-light-fitting-and-cabling",
+  "route": "qv_capture",
+  "note": "Standard light fittings, final circuit cabling and accessories are core QV electrical coverage.",
+  "claim_count": 2,
+  "title": "General light fitting and cabling",
+  "family": "electrical",
+  "coverage": "absent"
+ },
+ {
+  "id": "photovoltaic-array-installation",
+  "route": "web_research",
+  "note": "PV modules, rails and inverters are vendor-specific and priced per kW by specialist installers; QV does not carry renewables at this level.",
+  "claim_count": 2,
+  "title": "Photovoltaic array supply and install",
+  "family": "electrical",
+  "coverage": "absent"
+ },
+ {
+  "id": "cable-and-switchboard-upsizing",
+  "route": "qv_capture",
+  "note": "QV publishes cable rates by size and switchboard/protective device rates - capture both and build the differential in-house.",
+  "claim_count": 2,
+  "title": "Cable upsizing for voltage drop",
+  "family": "electrical",
+  "coverage": "absent"
+ },
+ {
+  "id": "digital-print-panel-finish",
+  "route": "supplier_quote",
+  "note": "Bespoke artwork setout and printing has no published measure - quote from signage/panel printers such as Speedy Signs, Mark 1 Signs, Sign Foundry or Fairview/Alucobond print fabricators.",
+  "claim_count": 2,
+  "title": "Digital print panel finish",
+  "family": "envelope",
+  "coverage": "absent"
+ },
+ {
+  "id": "glass-manifestation-application",
+  "route": "web_research",
+  "note": "Cut vinyl/frosted film is a signage-film subcontract with public $/m2 pricing (Speedy Signs, Window Film NZ, 3M applicators); QV does not measure it.",
+  "claim_count": 2,
+  "title": "Glass manifestation to glazing",
+  "family": "envelope",
+  "coverage": "absent"
+ },
+ {
+  "id": "facade-sealant-weatherproofing",
+  "route": "no_rate_needed",
+  "note": "Existing per-metre sealant and backing rod rate already covers the scope.",
+  "claim_count": 2,
+  "title": "Facade and window sealant joints",
+  "family": "envelope",
+  "coverage": "covered"
+ },
+ {
+  "id": "insulated-panel-penetration-seal",
+  "route": "qv_capture",
+  "note": "Unsure QV itemises penetrations through sandwich panel per ea - it does carry panel and flashing rates, so check the licensed reference first; fallback is Kingspan/Bondor.",
+  "claim_count": 2,
+  "title": "Insulated panel service penetrations",
+  "family": "envelope",
+  "coverage": "absent"
+ },
+ {
+  "id": "vehicle-gate-and-automation",
+  "route": "qv_capture",
+  "note": "QV external works carries gates and automated vehicle gates with motor/controls; standard measured item we simply never captured.",
+  "claim_count": 2,
+  "title": "Vehicle gate and automation",
+  "family": "external_works",
+  "coverage": "absent"
+ },
+ {
+  "id": "kerb-and-mowing-strip",
+  "route": "qv_capture",
+  "note": "Precast/in-situ kerb, channel and mowing strip per m is core QV external works content.",
+  "claim_count": 2,
+  "title": "Concrete kerb and mowing strip",
+  "family": "external_works",
+  "coverage": "absent"
+ },
+ {
+  "id": "external-paving-and-signage",
+  "route": "qv_capture",
+  "note": "Unit pavers, exposed aggregate and site signage are all standard QV external works items.",
+  "claim_count": 2,
+  "title": "External paving and signage",
+  "family": "external_works",
+  "coverage": "partial"
+ },
+ {
+  "id": "external-siteworks-scope-split",
+  "route": "no_rate_needed",
+  "note": "A commercial scope/boundary transfer with undefined quantities - priced from the constituent captured rates, not a new published rate.",
+  "claim_count": 2,
+  "title": "External siteworks scope reallocation",
+  "family": "external_works",
+  "coverage": "partial"
+ },
+ {
+  "id": "bollards-and-impact-barriers",
+  "route": "qv_capture",
+  "note": "Steel bollards and guard barriers with footings are standard QV external works; check whether removable/impact-rated variants are listed - capture anyway.",
+  "claim_count": 2,
+  "title": "Bollards and impact barriers",
+  "family": "external_works",
+  "coverage": "partial"
+ },
+ {
+  "id": "manhole-lid-level-adjust",
+  "route": "qv_capture",
+  "note": "Lid and frame raise/reset with riser rings is a normal QV drainage/civil measured item; unsure of exact wording but the licensed check is free.",
+  "claim_count": 2,
+  "title": "Manhole lid level adjustment",
+  "family": "drainage",
+  "coverage": "partial"
+ },
+ {
+  "id": "plinths-and-cover-slabs",
+  "route": "qv_capture",
+  "note": "Small in-situ RC pads, plinths, cover slabs, formwork and holding-down bolts are standard QV structure rates.",
+  "claim_count": 2,
+  "title": "Equipment plinths and cover slabs",
+  "family": "structure",
+  "coverage": "partial"
+ },
+ {
+  "id": "timber-treatment-hazard-upgrade",
+  "route": "qv_capture",
+  "note": "QV publishes structural timber supply by size and treatment class; the H-class differential is derivable from captured supply rates.",
+  "claim_count": 2,
+  "title": "Timber treatment hazard class upgrade",
+  "family": "structure",
+  "coverage": "absent"
+ },
+ {
+  "id": "crash-rail-pedestrian-barrier",
+  "route": "qv_capture",
+  "note": "Steel guard/crash rail and pedestrian barrier per m sits in QV structural steel/external works; capture and compare to balustrade rates.",
+  "claim_count": 2,
+  "title": "Crash rails and pedestrian barriers",
+  "family": "structure",
+  "coverage": "partial"
+ },
+ {
+  "id": "concrete-hardstand-ramp",
+  "route": "qv_capture",
+  "note": "Reinforced slab-on-grade, kerb edge and broomed/non-slip finish are all standard QV concrete rates.",
+  "claim_count": 2,
+  "title": "Concrete hardstand ramp construction",
+  "family": "civil",
+  "coverage": "partial"
+ },
+ {
+  "id": "site-survey-setout",
+  "route": "web_research",
+  "note": "Licensed surveyor professional fees are quoted, not measured; QV prelims do not carry consultant fee scales - research NZIS/consultant fee benchmarks.",
+  "claim_count": 2,
+  "title": "Site survey and setout",
+  "family": "civil",
+  "coverage": "absent"
+ },
+ {
+  "id": "foam-suppression-system",
+  "route": "supplier_quote",
+  "note": "Specialist hazardous-goods foam system priced by package - approach Argus Fire, Wormald NZ, Fire Protection Inspection Services / Tyco NZ.",
+  "claim_count": 2,
+  "title": "Foam suppression system installation",
+  "family": "fire",
+  "coverage": "absent"
+ },
+ {
+  "id": "water-pressure-booster-pump-set",
+  "route": "supplier_quote",
+  "note": "Packaged booster set is vendor equipment - approach Grundfos NZ, Davey/Brown Brothers, Reece/Mico Plumbing Supplies for trade pricing.",
+  "claim_count": 2,
+  "title": "Water pressure booster pump set",
+  "family": "hydraulic",
+  "coverage": "absent"
+ },
+ {
+  "id": "ceiling-perimeter-seismic-detail",
+  "route": "qv_capture",
+  "note": "Suspended ceiling perimeter trim and seismic gap/back-bracing detailing is normal QV ceiling content; unsure of the seismic line item but check the licensed reference first.",
+  "claim_count": 2,
+  "title": "Ceiling perimeter trim seismic detailing",
+  "family": "fitout",
+  "coverage": "partial"
+ },
+ {
+  "id": "vinyl-coving-cove-capping",
+  "route": "qv_capture",
+  "note": "Coved vinyl skirting with former and capping strip is a standard QV resilient flooring item.",
+  "claim_count": 2,
+  "title": "Vinyl coving and cove capping",
+  "family": "fitout",
+  "coverage": "partial"
+ },
+ {
+  "id": "carpet-tile-flooring",
+  "route": "no_rate_needed",
+  "note": "Already covered by an existing captured rate - no gap to fill.",
+  "claim_count": 2,
+  "title": "Carpet tile supply and lay",
+  "family": "fitout",
+  "coverage": "covered"
+ },
+ {
+  "id": "interior-painting-application",
+  "route": "no_rate_needed",
+  "note": "Rate already covered; single-colour selection within same paint system is a deferred aesthetic choice with no cost movement.",
+  "claim_count": 2,
+  "title": "Interior painting to walls ceilings",
+  "family": "fitout",
+  "coverage": "covered"
+ },
+ {
+  "id": "service-roof-penetrations",
+  "route": "qv_capture",
+  "note": "Standard measured roofing item - QV publishes penetration/soaker and proprietary flashing rates per number; capture rather than research.",
+  "claim_count": 2,
+  "title": "Framed and flashed roof penetrations",
+  "family": "roofing",
+  "coverage": "absent"
+ },
+ {
+  "id": "mechanical-plant-seismic-restraint",
+  "route": "qv_capture",
+  "note": "Seismic restraint to services is routine NZ measured work; I am not certain QV itemises the engineering/PS1 element, but capture the bracket/brace rate first - checking the licensed reference is free.",
+  "claim_count": 2,
+  "title": "Seismic restraint to mechanical plant",
+  "family": "mechanical",
+  "coverage": "absent"
+ },
+ {
+  "id": "low-level-air-inlet-install",
+  "route": "qv_capture",
+  "note": "Grilles, louvres and diffusers with frames are standard QV mechanical items, as is wall opening make-good.",
+  "claim_count": 2,
+  "title": "Low level air inlet installation",
+  "family": "mechanical",
+  "coverage": "absent"
+ },
+ {
+  "id": "process-plant-room-install",
+  "route": "supplier_quote",
+  "note": "Install-only of client-supplied compressors/process plant is quotation work - approach Airtech/Kaeser NZ, Active Refrigeration, Aquaheat or a local mechanical contractor.",
+  "claim_count": 2,
+  "title": "Compressor and process plant installation",
+  "family": "mechanical",
+  "coverage": "absent"
+ },
+ {
+  "id": "embedded-heating-pipework",
+  "route": "qv_capture",
+  "note": "Underfloor heating pipework per m2 is a conventional measured hydronic item QV is likely to publish; capture before paying for research.",
+  "claim_count": 2,
+  "title": "Underfloor and underground heating pipework",
+  "family": "mechanical",
+  "coverage": "absent"
+ },
+ {
+  "id": "temporary-site-perimeter-fencing",
+  "route": "qv_capture",
+  "note": "Temporary fencing hire/erect/remove is a standard preliminaries measured item in QV.",
+  "claim_count": 2,
+  "title": "Temporary site perimeter fencing",
+  "family": "contractual",
+  "coverage": "absent"
+ },
+ {
+  "id": "extended-preliminaries-delayed-possession",
+  "route": "qv_capture",
+  "note": "QV publishes preliminaries and general as a percentage/time-related allowance; capture the weekly site establishment basis and apply to the extension period.",
+  "claim_count": 2,
+  "title": "Extended preliminaries for delayed possession",
+  "family": "contractual",
+  "coverage": "absent"
+ },
+ {
+  "id": "lime-cement-subgrade-stabilisation",
+  "route": "qv_capture",
+  "note": "In-situ lime/cement stabilisation is a common civil measured item; QV very likely carries it under ground/site works - capture it.",
+  "claim_count": 1,
+  "title": "Lime cement subgrade stabilisation",
+  "family": "ground",
+  "coverage": "absent"
+ },
+ {
+  "id": "topsoil-stockpile-handling",
+  "route": "qv_capture",
+  "note": "Rehandling, stockpile maintenance and erosion/sediment control are standard QV siteworks items; capture to complete the partial coverage.",
+  "claim_count": 1,
+  "title": "Topsoil stripping stockpiling and rehandling",
+  "family": "ground",
+  "coverage": "partial"
+ },
+ {
+  "id": "contaminated-soil-removal",
+  "route": "web_research",
+  "note": "Licensed landfill acceptance fees and validation sampling are facility- and region-specific statutory charges QV does not publish; research landfill gate rates and an IANZ lab.",
+  "claim_count": 1,
+  "title": "Contaminated soil removal and disposal",
+  "family": "ground",
+  "coverage": "partial"
+ },
+ {
+  "id": "rigid-inclusion-ground-improvement",
+  "route": "supplier_quote",
+  "note": "Specialist geotechnical subcontract priced by quotation with rig mobilisation - approach Brian Perry Civil, Keller NZ, Hiway Stabilizers or Ground Improvement Solutions.",
+  "claim_count": 1,
+  "title": "Rigid inclusion ground improvement",
+  "family": "ground",
+  "coverage": "absent"
+ },
+ {
+  "id": "dock-leveller-and-shelter",
+  "route": "web_research",
+  "note": "Proprietary vendor equipment outside QV's measured scope - price via Dock & Door / Loading Systems NZ / Assa Abloy Entrance Systems.",
+  "claim_count": 1,
+  "title": "Dock leveller and shelter",
+  "family": "joinery",
+  "coverage": "absent"
+ },
+ {
+  "id": "builders-work-electrical-interface",
+  "route": "qv_capture",
+  "note": "Core drilling, chasing, fire-stopping and making good are standard QV builders-work-in-connection items; capture to fill the gaps.",
+  "claim_count": 1,
+  "title": "Builders work for electrical services",
+  "family": "electrical",
+  "coverage": "partial"
+ },
+ {
+  "id": "door-track-hood-fabrication",
+  "route": "qv_capture",
+  "note": "Folded/pressed light-gauge sheet metal flashings and hoods are standard QV sheetmetal rates by girth; capture and build up per opening.",
+  "claim_count": 1,
+  "title": "Door track hood fabrication",
+  "family": "envelope",
+  "coverage": "absent"
+ },
+ {
+  "id": "cladding-insulation-spec-upgrade",
+  "route": "qv_capture",
+  "note": "QV publishes insulation by R-value/thickness and alternative cladding build-ups; capture the upgraded components and derive the differential rather than inventing a delta.",
+  "claim_count": 1,
+  "title": "Cladding insulation specification upgrade",
+  "family": "envelope",
+  "coverage": "partial"
+ },
+ {
+  "id": "irrigation-controller-relocation",
+  "route": "qv_capture",
+  "note": "QV carries irrigation controllers/solenoid wiring and trade hourly rates; relocation can be built from the installed rate plus labour - unsure QV prices recommissioning explicitly, but checking the licensed reference first costs nothing.",
+  "claim_count": 1,
+  "title": "Irrigation controller relocation",
+  "family": "external_works",
+  "coverage": "partial"
+ },
+ {
+  "id": "mulch-and-weed-mat",
+  "route": "qv_capture",
+  "note": "Weed mat, bark/pebble mulch to depth, pins and garden edging are bread-and-butter QV soft-landscaping measured items.",
+  "claim_count": 1,
+  "title": "Mulch and weed mat",
+  "family": "external_works",
+  "coverage": "partial"
+ },
+ {
+  "id": "precast-concrete-wall",
+  "route": "qv_capture",
+  "note": "Footing concrete/reinforcement/formwork, precast panel erection, grouted starter bars, propping, crane and subsoil drainage are all standard QV substructure/structure items.",
+  "claim_count": 1,
+  "title": "Precast concrete wall construction",
+  "family": "external_works",
+  "coverage": "partial"
+ },
+ {
+  "id": "manhole-with-orifice-control",
+  "route": "qv_capture",
+  "note": "Complete precast manhole chambers to depth with cover and frame are core QV drainage; the orifice plate is minor and may need a Hynds price if QV omits it.",
+  "claim_count": 1,
+  "title": "Stormwater manhole with orifice",
+  "family": "drainage",
+  "coverage": "absent"
+ },
+ {
+  "id": "external-site-drainage-network",
+  "route": "qv_capture",
+  "note": "150-300mm reticulation, sumps/catchpits and manholes are standard QV external drainage; only the council connection/inspection fee needs separate authority research.",
+  "claim_count": 1,
+  "title": "External site drainage network installation",
+  "family": "drainage",
+  "coverage": "partial"
+ },
+ {
+  "id": "wastewater-pump-station",
+  "route": "supplier_quote",
+  "note": "Packaged duty/standby pump station is vendor equipment with no published measured rate - approach Hynds, Promax, Kingspan, Xylem/Flygt or Grundfos NZ.",
+  "claim_count": 1,
+  "title": "Wastewater pump station installation",
+  "family": "drainage",
+  "coverage": "absent"
+ },
+ {
+  "id": "stainless-overflow-cover",
+  "route": "supplier_quote",
+  "note": "One-off bespoke stainless plate/frame fabrication is never published - approach local fabricators such as Grayson Engineering, Metalcraft Engineering, Stainless Design or Fabtech NZ.",
+  "claim_count": 1,
+  "title": "Stainless steel overflow cover fabrication",
+  "family": "drainage",
+  "coverage": "absent"
+ },
+ {
+  "id": "civil-site-services",
+  "route": "no_rate_needed",
+  "note": "Coverage already complete - trenching, bedding, ducts, backfill and reinstatement all exist; nothing missing to price.",
+  "claim_count": 1,
+  "title": "Civil site services trenching works",
+  "family": "civil",
+  "coverage": "covered"
+ },
+ {
+  "id": "loading-dock-pit",
+  "route": "qv_capture",
+  "note": "Slab on ground with formwork and reinforcement, retaining pit walls, cast-in galvanised edge angle and small sump pump are standard QV civil/structure items.",
+  "claim_count": 1,
+  "title": "Loading dock pit construction",
+  "family": "civil",
+  "coverage": "partial"
+ },
+ {
+  "id": "demolition-making-good",
+  "route": "qv_capture",
+  "note": "Breaking out concrete slabs, kerbs and pavement, saw-cutting, breaker plant and cartage/tip fees are standard QV demolition and alterations items.",
+  "claim_count": 1,
+  "title": "Demolition and making good",
+  "family": "civil",
+  "coverage": "partial"
+ },
+ {
+  "id": "pavement-deflection-testing",
+  "route": "supplier_quote",
+  "note": "FWD/Benkelman mobilisation, testing and reporting is a consultancy day rate not published anywhere - ask WSP Research, Geotechnics Ltd, Downer Technology or Fulton Hogan Technical Services.",
+  "claim_count": 1,
+  "title": "Pavement deflection testing",
+  "family": "civil",
+  "coverage": "absent"
+ },
+ {
+  "id": "fire-alarm-devices",
+  "route": "qv_capture",
+  "note": "Heat detectors, manual call points, loop cabling and commissioning/certification allowances are ordinary QV fire-services measured items.",
+  "claim_count": 1,
+  "title": "Fire alarm detection device installation",
+  "family": "fire",
+  "coverage": "partial"
+ },
+ {
+  "id": "fire-rated-door",
+  "route": "no_rate_needed",
+  "note": "Already covered by existing fire-rated doorset rate; no further pricing needed.",
+  "claim_count": 1,
+  "title": "Fire rated door installation",
+  "family": "fire",
+  "coverage": "covered"
+ },
+ {
+  "id": "fire-rated-wall-upgrade",
+  "route": "qv_capture",
+  "note": "Strip-out and disposal of linings, timber/steel stud framing, fire-rated board and penetration sealing/collars are all standard QV internal and fire items.",
+  "claim_count": 1,
+  "title": "Fire rated wall panel upgrade",
+  "family": "fire",
+  "coverage": "partial"
+ },
+ {
+  "id": "pressure-reducing-relief-valve-install",
+  "route": "qv_capture",
+  "note": "PRVs, isolating valves, gauges and plumber hourly rates are standard QV hydraulic items; cut-in and recommissioning built from labour hours.",
+  "claim_count": 1,
+  "title": "In-line pressure relief valve",
+  "family": "hydraulic",
+  "coverage": "absent"
+ },
+ {
+  "id": "condensate-drain-pipework",
+  "route": "qv_capture",
+  "note": "32-40mm waste/condensate pipework with brackets, insulation and tundish/trap connections are routine QV hydraulic measured rates.",
+  "claim_count": 1,
+  "title": "Condensate drain pipework installation",
+  "family": "hydraulic",
+  "coverage": "partial"
+ },
+ {
+  "id": "floor-waste-and-trap-primer",
+  "route": "qv_capture",
+  "note": "Floor waste gullies, trap primers, core drilling of suspended slabs and puddle flanges are standard measured hydraulic/builderswork items QV publishes; capture the larger-diameter core drill range too.",
+  "claim_count": 1,
+  "title": "Floor waste and trap primer",
+  "family": "hydraulic",
+  "coverage": "partial"
+ },
+ {
+  "id": "pipework-acoustic-lagging",
+  "route": "web_research",
+  "note": "Mass-loaded acoustic pipe lagging is a proprietary specialist product (Pyrotek Sorberbarrier/Hushlag, Potter Interior Systems) - QV carries thermal pipe insulation but not MLV acoustic wraps.",
+  "claim_count": 1,
+  "title": "Acoustic lagging to pipework",
+  "family": "hydraulic",
+  "coverage": "absent"
+ },
+ {
+  "id": "wastewater-control-system",
+  "route": "supplier_quote",
+  "note": "Pump station control panel, level sensors and alarms are vendor-configured equipment with no published measured rate - approach Hynds Pipe Systems, Brown Brothers Engineers, Grundfos NZ and Ebara/Pump & Valve Specialties.",
+  "claim_count": 1,
+  "title": "Wastewater pump control system",
+  "family": "hydraulic",
+  "coverage": "absent"
+ },
+ {
+  "id": "hydraulic-services-rough-in",
+  "route": "qv_capture",
+  "note": "40/50mm waste branches, small-bore hot/cold copper and PEX, valves and pipe insulation are all core QV measured items; build the per-m2 rough-in allowance from the captured linear rates.",
+  "claim_count": 1,
+  "title": "General hydraulic services rough-in",
+  "family": "hydraulic",
+  "coverage": "partial"
+ },
+ {
+  "id": "plywood-wall-lining",
+  "route": "qv_capture",
+  "note": "Sheet plywood wall lining on battens and clear sealer/joint treatment are standard QV internal lining and decorating items.",
+  "claim_count": 1,
+  "title": "Plywood feature wall lining",
+  "family": "fitout",
+  "coverage": "partial"
+ },
+ {
+  "id": "vinyl-sheet-flooring",
+  "route": "qv_capture",
+  "note": "Floor preparation, grinding and self-levelling/smoothing compound are standard QV floor finishes preliminaries to vinyl - capture alongside the sheet rate.",
+  "claim_count": 1,
+  "title": "Vinyl sheet flooring supply install",
+  "family": "fitout",
+  "coverage": "partial"
+ },
+ {
+  "id": "entry-mat-system",
+  "route": "qv_capture",
+  "note": "Entrance matting in recessed frames is usually in QV floor finishes; I am not certain of the coverage depth, so check the licensed reference first before pricing Birrus/Forbo Coral direct.",
+  "claim_count": 1,
+  "title": "Recessed entry mat system",
+  "family": "fitout",
+  "coverage": "absent"
+ },
+ {
+  "id": "stainless-chequer-plate-floor",
+  "route": "supplier_quote",
+  "note": "Stainless chequer plate flooring is fabricated specialist metalwork with no measured rate - approach Steel & Tube Stainless, Atlas Steels and a local stainless fabricator (e.g. Fabtech/Cook Sheetmetal) for supply and install.",
+  "claim_count": 1,
+  "title": "Stainless chequer plate floor installation",
+  "family": "fitout",
+  "coverage": "absent"
+ },
+ {
+  "id": "toilet-cubicle-partitions",
+  "route": "qv_capture",
+  "note": "Toilet cubicle/pilaster systems with doors and hardware are a standard QV sanitary fitout item priced per cubicle.",
+  "claim_count": 1,
+  "title": "Toilet cubicle partition installation",
+  "family": "fitout",
+  "coverage": "absent"
+ },
+ {
+  "id": "multi-colour-feature-painting",
+  "route": "no_rate_needed",
+  "note": "Colour selection within the same paint system is a deferred aesthetic choice; any genuine extra cut-in/masking effort is covered by the existing painter hourly rate.",
+  "claim_count": 1,
+  "title": "Multi-colour feature painting tinting",
+  "family": "fitout",
+  "coverage": "partial"
+ },
+ {
+  "id": "internal-blinds-supply-install",
+  "route": "qv_capture",
+  "note": "Roller and venetian blinds with brackets and pelmets are standard QV fitout/furnishings items measured per m2.",
+  "claim_count": 1,
+  "title": "Internal window blinds installation",
+  "family": "fitout",
+  "coverage": "absent"
+ },
+ {
+  "id": "builders-work-specialist-fitout",
+  "route": "no_rate_needed",
+  "note": "Coverage already recorded as complete - no gap to fill.",
+  "claim_count": 1,
+  "title": "Builders work for specialist fitout",
+  "family": "fitout",
+  "coverage": "covered"
+ },
+ {
+  "id": "roof-turbine-ventilator",
+  "route": "qv_capture",
+  "note": "Roof ventilators with bases and soaker flashings to profiled metal roofing are standard QV roofing items; capture rather than chase Edmonds pricing.",
+  "claim_count": 1,
+  "title": "Roof turbine ventilator supply install",
+  "family": "roofing",
+  "coverage": "absent"
+ },
+ {
+  "id": "mech-plant-builderswork-power",
+  "route": "qv_capture",
+  "note": "Concrete equipment plinths, isolators, sub-main cable and final connections, and anti-vibration mounts are all routinely published by QV in concrete, electrical and mechanical sections.",
+  "claim_count": 1,
+  "title": "Builderswork and power connection",
+  "family": "mechanical",
+  "coverage": "partial"
+ },
+ {
+  "id": "services-commissioning-tuning",
+  "route": "web_research",
+  "note": "Air/water balancing, BMS tuning and independent witnessing are specialist subcontract services priced by quotation or as a percentage of plant value, not measured by QV.",
+  "claim_count": 1,
+  "title": "Services commissioning and tuning",
+  "family": "mechanical",
+  "coverage": "absent"
+ },
+ {
+  "id": "mechanical-installation-revision",
+  "route": "qv_capture",
+  "note": "Mechanical fitter labour rates, ductwork and pipework strip-out, bends, transitions, flexible connections and re-insulation are standard QV measured items; assemble the rework sum from them.",
+  "claim_count": 1,
+  "title": "Mechanical services installation revision",
+  "family": "mechanical",
+  "coverage": "partial"
+ },
+ {
+  "id": "refrigeration-pipework-termination",
+  "route": "supplier_quote",
+  "note": "Specialist refrigeration subcontract work (brazing, evacuation, gas charge) priced per job, not a QV measured item; approach Active Refrigeration, Aotea Energy, Realcold/Airco, Patton Engineering.",
+  "claim_count": 1,
+  "title": "Refrigeration pipework termination",
+  "family": "mechanical",
+  "coverage": "absent"
+ },
+ {
+  "id": "glycol-circulation-pump",
+  "route": "qv_capture",
+  "note": "Circulating pump sets, isolating valves, strainers and flexible connections are standard QV mechanical/hydraulic measured items - not certain QV covers glycol duty specifically, but check the licensed reference first before buying research.",
+  "claim_count": 1,
+  "title": "Glycol circulation pump installation",
+  "family": "mechanical",
+  "coverage": "absent"
+ },
+ {
+  "id": "laydown-storage-area-establishment",
+  "route": "no_rate_needed",
+  "note": "Already flagged as covered - hardstand formation and reinstatement rates exist, no new rate moves the cost.",
+  "claim_count": 1,
+  "title": "Material laydown area establishment",
+  "family": "contractual",
+  "coverage": "covered"
+ },
+ {
+  "id": "insurance-endorsement-amendment",
+  "route": "supplier_quote",
+  "note": "Premium adjustment plus broker fee is client/risk specific and unpublished; obtain from the project broker - Aon NZ, Gallagher (Crombie Lockwood), Marsh, or insurer Vero/NZI.",
+  "claim_count": 1,
+  "title": "Contract insurance endorsement amendment",
+  "family": "contractual",
+  "coverage": "absent"
+ },
+ {
+  "id": "client-supplied-goods-handling",
+  "route": "qv_capture",
+  "note": "Mechanical offloading/crane hire, labourer hours and secure storage (container hire) are ordinary QV preliminaries items; item-specific install content can be built from captured labour rates.",
+  "claim_count": 1,
+  "title": "Client-supplied goods handling installation",
+  "family": "contractual",
+  "coverage": "partial"
+ },
+ {
+  "id": "substitution-design-review",
+  "route": "web_research",
+  "note": "Structural/fire engineer hourly consultancy fees and PS1/PS4 documentation are professional fee data QV does not publish; use ACENZ/consultant fee survey or direct consultant approach.",
+  "claim_count": 1,
+  "title": "Engineering review of product substitutions",
+  "family": "professional",
+  "coverage": "absent"
+ },
+ {
+  "id": "evacuation-scheme-design",
+  "route": "web_research",
+  "note": "FENZ lodgement is a statutory charge and the scheme is a fire-consultant fee - outside QV's measured-rate coverage.",
+  "claim_count": 1,
+  "title": "Evacuation scheme design and approval",
+  "family": "professional",
+  "coverage": "absent"
+ },
+ {
+  "id": "qa-software-licensing",
+  "route": "web_research",
+  "note": "Vendor per-user subscription pricing is published online (e.g. Procore, HammerTech, Assignar); QV carries no software licences.",
+  "claim_count": 1,
+  "title": "Quality assurance software licensing",
+  "family": "professional",
+  "coverage": "absent"
+ },
+ {
+  "id": "vehicle-boom-gate-installation",
+  "route": "supplier_quote",
+  "note": "Proprietary motorised barrier, controller and loop detector priced as an equipment package; approach Magnetic Automation NZ, Automatic Technology NZ (ATA), Gallagher Security, Smart Access Solutions.",
+  "claim_count": 1,
+  "title": "Vehicle boom gate installation",
+  "family": "specialist",
+  "coverage": "absent"
+ },
+ {
+  "id": "coolstore-panel-thermal-upgrade",
+  "route": "supplier_quote",
+  "note": "Coolstore sandwich panel core thickness/type pricing is a proprietary trade price list; approach Kingspan Insulated Panels NZ, Bondor/Metecno NZ, Thermal Building Systems.",
+  "claim_count": 1,
+  "title": "Insulated panel thermal specification upgrade",
+  "family": "specialist",
+  "coverage": "absent"
+ },
+ {
+  "id": "licensed-asbestos-removal",
+  "route": "supplier_quote",
+  "note": "Licensed removal, enclosure, air monitoring, clearance and hazardous landfill disposal are quoted per site; approach Chemcare, Precise Environmental, Nikau Group, Trace Environmental.",
+  "claim_count": 1,
+  "title": "Licensed asbestos removal and disposal",
+  "family": "specialist",
+  "coverage": "absent"
+ }
+]

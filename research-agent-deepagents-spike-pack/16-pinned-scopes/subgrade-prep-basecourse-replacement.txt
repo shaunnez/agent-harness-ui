@@ -1,0 +1,62 @@
+SCENARIO
+id: subgrade-prep-basecourse-replacement-pinned
+title: Subgrade preparation and basecourse replacement
+family: ground
+catalogue unit: m3 (per cubic metre of in-situ undercut volume, measured as excavated void, which equals the compacted replacement volume)
+
+SCOPE - FIXED. Do not substitute your own.
+  location:          Auckland, suburban commercial site, sealed access for 8-wheeler truck and trailer
+  area worked:       500 m2 of trafficked pavement / slab subgrade, in two patches of 250 m2
+  undercut depth:    300mm uniform below design subgrade level
+  nominal quantity:  150 m3 in-situ undercut volume (500 m2 x 0.300m)
+  spoil:             clean fill, Auckland residual clay, CBR under 3, NOT contaminated,
+                     disposal to a licensed cleanfill within 25 km round trip
+  replacement:       TNZ M/4 AP40 basecourse (GAP40), compacted in 150mm layers
+                     to 95% MDD NZS 4402, over Bidim A24 non-woven geotextile separation
+  compaction plant:  8-tonne smooth drum roller, site already open and accessible
+
+INCLUDED, amortised over the nominal 150 m3 where not already per-unit:
+  - machine excavation of the 300mm undercut with a 13-tonne excavator
+  - load, cart and cleanfill disposal fee for 150 m3 in-situ (approx 180 m3 loose, bulking 1.2)
+  - Bidim A24 geotextile to the 500 m2 formation, lapped 300mm, amortised over 150 m3
+  - supply, cart and place TNZ M/4 AP40 to 300mm in two 150mm layers
+  - compaction, trim and shape to level, water for compaction
+  - proof roll and one Scala penetrometer / plate-bearing test set per patch
+  - excavator and roller mobilisation to site, amortised over 150 m3
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, design, geotechnical engineer's fees, consent fees
+  - contaminated or asbestos-bearing spoil, and any managed-fill or Class A landfill premium
+  - dewatering, groundwater control or undercut deeper than 300mm
+  - breaking out and reinstating any overlying seal, concrete slab or pavement surfacing
+  - traffic management, temporary works, night or weekend shift premium
+  - cement or lime stabilisation of the subgrade as an alternative to undercut
+
+---
+
+**Band: $185 - $255 / m3 in-situ undercut volume. Midpoint $215/m3.**
+
+**Total for the nominal 150 m3: $27,750 - $38,250. Midpoint $32,250.**
+
+Build-up at the midpoint, per m3 in-situ:
+
+| Component | $/m3 | Basis |
+|---|---|---|
+| Excavate undercut, 13t machine | 18 | ~$155/hr, 9 m3/hr effective in wet clay |
+| Load and cart, 180 m3 loose | 42 | 8-wheeler, 25 km round trip, ~$16/m3 loose |
+| Cleanfill disposal fee | 34 | ~$28/m3 loose gate rate, Auckland cleanfill |
+| Bidim A24 supply and lay | 12 | ~$3.60/m2 laid over 500 m2, ÷ 150 m3 |
+| AP40 supply, ex-quarry | 62 | ~$44/t delivered, 2.15 t/m3 compacted, plus 5% loss |
+| Place, compact, trim, water | 26 | Two 150mm layers, roller and operator |
+| Testing and proof roll | 8 | Two test sets, ~$600/set, ÷ 150 m3 |
+| Mobilisation, excavator + roller | 13 | ~$1,950 one visit, ÷ 150 m3 |
+| **Total** | **215** | |
+
+Where the band moves:
+
+1. **AP40 delivered price** is the biggest single line and the most volatile. $38/t at a close Hunua or Drury quarry, $52/t if the site is far from a supplier or the quarry is running a shortage. That alone is ±$20/m3.
+2. **Cleanfill gate rate** varies from $20/m3 loose at a farm-consented cleanfill to $45/m3 at a commercial site. Auckland has tightened cleanfill availability, so the upper end is now common.
+3. **Small quantity penalty.** At 150 m3 you are inside the range where mobilisation and a half-day minimum charge still bite. At 1,000 m3 the same scope lands around $150-$180/m3.
+4. **Two patches, not one.** The 250 m2 split costs roughly $8/m3 more than a single 500 m2 area in tracking and plant repositioning.
+
+Confidence: **medium-high** on the supply and cart lines, which come from published Auckland quarry and cleanfill rates. **Medium** on the excavation productivity, which in CBR-under-3 clay can halve if the undercut floor pumps and the machine has to work off a mat.

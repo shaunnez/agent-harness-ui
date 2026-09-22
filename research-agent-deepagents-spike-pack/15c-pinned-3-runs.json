@@ -1,0 +1,320 @@
+[
+ {
+  "run": "run1.json",
+  "cost_usd": 1.4743259999999998,
+  "turns": 22,
+  "band": {
+   "unit": "m of channel run",
+   "low": 570,
+   "high": 620,
+   "centre": "Auckland",
+   "basis": "Sum of five QV rows: t16:r14 channel installed ($416) + 2 x t17:r40 sawcut ($28.20) + t5:r8 break-out over 0.45-0.60m width ($79-106) + t6:r5 paving reinstatement over 0.10-0.25m residual strip ($14-36) + t9:r2 connection amortised over 20m ($31.85). Band width comes from break-out and reinstatement WIDTH assumptions only; all unit rates are taken as published, unadjusted. 20m run total $11,400-12,400. WLG $555-600/m ($11,100-12,000); CHC $575-625/m ($11,500-12,500). Excludes GST, preliminaries, margin, design, consent, contaminated spoil, dewatering, traffic management, second connection, sump or cesspit, per scope. Expect the real figure at or above the top of the band because the small-quantity patching premium is unpriced.",
+   "alternative_basis": "If t16:r14 proves to be supply-and-fix only, add t8:r2 ($102/m) and t0:r3 ($16.20/m), giving approximately $690-740/m and $13,800-14,800 for the 20m run."
+  },
+  "components": [
+   {
+    "role": "proprietary channel and grate, light commercial duty, 100mm nominal, installed (inferred to include concrete haunch and trench excavation)",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r14",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 416.0,
+     "high": 416.0
+    },
+    "centre": "Auckland",
+    "caveat": "Table heading rows absent from index, so inclusions could not be read. Inferred as fully installed rate because same table prices residential 100mm at $310/m against ~$29/m retail supply for a residential channel-and-grate unit. If supply-and-fix only, add t8:r2 ($102/m surround) and t0:r3 ($16.20/m trench excavation). WLG 403.00, CHC 412.00."
+   },
+   {
+    "role": "sawcut existing reinforced concrete paving, 150mm deep, two cuts per metre of run",
+    "row_id": "3012e40c988aa035c47e34ff2ff827c2bcb29af24240a7bd826ab798d7476014:t17:r40",
+    "source": null,
+    "unit": "m of run (2 x 14.10)",
+    "amount": {
+     "low": 28.2,
+     "high": 28.2
+    },
+    "centre": "Auckland",
+    "caveat": "Published rate is based on 100m of cutting; this job cuts ~40m, so the unit rate is optimistic. Rate is flat across AKL/WLG/CHC."
+   },
+   {
+    "role": "break up and cart away existing 150mm concrete along channel line",
+    "row_id": "1e431d3e9f4822173217f03e52bdab07b323b92dd9046304b513b2875344218e:t5:r8",
+    "source": null,
+    "unit": "m of run (0.45-0.60 m2 at $176/m2)",
+    "amount": {
+     "low": 79.2,
+     "high": 105.6
+    },
+    "centre": "Auckland",
+    "caveat": "Row is 'concrete floor topping' under Demolition and Alterations, an internal-works rate, not external reinforced paving. Break-out width 0.45-0.60m is my geometry assumption (100mm channel + ~150mm haunch each side + working space), not a QV figure. WLG $178/m2, CHC $196/m2."
+   },
+   {
+    "role": "reinstate 150mm in-situ concrete paving to residual strip each side of channel",
+    "row_id": "f8d9cf5aa0d2fe887d830f8c558cf798e2e97ca147ce5dffa40fba65e82bb294:t6:r5",
+    "source": null,
+    "unit": "m of run (0.10-0.25 m2 at $144/m2)",
+    "amount": {
+     "low": 14.4,
+     "high": 36.0
+    },
+    "centre": "Auckland",
+    "caveat": "Row is 17.5MPa 19mm new paving on prepared ground, priced on a large-area basis and with no reinforcing stated. Matching 150mm REINFORCED paving over a 2-5m2 patch with mesh and dowel tie-in will exceed this; the small-quantity premium is unpublished and is NOT in the band. WLG $137/m2, CHC $136/m2."
+   },
+   {
+    "role": "single stormwater connection at 1.0m invert, amortised over 20m",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t9:r2",
+    "source": null,
+    "unit": "m of run ($637 each / 20m)",
+    "amount": {
+     "low": 31.85,
+     "high": 31.85
+    },
+    "centre": "Auckland",
+    "caveat": "Row is 'Locate and Break into Existing 100mm Pipe and make new connection in trench, not exceeding 1.5m deep'. Covers the 1.0m invert but assumes the existing line is 100mm; QV publishes no larger-pipe equivalent in this table. WLG $583, CHC $632."
+   },
+   {
+    "role": "supply price cross-check on channel component (used only to test whether t16:r14 is an installed rate)",
+    "row_id": null,
+    "source": "https://www.bunnings.co.nz/everhard-easydrain-1m-compact-channel-and-polymer-grate_p4770222",
+    "unit": "m",
+    "amount": {
+     "low": 29.0,
+     "high": 29.0
+    },
+    "centre": "NZ retail",
+    "caveat": "Residential plastic channel with polymer grate, Class A, GST-inclusive retail. NOT a light-commercial equivalent and not used in the band. Used only to infer that QV's $310/m residential row must carry excavation, surround and labour."
+   }
+  ],
+  "not_established": [
+   "What QV row t16:r14 actually includes - the 'Light commercial use' heading rows (r13, r16) and any table preamble are absent from the local index, so the excavation and concrete-surround inclusion boundary is inferred, not read. This is the single largest uncertainty and decides between $570-620/m and $690-740/m.",
+   "Trade supply price for a light-commercial Class B/C 100mm polymer concrete channel and grate in NZ. ACO NZ and Allproof both decline to publish pricing; Allproof states costs are released only via installer or merchant. Ring ACO NZ, Allproof Industries, or Hynds Pipe Systems for a project quote.",
+   "Small-quantity premium for patching 2-5m2 of 150mm reinforced concrete paving with mesh and dowelled tie-in to the existing slab. Not published in QV; t6:r5 is a large-area new-work rate.",
+   "Length of connecting pipe from the channel outlet to the existing stormwater line. Scope specified a connection point and invert depth but no run length, so only the break-in is priced.",
+   "Diameter of the existing stormwater line. t9:r2 assumes 100mm; QV's Breaking Into Existing Pipelines table publishes no larger-diameter equivalent.",
+   "Ground conditions. Light soil assumed throughout; QV t0:r70 shows hand excavation in clay at roughly 2.8x the light-soil rate."
+  ]
+ },
+ {
+  "run": "run2.json",
+  "cost_usd": 1.4807465,
+  "turns": 26,
+  "band": {
+   "unit": "m of channel run",
+   "low": 620,
+   "high": 700,
+   "centre": "Auckland",
+   "basis": "Sum of seven QV CostBuilder rows. Channel and grate is a direct row match on duty class and nominal width (t16:r14); the other six are borrowed rows applied over an assumed 0.40-0.60m wide breakout and reinstatement strip. 20m run total: $12,400-$14,000 excl GST. Wellington approx $640/m, Christchurch approx $661/m on the same build-up. Conditional adjustment: if the t16 table header excludes the concrete surround, add approx $100/m (t8:r2 proxy) taking the rate to approx $790/m and the run to approx $15,800 - not included in the band because combining t8:r2 with t16:r14 would double count if the surround is already inside the channel rate."
+  },
+  "components": [
+   {
+    "role": "channel_and_grate_installed",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r14",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 416.0,
+     "high": 416.0
+    },
+    "centre": "Auckland",
+    "caveat": "Exact duty class and width match. Parent header row (t16:r13/r8) not returned by the index - cannot confirm whether concrete haunch/surround is inside this rate. Price stepping across duty tiers suggests it is. Unreviewed."
+   },
+   {
+    "role": "sawcut_existing_paving",
+    "row_id": "3012e40c988aa035c47e34ff2ff827c2bcb29af24240a7bd826ab798d7476014:t17:r40",
+    "source": null,
+    "unit": "m of run (2 cuts at $14.10/m)",
+    "amount": {
+     "low": 28.2,
+     "high": 28.2
+    },
+    "centre": "Auckland",
+    "caveat": "QV rate is stated as based on 100m runs; this job has 40m of cutting, so the real rate is higher."
+   },
+   {
+    "role": "break_out_and_remove_150mm_rc_paving",
+    "row_id": "1e431d3e9f4822173217f03e52bdab07b323b92dd9046304b513b2875344218e:t5:r8",
+    "source": null,
+    "unit": "m of run (0.40-0.60 m2/m at $176/m2)",
+    "amount": {
+     "low": 70.4,
+     "high": 105.6
+    },
+    "centre": "Auckland",
+    "caveat": "Row is an interior 'concrete floor topping' demolition rate applied to external paving. Its 'break up and remove' wording may overlap the separately priced sawcut. Strip width is my assumption, not QV."
+   },
+   {
+    "role": "trench_excavation",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t0:r3",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 16.2,
+     "high": 16.2
+    },
+    "centre": "Auckland",
+    "caveat": "Shallowest published band is '1.5m total depth, average depth 1m, light soil' - deeper than a 100mm channel trench needs, so slightly overstated. Parent pipe-size header row not returned."
+   },
+   {
+    "role": "spoil_cart_away",
+    "row_id": "d2f8402515bbdf813cdb14f78c04616b2379638bb82729718b17c996ec0683a1:t7:r3",
+    "source": null,
+    "unit": "m of run (0.25-0.30 m3/m at $30.80/m3)",
+    "amount": {
+     "low": 0,
+     "high": 9.24
+    },
+    "centre": "Auckland",
+    "caveat": "Carried at zero in the low case because the trench excavation row may already include disposal. Concrete arisings are already inside the break-out row."
+   },
+   {
+    "role": "reinstate_concrete_paving_150mm",
+    "row_id": "f8d9cf5aa0d2fe887d830f8c558cf798e2e97ca147ce5dffa40fba65e82bb294:t6:r5",
+    "source": null,
+    "unit": "m of run (0.40-0.60 m2/m at $144/m2)",
+    "amount": {
+     "low": 57.6,
+     "high": 86.4
+    },
+    "centre": "Auckland",
+    "caveat": "17.5MPa bulk new paving on prepared ground, not a narrow reinstatement strip against a saved edge with dowels and edge formwork. Weakest line in the build-up; likely understated."
+   },
+   {
+    "role": "stormwater_connection_amortised",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t9:r2",
+    "source": null,
+    "unit": "m of run ($637 each over 20m)",
+    "amount": {
+     "low": 31.85,
+     "high": 31.85
+    },
+    "centre": "Auckland",
+    "caveat": "'Locate and break into existing 100mm pipe, not exceeding 1.5m deep' - covers the 1.0m invert. Any length of connecting pipe between the channel outlet and the existing line is not separately priced."
+   }
+  ],
+  "not_established": [
+   "Whether the concrete haunch/surround is inside QV row t16:r14 - the parent header row is not returned by the index and must be read in CostBuilder",
+   "Whether QV trench excavation rows t0:r3 include cart-away disposal",
+   "A QV rate for narrow-strip concrete paving reinstatement against a saved sawcut edge (dowelled, edge-formed) - no such row published",
+   "Short-run premium for a 20m job on rates QV states are based on 100m continuity",
+   "Named proprietary channel system (ACO, Stormtech, Hydro Tech) - QV publishes duty-class rows only, no branded product rates in this table"
+  ]
+ },
+ {
+  "run": "run3.json",
+  "cost_usd": 1.5421930000000001,
+  "turns": 24,
+  "band": {
+   "unit": "m",
+   "low": 580,
+   "high": 800,
+   "centre": "Auckland",
+   "basis": "Sum of the QV build-up above, GST exclusive, NZD, Auckland. Excludes prelims, margin, design, consent fees, contaminated spoil, dewatering, traffic management, second connection, sump/cesspit. 20m run total = $11,600 to $16,000. Mid-case approx $690/m = $13,800. Band width is dominated by one unresolved question: whether QV row t16:r14 already includes the concrete surround. If it does, use $580-690/m; if not, use $690-800/m. Wellington approx 3% below, Christchurch approx 1% below."
+  },
+  "components": [
+   {
+    "role": "proprietary channel and grate, light commercial duty, 100mm nominal, supplied and installed",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r14",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 416,
+     "high": 416
+    },
+    "centre": "Auckland",
+    "caveat": "Exact duty-class and width match. UNREVIEWED QV row. Unresolved whether the rate already includes the concrete haunch/surround - this single ambiguity drives most of the band width."
+   },
+   {
+    "role": "sawcut existing 150mm reinforced concrete paving, two cuts per lineal metre",
+    "row_id": "3012e40c988aa035c47e34ff2ff827c2bcb29af24240a7bd826ab798d7476014:t17:r40",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 28.2,
+     "high": 42.3
+    },
+    "centre": "Auckland",
+    "caveat": "QV rate $14.10/m is based on 100m runs; only 40m of cut here, so high column carries a 1.5x small-quantity uplift. Saw mobilisation may not be recovered."
+   },
+   {
+    "role": "break out and cart away 150mm reinforced concrete paving along channel line",
+    "row_id": "1e431d3e9f4822173217f03e52bdab07b323b92dd9046304b513b2875344218e:t5:r8",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 70.4,
+     "high": 105.6
+    },
+    "centre": "Auckland",
+    "caveat": "$176/m2 is an internal 'floor topping' partial-demolition proxy, conservative. Breakout strip width 0.4-0.6m per metre is my assumption, not a QV quantity."
+   },
+   {
+    "role": "concrete haunch/surround to channel, including all additional excavation and spoil",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t8:r2",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 0,
+     "high": 125
+    },
+    "centre": "Auckland",
+    "caveat": "Volumetric proxy: t8:r2 (100mm pipe, 0.13m3/m, $102/m) to t8:r3 (150mm pipe, 0.16m3/m, $125/m). Low set to 0 for the case where t16:r14 already includes surround. These rows state 'including all additional excavation', so NO separate trench-excavation line has been added along the channel - doing so would double count."
+   },
+   {
+    "role": "reinstate concrete paving 150mm, 17.5MPa 19mm, to match",
+    "row_id": "f8d9cf5aa0d2fe887d830f8c558cf798e2e97ca147ce5dffa40fba65e82bb294:t6:r5",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 21.6,
+     "high": 43.2
+    },
+    "centre": "Auckland",
+    "caveat": "$144/m2. Reinstatement strip 0.15-0.30m2 per lineal metre is my assumption. QV row is a bulk external paving rate; narrow-strip reinstatement attracts a small-quantity uplift not reflected."
+   },
+   {
+    "role": "reinforcing mesh to reinstated paving to match existing reinforced slab",
+    "row_id": "d31e428f9f70fc099dda4c8b1e731a35f618a1551902b313033079cdaf5d53f9:t3:r3",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 3.05,
+     "high": 6.09
+    },
+    "centre": "Auckland",
+    "caveat": "665 mesh at $20.30/m2 on the same assumed 0.15-0.30m2 strip. Added because the existing paving is reinforced; QV paving row t6:r5 does not state reinforcement."
+   },
+   {
+    "role": "single connection to existing stormwater line at 1.0m invert, amortised over 20m",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t9:r2",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 31.85,
+     "high": 31.85
+    },
+    "centre": "Auckland",
+    "caveat": "$637 each for 'not exceeding 1.5m deep' - the 1.0m invert sits inside this band. Divided by the 20m run. Assumes the existing line is locatable and is 100mm; larger host pipe not priced by this row."
+   },
+   {
+    "role": "100mm uPVC SN6 spur from channel outlet to stormwater line, amortised over 20m",
+    "row_id": "70e61b5b487d9cd10c154ca14e9bb57a35931b9e0cc2a0d0e5d83bf3db193d55:t0:r2",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 10.5,
+     "high": 26.25
+    },
+    "centre": "Auckland",
+    "caveat": "$105/m incl. excavation to 1500mm. Spur length is NOT in the scope brief; 2-5m assumed. Add $5.25/m of run for each extra metre of spur. This is an aggregate row (includes bends/junctions allowance) - do not also add separate fitting or excavation rows against it."
+   }
+  ],
+  "not_established": [
+   "Whether QV row t16:r14 (light commercial channel, 100mm) is supply-only, supply-and-fix, or supply-and-fix-including-concrete-surround - the table preamble is not in the indexed data and must be read in QV CostBuilder directly",
+   "Published NZ list pricing for proprietary 100mm polymer concrete channel (ACO KlassikDrain K100, Drainline 100, Allproof) - no vendor publishes rates; supplier quote needed to cross-check the $416/m row",
+   "A QV rate for shallow (approx 300mm) trench excavation specific to a channel drain line - no matching row exists; covered instead by the concrete surround rows which state 'including all additional excavation'",
+   "Breakout strip width and reinstatement strip width - assumed 0.4-0.6m and 0.15-0.30m respectively, not sourced from QV",
+   "Length of spur pipe from channel outlet to the existing stormwater line - not given in the scenario; 2-5m assumed",
+   "Small-quantity / mobilisation uplift for a single 20m run (saw hire, concrete part-load, plant float) - not separable from QV rates, which assume larger quantities"
+  ]
+ }
+]

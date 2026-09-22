@@ -1,0 +1,46 @@
+SCENARIO
+id: site-electrical-reticulation-pinned
+title: Site electrical reticulation and services
+family: electrical
+catalogue unit: sum (for the whole external reticulation installation, one site)
+
+SCOPE - FIXED. Do not substitute your own.
+  site area:      3,000 m2 external sealed car park and service yard, flat, Auckland
+  nominal route:  250 lineal metres of trench, 450mm wide x 750mm deep, 100mm sand bed
+                  and surround with marker tape; 200m in grass/unsealed ground, 50m
+                  through existing 150mm concrete or asphalt hardstand
+  conduits:       2 x 63mm and 1 x 32mm orange heavy-duty PVC to AS/NZS 2053, laid the
+                  full 250m, draw cord to every way
+  sub-main:       180 lineal metres of 4-core 25mm2 copper XLPE/PVC 0.6/1kV, drawn into
+                  one 63mm way, terminated both ends
+  pits:           8 no. 450 x 450 polymer concrete pits, Class B lids (light vehicle),
+                  plus 2 no. 600 x 600 pits, Class C lids
+  distribution:   one external IP66 100A TP&N 12-way distribution board, RCBO protected,
+                  on a hot-dip galvanised steel frame plinth
+  lighting spurs: 10 no. 4mm2 drops from pit to lighting pole base, 6m average each,
+                  cable and gland only
+
+INCLUDED, amortised over the 250m nominal route where not already per-unit:
+  - machine trench excavation, sand bed and surround, backfill and compaction
+  - sawcut, break out and reinstate the 50m of concrete/asphalt hardstand to match
+  - all conduit, draw cord, bends and couplers, supplied and laid
+  - the 180m sub-main, supplied, drawn in and terminated at both ends
+  - all 10 pits, supplied, set to level, surround and lids
+  - the external distribution board, plinth, mounting and terminations
+  - the 10 lighting pole base drops, amortised across the sum
+  - testing, commissioning, electrical certificate of compliance and as-built mark-up
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, design, consent fees
+  - the incoming supply, network connection, transformer, main switchboard or metering
+  - lighting poles, pole footings, luminaires, controls or CCTV/comms active equipment
+  - rock excavation, contaminated spoil, dewatering, traffic management
+  - any second sub-main run, generator feed or EV charger provision
+  - paving, kerbing, landscaping or turf reinstatement beyond the trench line
+
+Give the band as a lump sum for this exact scope, broken into the trenching and
+reinstatement, the conduit and cable, the pits, and the board and spurs, so a reviewer
+can reject one part without the others. State the implied $/lineal metre over the 250m
+nominal route as well, so the amortisation is auditable.
+
+Price it, or tell us honestly why you cannot.

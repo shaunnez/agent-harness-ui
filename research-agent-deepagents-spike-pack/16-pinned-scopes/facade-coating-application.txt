@@ -1,0 +1,52 @@
+SCENARIO
+id: facade-coating-application-pinned
+title: Facade and soffit coating
+family: envelope
+catalogue unit: m2 (per square metre of coated face area, measured flat, no deduction under 0.5 m2)
+
+SCOPE - FIXED. Do not substitute your own.
+  substrate:        existing solid plaster over concrete block, sound and previously painted
+  nominal quantity: 600 m2 of coated area on one building - 480 m2 wall face plus 120 m2 soffit
+  building height:  3 levels, 9.5m to the highest coated line
+  coating system:   100% acrylic, low-sheen, elastomeric-modified exterior wall coating
+                    (Resene X-200 grade or equal), 2 finish coats at 35 microns DFT each
+                    over 1 coat solvent-borne acrylic sealer to bare or chalked areas
+  colour / tint:    one mid-tone colour, standard tint base, light-reflectance value 40-60%
+                    (no deep-base, no two-tone banding, no feature colour)
+  preparation:      water blast to 3000 psi, spot-scrape flaking paint to 5% of area,
+                    fill and sand cracks to 2mm width over 60 lineal metres total
+  access:           mobile aluminium scaffold and a 13m knuckle-boom EWP, 3 weeks on site
+
+INCLUDED, amortised over the 600 m2 where not already per-unit:
+  - water blast, scrape, sand and dust-off of the full 600 m2
+  - crack fill and sand, 60 lineal metres
+  - sealer coat to bare and chalked areas (assume 15% of area)
+  - two finish coats to the full 600 m2, sprayed with back-roll to walls, sprayed to soffits
+  - EWP hire, delivery and pickup, 3 weeks, amortised across the 600 m2
+  - mobile scaffold hire for low-level and soffit work, amortised across the 600 m2
+  - masking and protection of windows, joinery and ground surfaces, and daily clean-up
+  - paint, sundries, drop sheets and waste-water containment on site
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, design and consent fees
+  - lead or asbestos-containing paint testing, containment or removal
+  - plaster repair, re-rendering, remedial weathertightness work or sealant replacement
+  - fixed or shrink-wrapped scaffold, gantries, or traffic and pedestrian management
+  - coating of steel panel, metal roofing, joinery, handrails or downpipes
+  - anti-graffiti coating, anti-carbonation systems, or third and subsequent coats
+
+**Band: $52 - $76 /m2, midpoint $62 /m2**
+**Total for the 600 m2 nominal quantity: $31,200 - $45,600, midpoint $37,200**
+
+Audit of the midpoint:
+
+| Component | $/m2 | Total over 600 m2 |
+|---|---|---|
+| Preparation (blast, scrape, sand, crack fill) | 12 | 7,200 |
+| Sealer to 15% of area | 3 | 1,800 |
+| Two finish coats, applied | 30 | 18,000 |
+| EWP, 3 weeks at ~$1,400/wk + delivery | 8 | 4,800 |
+| Mobile scaffold, 3 weeks | 4 | 2,400 |
+| Masking, protection, clean-up | 5 | 3,000 |
+
+Drivers of the spread: soffit work runs 20-30% slower than wall face, so a job with more soffit sits at the top; a substrate needing sealer over 40% rather than 15% adds $5-6/m2; and a sub-300 m2 job cannot amortise the access plant and lands above $76/m2.

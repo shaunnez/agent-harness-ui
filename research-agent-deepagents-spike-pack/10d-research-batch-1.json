@@ -1,0 +1,302 @@
+[
+ {
+  "id": "retaining-wall-construction",
+  "title": "Retaining wall construction",
+  "scope": "Construct retaining wall up to 3m retained height including excavation, foundation, wall structure, drainage layer, backfill and surface finish, excluding specific engineering design.",
+  "family": "civil",
+  "unit": "m2",
+  "materiality": "high",
+  "claim_count": 29,
+  "research_need": "Wall type, retained height, surcharge, foundation conditions, drainage and consent requirements"
+ },
+ {
+  "id": "channel-drain-installation",
+  "title": "Channel drain installation to paving",
+  "scope": "Supply and install proprietary polymer/concrete channel drain with grate to trafficable or footpath paving, including concrete haunching and connection to nearest stormwater line, per metre of run.",
+  "family": "drainage",
+  "unit": "m",
+  "materiality": "high",
+  "claim_count": 23,
+  "research_need": "Channel/grate load class rates, haunch concrete quantity, connection depth and paving reinstatement"
+ },
+ {
+  "id": "suspended-ceiling-tile-grid",
+  "title": "Suspended tile ceiling supply install",
+  "scope": "Supply and install exposed-grid suspended ceiling with mineral fibre or similar lay-in tiles, including hangers and seismic bracing, to regular open ceiling areas.",
+  "family": "fitout",
+  "unit": "m2",
+  "materiality": "high",
+  "claim_count": 19,
+  "research_need": "Tile type/NRC, grid system, ceiling height and seismic restraint standard."
+ },
+ {
+  "id": "mains-and-feeder-cable-install",
+  "title": "Mains and feeder cable installation",
+  "scope": "Supply and install main incoming and sub-main feeder cables with containment and terminations between switchboards, priced per metre of installed run.",
+  "family": "electrical",
+  "unit": "m",
+  "materiality": "high",
+  "claim_count": 17,
+  "research_need": "Cable size and type, route length, containment, termination and copper price basis"
+ },
+ {
+  "id": "internal-doorset-supply-install",
+  "title": "Internal doorset supply and install",
+  "scope": "Supply and install a single internal door leaf with frame, hung and adjusted, priced per leaf type, frame material and opening height, excluding hardware and vision panels.",
+  "family": "joinery",
+  "unit": "ea",
+  "materiality": "high",
+  "claim_count": 14,
+  "research_need": "Rates by leaf core, fire/acoustic rating, timber vs steel frame, opening height"
+ },
+ {
+  "id": "solar-mounting-structural-design",
+  "title": "Solar array mounting structural support",
+  "scope": "Structural design, supply and installation of roof or ground mounting support for a solar PV array, including purlin or rafter strengthening and fixings, excluding electrical work.",
+  "family": "structure",
+  "unit": "sum",
+  "materiality": "high",
+  "claim_count": 12,
+  "research_need": "Array size and weight, roof structure capacity, strengthening extent, PS1 fee"
+ },
+ {
+  "id": "acp-facade-cladding-install",
+  "title": "Aluminium composite panel cladding",
+  "scope": "Supply and fix aluminium composite or sheet wall cladding on existing framing/substrate up to 10m height, including fixings, subgirts and standard flashings, measured by cladding face area.",
+  "family": "envelope",
+  "unit": "m2",
+  "materiality": "high",
+  "claim_count": 10,
+  "research_need": "Panel system rates, subgirt spacing, access method and flashing extent per m2"
+ },
+ {
+  "id": "switchboard-fault-rating-protection",
+  "title": "Switchboard fault rating and protection",
+  "scope": "Fault level assessment, busbar bracing upgrade and supply/installation of correctly rated protection devices to an existing or new switchboard.",
+  "family": "electrical",
+  "unit": "ea",
+  "materiality": "high",
+  "claim_count": 9,
+  "research_need": "Prospective fault current, breaker kA ratings, discrimination study and design fees"
+ },
+ {
+  "id": "solar-connection-switchboard-works",
+  "title": "Solar connection switchboard works",
+  "scope": "Switchboard and distribution board works for PV grid connection including solar supply switch, dedicated solar board and associated upgrade of existing boards.",
+  "family": "electrical",
+  "unit": "ea",
+  "materiality": "high",
+  "claim_count": 9,
+  "research_need": "Inverter capacity, board modification extent, export limits and network approval"
+ },
+ {
+  "id": "facade-coating-application",
+  "title": "Facade and soffit coating",
+  "scope": "Prepare and apply two-coat exterior coating system to plastered, concrete, steel panel or soffit surfaces up to 10m height, including access, measured by coated area.",
+  "family": "envelope",
+  "unit": "m2",
+  "materiality": "medium",
+  "claim_count": 9,
+  "research_need": "Coating system spec, substrate prep, number of coats and access type"
+ },
+ {
+  "id": "glazed-vision-panel",
+  "title": "Glazed vision panel to door",
+  "scope": "Cut, frame and glaze a vision panel into a door leaf, including beads and glass to rating, priced per panel up to 300x900mm.",
+  "family": "joinery",
+  "unit": "ea",
+  "materiality": "high",
+  "claim_count": 8,
+  "research_need": "Factory versus site cut cost, fire-rated glazing rates, leaf rating impact"
+ },
+ {
+  "id": "site-establishment-relocation",
+  "title": "Site establishment and compound relocation",
+  "scope": "Relocating or reconfiguring temporary site fencing, sheds, stockpile and material storage areas within an operating construction site, excluding new hardstand construction.",
+  "family": "civil",
+  "unit": "sum",
+  "materiality": "medium",
+  "claim_count": 8,
+  "research_need": "Fence length, shed size, crane/hiab needs, number of moves, standing time rates"
+ },
+ {
+  "id": "door-hardware-sets",
+  "title": "Door hardware set installation",
+  "scope": "Supply and install ironmongery per leaf - locksets, closers, security and roller door hardware - fitted to an already hung door, excluding access control wiring.",
+  "family": "joinery",
+  "unit": "ea",
+  "materiality": "high",
+  "claim_count": 8,
+  "research_need": "Rates for standard, security and closer sets by grade and finish"
+ },
+ {
+  "id": "concrete-paving-slab",
+  "title": "External concrete paving and slabs",
+  "scope": "Construct reinforced concrete external paving or yard slab on prepared subbase, including formwork, mesh, falls to design levels, joints and finish, up to 200mm thick.",
+  "family": "civil",
+  "unit": "m2",
+  "materiality": "high",
+  "claim_count": 8,
+  "research_need": "Slab thickness, reinforcement, subbase depth, surface finish, joint layout and area size"
+ },
+ {
+  "id": "metering-control-instrumentation-wiring",
+  "title": "Metering and control wiring installation",
+  "scope": "Install and terminate small-gauge control, instrumentation and monitoring cabling to water meters, irrigation controllers and field devices, including containment within a site.",
+  "family": "electrical",
+  "unit": "m",
+  "materiality": "medium",
+  "claim_count": 7,
+  "research_need": "Cable type, run lengths, termination counts and BMS interface points"
+ },
+ {
+  "id": "garden-bed-planting",
+  "title": "Garden bed planting installation",
+  "scope": "Supply and planting of trees, shrubs and groundcover into prepared garden beds including topsoil, staking and establishment period, excluding turf, mulch and irrigation.",
+  "family": "external_works",
+  "unit": "m2",
+  "materiality": "high",
+  "claim_count": 7,
+  "research_need": "Species schedule, plant grades, densities, topsoil depth and maintenance period length."
+ },
+ {
+  "id": "steel-connection-fabrication",
+  "title": "Structural steel connection fabrication upgrades",
+  "scope": "Fabrication and installation of revised or added steel connections - cleats, brackets, weld plates, bolted and welded joints - on members already in the contract, priced per connection.",
+  "family": "structure",
+  "unit": "ea",
+  "materiality": "high",
+  "claim_count": 7,
+  "research_need": "Connection type, plate/weld size, shop versus site work, inspection requirements"
+ },
+ {
+  "id": "glass-kitchen-splashback",
+  "title": "Glass splashback supply install",
+  "scope": "Supply and install toughened back-painted glass or tiled splashback to kitchen and kitchenette benches, including templating, cutouts for services and silicone fixing.",
+  "family": "fitout",
+  "unit": "m2",
+  "materiality": "medium",
+  "claim_count": 7,
+  "research_need": "Glass type/colour, panel sizes, number of cutouts and wall substrate."
+ },
+ {
+  "id": "internal-stud-partition-walls",
+  "title": "Internal stud partition wall construction",
+  "scope": "Supply and erect steel or timber stud partitions to a documented wall type, including plasterboard both faces, insulation, stopping ready for decoration, floor to underside of ceiling or slab.",
+  "family": "fitout",
+  "unit": "m2",
+  "materiality": "high",
+  "claim_count": 7,
+  "research_need": "Wall type build-up, height, fire/acoustic rating and stopping level required."
+ },
+ {
+  "id": "deflection-head-acoustic-seal",
+  "title": "Deflection head and acoustic seal",
+  "scope": "Form head-of-wall deflection detail to timber or steel framed partitions with compressible acoustic seal and slip track, measured per linear metre of wall head.",
+  "family": "envelope",
+  "unit": "m",
+  "materiality": "medium",
+  "claim_count": 7,
+  "research_need": "Deflection allowance, acoustic/fire rating and proprietary head track system"
+ },
+ {
+  "id": "benchtop-and-laminate-panel",
+  "title": "Benchtop and laminate panel",
+  "scope": "Supply and install benchtops and compact laminate panels to existing cabinetry or framing, including cutouts and edging, priced per lineal metre of run.",
+  "family": "joinery",
+  "unit": "m",
+  "materiality": "high",
+  "claim_count": 6,
+  "research_need": "Rates by benchtop material, thickness, edge detail and cutout count"
+ },
+ {
+  "id": "network-supply-connection-hv-metering",
+  "title": "Network supply connection and metering",
+  "scope": "Lines-company supply point connection, HV/LV metering unit installation and configuration including network fees, coordination and energisation for one connection.",
+  "family": "electrical",
+  "unit": "sum",
+  "materiality": "high",
+  "claim_count": 6,
+  "research_need": "Network operator fee schedule, metering CT class, connection lead times"
+ },
+ {
+  "id": "sprinkler-system-installation",
+  "title": "Fire sprinkler system installation",
+  "scope": "Supply and install wet pipe sprinkler system to an existing approved design within a single building, including pipework, heads, valve set and commissioning, excluding pump, tank and hydraulic design.",
+  "family": "fire",
+  "unit": "m2",
+  "materiality": "high",
+  "claim_count": 6,
+  "research_need": "NZS 4541 head spacing, hazard class, per m2 sprinkler rates by building type"
+ },
+ {
+  "id": "interior-finishes-to-schedule",
+  "title": "Interior finishes to schedule",
+  "scope": "Supply and install of miscellaneous interior finishes nominated on a finishes schedule not covered by a dedicated trade, including wall, floor and feature finishes in fitout areas.",
+  "family": "fitout",
+  "unit": "sum",
+  "materiality": "medium",
+  "claim_count": 6,
+  "research_need": "Finishes schedule items, quantities and which trades are already covered."
+ },
+ {
+  "id": "subgrade-prep-basecourse-replacement",
+  "title": "Subgrade preparation and basecourse replacement",
+  "scope": "Undercut of unsuitable subgrade, disposal and replacement with compacted GAP40/65 basecourse to 300mm, in trafficked pavement or slab areas.",
+  "family": "ground",
+  "unit": "m3",
+  "materiality": "high",
+  "claim_count": 6,
+  "research_need": "GAP supply and cart rates, disposal costs and undercut depth assumptions"
+ },
+ {
+  "id": "industrial-roller-doors",
+  "title": "Industrial roller and specialist doors",
+  "scope": "Supply and install industrial door units - roller, roller shutter, high speed or specialist - up to 5x5m opening including tracks, motor and commissioning, excluding structural opening works.",
+  "family": "joinery",
+  "unit": "ea",
+  "materiality": "high",
+  "claim_count": 5,
+  "research_need": "Rates by door type, opening size, motorisation and cycle speed"
+ },
+ {
+  "id": "joinery-finishing-painting",
+  "title": "Joinery finishing and painting",
+  "scope": "Prepare, prime and finish coat site or factory joinery surfaces, priced per m2, covering paint, stain or clear lacquer systems on standard substrates.",
+  "family": "joinery",
+  "unit": "m2",
+  "materiality": "medium",
+  "claim_count": 5,
+  "research_need": "Rates per m2 for paint, stain and lacquer systems, factory versus site"
+ },
+ {
+  "id": "emergency-lighting-exit-signage",
+  "title": "Emergency lighting and exit signage",
+  "scope": "Supply, install and test maintained emergency luminaires and exit sign fittings including circuit wiring and AS/NZS 2293 discharge testing certification.",
+  "family": "electrical",
+  "unit": "ea",
+  "materiality": "high",
+  "claim_count": 5,
+  "research_need": "Fitting type and count, wiring runs, 90-minute test and certification cost"
+ },
+ {
+  "id": "site-electrical-reticulation",
+  "title": "Site electrical reticulation and services",
+  "scope": "Installation of site-wide electrical reticulation, services layout equipment, pits, conduits and general electrical services fitout across an external site area.",
+  "family": "electrical",
+  "unit": "sum",
+  "materiality": "high",
+  "claim_count": 5,
+  "research_need": "Reticulation route lengths, conduit sizes, pit counts and excavation interface"
+ },
+ {
+  "id": "data-rack-and-network-hardware",
+  "title": "Data rack and network hardware",
+  "scope": "Supply and install communications rack, patch panels, network switches and rack-terminated structured cabling for one comms room or cabinet.",
+  "family": "electrical",
+  "unit": "ea",
+  "materiality": "high",
+  "claim_count": 5,
+  "research_need": "Rack size, port counts, switch specification and cable certification testing"
+ }
+]

@@ -1,0 +1,41 @@
+SCENARIO
+id: joinery-finishing-painting-pinned
+title: Joinery finishing and painting
+family: joinery
+catalogue unit: m2 (per m2 of finished joinery face area, measured over the visible painted/coated surface: fronts, exposed ends, shelf tops and bottoms; carcase interiors excluded from the measure)
+
+SCOPE - FIXED. Do not substitute your own.
+  substrate:        18mm MDF, E0, moisture-resistant grade, machined and edge-sealed
+  item type:        commercial fitout joinery — reception counter, tea-point cabinetry,
+                    open shelving; flat and shaped edges, no curved or veneered panels
+  system:           2-pack polyurethane, pigmented, satin 30% gloss level
+                    (Resene Uracryl / Dulux Duratec equivalent), 1 sealer + 2 topcoats
+  application:      FACTORY spray, off-site in a controlled spray booth, sanded between
+                    coats, wrapped for transport
+  nominal quantity: 150 m2 of finished face area, in one production batch, one colour
+  site allowance:   5% of the area (7.5 m2) touched up on site after installation
+  location:         Auckland, single-storey commercial fitout, normal working hours
+
+INCLUDED, amortised over the 150 m2 where not already per-unit:
+  - sanding, filling, edge-sealing and preparation of the raw MDF
+  - one pigmented 2-pack sealer coat plus two satin topcoats, both faces where exposed
+  - denib and sand between coats
+  - booth setup, colour mix, gun clean-down and single colour change, amortised
+  - masking of hardware cut-outs and unpainted zones
+  - protective wrap and stacking for transport
+  - on-site touch-up of 5% of the area after install, including one trade visit
+  - spray booth consumables, extraction and waste paint disposal
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, design, consent fees
+  - the joinery itself — sheet material, machining, edging, assembly, hardware
+  - delivery, cartage, hoisting and installation of the joinery
+  - stain, clear lacquer, two-tone or multi-colour work, and any second colour
+  - benchtops, laminate, veneer, melamine or pre-finished panel products
+  - scaffolding, site protection, site painting of walls or ceilings
+  - metallic, textured, anti-graffiti or fire-rated coating systems
+
+Give the band as $/m2 of finished face area for this exact scope, and state the total
+for the 150 m2 batch so the amortisation is auditable.
+
+Price it, or tell us honestly why you cannot.

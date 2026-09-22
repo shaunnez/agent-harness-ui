@@ -1,0 +1,59 @@
+SCENARIO
+id: door-hardware-sets-pinned
+title: Door hardware set installation
+family: joinery
+catalogue unit: ea (per door leaf, one complete hardware set fitted to that leaf)
+
+SCOPE - FIXED. Do not substitute your own.
+  door leaf:        2040 x 820 x 45mm solid core timber leaf, already hung in a
+                    steel-reinforced timber jamb, prepped morticed and drilled
+  set type:         internal office/corridor single leaf, non-fire-rated
+  lockset:          mortice lockset, ANSI/BHMA Grade 2 equivalent commercial duty,
+                    60mm backset, lever-on-rose furniture both sides, key outside /
+                    turn-snib inside, 6-pin restricted-keyway cylinder
+  closer:           surface-mounted overhead closer, EN 1154 size 3, adjustable
+                    power EN 2-4, fixed arm, fitted to pull side
+  hinges:           3 no. 100 x 75 x 3.0mm ball-bearing butt hinges
+  finish:           satin stainless steel (SSS / 316-grade look) throughout, all
+                    items matched to one finish family
+  nominal quantity: 25 leaves, one building, one floor, one visit
+
+INCLUDED, amortised over the 25 leaves where not already per-unit:
+  - supply of lockset, cylinder, lever furniture, closer and hinges as specified
+  - installation labour: fit lock body, cylinder, furniture, hinges, closer and
+    closer soffit/backplate, to an already-hung and pre-morticed leaf
+  - adjust, lubricate and test the closer sweep and latch speed
+  - door stop (floor or wall mounted), 1 per leaf
+  - keying to a single master-key system, cylinders keyed and stamped off site
+  - registered key cutting, 3 keys per cylinder, plus master keys amortised over 25
+  - site setup, hardware schedule check-off and handover of keys and warranties,
+    amortised over 25
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, design, consent fees
+  - the door leaf, frame, hanging, and any morticing or machining of the leaf or jamb
+  - access control: readers, electric strikes, mag locks, power supplies, cabling
+  - fire-rated or smoke-seal hardware, intumescent kits, hold-open devices
+  - roller door, sliding, security-grille or panic/exit hardware (separate scenario)
+  - scaffolding, access equipment, making good paint or finishes
+
+---
+
+## Price
+
+**Band: $620 – $880 per leaf** (mid-point ~$740/ea), excl. GST, Auckland, 2026.
+
+| Component | $/leaf (mid) |
+|---|---|
+| Mortice lockset + lever furniture, SSS, Grade 2 commercial | 195 – 290 |
+| Restricted 6-pin cylinder, keyed to master system | 85 – 130 |
+| Overhead closer, EN 1154 size 3, SSS cover | 150 – 230 |
+| 3 no. ball-bearing hinges + door stop | 45 – 70 |
+| Installation labour, 1.5 – 2.0 hr @ $85 – $95/hr | 130 – 190 |
+| Keying, key cutting, setup and handover, amortised over 25 | 15 – 25 |
+
+**Total for the nominal 25 leaves: $15,500 – $22,000** (mid ~$18,500), excl. GST.
+
+Amortisation check: the only non-per-leaf items are the master-key system setup and the site setup/handover, together $375 – $625 across 25 leaves — that is the $15 – $25/leaf line. Everything else is genuinely per-leaf and does not vary with the run length.
+
+Sensitivity worth knowing before you use this rate elsewhere: a fire-rated leaf adds roughly $120 – $200/ea (fire-rated closer, intumescent kit, certified hinges). A run of 5 leaves instead of 25 pushes the amortised line to ~$95/leaf, taking the band to roughly $700 – $960/ea.

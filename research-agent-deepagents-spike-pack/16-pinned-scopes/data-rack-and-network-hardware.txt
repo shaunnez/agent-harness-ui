@@ -1,0 +1,67 @@
+SCENARIO
+id: data-rack-and-network-hardware-pinned
+title: Data rack and network hardware
+family: electrical
+catalogue unit: ea (per completed comms rack, fully populated and tested)
+
+SCOPE - FIXED. Do not substitute your own.
+  rack:             42RU floor-standing, 800mm wide x 1000mm deep, perforated front
+                    and rear doors, black, static load 800kg, on plinth
+  nominal quantity: ONE rack serving 96 copper outlets (48 workstation positions)
+  patching:         4 x 24-port Cat6A UTP patch panels, 1RU, rear-punchdown, plus
+                    2 x 1RU brush cable managers and 2 x 1RU horizontal managers
+  switching:        2 x 48-port Gigabit managed L2/L3 access switches, 4 x 10G SFP+
+                    uplinks, full PoE+ 30W on all ports (740W budget each), 1RU
+  power:            2 x 1RU 8-way C13 rack PDU, 16A, switched, plus UPS excluded
+  cabling:          96 x Cat6A U/UTP terminations at the rack end ONLY, dressed and
+                    labelled; 100 x 2m Cat6A patch leads (96 + 4 spare)
+  testing:          permanent-link certification to TIA-568.2-D / ISO Class EA on
+                    all 96 links, Fluke DSX-class tester, PDF results per link
+
+INCLUDED, amortised over the one rack / 96 links:
+  - rack, plinth, doors, earth kit, rack-to-MEB earth bond, levelling and fixdown
+  - patch panels, cable managers, PDUs, blanking panels, supply and install
+  - 2 x 48-port PoE+ switches, supply, rack-mount, power up, factory default only
+  - rack-end termination of 96 Cat6A links onto the patch panels
+  - 100 x 2m Cat6A patch leads, installed rack-side and floor-side
+  - labelling to AS/NZS 3084 at rack, panel port and outlet
+  - certification testing of all 96 permanent links, PDF report and as-built schedule
+  - one 2-hour handover and results walkthrough
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, design, consent fees
+  - the horizontal cable runs, outlet-end terminations, faceplates, containment,
+    catenary, ceiling or floor access (priced under the cabling scenario)
+  - switch configuration: VLANs, routing, stacking, licensing, network integration
+  - UPS, dedicated power circuits, RCBOs, the supply to the rack PDUs
+  - fibre backbone, patch panels, splicing, OTDR testing
+  - room works: air conditioning, fire rating, access control, plywood backboards
+
+**Price for this exact scope - one 42RU rack, 96 certified Cat6A links, 2 x 48-port PoE+ switches, Auckland, mid-market commercial, excl. GST**
+
+Band: **$36,000 to $48,000 per rack**, most likely **$41,500**
+
+Build-up at the midpoint, so the amortisation is auditable:
+
+| Item | Qty | Rate | Total |
+|---|---|---|---|
+| 42RU 800x1000 rack, plinth, doors, earth kit, installed | 1 | $3,200 | $3,200 |
+| Cat6A patch panels 24-port, supply + fix | 4 | $420 | $1,680 |
+| Cable managers, blanking panels, rack accessories | 1 lot | $650 | $650 |
+| Switched 16A PDU, 8-way C13 | 2 | $900 | $1,800 |
+| 48-port Gigabit PoE+ managed switch, 4x SFP+ | 2 | $7,600 | $15,200 |
+| Cat6A rack-end termination, punchdown + dress | 96 | $38 | $3,648 |
+| Cat6A 2m patch leads | 100 | $22 | $2,200 |
+| Labelling and as-built schedule | 96 | $9 | $864 |
+| Certification test, permanent link, incl. report | 96 | $32 | $3,072 |
+| Install labour: rack build, panel fit, switch mount, dress | 26 hr | $105 | $2,730 |
+| Commissioning, handover, spares reconciliation | 6 hr | $105 | $630 |
+| **Subtotal (excl. GST, prelims, margin)** | | | **$35,674** |
+| Contingency on switch pricing and lead variance, ~16% | | | $5,800 |
+| **Most likely** | | | **$41,474** |
+
+Per-link amortisation, so the rate can be checked against a different port count: rack + panels + PDUs + accessories = $7,330 fixed, or **$76/link** at 96 links. Per-link variable (termination, lead, label, test) = **$101/link**. Switches = $15,200, or **$158/link**. Labour = $3,360, or **$35/link**. Total **$370/link** before contingency, **$432/link** at the most-likely figure.
+
+What moves the band: the switches are 37% of the cost and the single largest driver. A tier-2 vendor (e.g. Ubiquiti, Netgear M4250-class) lands the pair near $4,800 and drops the rack to $30,000; a tier-1 with 3-year support (Cisco Catalyst 9200L, Aruba 6100) reaches $22,000 for the pair and pushes the rack to $48,000. The $7,600 each pinned above sits mid-market — Aruba Instant On 1960/1930-class or Cisco CBS350 with basic support.
+
+Next: if this catalogue line will be used against tier-1-specified jobs, split the switch out as its own scenario so the rack rate stops carrying a $17,000 swing.

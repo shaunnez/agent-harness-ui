@@ -1,0 +1,604 @@
+[
+ {
+  "id": "retaining-wall-construction",
+  "verdict": "needs_more_qv",
+  "rows": [
+   {
+    "row_id": "d2f8402515bbdf813cdb14f78c04616b2379638bb82729718b17c996ec0683a1:t8:r22",
+    "role": "Drainage layer behind the wall - free-draining backfill measured m3, converted to the m2 wall-face unit by assumed drainage zone thickness (e.g. 0.3-0.6m) x retained height.",
+    "caveat": "Unit is m3 of placed fill, not m2 of wall face - conversion factor must be stated. Reviewer to confirm whether rate is supply-and-place-and-compact or supply only, whether it includes geotextile separation/filter cloth (likely not), and whether it includes cartage of surplus spoil it displaces."
+   },
+   {
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t7:r5",
+    "role": "Subsoil/land drain at base of wall (110mm) discharging the drainage layer - measured per m of wall length.",
+    "caveat": "Two captures give different rates for the same nominal item (see the 70e61b... pair); reviewer must decide which capture/edition governs before use. Confirm whether the rate includes trench excavation, bedding, filter sock/geotextile wrap and connection to outfall, or pipe laying only. Per-m-of-wall unit must be divided by retained height to sit in an m2 wall rate."
+   },
+   {
+    "row_id": "70e61b5b487d9cd10c154ca14e9bb57a35931b9e0cc2a0d0e5d83bf3db193d55:t1:r5",
+    "role": "Alternative/cross-check rate for the same 110mm land drain at the wall base.",
+    "caveat": "Duplicate description to 915613f8...:t7:r5 at a materially higher price - unresolved edition or inclusion difference (possibly with/without excavation or backfill). Do not use both; resolve before pricing."
+   },
+   {
+    "row_id": "f0968d722af3d033d91c79c47fe7ecbea989e5abaecc3422c66d853ac075ca53:t1:r12",
+    "role": "Possible proxy for the wall footing/base beam - 30MPa concrete with 100kg/m3 reinforcement, formwork, excavation not exceeding 1.5m deep, planking and strutting, measured m3.",
+    "caveat": "Aggregate row - it already contains concrete, reinforcement, formwork and excavation, so it must NOT be combined with the separate formwork row or any separate excavation row for the same element (double count). Reinforcement content (100kg/m3) is likely light for a 3m cantilever retaining footing; grade/steel density mismatch to be confirmed by the (excluded) engineering design. Unit m3 requires a footing size assumption to convert to m2 of wall face."
+   },
+   {
+    "row_id": "15a23f8a873157dfec6a6eca2ff324908388517417e9eec426ab050f7d825a80:t1:r3",
+    "role": "Formwork to the vertical stem if the wall is priced from component rates (concrete + steel + formwork) rather than an aggregate wall rate.",
+    "caveat": "F1 finish is a rough/unseen finish - not acceptable for an exposed retaining wall face, so an extra-over for F3/F5 is needed. Measured per m2 of contact area (one face), so a two-face wall needs 2 x wall-face area. Do not use alongside f0968d72...:t1:r12 for the same element."
+   },
+   {
+    "row_id": "3012e40c988aa035c47e34ff2ff827c2bcb29af24240a7bd826ab798d7476014:t4:r2",
+    "role": "Would be the wall structure for a sprayed-concrete (shotcrete) retaining wall option.",
+    "caveat": "No published rate in any of the six centres in this capture - unusable as priced. Also m3 (needs thickness assumption) and almost certainly excludes reinforcing mesh/bar, anchors and excavation/face preparation."
+   },
+   {
+    "row_id": "2ead2a7b9d3bc8c7d59cad219f1b7b6a929f0eb447ab3a0768df4f789d148cd7:t9:r1",
+    "role": "Only wall-face m2 rate in the shortlist that resembles a retaining structure (Moss Rock stonework).",
+    "caveat": "Described as GARDEN wall construction - a low decorative/gravity wall, not an engineered 3m retaining structure. Confirm face-area unit, whether foundation and backfill are included, and do not stretch it to the 3m scenario without a QV retaining-specific row."
+   }
+  ],
+  "missing": "The core wall structure and the earthworks. No priced row exists for: (a) an in-situ reinforced concrete retaining wall stem (m2 of face or m3 with reinforcement kg and F3/F5 formwork both faces); (b) alternative retaining systems QV publishes - timber pole and lagging (H5 poles), crib wall, keystone/segmental block, gabion; (c) excavation for the wall/footing and behind the stem, plus disposal of surplus spoil; (d) compacted general backfill in front of/over the toe; (e) geotextile filter fabric to the drainage zone; (f) topsoil/surface finish at the top of wall. Every remaining candidate row (carpet, Autex, marble, curtain walling, operable walls, stairlifts, WC pans, security doors, precast cladding panels) is irrelevant to this scenario.",
+  "search_capture_for": "Search the capture for: 'Retaining Wall' under Concrete Work / In-situ Concrete Walls and under Site Works/External Works; 'Timber Retaining Wall' / 'pole retaining' / 'H5 pole' / 'lagging'; 'Crib Wall', 'Keystone', 'segmental block wall', 'gabion'; Reinforcement 'Bar reinforcement, grade 500E, walls' (kg or tonne); Formwork 'Walls, F3 finish' and 'extra over, F5'; Excavation 'Excavate for foundations/trenches exceeding 1.5m deep', 'Excavate to reduce levels', 'Disposal of surplus spoil off site'; 'Backfill and compact, imported hardfill / selected fill'; 'Filter cloth / geotextile behind retaining wall'; 'Novaflo / drainage coil 110mm with filter sock'.",
+  "note": "The shortlist supports only the drainage and (arguably) the footing components; the structural wall itself and all earthworks are absent, so the m2 scenario cannot be assembled. Once the missing rows surface, guard against double counting between the aggregate Foundation Beam row (concrete+steel+formwork+excavation) and any standalone concrete, reinforcement, formwork or excavation rows. The scope expressly excludes specific engineering design, so PS1/geotech input is a separate outside-QV cost item (quote-only) if the client wants it included.",
+  "title": "Retaining wall construction",
+  "claim_count": 29
+ },
+ {
+  "id": "channel-drain-installation",
+  "verdict": "needs_more_qv",
+  "rows": [
+   {
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r10",
+    "role": "Primary rate candidate - 75mm nominal width channel drain, linear metre of run (narrowest/lightest option, likely domestic/footpath duty)",
+    "caveat": "Captured description is width-only; the sub-heading that defines material (polymer vs precast concrete), grate type and load class (A15/B125/C250/D400) has been lost in capture. Table t16 clearly contains at least three price tiers at the same nominal widths (r10-r12 vs r14-r15 vs r17-r18), so a reviewer must recover the group headings before selecting. Also unconfirmed whether the rate is supply-and-fix in-ground with concrete surround/haunching, or supply-and-lay only with haunching measured separately."
+   },
+   {
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r11",
+    "role": "Primary rate candidate - 100mm nominal width channel drain (the standard footpath/light-trafficable size for this scenario), lowest tier",
+    "caveat": "Same lost sub-heading problem. 100mm appears three times (r11 $310/297/306, r14 $416/403/412, r17 $561/543/556 Akl/Wgtn/Chch) - a ~1.8x spread that almost certainly reflects grate load class or material, not region. Do not price until the tier is identified; picking the wrong tier is the single biggest risk in this scenario."
+   },
+   {
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r12",
+    "role": "Primary rate candidate - 160mm nominal width channel drain, lowest tier (wider run / higher flow)",
+    "caveat": "As above - tier unidentified. Also confirm 'nominal width' is internal channel width, not overall body width, before matching to a specified proprietary product."
+   },
+   {
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r14",
+    "role": "Alternative tier for 100mm nominal width - likely the trafficable/heavier-grate option",
+    "caveat": "Tier definition unconfirmed. Use only once the heading is recovered; otherwise this row and r11 double-count the same measured item."
+   },
+   {
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r15",
+    "role": "Alternative tier for 160mm nominal width",
+    "caveat": "Same tier ambiguity as r14."
+   },
+   {
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r17",
+    "role": "Highest tier 100mm nominal width - candidate for heavy-duty/vehicle-crossing (D400) grate to trafficable paving",
+    "caveat": "Highest of three 100mm tiers; must confirm whether the uplift is ductile iron/locking grate, deeper body, or sloped-invert channel. Unconfirmed whether concrete encasement is included at this price level."
+   },
+   {
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r18",
+    "role": "Highest tier 160mm nominal width",
+    "caveat": "As r17."
+   },
+   {
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r2",
+    "role": "Possible alternative - 100mm dia (likely slot drain or round-bottom channel rather than rectangular channel)",
+    "caveat": "'dia' suggests a different product family (pipe-based slot drain) sitting under a different sub-heading; may not be the proprietary channel-and-grate the scenario describes. Confirm before substituting."
+   },
+   {
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r4",
+    "role": "Wide-format channel/grating 225mm - upper-size option for yard or wash-down runs",
+    "caveat": "The r4-r7 block (225/300/375/450mm 'wide') is described as 'wide' not 'nominal width' and is priced well below the r17/r18 tier at comparable size - it may be a grating-only or dish-channel-and-grate item rather than a full proprietary channel drain body. Verify it is not supply-only grating."
+   },
+   {
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r5",
+    "role": "Wide-format channel/grating 300mm",
+    "caveat": "As r4 - product identity and inclusion of channel body unconfirmed."
+   },
+   {
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r6",
+    "role": "Wide-format channel/grating 375mm",
+    "caveat": "As r4."
+   },
+   {
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r7",
+    "role": "Wide-format channel/grating 450mm",
+    "caveat": "As r4."
+   },
+   {
+    "row_id": "f8d9cf5aa0d2fe887d830f8c558cf798e2e97ca147ce5dffa40fba65e82bb294:t6:r7",
+    "role": "Fallback proxy for concrete haunching/thickening either side of the channel run, 200x200mm, per metre",
+    "caveat": "This is an edge thickening to in-situ paving, not a purpose-measured channel haunch, and it is one side only - a channel needs haunch both sides, so quantity would be 2m per 1m of run. Include ONLY if the reviewer confirms the t16 channel rate excludes concrete surround; otherwise it double-counts."
+   },
+   {
+    "row_id": "f8d9cf5aa0d2fe887d830f8c558cf798e2e97ca147ce5dffa40fba65e82bb294:t6:r13",
+    "role": "Supporting rate if the scenario is priced as new paving with channel cast in - 100mm in-situ concrete paving, upper tier (finish/reinforcing grade unknown)",
+    "caveat": "Three parallel 100/150/200mm sets exist (r4-r6, r9-r11, r13-r15) with lost sub-headings - almost certainly plain vs reinforced vs special finish. Not part of the per-metre channel rate; keep as a separate measured item so the channel run does not absorb paving cost."
+   },
+   {
+    "row_id": "d2f8402515bbdf813cdb14f78c04616b2379638bb82729718b17c996ec0683a1:t0:r14",
+    "role": "Retrofit case only - sawcut, break up and remove existing paving to form the channel trench",
+    "caveat": "Row is bitumen paving with basecourse; a concrete-paving break-out rate is a different (higher) item. Unit is m2 so a cut-width assumption is needed to convert to per-metre of run. Omit entirely for new-build paving."
+   },
+   {
+    "row_id": "3012e40c988aa035c47e34ff2ff827c2bcb29af24240a7bd826ab798d7476014:t0:r34",
+    "role": "Optional adjustment - small load concrete surcharge where haunching concrete is delivered in small volumes",
+    "caveat": "Supply surcharge only, not placement. Applies per m3 of the short load, not per m3 of haunch. Only relevant for isolated short runs; do not apply where haunching concrete comes off a larger paving pour."
+   }
+  ],
+  "missing": "Three components of the scenario are not in this shortlist. (1) The stormwater connection: the drain pipe from the channel outlet to the nearest stormwater line (typically 100-150mm uPVC laid in trench), the trench excavation/bedding/backfill, and the connection itself (saddle/junction into an existing line, or break-in to an existing manhole/sump). (2) Channel drain ancillaries measured as 'each' rather than per metre - end caps, outlet/sump units, silt buckets, grate locking sets, and trash boxes. (3) Confirmation of what the t16 per-metre rate already includes (excavation to channel, bedding, concrete surround) so the composite is not double-built.",
+  "search_capture_for": "In the same drainage document (915613f8...), pull the FULL table t16 including its sub-headings and any preceding/following tables: search for 'Channel Drains and Gratings' headings, 'end cap', 'outlet', 'sump unit', 'silt bucket', 'load class', 'Class B', 'Class D', 'polymer concrete', 'ductile iron grate'. Separately search Drainage sections for 'uPVC drain', 'PVC-U 100mm', 'drain laid in trench', 'trench excavation and backfill for drainage', 'connection to existing drain', 'connection to existing manhole', 'saddle junction', 'sump', 'catchpit'. Also search External Works / In Situ Concrete Paving for the lost sub-headings distinguishing the three 100/150/200mm price tiers, and for any 'haunching' or 'concrete surround to channel' line.",
+  "note": "The core measured item is genuinely present and at the right unit (m of run) - rows 915613f8...t16:r10-r18 are the right family. The blocker is not absence of a rate but the capture having stripped the sub-headings that distinguish three price tiers spanning roughly 1.8x at identical nominal widths; a reviewer cannot responsibly pick between $310 and $561 per metre for a 100mm channel without recovering the heading. Once that is resolved and a stormwater connection/pipework rate is found, the scenario builds as: [channel drain per m] + [haunching if not included] + [outlet and end cap, each] + [connection pipe run per m] + [connection to existing line, each], with paving reinstatement or new paving measured separately in m2. No outside-QV input is needed - this is all measured work QV publishes. Six-centre note: the t16 channel rates vary by centre (Akl highest) while the t7 kerb-and-channel rates are flat nationally, which is a further hint the two tables come from different data vintages or contributors; flag for the reviewer.",
+  "title": "Channel drain installation to paving",
+  "claim_count": 23
+ },
+ {
+  "id": "suspended-ceiling-tile-grid",
+  "verdict": "sufficient",
+  "rows": [
+   {
+    "row_id": "2f69cd6fc3148a59e4a1d63e299e323cb928f7a20b9b2fcddb15bb7192dff8f1:t1:r2",
+    "role": "Base component A - exposed 24mm standard grid suspension system, lower-price tier; pair with a tile row to build the composite m2 rate",
+    "caveat": "Identical description to t1:r6 at a different price - the source table almost certainly tiers by suspension depth/ceiling height or module size (1200x600 vs 600x600); reviewer must recover the table's column/tier heading before choosing. Also confirm the rate is supply+fix including hangers and, critically, whether seismic restraint (back-bracing/perimeter fixings to AS/NZS 2785 / NZS 1170.5) is inside the rate or a separate item. Confirm grid only, no tile."
+   },
+   {
+    "row_id": "2f69cd6fc3148a59e4a1d63e299e323cb928f7a20b9b2fcddb15bb7192dff8f1:t1:r6",
+    "role": "Base component A (alternative tier) - exposed 24mm standard grid, higher-price tier for greater drop/heavier duty or smaller module",
+    "caveat": "Same tier-ambiguity as t1:r2; do not average the two without knowing what distinguishes them. Same seismic-bracing inclusion question."
+   },
+   {
+    "row_id": "2f69cd6fc3148a59e4a1d63e299e323cb928f7a20b9b2fcddb15bb7192dff8f1:t1:r3",
+    "role": "Component A variant - 24mm heavyweight grid, for larger/seismically demanding open areas or heavier tiles",
+    "caveat": "'Heavyweight' is a grid duty classification, not a seismic rating - do not assume it covers bracing. Same duplicate-tier issue with t1:r7."
+   },
+   {
+    "row_id": "2f69cd6fc3148a59e4a1d63e299e323cb928f7a20b9b2fcddb15bb7192dff8f1:t1:r7",
+    "role": "Component A variant (upper tier) - 24mm heavyweight grid",
+    "caveat": "Duplicate description to t1:r3 at higher price; tier basis unresolved."
+   },
+   {
+    "row_id": "2f69cd6fc3148a59e4a1d63e299e323cb928f7a20b9b2fcddb15bb7192dff8f1:t1:r4",
+    "role": "Component A variant - 15mm heavyweight (narrow-face) grid where a slimline exposed tee is specified",
+    "caveat": "15mm face grid requires tegular/edge-compatible tiles - must be matched to a compatible panel row, not to a square-edge lay-in. Duplicate tier with t1:r8."
+   },
+   {
+    "row_id": "2f69cd6fc3148a59e4a1d63e299e323cb928f7a20b9b2fcddb15bb7192dff8f1:t1:r8",
+    "role": "Component A variant (upper tier) - 15mm heavyweight grid",
+    "caveat": "Duplicate description to t1:r4; tier basis unresolved."
+   },
+   {
+    "row_id": "2f69cd6fc3148a59e4a1d63e299e323cb928f7a20b9b2fcddb15bb7192dff8f1:t2:r9",
+    "role": "Component B - economy lay-in panel (15mm 'Star'), suits the budget end of a mineral-fibre tile ceiling",
+    "caveat": "Section heading 'Ceiling Panels to Exposed Grid' implies panel supply+lay-in ONLY, excluding grid - must be added to a t1 grid row, never used alone as the scenario rate. Confirm whether the rate is lay-in labour inclusive or supply-only."
+   },
+   {
+    "row_id": "2f69cd6fc3148a59e4a1d63e299e323cb928f7a20b9b2fcddb15bb7192dff8f1:t2:r10",
+    "role": "Component B - mid-range 19mm acoustic mineral-fibre lay-in panel; likely the default 'or similar' tile for the scenario",
+    "caveat": "Panel-only (excludes grid). Edge profile (square lay-in vs tegular) not stated - must match the chosen grid face width. Duplicate-tier ambiguity exists across the t2 panel rows (three separate 24mm Alpha One prices: r4, r7, r11)."
+   },
+   {
+    "row_id": "2f69cd6fc3148a59e4a1d63e299e323cb928f7a20b9b2fcddb15bb7192dff8f1:t2:r6",
+    "role": "Component B - upper-spec 24mm acoustic lay-in panel where higher NRC/CAC is required",
+    "caveat": "Panel-only. 24mm thick tiles are heavier - pair with a heavyweight grid row. Duplicate pricing with t2:r3 unresolved."
+   },
+   {
+    "row_id": "2f69cd6fc3148a59e4a1d63e299e323cb928f7a20b9b2fcddb15bb7192dff8f1:t2:r11",
+    "role": "Component B - 24mm Alpha One tile, alternative upper-spec mineral tile",
+    "caveat": "Panel-only; three differently priced 24mm Alpha One rows (r4/r7/r11) indicate an unrecovered tier (edge profile VT/SK/board size). Pick one only after the tier is identified."
+   },
+   {
+    "row_id": "81310588732937020e50ae66e1c909b338b2d4a2a9ccf31b80332d286c630fbb:t3:r2",
+    "role": "Aggregate cross-check - complete proprietary suspended ceiling, AMF THERMATEX VT acoustic tile, grid + tile + suspension in one m2 rate; use as the headline scenario rate or as a sanity check on grid+panel build-up",
+    "caveat": "DOUBLE-COUNT RISK: this row already contains the grid and the tile - never add a t1 grid row or t2 panel row to it. Note it prices ~\u00a3/$ higher than grid+tile summed (e.g. 46.90+118.00=164.90 vs 161.00), which is a plausible reconciliation but must be confirmed, not assumed. Confirm whether seismic bracing, perimeter angle, cutting around penetrations and edge trims are inside."
+   },
+   {
+    "row_id": "81310588732937020e50ae66e1c909b338b2d4a2a9ccf31b80332d286c630fbb:t3:r3",
+    "role": "Aggregate alternative - complete proprietary system with AMF THERMATEX VT Alpha One tile",
+    "caveat": "Same aggregate double-count rule as t3:r2; identical pricing to t3:r2 suggests tile substitution is cost-neutral in the source - verify."
+   },
+   {
+    "row_id": "1e431d3e9f4822173217f03e52bdab07b323b92dd9046304b513b2875344218e:t5:r12",
+    "role": "Optional adjunct - strip out existing suspended ceiling where the scenario is applied to a refurbishment/fitout of an occupied shell",
+    "caveat": "Not part of new-build scope; only apply on refurb. Confirm whether the rate includes grid, tiles, hangers, disposal and cartage, or lining only."
+   }
+  ],
+  "missing": "Nothing that blocks a headline m2 rate. Two secondary items are unconfirmed rather than absent: (a) explicit seismic restraint/back-bracing to AS/NZS 2785 and NZS 1170.5 - no row in this shortlist names it, so it is either buried in the grid rate or is a separate QV item; (b) perimeter trim/shadowline angle, bulkheads, and cutting/trimming around light fittings, diffusers and sprinkler droppers, which are normally minor extras over the plain-area rate.",
+  "search_capture_for": "Within the Suspended Ceilings section (hash 2f69cd6f...), search for 'seismic', 'restraint', 'back bracing', 'bracing to ceiling', 'perimeter angle', 'shadowline', 'wall angle', 'bulkhead', and 'cutting around fittings / trimming to penetrations'. Also retrieve the full t1 and t2 table headers and any preamble/inclusions note from that same source table to resolve the duplicate-description price tiers (t1:r2 vs r6, t1:r3 vs r7, t1:r4 vs r8, t2:r4/r7/r11) and to confirm whether the t2 'Ceiling Panels to Exposed Grid' rates are panel-only.",
+  "note": "Build the scenario one of two mutually exclusive ways and state which on the face of the rate: (1) composite build-up = one t1 exposed-grid row + one t2 panel row (e.g. t1:r7 24mm heavyweight grid + t2:r6 24mm acoustic panel), or (2) single aggregate row 81310...t3:r2 or t3:r3. Do not mix the two - the t3 proprietary rows already include grid and tile. The concealed-grid row (2f69cd6f...t0:r1) and all the Ceiling Finishes lining rows (Villaboard, fibrous plaster, pine clears, hardwall) are a different system and are out of scope for an exposed-grid lay-in ceiling. The clock, sprinkler dropper, hospital call, light-fitting demolition, dry-pipe sprinkler, covered yard and residential/upper-floor rows are unrelated retrieval noise. Six-centre spread is real on the grid and complete-system rows (Wellington cheapest, Auckland dearest) but near-flat on the panel rows, consistent with panels being a supply-dominated item - flag this when regionalising. Pricing is m2 of measured ceiling area; confirm the measurement convention (gross area between walls, no deduction for small penetrations) before publishing.",
+  "title": "Suspended tile ceiling supply install",
+  "claim_count": 19
+ },
+ {
+  "id": "mains-and-feeder-cable-install",
+  "verdict": "needs_more_qv",
+  "rows": [
+   {
+    "row_id": "e1ff7e963e91c35573874d517724a27a1c78ba246a86001e942ab32470747a38:t0:r29",
+    "role": "Order-of-magnitude sanity check only - all-in electrical services allowance expressed per m2 of building floor area (clubhouse/change room benchmark); cannot be measured against a linear metre of cable run",
+    "caveat": "Aggregate building-rate row: it already embeds mains, submains, distribution boards, final circuits, fittings and labour, so using it alongside any per-metre cable rate would double-count. Building-type specific and not a feeder-cable rate; unit is m2 GFA, not m of run. Do not use as the scenario rate."
+   },
+   {
+    "row_id": "1e431d3e9f4822173217f03e52bdab07b323b92dd9046304b513b2875344218e:t7:r11",
+    "role": "Not usable for the build - listed only to record that the only per-metre services rows surfaced are demolition/disconnection of copper pipework, not electrical cable installation",
+    "caveat": "Demolition and Alterations section: this is removal/making safe of 100-150mm copper pipe per metre, wrong trade and wrong direction of work. Must not be substituted for cable installation."
+   }
+  ],
+  "missing": "No row in this shortlist prices supply and installation of main incoming or sub-main feeder cable per metre. Missing: cable rate by size/type (e.g. 16mm2 to 300mm2 XLPE/PVC or TPS, single or 4-core, copper vs aluminium), containment (cable tray, ladder, ducting, conduit, trenching/bedding for underground runs), terminations/glands at each end, and connection/testing at switchboards. Also missing any statement of whether QV's cable rates are supply-only or supply-and-fix.",
+  "search_capture_for": "Electrical Services sub-sections: 'Mains and Submains', 'Cables and Cabling', 'Power Reticulation', 'Sub-mains cable', 'XLPE', 'TPS', 'Cable Tray / Cable Ladder / Ducting', 'Conduit, PVC heavy duty', 'Cable glands and terminations', 'Main Switchboard / Distribution Board connection'. Also check Infrastructure/Externals for 'Trenching for electrical services' and 'Cable draw pits' for underground feeder runs, and Demolition/Alterations only if an existing feeder is being replaced.",
+  "note": "QV CostBuilder does publish electrical mains/submains cabling and containment by size in the Electrical Services chapter - this retrieval simply did not surface it (the shortlist is dominated by unrelated fit-out, structural and building-type rates). This is a retrieval gap, not a catalogue gap, so it is needs_more_qv rather than needs_outside. Once the cable rows are found, a reviewer must confirm: (a) whether the per-metre rate is supply-only or installed; (b) whether containment and terminations are included in the linear rate or measured separately (to avoid double-counting); (c) size/grade match to the actual design (cable CSA, core count, copper vs aluminium, insulation type); (d) six-centre location factors, as several electrical rows in this capture are flat nationally while trade labour is not. Network company connection fees, lines-company inspection and any ICP/metering charges are not measured work and would sit outside QV - quote or utility schedule only.",
+  "title": "Mains and feeder cable installation",
+  "claim_count": 17
+ },
+ {
+  "id": "internal-doorset-supply-install",
+  "verdict": "needs_more_qv",
+  "rows": [
+   {
+    "row_id": "78c8fd59161b9762a39ae3343a98a487a3973500676292e0de7fc9f254e869a4:t11:r2",
+    "role": "Nearest available doorset-as-a-unit row (single door and frame, 1980 x 810) \u2014 usable only as an order-of-magnitude sanity check on a per-leaf doorset rate, not as the priced line",
+    "caveat": "Aluminium leaf and frame, i.e. wrong material family for an internal timber/hollow-core or solid-core doorset; almost certainly an external-grade glazed/commercial door. Unstated whether supply-only or supply and fix, and whether hanging, hardware and reveal/architraves are in the rate. Do not substitute for a timber internal doorset."
+   },
+   {
+    "row_id": "78c8fd59161b9762a39ae3343a98a487a3973500676292e0de7fc9f254e869a4:t11:r3",
+    "role": "Double-leaf companion to the above; only relevant as a check on the single:double ratio if the scenario is later extended to pairs",
+    "caveat": "Same aluminium material mismatch. Also an aggregate (two leaves + frame in one 'each') \u2014 if used alongside the single-leaf row it must not be double-counted, and the per-leaf derivation is an assumption."
+   },
+   {
+    "row_id": "78c8fd59161b9762a39ae3343a98a487a3973500676292e0de7fc9f254e869a4:t22:r1",
+    "role": "Reference point for a framed doorset including frame and lock, set into a wall",
+    "caveat": "Steel security door set in concrete \u2014 wrong leaf type, wrong grade, and it bundles a standard lock which the scenario expressly excludes, so it would double-count hardware. Not a valid basis for an internal doorset rate."
+   },
+   {
+    "row_id": "a4bbf7211339ad80044429f4a2aa721d5ac5c61f6fe4a34f6afb9ccae5475570:t0:r13",
+    "role": "Optional adjunct if the doorset is specified paint-finished on site rather than factory-prefinished \u2014 interior painting of door and frame, per door",
+    "caveat": "Scope as written covers supply, install, hang and adjust only; painting may sit in the painting trade and be measured separately. Confirm whether 'each' means one leaf plus both frame faces, how many coats, and whether it duplicates any factory finish assumed in the joinery rate. Six-centre spread here is real (AK 218 / WN 178 / CH 215) so regional selection matters."
+   }
+  ],
+  "missing": "A genuine internal timber doorset rate: hollow-core and solid-core flush leaf, paint-grade and veneer, in a timber (and optionally pressed-metal) frame, hung and adjusted, priced per leaf and banded by opening height (2.0m standard vs 2.4m/full-height). Also the frame/jamb/stop/architrave components if QV prices leaf and frame separately, and fire-rated (-/30/30, -/60/60) doorset variants.",
+  "search_capture_for": "Doors / Doors, Timber \u2014 'flush door, hollow core', 'solid core', 'paint grade', 'veneer', '1980 x 760/810/860', 'door and frame', 'hang door', 'door jamb / rebated jamb / door stop / architrave' (lin m or each), 'Fire Doors' and 'Doors, Fire Rated' tables; also 'Doors, Pressed Metal Frames' and any 'Doors, Doorsets' aggregate table. Search the Joinery/Doors section of the same source document as 78c8fd59\u2026 (tables t1\u2013t10 likely precede the aluminium table t11).",
+  "note": "Every priced row in this shortlist is either the wrong material family (aluminium, steel security, frameless glass automatic), unrelated trade (sprinklers, fire pumps, cold stores, street furniture, lifts, structural steel), or hardware that the scenario explicitly excludes (electromagnetic locks, 67/800/6000-series door furniture supply-only). The acoustic operable wall row and all cold-store rows carry no rates at all. The gap is ordinary measured joinery that QV certainly publishes, so this is a retrieval failure rather than a coverage gap \u2014 no outside research or subcontract quote is needed. Note also that if a timber doorset aggregate 'door and frame, each' row is later found, it must be checked against any separate jamb/architrave and hanging rows so the frame and fixing labour are not counted twice.",
+  "title": "Internal doorset supply and install",
+  "claim_count": 14
+ },
+ {
+  "id": "solar-mounting-structural-design",
+  "verdict": "needs_outside",
+  "rows": [
+   {
+    "row_id": "52d4a068b2aced2722dab3e921b35879d1a60fc34fe3b6d61a4a3aec5c10b994:t4:r2",
+    "role": "Primary priced basis for a fabricated steel mounting frame (ground-mount A-frame or roof tilt frame) - SHS members, supply and erect, measured by kg of steel from the engineer's member schedule",
+    "caveat": "Minor Steel Works kg rate - confirm it is supply AND erect at height on an existing roof, not shop-floor only; no allowance for galvanising/duragal or marine-grade coating that solar frames normally require; verify whether access/EWP is in the rate"
+   },
+   {
+    "row_id": "52d4a068b2aced2722dab3e921b35879d1a60fc34fe3b6d61a4a3aec5c10b994:t4:r3",
+    "role": "Alternative frame member rate where RHS rails/purlins are used in lieu of SHS",
+    "caveat": "Same kg-basis and supply/erect caveat as SHS row; do not apply alongside SHS for the same member"
+   },
+   {
+    "row_id": "52d4a068b2aced2722dab3e921b35879d1a60fc34fe3b6d61a4a3aec5c10b994:t4:r4",
+    "role": "Frame member rate for CHS legs/raking props if the design uses circular sections",
+    "caveat": "Duplicate of the minor-steel kg rate family - use only for members actually CHS; confirm coating excluded"
+   },
+   {
+    "row_id": "52d4a068b2aced2722dab3e921b35879d1a60fc34fe3b6d61a4a3aec5c10b994:t2:r34",
+    "role": "Angle section rate for lightweight rails, edge trim and cross-bracing to the array frame",
+    "caveat": "Major Steel Works section - likely priced on larger-tonnage economies of scale; a small solar frame of a few hundred kg will not achieve this rate, flag for an uplift decision"
+   },
+   {
+    "row_id": "52d4a068b2aced2722dab3e921b35879d1a60fc34fe3b6d61a4a3aec5c10b994:t2:r49",
+    "role": "Fabricated brackets (roof standoff / rafter connection brackets) at the lower fabrication intensity",
+    "caveat": "Rate is fabrication-hours-per-tonne banded (120 hr/t); reviewer must pick the band against the actual bracket complexity. Check whether this is an ADD to the raw steel supply row or an all-up rate - if all-up, do not also add the steel supply row"
+   },
+   {
+    "row_id": "52d4a068b2aced2722dab3e921b35879d1a60fc34fe3b6d61a4a3aec5c10b994:t2:r50",
+    "role": "Higher-fabrication bracket band for complex adjustable/tilt brackets",
+    "caveat": "Same band-selection and possible double-count-with-steel-supply issue; 250 hr/t is a heavy fabrication assumption, justify before use"
+   },
+   {
+    "row_id": "52d4a068b2aced2722dab3e921b35879d1a60fc34fe3b6d61a4a3aec5c10b994:t2:r45",
+    "role": "Purlin cleats - the closest published item to new cleats where purlins are supplemented or strengthened to carry array uplift",
+    "caveat": "kg basis, 120 hr/t band; covers new cleat fabrication only, NOT the strengthening purlin/rafter member itself nor any temporary propping of the existing roof"
+   },
+   {
+    "row_id": "52d4a068b2aced2722dab3e921b35879d1a60fc34fe3b6d61a4a3aec5c10b994:t2:r41",
+    "role": "Base plates for ground-mount posts or roof standoff feet",
+    "caveat": "40 hr/t band, kg only - holding-down bolts, chemical anchors and grouting are not evidenced in this row"
+   },
+   {
+    "row_id": "52d4a068b2aced2722dab3e921b35879d1a60fc34fe3b6d61a4a3aec5c10b994:t2:r43",
+    "role": "Connection/gusset plates at frame node connections",
+    "caveat": "35 hr/t band; confirm it is not already captured inside the 'plate connections' percentage add row - using both would double-count connections"
+   },
+   {
+    "row_id": "52d4a068b2aced2722dab3e921b35879d1a60fc34fe3b6d61a4a3aec5c10b994:t2:r39",
+    "role": "Percentage add for plate connections on the fabricated steel tonnage",
+    "caveat": "Unit is 'percent' with no stated base - reviewer must establish whether it applies to the steel supply rate, the erected rate, or the tonne value, and must not be applied on top of the discrete connection-plate/gusset rows"
+   },
+   {
+    "row_id": "52d4a068b2aced2722dab3e921b35879d1a60fc34fe3b6d61a4a3aec5c10b994:t2:r16",
+    "role": "Raw steel material component - only if the fabrication-hour rows above prove to be labour/fabrication add-ons rather than all-up rates",
+    "caveat": "Clearly supply-only (includes waste and consumables). Duplicate of t2:r6 at the same rate - use one only. High double-count risk against the supply-and-erect kg rows"
+   },
+   {
+    "row_id": "5c692a5a1ee23430c4ed8c04e6ec20a57f0a82bfbf11ae7f5c9496df4374b5cc:t3:r4",
+    "role": "Descriptive best-fit item (small section angle/flat bracket support framing, bolted or screw fixed) - matches solar standoff framing almost exactly and should be the preferred basis if priced",
+    "caveat": "All six centres return None in this capture - no usable rate. Must be re-pulled from QV before it can carry any money"
+   }
+  ],
+  "missing": "Three pieces are absent and two of them are not QV measured work: (1) the structural engineer's PS1 design, wind/uplift calculation to AS/NZS 1170 and roof capacity assessment - that is a consultant professional fee, not a published measured rate; (2) the proprietary solar mounting system itself (rail, clamps, roof hooks/standoffs, tilt legs, e.g. Clenergy/Schletter/Radiant-type kits), which is a supplier package priced per module or per kW, not per kg of fabricated steel; (3) weathertight roof penetration detailing - EPDM/butyl flashing seals and re-sealing of the existing roof cladding around each fixing point, plus any producer statement for the penetration. Items (1) and (2) are outside the catalogue. Also note this scenario's unit is 'sum' while every usable row is kg/each/percent, so a member schedule and steel weight take-off is a precondition to pricing at all - without it these rows cannot be aggregated into a sum.",
+  "search_capture_for": "Within QV, still worth searching for: timber framing / roof framing rates for supplementary rafters, purlins and dwangs (to price rafter strengthening in a timber-framed roof, which no shortlisted row covers); roof cladding removal-and-refix and penetration flashing rows under Roof Coverings; galvanising or hot-dip coating add rows under Structural Steelwork (the kg rates here appear to exclude coating); small-tonnage steelwork uplift or 'minor works' premium notes; and concrete pad/pier foundation rows for ground-mount footings - the only foundation row surfaced (f0968d72...:t13:r89, TC3 house foundations m2) is the wrong item and must not be used.",
+  "note": "Do not price this scenario as a lump sum off these rows. The steel rows can legitimately build a bespoke fabricated support frame and its cleats, brackets, base plates and connections once a weight take-off exists, but nearly all real NZ solar arrays use a proprietary rail kit rather than bespoke steel, so a bespoke-steel build-up will read high and should be flagged as an alternative, not the default. The design fee is web-researchable as an indicative percentage or hourly range for a chartered structural engineer but should be a named quote allowance for anything beyond a small residential array. The mounting kit is quote-only from the solar supplier. The perforated screen, cycle rack, emergency lighting, sprinkler, access control, carpet, aquarium, parking, dormitory and rooflight rows in this shortlist are irrelevant retrieval noise and are cited nowhere above.",
+  "title": "Solar array mounting structural support",
+  "claim_count": 12
+ },
+ {
+  "id": "acp-facade-cladding-install",
+  "verdict": "sufficient",
+  "rows": [
+   {
+    "row_id": "5c692a5a1ee23430c4ed8c04e6ec20a57f0a82bfbf11ae7f5c9496df4374b5cc:t12:r7",
+    "role": "Primary face rate - aluminium sheet wall cladding 1.6mm, measured m2 of cladding face; the base build-up item for the scenario.",
+    "caveat": "Unreviewed: not stated whether supply-only or supply-and-fix, and whether it is plain/coated sheet or a true composite (ACP) panel. Note this table contains TWO price bands for the same thicknesses (r6-r9 flat across all centres vs r2-r4 centre-varied) - the flat-priced band looks like a material/supply-only sub-table and the centre-varied band like a fixed rate. Reviewer must settle which band is installed work before use; do not mix bands."
+   },
+   {
+    "row_id": "5c692a5a1ee23430c4ed8c04e6ec20a57f0a82bfbf11ae7f5c9496df4374b5cc:t12:r6",
+    "role": "Thickness alternative (1.2mm) to the primary face rate for lighter sheet specification.",
+    "caveat": "Same band/convention question as r7; confirm gauge suits 10m-height wind loading before substituting."
+   },
+   {
+    "row_id": "5c692a5a1ee23430c4ed8c04e6ec20a57f0a82bfbf11ae7f5c9496df4374b5cc:t12:r8",
+    "role": "Thickness alternative (2mm) - upper-bound face rate where a heavier cassette panel is specified.",
+    "caveat": "Flat six-centre pricing again suggests supply/material convention; confirm before adding labour separately or double-counting fix."
+   },
+   {
+    "row_id": "5c692a5a1ee23430c4ed8c04e6ec20a57f0a82bfbf11ae7f5c9496df4374b5cc:t12:r3",
+    "role": "Cross-check / alternative band face rate (1.2mm, centre-varied) to test which band is installed work.",
+    "caveat": "Duplicate description to r6 at a materially lower price - one of the two bands must be discarded, not averaged."
+   },
+   {
+    "row_id": "9bd8f998e94fb5e52699ed2b20902f0ecc410fad78bb9c156213c3ff5b2a2711:t41:r21",
+    "role": "Subgirt/support component - top hat and intermediate top hat rails at 600mm crs (2.5 lm/m2), expressed per m2 of facade, used to price the cavity/subgirt layer behind the sheet.",
+    "caveat": "Row is drawn from the FC Exotec commercial facade build-up, so it is a component line within an aggregate system; confirm it is rail supply+fix only and that it is NOT already embedded in whichever aluminium sheet rate is adopted. Steel top hat vs aluminium subgirt is a material mismatch to flag."
+   },
+   {
+    "row_id": "9bd8f998e94fb5e52699ed2b20902f0ecc410fad78bb9c156213c3ff5b2a2711:t41:r4",
+    "role": "Exact duplicate of t41:r21 - use only to confirm the subgirt rate, never add both.",
+    "caveat": "Capture duplication across two tables; pick one instance."
+   },
+   {
+    "row_id": "9bd8f998e94fb5e52699ed2b20902f0ecc410fad78bb9c156213c3ff5b2a2711:t30:r2",
+    "role": "Standard flashing - base and cavity closure flashing to bottom of cladding, linear metre.",
+    "caveat": "Measured per m, not m2: needs a quantity assumption (lm of base per m2 of facade) to fold into the m2 scenario rate. Sized for 20/35mm timber cavity - confirm compatibility with a top-hat subgirt cavity depth."
+   },
+   {
+    "row_id": "9bd8f998e94fb5e52699ed2b20902f0ecc410fad78bb9c156213c3ff5b2a2711:t30:r4",
+    "role": "Colorsteel Maxx variant of the base/cavity closure flashing - specification alternative.",
+    "caveat": "Same rate as r2 despite differing description; duplicate risk - use one only. Colorsteel against aluminium raises a bimetallic-contact spec query for the designer."
+   },
+   {
+    "row_id": "9bd8f998e94fb5e52699ed2b20902f0ecc410fad78bb9c156213c3ff5b2a2711:t30:r24",
+    "role": "External corner flashing (90x90 behind cladding), linear metre, for standard corner detailing.",
+    "caveat": "Per m; requires corner-length allowance per m2. 'Behind cladding' convention means the visible aluminium corner trim/extrusion may still be unpriced."
+   },
+   {
+    "row_id": "9bd8f998e94fb5e52699ed2b20902f0ecc410fad78bb9c156213c3ff5b2a2711:t30:r22",
+    "role": "Internal corner flashing, linear metre, completes standard flashing set.",
+    "caveat": "Per m; quantity assumption required. Timber-cladding flashing family - confirm acceptable on a rainscreen sheet system."
+   },
+   {
+    "row_id": "9bd8f998e94fb5e52699ed2b20902f0ecc410fad78bb9c156213c3ff5b2a2711:t30:r26",
+    "role": "Vertical control joint back flashing, linear metre - needed where sheet runs are broken at movement joints on a 10m elevation.",
+    "caveat": "Per m; only applies if control joints are detailed. Do not add by default."
+   },
+   {
+    "row_id": "9bd8f998e94fb5e52699ed2b20902f0ecc410fad78bb9c156213c3ff5b2a2711:t41:r33",
+    "role": "Aggregate sanity-check only - complete proprietary facade panel system total per m2, used as an upper-bound reasonableness test on the assembled rate.",
+    "caveat": "AGGREGATE: this line already contains panel + top hat + fixings + accessories, so it double-counts t41:r21 and the face rate. Never add it to component rows. Note two conflicting 'system total' values exist (r33 and r17) - different area bands or spec, unresolved."
+   }
+  ],
+  "missing": "Nothing that blocks a build. The scenario's own scope permits sheet cladding, and face area, subgirt and standard flashings are all represented. Unpriced by design and to be stated as exclusions: access/scaffolding to 10m, proprietary ACP cassette fabrication/routing and folded returns, PE vs FR (fire-rated) core selection, and any design/producer-statement or specific-engineering-design input for a rainscreen over 10m.",
+  "search_capture_for": "If the reviewer rejects the plain-sheet substitution, search the capture for proprietary ACP trade names (Alucobond, Vitrabond, Alpolic, Larson, Symonite) under Metalwork or Proprietary Cladding Systems; also search for 'aluminium subgirt' / 'top hat' rails under Metalwork rather than the FC Exotec table, and for the Metalwork/Aluminium Sheet Cladding table header note that distinguishes the two price bands (supply vs fixed). Scaffolding rates sit in Preliminaries/Scaffolding if access must be carried.",
+  "note": "Build as: adopted face rate (one band only) + subgirt m2 + flashings converted from lm to an m2 allowance using measured corner/base/joint lengths. The two duplicated price bands in the aluminium sheet table and the duplicated top hat and system-total rows are the main capture hazards - each pair must be resolved to a single line. Do not blend component rows with any 'system total' row. Six-centre spread is nil on several rows (flat national pricing), which itself signals a supply-only convention and should be confirmed before regional adjustment is applied.",
+  "title": "Aluminium composite panel cladding",
+  "claim_count": 10
+ },
+ {
+  "id": "switchboard-fault-rating-protection",
+  "verdict": "needs_outside",
+  "rows": [
+   {
+    "row_id": "1e431d3e9f4822173217f03e52bdab07b323b92dd9046304b513b2875344218e:t7:r13",
+    "role": "Only marginally relevant row: alterations/disconnection or removal of an existing switchboard or distribution board, usable as the strip-out/make-safe component if the existing board is replaced rather than retro-braced.",
+    "caveat": "Sits in Demolition and Alterations / Work in Connection With Services, so it is almost certainly disconnect-and-remove (or isolate/reconnect) labour only - it is not supply, not installation, and carries no board, busbar or protective device content. Reviewer must confirm whether the rate covers electrician attendance, isolation and certification, and whether it assumes a small DB rather than a main switchboard (no size/rating band stated). Unit 'each' per board must be confirmed. Do not use it as a proxy for any part of the fault-rating work."
+   }
+  ],
+  "missing": "Everything that makes up the scenario: (a) a fault level / short-circuit and protection coordination study to AS/NZS 3000 and AS 3851 - this is consulting electrical engineer time, not measured work; (b) switchboard manufacturer's shop work to uprate busbar bracing / replace busbar chamber to a higher kA withstand on an existing Form-rated board, including type-test evidence and re-labelling; (c) supply and installation of correctly rated MCBs/MCCBs/ACBs, cascade/energy-let-through matched devices, and main switch/incomer; (d) network company confirmation of prospective fault current at the point of supply; (e) outage/after-hours and temporary supply costs while the board is de-energised. Items (a), (b) and (d) are not rates QV publishes.",
+  "search_capture_for": "Electrical Services / Mains and Submains, Switchboards, Distribution Boards, Main Switchboard, Circuit Protection - search the capture for 'switchboard', 'distribution board', 'circuit breaker', 'MCB', 'MCCB', 'RCD', 'main switch', 'busbar', 'submain' and any 'Electrical' section rates per board or per pole/way, plus 'Preliminaries / After hours work' or 'out of hours' loading and 'temporary electrical supply'. If QV carries a per-way DB rate and per-pole breaker rates, the device replacement element can be partly measured, but the bracing uprate and the study still cannot.",
+  "note": "The scenario is engineering assessment plus a proprietary switchboard modification, not a catalogue-measurable build-up, so it cannot be priced from this shortlist at any confidence. Fault level assessment fees are web-researchable as an indicative consultant hourly/lump-sum range (typically scoped per board), but the network operator's prospective fault current data must be requested from the lines company. The busbar bracing uprate and any Form-segregation or type-test re-verification are quote-only from the original switchboard manufacturer or an accredited assembler, because the permissible modification depends on the board's type-test certificate. Protection device supply, if QV rates surface, should be checked for supply-only versus supply-and-fix and for whether the device rating band (frame size, kA breaking capacity) matches; a generic 'circuit breaker each' rate captured at domestic 6kA will badly under-price a 50kA-rated commercial device. Also confirm that any aggregate 'switchboard each' rate found does not already include its own protective devices before adding breakers separately, or the devices will be double-counted. No price has been derived here.",
+  "title": "Switchboard fault rating and protection",
+  "claim_count": 9
+ },
+ {
+  "id": "solar-connection-switchboard-works",
+  "verdict": "needs_more_qv",
+  "rows": [
+   {
+    "row_id": "1e431d3e9f4822173217f03e52bdab07b323b92dd9046304b513b2875344218e:t7:r13",
+    "role": "Only directly relevant row: covers the existing-board side of the works - disconnection/removal (or alteration) of a switchboard or distribution board where the existing board is stripped out or made safe prior to the PV connection.",
+    "caveat": "Sits in Demolition and Alterations / Work in Connection With Services, so it is almost certainly a disconnect-and-remove (or make-safe) labour rate, NOT supply or install of a new board and NOT an 'upgrade' of a live board. Unit 'each' - confirm whether it is per board regardless of size/way count, whether isolation, temporary supply, certification and disposal are included, and whether it assumes a registered electrician's attendance or is a builder's attendance rate. Cannot be reused as a proxy for a new solar DB."
+   }
+  ],
+  "missing": "Everything on the supply/install side: new dedicated solar distribution board (supply and fix, ways/rating), solar supply main switch / AC isolator and lockable isolation at the board, MCB/RCBO circuit protection, sub-main and consumer-mains cabling and terminations from inverter to board, labelling/signage to AS/NZS 4777 and 3000, upgrade/extension of the existing MSB or DB (added ways, new main switch, tails), and electrician test, certification (CoC/ESC) and inverter commissioning. Also outside measured work: the lines-company/distributor connection application and ICP/meter change fees and any retailer export-meter charge.",
+  "search_capture_for": "Electrical Services section tables - 'Switchboards', 'Distribution Boards' (supply and install, by number of ways / amperage), 'Main Switchboard', 'Circuit breakers / MCB / RCD / RCBO', 'Isolating switch / isolator', 'Sub-mains and consumer mains cable (per m, by size)', 'Cable tray/conduit', 'Testing and commissioning' or 'Connect, test and commission' rows within Electrical Services rather than Security Systems; also any 'Photovoltaic / Solar' or 'Renewable energy' sub-section under Electrical Services or Specialist Services.",
+  "note": "The shortlist is dominated by irrelevant retrieval noise (structural steel 'connection plates/brackets', plaster/cladding 'board' matches, intruder-alarm panel, landscaping) - these matched on the words 'connection' and 'board' only and must not be used. The intruder-alarm rows (ac5fef...:t38:r1, :t38:r8) are alarm-specific and are not a legitimate proxy for a solar board or its commissioning. Once the Electrical Services board/isolator/sub-main rows are surfaced the scenario is buildable from QV, except the distributor/retailer connection and metering fees, which QV does not publish - those are web-researchable from the local lines company and retailer price lists, with inverter and PV-specific accessory pricing quote-only.",
+  "title": "Solar connection switchboard works",
+  "claim_count": 9
+ },
+ {
+  "id": "facade-coating-application",
+  "verdict": "needs_more_qv",
+  "rows": [
+   {
+    "row_id": "f3f4c6bb8054b7bf95afdcd863ce58fda6f7210961397ae49e65d1289cd15fa8:t0:r87",
+    "role": "Closest priced proxy for the two-coat acrylic paint system on plastered/concrete substrate (seal + 2 coats), applied per m2 of coated area",
+    "caveat": "Row sits under Wall Finishes / Wall Linings and Finishes, i.e. an internal lining context. Reviewer must confirm whether the sealer/paint specification, prep allowance and coverage are valid for an exterior-grade system, and whether any exterior prep (water blast, fungicidal wash, making good) is included or must be added separately. No access/height loading included."
+   },
+   {
+    "row_id": "a4bbf7211339ad80044429f4a2aa721d5ac5c61f6fe4a34f6afb9ccae5475570:t7:r2",
+    "role": "Priced proxy for the coated-steel-panel portion of the facade \u2014 acrylic etch primer plus two coats, per m2",
+    "caveat": "Published under Metal Roofing; reviewer must confirm it transfers to vertical steel wall/facade panels (girth vs plan area measurement, profile development factor) and whether prep of factory-coated or galvanised panel (degrease/etch) is inside the rate. Assume applied-only, no scaffolding."
+   },
+   {
+    "row_id": "a4bbf7211339ad80044429f4a2aa721d5ac5c61f6fe4a34f6afb9ccae5475570:t16:r10",
+    "role": "Alternative/comparator if the specified system is a high-build exterior coating rather than conventional two-coat paint",
+    "caveat": "Flexitrowel is a trowel-applied high-build styrene acrylic with scratch finish \u2014 a different product class and a much higher rate than a two-coat paint. Do not use as the base two-coat rate; use only if the spec is genuinely high-build. Confirm whether substrate prep and glaze/topcoat are included and whether it is single-application or a system."
+   },
+   {
+    "row_id": "52d4a068b2aced2722dab3e921b35879d1a60fc34fe3b6d61a4a3aec5c10b994:t12:r18",
+    "role": "Reference for site-applied topcoat to structural steel elements within the facade",
+    "caveat": "No six-centre prices captured (nulls) \u2014 cannot be used to build a number. Also one coat only, and the description expressly excludes hot dip galvanised surfaces which need degrease/etch/prime first."
+   },
+   {
+    "row_id": "ccca136139e3a314f638ae4993aee7c3b5df4e2a669fdb6993cb7a366344de23:t7:r12",
+    "role": "Indicative only \u2014 soffit work measured to the underside of timber joists, useful for the soffit geometry/measurement convention",
+    "caveat": "This is cement plaster to soffit, i.e. a rendering trade item, not a coating. It would double-count if added to a coating rate applied over the same soffit. Use for measurement logic only, not as a coating price."
+   }
+  ],
+  "missing": "A dedicated exterior painting section: preparation (water blast / fungicidal wash / make good) and seal-plus-two-coats acrylic to exterior plastered, render, concrete and fibre-cement surfaces, plus the matching exterior soffit/eaves painting rate. Also missing the access component \u2014 scaffolding or EWP to 10m \u2014 which the scenario says is to be included in the m2 rate. The plaster/cladding system rows in this shortlist (Thermaclad, Rockcote, ExoTec, Easylap) are full cladding build-ups and would grossly double-count if used as a coating rate.",
+  "search_capture_for": "Painting & Specialist Finishes \u2014 'Walls, Exterior' and 'Soffits/Eaves, Exterior' sub-tables: 'Prepare and two coats acrylic, exterior', 'Water blast / prepare existing exterior surfaces', 'Sealer to plaster/concrete, exterior'; also Preliminaries & General \u2014 'Scaffolding' (m2 of elevation, per week hire, erect/dismantle) and 'Elevated Work Platform / scissor lift hire'; and Structural Steelwork \u2014 'Steelwork Surface Treatments' rows with populated six-centre pricing.",
+  "note": "Buildable coating rates exist in the capture but this shortlist surfaced mostly cladding-system and floor-coating rows. Several of the most relevant rows (steel topcoat, Rockcote render systems, residential all-up $/m2 rows) have null pricing and cannot be cited as numbers. Flag that any all-up residential $/m2 rows (3b624bfa\u2026) are building-cost-per-floor-area indices, not coating rates. Scaffolding is measured work QV publishes, so this is needs_more_qv rather than needs_outside; if the capture has no scaffolding table, revert to a hire quote.",
+  "title": "Facade and soffit coating",
+  "claim_count": 9
+ },
+ {
+  "id": "glazed-vision-panel",
+  "verdict": "needs_more_qv",
+  "rows": [
+   {
+    "row_id": "2dc5b4497e75a669b63791e1bce6bc7b6b7822720171a44ad93080bdfe1b8237:t24:r17",
+    "role": "Glass component for a non-rated / acoustic-rated vision panel - 12.38mm clear laminate, applied to the panel area (300x900 = 0.27 m\u00b2)",
+    "caveat": "Sits under 'Glazing: Other' at the same $250/m\u00b2 as the glazed-partition row ffb...:t11:r1, so it is almost certainly the same published rate duplicated - use one only, never both. Unreviewed whether it is supply-only glass or supply+install into partition framing (if install is included it double-counts the bead/fixing rows below). Small-pane minimum charge almost certainly applies: 0.27 m\u00b2 x rate will under-price a cut-to-size vision pane; reviewer must settle a minimum-pane allowance. Not a fire-rated product."
+   },
+   {
+    "row_id": "2dc5b4497e75a669b63791e1bce6bc7b6b7822720171a44ad93080bdfe1b8237:t24:r18",
+    "role": "Alternative glass component where an STC 39 acoustic vision panel is specified - 12.76mm acoustic laminate",
+    "caveat": "Duplicate of ffb...:t11:r2 at the same $320/m\u00b2; pick one. Same supply-only vs supply-and-fix ambiguity and same small-pane minimum problem. STC rating is acoustic, not a fire rating - it does not answer the scenario's 'glass to rating' if that means FRR."
+   },
+   {
+    "row_id": "ffb6248bf6086c84825d2625b9c211d958dca5e8aa70e3a759aeaafe6d1664ff:t11:r1",
+    "role": "Cross-check source for the 12.38mm laminate glass rate (glazed partitions section)",
+    "caveat": "Same description and price as 2dc5...:t24:r17 - treat as the same rate, not an additional item. Being a partition rate it may include framing/install content that is not applicable to a door leaf aperture."
+   },
+   {
+    "row_id": "ffb6248bf6086c84825d2625b9c211d958dca5e8aa70e3a759aeaafe6d1664ff:t11:r2",
+    "role": "Cross-check source for the 12.76mm acoustic glass rate",
+    "caveat": "Duplicate of 2dc5...:t24:r18; do not add both."
+   },
+   {
+    "row_id": "78c8fd59161b9762a39ae3343a98a487a3973500676292e0de7fc9f254e869a4:t3:r6",
+    "role": "Glazing bead to both faces of the aperture - 18x12x6mm RP clears H3.1, measured on panel perimeter (approx 2.4 lin m per face, 4.8 m both faces)",
+    "caveat": "Unit convention unconfirmed: is $22.70/m supply-and-fix or supply-only timber? If supply-only, the fixing row t3:r10 must be added; if fix is already in, adding r10 double-counts. H3.1 treated exterior bead is likely over-spec for an internal door - a clears/FJ interior profile may be the correct pick. Bead depth must suit 12.38-12.76mm glass; a 6mm rebate bead will not hold laminate of this thickness."
+   },
+   {
+    "row_id": "78c8fd59161b9762a39ae3343a98a487a3973500676292e0de7fc9f254e869a4:t3:r5",
+    "role": "Alternative deeper bead (30x10x6mm RP clears) where the thicker laminate/acoustic pane needs a larger rebate cover",
+    "caveat": "Same supply-only vs fixed ambiguity; choose one bead profile only, do not stack r5, r6, r7, r8, r2 and r3 together."
+   },
+   {
+    "row_id": "78c8fd59161b9762a39ae3343a98a487a3973500676292e0de7fc9f254e869a4:t3:r10",
+    "role": "Fixing of beads with brass screws and cups, per lin m of bead",
+    "caveat": "Only add if the chosen bead row is confirmed supply-only. Brass screws and cups is a finish-joinery convention; a painted commercial door may use pins and stopping instead, so the reviewer should confirm the fixing method matches the specification."
+   }
+  ],
+  "missing": "The core labour operation is absent: cutting/forming the aperture in a manufactured door leaf (marking out, cutting through both faces, lipping or blocking the exposed core edge, making good and preparing for beads). None of the shortlisted rows measure that. Also absent is fire-rated glass and rated glazing componentry (e.g. Pyrostop/Pyran type insulated or integrity glass, intumescent glazing tape/seals, rated bead system and the rated-door-set certification/relabelling that a site-cut vision panel triggers). The shortlisted glass rows are acoustic/laminate only. No door leaf row here corresponds to a plain flush leaf being modified - the 1/2/8-light and entrance door rows are complete factory door sets, so using them would double-count the leaf. Note also the glass rows are m\u00b2 with no small-pane minimum, while the scenario is a 0.27 m\u00b2 pane.",
+  "search_capture_for": "Search the capture for: (1) Doors / Doors, Timber, Flush or Solid Core sub-sections for 'vision panel', 'glazed lite', 'view panel', 'aperture' or 'extra over for glazing to door'; (2) Glazing section for 'fire rated glazing', 'Pyrostop', 'Pyran', 'Pyroshield', 'wired glass', '-/30/30', '-/60/60'; (3) 'intumescent' seals/glazing tape under Doors hardware or Fire Protection / Passive Fire Stopping; (4) Carpentry or Joinery labour constants / hourly rates (carpenter, joiner) to build up the cut-and-frame operation if no composite exists; (5) 'fire door' rows to see whether QV publishes an extra-over for a vision panel in a rated leaf.",
+  "note": "Only if the capture has no fire-rated vision panel item does this become needs_outside: FRR glass supply and, critically, the fire-door manufacturer's approval/relabelling for a site-cut aperture in a rated leaf are quote-only (door manufacturer or IANZ-certified installer) - a site-cut panel voids the leaf's certification unless done to the manufacturer's tested detail. Product-only pricing for rated glass is partly web-researchable from NZ glazing suppliers, but the certification is not. For a non-rated leaf, this scenario is buildable once a cut-aperture labour row or joinery labour rate surfaces. Six-centre spread: bead, glass and fixing rows are all flat nationally, so no regional factor falls out of these rows - the reviewer should confirm whether the flat rate is a genuine national rate or an uncaptured centre variation.",
+  "title": "Glazed vision panel to door",
+  "claim_count": 8
+ },
+ {
+  "id": "site-establishment-relocation",
+  "verdict": "needs_more_qv",
+  "rows": [
+   {
+    "row_id": "253b838adc4d69933b82891e3d8333d2935553d0887a5909116772b2bba43150:t4:r3",
+    "role": "Re-erect temporary site fence in its new alignment (labour to install, per m of fence line).",
+    "caveat": "Unit convention unconfirmed - $2.90/m is identical to the hire and dismantle rows, which suggests either a per m per period hire component or a capture artefact. Reviewer must confirm this is a one-off install labour rate and whether panels/feet/couplers are supply-inclusive or hire-only."
+   },
+   {
+    "row_id": "253b838adc4d69933b82891e3d8333d2935553d0887a5909116772b2bba43150:t4:r4",
+    "role": "Take down the existing fence line before relocation (a relocation = dismantle + re-install).",
+    "caveat": "Confirm it is not already embedded in the hire-period rows (t4:r8/r9/r10); if the period rates are all-in supply+install+dismantle, pricing r3+r4 on top double-counts."
+   },
+   {
+    "row_id": "253b838adc4d69933b82891e3d8333d2935553d0887a5909116772b2bba43150:t4:r10",
+    "role": "Ongoing hire of the relocated fence line for the balance of the civil contract (200m+, 6-12 months band).",
+    "caveat": "Aggregate-risk row: unclear whether the rate is per m per week, per m per month, or per m for the whole stated duration, and whether it already includes install/dismantle. Must be resolved before combining with r3/r4."
+   },
+   {
+    "row_id": "253b838adc4d69933b82891e3d8333d2935553d0887a5909116772b2bba43150:t4:r9",
+    "role": "Alternative hire band if the reconfigured compound fence line falls in the 50-200m / 6-9 month range.",
+    "caveat": "Same unit-period ambiguity as r10; pick one band only, do not add bands together."
+   },
+   {
+    "row_id": "253b838adc4d69933b82891e3d8333d2935553d0887a5909116772b2bba43150:t4:r5",
+    "role": "Delivery of additional fence panels from hire depot for the reconfigured compound.",
+    "caveat": "Per-load 'each' - confirm whether one charge covers a full truckload and how many loads the fence length requires; a purely internal relocation may incur no depot transport at all."
+   },
+   {
+    "row_id": "253b838adc4d69933b82891e3d8333d2935553d0887a5909116772b2bba43150:t4:r6",
+    "role": "Return of surplus fence panels to depot after reconfiguration.",
+    "caveat": "Only applies if panel count reduces; otherwise omit. Same 'per load vs per event' ambiguity as r5."
+   },
+   {
+    "row_id": "253b838adc4d69933b82891e3d8333d2935553d0887a5909116772b2bba43150:t11:r7",
+    "role": "Barrier mesh to delineate relocated stockpile and material storage areas.",
+    "caveat": "Explicitly excludes supports - waratahs/star pickets must be priced separately and are not in this shortlist."
+   },
+   {
+    "row_id": "253b838adc4d69933b82891e3d8333d2935553d0887a5909116772b2bba43150:t11:r6",
+    "role": "Danger tape for short-term demarcation during the compound move.",
+    "caveat": "Supply-only assumption; no fixing/support included."
+   },
+   {
+    "row_id": "253b838adc4d69933b82891e3d8333d2935553d0887a5909116772b2bba43150:t11:r2",
+    "role": "Replacement/relocated 'Construction Keep Out' signage on the new fence line.",
+    "caveat": "Confirm supply-only vs supply-and-fix; existing signs may simply be re-hung at nil material cost."
+   },
+   {
+    "row_id": "253b838adc4d69933b82891e3d8333d2935553d0887a5909116772b2bba43150:t11:r4",
+    "role": "Site hazard signage re-posted at the reconfigured compound entry.",
+    "caveat": "Supply vs supply-and-fix unconfirmed; avoid double-counting with r2/r3 if one sign suite is being reused."
+   },
+   {
+    "row_id": "253b838adc4d69933b82891e3d8333d2935553d0887a5909116772b2bba43150:t11:r3",
+    "role": "Site danger signage at the relocated gate.",
+    "caveat": "Same supply/fix ambiguity; quantity driven by number of new access points, not measured here."
+   },
+   {
+    "row_id": "2d92fb333c379af3f3ef632920d6b11a6f53e11fd70fd767decdc8f8a7bf1f6f:t0:r11",
+    "role": "Shifting existing stockpiled material to the new stockpile location (cut and remove to stockpile within 500m).",
+    "caveat": "Written as excavation-to-stockpile, not re-handle of an existing loose stockpile - loosening/loading of already-won material may be cheaper or dearer. Confirm whether it includes load, cart and tip, and confirm m3 is bank or loose measure."
+   },
+   {
+    "row_id": "2d92fb333c379af3f3ef632920d6b11a6f53e11fd70fd767decdc8f8a7bf1f6f:t0:r13",
+    "role": "Load and cart of unsuitable/surplus material out of the footprint being reconfigured.",
+    "caveat": "Destination is 'to stockpile' not to tip - disposal off site is not covered. Confirm haul distance assumption and measure basis."
+   },
+   {
+    "row_id": "253b838adc4d69933b82891e3d8333d2935553d0887a5909116772b2bba43150:t9:r21",
+    "role": "Crane driver travel time if a mobile crane is used to lift sheds/containers to the new compound position.",
+    "caveat": "This is only the driver's transport component - the crane hire itself, mobilisation and minimum-hire charge are not in this shortlist, so it cannot be used alone."
+   }
+  ],
+  "missing": "The shed/site-accommodation half of the scenario. Nothing in the shortlist prices site office, lunchroom, ablution or lockable container hire, nor the shift/relocation event for those units (uplift, transport within or to site, re-levelling on bearers, re-connection of temporary power/water/data). The mobile crane hire rate itself (hourly rate, mobilisation, minimum hire) is also absent - only the driver transport line surfaced. The 'site establishment cost, stud welding contractor' rows (52d4a...:t10:r8 and 15a23...:t5:r33) are trade-specific establishment lump sums for a stud welding subcontractor and are not transferable to general compound relocation; note also that 15a23...:t5:r33 has a null unit and appears to be a duplicate of the same item.",
+  "search_capture_for": "Preliminaries section: 'Site Accommodation', 'Site Huts', 'Site Offices', 'Lunchroom', 'Ablutions / portable toilet hire', 'Container hire', 'Storage container', 'Cabin delivery / uplift', 'Relocate on site'; also the full 'Preliminaries / Mobile Crane Hire' table (253b838a...:t9 rows other than r21) for crane hourly rates, mobilisation and minimum hire; and 'Temporary Services' for disconnect/reconnect of temporary power and water to relocated sheds.",
+  "note": "Fencing, delineation, signage and stockpile re-handle can all be built from this shortlist once the fence rate unit convention is settled, but a compound relocation sum is not credible without shed/container shift and craneage rates. Flag for the reviewer that the four fence rows at $2.90/m (install, dismantle, civil hire, and the two 3.50 hire bands) are suspiciously uniform and must be checked against the source table headings before any are stacked. All rates are the same in all three centres for the fence, crane-transport and stud-welding rows, i.e. no regional loading - confirm this is QV's convention and not a capture fill-down.",
+  "title": "Site establishment and compound relocation",
+  "claim_count": 8
+ }
+]

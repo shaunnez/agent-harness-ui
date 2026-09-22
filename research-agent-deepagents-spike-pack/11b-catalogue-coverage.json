@@ -1,0 +1,1733 @@
+[
+ {
+  "id": "retaining-wall-construction",
+  "bucket": "partial",
+  "rate_keys": [
+   "timber_pole_retaining_wall_1_2m",
+   "excavate_clay",
+   "bulk_clay",
+   "cart_clay",
+   "trench_excavate_clay",
+   "gap65_placed",
+   "bidim",
+   "clay_filling_compacted",
+   "drain_100"
+  ],
+  "missing": "No rate for a wall retaining up to 3m - the only wall rate is a timber pole wall limited to 1.2m retained height (pole size, embedment, concrete surrounds and reinforcement all change). Also no rate for an engineered foundation/pile or for a cantilever concrete/block alternative, and no surface finish rate to the exposed wall face.",
+  "claim_count": 29,
+  "title": "Retaining wall construction"
+ },
+ {
+  "id": "channel-drain-installation",
+  "bucket": "covered",
+  "rate_keys": [
+   "channel_100_commercial",
+   "drain_100",
+   "pipe_connection",
+   "drainlayer"
+  ],
+  "missing": "",
+  "claim_count": 23,
+  "title": "Channel drain installation to paving"
+ },
+ {
+  "id": "suspended-ceiling-tile-grid",
+  "bucket": "partial",
+  "rate_keys": [
+   "ceiling_grid_600",
+   "ceiling_tile_acoustic_1200"
+  ],
+  "missing": "Grid rate covers hangers, clips and edge trim only; no rate for seismic restraint/bracing (back-propping, braces, perimeter fixings) required by NZS 1170.5 / AS 1170 ceiling bracing, which is a material cost line in NZ.",
+  "claim_count": 19,
+  "title": "Suspended tile ceiling supply install"
+ },
+ {
+  "id": "mains-and-feeder-cable-install",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No cable rates at all - no supply/install rate for mains or sub-main cable of any size, no cable tray/ladder containment, no terminations, glands or switchboard connections. Only buried conduit (electrical_duct_50), trenching and an electrician hourly rate exist, which cannot carry the cost.",
+  "claim_count": 17,
+  "title": "Mains and feeder cable installation"
+ },
+ {
+  "id": "internal-doorset-supply-install",
+  "bucket": "partial",
+  "rate_keys": [
+   "single_fire_door_60",
+   "entrance_door_steel_faced",
+   "carpenter",
+   "painter"
+  ],
+  "missing": "No rate for a standard non-fire-rated internal doorset (hollow-core or solid-core leaf, timber or steel frame) and no variants for leaf height/width other than the 1980x810 fire doorset. Only the 1hr fire doorset and an external steel-faced entrance doorset are published.",
+  "claim_count": 14,
+  "title": "Internal doorset supply and install"
+ },
+ {
+  "id": "solar-mounting-structural-design",
+  "bucket": "partial",
+  "rate_keys": [
+   "dhs_250_15_purlin",
+   "dhs_300_18_purlin",
+   "rhs_minor",
+   "thrubolt_m16",
+   "steel_erector",
+   "steel_coating"
+  ],
+  "missing": "No rate for the proprietary PV mounting system itself (rails, roof clamps/brackets, ballast or ground-mount frames) and no rate for structural engineering design/PS1. Purlin replacement and minor RHS strengthening are the only supporting items available.",
+  "claim_count": 12,
+  "title": "Solar array mounting structural support"
+ },
+ {
+  "id": "acp-facade-cladding-install",
+  "bucket": "covered",
+  "rate_keys": [
+   "acm_reynobond",
+   "acm_alupanel_straight",
+   "acm_alupanel_curved",
+   "acm_cygnus_tile_panel",
+   "scaffold_week"
+  ],
+  "missing": "",
+  "claim_count": 10,
+  "title": "Aluminium composite panel cladding"
+ },
+ {
+  "id": "switchboard-fault-rating-protection",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No switchboard, distribution board, busbar or protective device (MCB/MCCB/ACB) rates exist, and nothing for fault level study or arc-flash/discrimination assessment. Only an electrician hourly rate is available.",
+  "claim_count": 9,
+  "title": "Switchboard fault rating and protection"
+ },
+ {
+  "id": "solar-connection-switchboard-works",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No switchboard or distribution board rates, no solar supply main switch, no PV isolator/metering or board upgrade items. Electrician hours alone cannot price this.",
+  "claim_count": 9,
+  "title": "Solar connection switchboard works"
+ },
+ {
+  "id": "facade-coating-application",
+  "bucket": "partial",
+  "rate_keys": [
+   "paint_acrylic_walls",
+   "paint_acrylic_ceilings",
+   "paint_metalwork_general",
+   "paint_prepare_plaster_walls",
+   "paint_roof_trapezoidal_full",
+   "paint_scaffold_6m_extra",
+   "scaffold_week",
+   "painter"
+  ],
+  "missing": "Access is only priced as an add for scaffolding not exceeding 6m (and a 4m mobile tower hire); no add or access rate for coating work between 6m and 10m. No dedicated exterior coating rate for bare/sealed precast concrete or for water-blasting/preparation of concrete and coated steel panel substrates.",
+  "claim_count": 9,
+  "title": "Facade and soffit coating"
+ },
+ {
+  "id": "glazed-vision-panel",
+  "bucket": "partial",
+  "rate_keys": [
+   "fire_rated_window_fixed",
+   "carpenter",
+   "painter"
+  ],
+  "missing": "No rate for forming a vision panel in a door leaf - cutting the aperture, lipping/liner, beads and glazing to a small (0.27m2) panel. The fire-rated fixed window rate is a wall window measured per m2 and no non-rated vision panel or safety-glass panel rate exists.",
+  "claim_count": 8,
+  "title": "Glazed vision panel to door"
+ },
+ {
+  "id": "site-establishment-relocation",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No preliminaries/site establishment rates at all - no temporary fencing or hoarding (supply, erect, shift), site sheds/containers, temporary services or stockpile area items. Only labourer and light truck hours exist, which would require inventing the entire scope.",
+  "claim_count": 8,
+  "title": "Site establishment and compound relocation"
+ },
+ {
+  "id": "door-hardware-sets",
+  "bucket": "partial",
+  "rate_keys": [
+   "ordinary_lockset",
+   "classroom_lockset",
+   "roller_door_electric_operator",
+   "carpenter"
+  ],
+  "missing": "Only two commercial locksets are published. No rates for hinges, door closers, panic/exit devices, pull handles, flush bolts, seals, kick plates, hold-opens, electric strikes/magnetic locks, or manual roller door locking hardware.",
+  "claim_count": 8,
+  "title": "Door hardware set installation"
+ },
+ {
+  "id": "concrete-paving-slab",
+  "bucket": "partial",
+  "rate_keys": [
+   "basecourse",
+   "basecourse_100mm_small_area",
+   "gap65_placed",
+   "under_slab_crushed_rock",
+   "joint_seal_10",
+   "topsoil_strip_150"
+  ],
+  "missing": "No rate for a ground-bearing reinforced concrete paving slab (100-200mm, mesh, edge formwork, falls, power float/broom finish). The only slab rates are suspended in-situ (suspended_slab_150) and Hibond, which carry formwork and propping costs that do not apply.",
+  "claim_count": 8,
+  "title": "External concrete paving and slabs"
+ },
+ {
+  "id": "metering-control-instrumentation-wiring",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No rate for control/instrumentation cable (multicore, screened, Cat-type), no field device terminations, no small containment (20-25mm conduit, tray, saddles). Only 50mm buried conduit, trenching and electrician hours exist - the cabling itself is unpriced.",
+  "claim_count": 7,
+  "title": "Metering and control wiring installation"
+ },
+ {
+  "id": "garden-bed-planting",
+  "bucket": "partial",
+  "rate_keys": [
+   "shrubs",
+   "topsoil_strip_150",
+   "labourer"
+  ],
+  "missing": "Only a shrub (incl. staking) rate exists. No rate for specimen/PB-size trees, no groundcover or plants per m2 rate, no imported garden-bed topsoil/soil conditioning by m3 or m2 (the loam rate is bundled inside the lawn item), and no plant establishment/maintenance period for beds.",
+  "claim_count": 7,
+  "title": "Garden bed planting installation"
+ },
+ {
+  "id": "steel-connection-fabrication",
+  "bucket": "partial",
+  "rate_keys": [
+   "rhs_minor",
+   "steel_erector",
+   "thrubolt_m16",
+   "steel_coating"
+  ],
+  "missing": "No per-connection fabrication rate (cleats, weld plates, gussets, site welding, bolt assemblies). Beam/column rates include connections in the member rate only; rhs_minor plus erector hours would have to be built up by assumption.",
+  "claim_count": 7,
+  "title": "Structural steel connection fabrication upgrades"
+ },
+ {
+  "id": "glass-kitchen-splashback",
+  "bucket": "partial",
+  "rate_keys": [
+   "wall_tile_medium_40",
+   "seratone_aqua_plus_1200",
+   "seratone_aqua_plus_900"
+  ],
+  "missing": "No rate for toughened back-painted glass splashback (supply, templating, cutouts, silicone fixing). Only the tiled/sheet-lining alternative is priceable.",
+  "claim_count": 7,
+  "title": "Glass splashback supply install"
+ },
+ {
+  "id": "internal-stud-partition-walls",
+  "bucket": "partial",
+  "rate_keys": [
+   "gib_standard_10_lined",
+   "gib_aqualine_10_lined",
+   "gib_fyreline_13_lined",
+   "gib_f5_extra",
+   "wall_insulation_r24_glasswool",
+   "noggings",
+   "skirting_cornice_painting"
+  ],
+  "missing": "No rate for the stud framing itself (timber or steel studs, tracks, head/base fixing) - only noggings/dwangs exist. Lining rates assume framing already present.",
+  "claim_count": 7,
+  "title": "Internal stud partition wall construction"
+ },
+ {
+  "id": "deflection-head-acoustic-seal",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No head-of-wall deflection detail rate: slip/deflection track, compressible acoustic seal, fire/acoustic head sealing per linear metre. joint_seal_10 is a concrete floor joint and is not equivalent.",
+  "claim_count": 7,
+  "title": "Deflection head and acoustic seal"
+ },
+ {
+  "id": "benchtop-and-laminate-panel",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No joinery benchtop or compact laminate panel rate (supply, cutouts, edging) - no cabinetry/joinery items in the catalogue at all.",
+  "claim_count": 6,
+  "title": "Benchtop and laminate panel"
+ },
+ {
+  "id": "network-supply-connection-hv-metering",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No supply-point connection, HV/LV metering unit, network/lines-company fee or energisation item. electrician hours alone cannot carry this.",
+  "claim_count": 6,
+  "title": "Network supply connection and metering"
+ },
+ {
+  "id": "sprinkler-system-installation",
+  "bucket": "partial",
+  "rate_keys": [
+   "exposed_sprinkler"
+  ],
+  "missing": "Only the exposed head assembly with 3m of pipe is rated. No valve set/alarm valve, main and distribution pipework and hangers, flow switches, or system commissioning/certification rate; no per-m2 system rate.",
+  "claim_count": 6,
+  "title": "Fire sprinkler system installation"
+ },
+ {
+  "id": "interior-finishes-to-schedule",
+  "bucket": "partial",
+  "rate_keys": [
+   "wall_tile_medium_40",
+   "carpet_tile_nylon_xhd",
+   "carpet_tile_polypropylene",
+   "vinyl_sheet_commercial_mid",
+   "vinyl_safety_sheet_titan",
+   "vinyl_skirting_150",
+   "paint_acrylic_walls",
+   "paint_acrylic_ceilings",
+   "gib_standard_10_lined",
+   "seratone_aqua_plus_1200"
+  ],
+  "missing": "Common wall/floor finishes are rated, but the undefined 'feature finishes' element (timber/veneer panelling, acoustic wall panels, decorative films, specialist linings) has no rate; a lump sum could not be built without inventing it.",
+  "claim_count": 6,
+  "title": "Interior finishes to schedule"
+ },
+ {
+  "id": "subgrade-prep-basecourse-replacement",
+  "bucket": "covered",
+  "rate_keys": [
+   "excavate_clay",
+   "cart_clay",
+   "gap65_placed",
+   "bulk_clay",
+   "basecourse",
+   "basecourse_100mm_small_area"
+  ],
+  "missing": "",
+  "claim_count": 6,
+  "title": "Subgrade preparation and basecourse replacement"
+ },
+ {
+  "id": "industrial-roller-doors",
+  "bucket": "partial",
+  "rate_keys": [
+   "roller_door_industrial",
+   "roller_shutter_slat",
+   "roller_door_electric_operator"
+  ],
+  "missing": "Published rates are limited to 2.7-4.0m leaf sizes, so a 5x5m opening is outside the range; no rate at all for high-speed fabric or other specialist door types, or for commissioning of such units.",
+  "claim_count": 5,
+  "title": "Industrial roller and specialist doors"
+ },
+ {
+  "id": "joinery-finishing-painting",
+  "bucket": "partial",
+  "rate_keys": [
+   "paint_acrylic_walls",
+   "paint_metalwork_general",
+   "painter",
+   "paint_prepare_plaster_walls"
+  ],
+  "missing": "No rate for painting/enamel to timber joinery, nor for stain or clear lacquer systems; the available rates are for plasterboard walls/ceilings and general metalwork.",
+  "claim_count": 5,
+  "title": "Joinery finishing and painting"
+ },
+ {
+  "id": "emergency-lighting-exit-signage",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No luminaire, emergency light, exit sign, or lighting circuit rates; no AS/NZS 2293 testing/certification item. Only generic electrician hours exist.",
+  "claim_count": 5,
+  "title": "Emergency lighting and exit signage"
+ },
+ {
+  "id": "site-electrical-reticulation",
+  "bucket": "partial",
+  "rate_keys": [
+   "electrical_duct_50",
+   "service_trench",
+   "electrician",
+   "excavate_clay",
+   "cart_clay"
+  ],
+  "missing": "Trenching and 50mm conduit are covered, but there is no rate for cable supply and pulling, draw pits/chambers, distribution boards, site switchgear, external lighting or termination - the bulk of the reticulation cost.",
+  "claim_count": 5,
+  "title": "Site electrical reticulation and services"
+ },
+ {
+  "id": "data-rack-and-network-hardware",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No communications rack, patch panel, switch, or structured cabling/termination rates exist.",
+  "claim_count": 5,
+  "title": "Data rack and network hardware"
+ },
+ {
+  "id": "perimeter-fencing-supply-install",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No fencing rate of any kind (mesh or palisade fencing per metre, posts and footings, pedestrian gates). security_grille_mesh is a bolted window/opening grille, not perimeter fencing.",
+  "claim_count": 5,
+  "title": "Perimeter security fencing supply install"
+ },
+ {
+  "id": "landscape-irrigation-system",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No irrigation components at all - pop-up sprinklers, dripline, laterals, solenoid valves, controller, backflow prevention and connection. service_trench could cover only the minor trenching element.",
+  "claim_count": 5,
+  "title": "Landscape irrigation system installation"
+ },
+ {
+  "id": "steel-framing-purlins-bracing",
+  "bucket": "covered",
+  "rate_keys": [
+   "steel_beam_200ub25",
+   "steel_beam_310ub40",
+   "steel_beam_410ub54",
+   "steel_column_150uc37",
+   "steel_column_200uc60",
+   "dhs_250_15_purlin",
+   "dhs_300_18_purlin",
+   "rhs_minor",
+   "thrubolt_m16",
+   "steel_erector",
+   "steel_coating"
+  ],
+  "missing": "",
+  "claim_count": 5,
+  "title": "Primary steel framing and purlins"
+ },
+ {
+  "id": "access-platforms-support-steel",
+  "bucket": "partial",
+  "rate_keys": [
+   "ladder_galvanised",
+   "handrail_moddex_ar150",
+   "handrail_aluminium",
+   "balustrade_tubular_galv",
+   "rhs_minor",
+   "thrubolt_m16",
+   "steel_erector",
+   "steel_coating"
+  ],
+  "missing": "No rate for walkway/platform decking (steel grating, mesh or checker plate) or proprietary roof walkway systems; no rate for services support hangers/unistrut framing.",
+  "claim_count": 5,
+  "title": "Access platforms and support steel"
+ },
+ {
+  "id": "slab-redesign-reinforcement",
+  "bucket": "partial",
+  "rate_keys": [
+   "suspended_slab_150",
+   "hibond_110_slab",
+   "under_slab_crushed_rock",
+   "gap65_placed",
+   "basecourse"
+  ],
+  "missing": "No slab-on-grade (ground floor slab) rate with DPM, mesh/reinforcement variation or power float; no under-slab rigid insulation rate for coldstore build-up; no separate reinforcement rate per kg or per tonne.",
+  "claim_count": 5,
+  "title": "Slab redesign and reinforcement change"
+ },
+ {
+  "id": "polished-concrete-floor-finish",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No grinding/honing/polishing, densifier, sealer or dye rates for concrete floor finishes.",
+  "claim_count": 5,
+  "title": "Polished concrete floor finish"
+ },
+ {
+  "id": "locker-supply-install",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No locker/joinery unit supply and install rate; only peripheral items (noggings, carpenter hours) exist, which do not carry the cost.",
+  "claim_count": 5,
+  "title": "Locker supply and installation"
+ },
+ {
+  "id": "tenant-signage-fabrication",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No signage fabrication, graphics, substrate or sign installation rates.",
+  "claim_count": 5,
+  "title": "Tenant signage fabrication and installation"
+ },
+ {
+  "id": "distribution-board-supply-install",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No distribution board, chassis, MCB/RCD or board wiring and labelling rates; only electrician hourly attendance exists.",
+  "claim_count": 4,
+  "title": "Distribution board supply and install"
+ },
+ {
+  "id": "led-high-bay-luminaire",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No luminaire supply/install rate (high bay or otherwise) and no lighting circuit/cabling rate; only electrician hours and scaffold hire.",
+  "claim_count": 4,
+  "title": "LED high bay luminaire installation"
+ },
+ {
+  "id": "drainage-point-relocation",
+  "bucket": "partial",
+  "rate_keys": [
+   "pipe_connection",
+   "drain_100",
+   "waste_vent_pvc_100",
+   "gully_trap_100",
+   "service_trench",
+   "drainlayer"
+  ],
+  "missing": "No rate for saw-cutting/breaking out and reinstating an existing concrete slab or hardstanding for the in-slab portion; no rate for capping/abandoning the redundant point.",
+  "claim_count": 4,
+  "title": "Drainage point relocation and adjustment"
+ },
+ {
+  "id": "telecom-pit-installation",
+  "bucket": "partial",
+  "rate_keys": [
+   "service_trench",
+   "electrical_duct_50",
+   "excavate_clay",
+   "gap65_placed"
+  ],
+  "missing": "No rate for a precast telecommunications/service pit chamber and trafficable lid and frame (manhole_ring is only an adjustment ring).",
+  "claim_count": 4,
+  "title": "Telecommunications pit installation"
+ },
+ {
+  "id": "sprinkler-hydraulic-design",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No professional fee rates for fire engineering or sprinkler hydraulic design; exposed_sprinkler carries installation only.",
+  "claim_count": 4,
+  "title": "Sprinkler hydraulic design and calculation"
+ },
+ {
+  "id": "fire-alarm-panel-cabling",
+  "bucket": "partial",
+  "rate_keys": [
+   "fire_board",
+   "smoke_detector",
+   "fire_bell",
+   "electrician"
+  ],
+  "missing": "No rate for an addressable FACP/FIP upgrade to an existing system, relay/interface modules or tie-in/interface cabling per metre to other building services.",
+  "claim_count": 4,
+  "title": "Fire alarm panel and cabling"
+ },
+ {
+  "id": "acoustic-baffle-ceiling",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No acoustic baffle/blade/raft supply or suspension rate; grid and tile ceiling rates are a different product class.",
+  "claim_count": 4,
+  "title": "Acoustic baffle ceiling installation"
+ },
+ {
+  "id": "extract-supply-fan-ductwork",
+  "bucket": "partial",
+  "rate_keys": [
+   "axial_fan",
+   "spiral_duct",
+   "electrician"
+  ],
+  "missing": "No rates for duct bends, transitions, flexible connections, dampers, grilles/weather cowls, roof-mounted fan and curb, or controls wiring/commissioning.",
+  "claim_count": 4,
+  "title": "Fan and ductwork installation"
+ },
+ {
+  "id": "mechanical-plant-relocation",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No disconnect/reconnect, plant handling, refrigerant pipework or re-commissioning rates; no mechanical fitter hourly rate (only electrician).",
+  "claim_count": 4,
+  "title": "Relocation of mechanical plant"
+ },
+ {
+  "id": "fall-arrest-anchor-system",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No fall arrest anchor point, static line, roof structural fixing or load testing/certification rates; thrubolt_m16 alone does not carry the cost.",
+  "claim_count": 4,
+  "title": "Roof fall arrest anchor system"
+ },
+ {
+  "id": "form-ventilation-opening-fabric",
+  "bucket": "partial",
+  "rate_keys": [
+   "carpenter",
+   "labourer",
+   "noggings",
+   "painter",
+   "scaffold_week"
+  ],
+  "missing": "No rate for cutting/forming an opening through existing wall or roof fabric, no lintel/trimmer member rate, and no stand-alone folded flashing/weatherproofing rate (flashings only appear bundled inside new roof sheet rates); make-good of cladding/lining around the opening also unpriced.",
+  "claim_count": 4,
+  "title": "Form ventilation opening in fabric"
+ },
+ {
+  "id": "settlement-monitoring-installation",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No rates for settlement plates/monitoring instrumentation, installation boreholes, or baseline and periodic survey readings; needs specialist geotechnical/survey quotation.",
+  "claim_count": 3,
+  "title": "Settlement monitoring installation and surveys"
+ },
+ {
+  "id": "earthing-system-and-conductors",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No rates for earthing conductors (per m), earth electrodes/rods, earth bars, bonding connections or communications earth cabling. Only electrician person-hours and a 50mm buried conduit exist, which do not carry the substance of the work.",
+  "claim_count": 3,
+  "title": "Earthing system and conductor installation"
+ },
+ {
+  "id": "main-switchboard-transformer-works",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No rates for main switchboard supply/install, transformer, HV/LV cabling, shutdown, changeover or re-energisation. Only electrician person-hour attendance exists; needs electrical subcontract pricing.",
+  "claim_count": 3,
+  "title": "Main switchboard and transformer works"
+ },
+ {
+  "id": "ev-charge-point-install",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No rate for AC/DC EV charger unit, mounting pedestal, dedicated circuit/submain cabling, protective devices, load management or commissioning. Only electrician hours and 50mm buried conduit exist.",
+  "claim_count": 3,
+  "title": "EV charge point installation"
+ },
+ {
+  "id": "security-cctv-access-control",
+  "bucket": "partial",
+  "rate_keys": [
+   "intruder_panel",
+   "intruder_expansion",
+   "intruder_detector",
+   "intruder_internal_sounder",
+   "intruder_external_sounder",
+   "intruder_commission",
+   "electrician",
+   "electrical_duct_50",
+   "concrete_hole"
+  ],
+  "missing": "No rates for CCTV cameras, NVR/head-end and monitors, access control readers/controllers, electric strikes or maglocks and door hardware interfaces, or the structured data/security cabling per point.",
+  "claim_count": 3,
+  "title": "Security CCTV and access control"
+ },
+ {
+  "id": "turf-supply-installation",
+  "bucket": "covered",
+  "rate_keys": [
+   "lawn",
+   "topsoil_strip_150",
+   "labourer"
+  ],
+  "missing": "",
+  "claim_count": 3,
+  "title": "Turf supply and installation"
+ },
+ {
+  "id": "stormwater-line-upsizing",
+  "bucket": "partial",
+  "rate_keys": [
+   "drain_100",
+   "service_trench",
+   "pipe_connection",
+   "trench_excavate_clay",
+   "cart_clay",
+   "drainlayer",
+   "gap65_placed"
+  ],
+  "missing": "Only a 100mm drainage assembly exists, so no rate for the upsized diameters (150/225/300mm) needed to establish the rate difference; no rates for larger fittings/junctions or for forming and sealing an enlarged tank inlet/outlet penetration.",
+  "claim_count": 3,
+  "title": "Stormwater pipe and outlet resizing"
+ },
+ {
+  "id": "stormwater-detention-tank",
+  "bucket": "partial",
+  "rate_keys": [
+   "excavate_clay",
+   "bulk_clay",
+   "cart_clay",
+   "gap65_placed",
+   "clay_filling_compacted",
+   "drain_100",
+   "pipe_connection",
+   "gully_trap_100",
+   "drainlayer",
+   "bidim"
+  ],
+  "missing": "No rate for the buried detention/storage tank itself (proprietary tank or modular cell system up to 30,000 L), nor for anti-flotation slab/strapping, access risers/lids or trafficable cover slab. The tank supply is the dominant cost and must be quoted.",
+  "claim_count": 3,
+  "title": "Underground stormwater tank installation"
+ },
+ {
+  "id": "slab-edge-joint-detailing",
+  "bucket": "partial",
+  "rate_keys": [
+   "joint_seal_10",
+   "suspended_slab_150",
+   "carpenter",
+   "labourer"
+  ],
+  "missing": "No linear-metre rate for slab edge rebate formwork, thickened/widened edge beams at penetrations, or saw-cut/dowelled construction and control joint formation (only the sealant to a 10mm joint is priced, and chase cutting is excluded).",
+  "claim_count": 3,
+  "title": "Slab edge and joint detailing"
+ },
+ {
+  "id": "fire-pump-set",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No rates for diesel or electric fire pump sets, pump controllers, suction/discharge pipework and valve sets, or flow testing and commissioning; needs fire services subcontract quotation.",
+  "claim_count": 3,
+  "title": "Fire pump set and testing"
+ },
+ {
+  "id": "fire-pump-room-build",
+  "bucket": "partial",
+  "rate_keys": [
+   "block_wall_200_solid",
+   "block_wall_150_solid",
+   "precast_wall_panel_150",
+   "roof_sheet_corrugate_055",
+   "roof_sheet_highrib_055",
+   "single_fire_door_60",
+   "trench_excavate_clay",
+   "under_slab_crushed_rock",
+   "gap65_placed",
+   "service_trench",
+   "electrical_duct_50",
+   "electrician",
+   "drainlayer"
+  ],
+  "missing": "No slab-on-grade rate (only suspended/Hibond slabs), no rate for footings/foundation to the enclosure, no louvre or ventilation grille rate, and no rates for incoming power, water and drainage service connections/terminations to the plant room.",
+  "claim_count": 3,
+  "title": "Fire pump room construction"
+ },
+ {
+  "id": "fire-water-storage-tank",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No rate for a dedicated fire water storage tank (bolted/concrete/poly), its ring base or slab, inlet/outlet assemblies, level controls or trim; only generic excavation and drainage items exist, which do not carry the cost.",
+  "claim_count": 3,
+  "title": "Fire water storage tank"
+ },
+ {
+  "id": "site-water-main-and-meter-connection",
+  "bucket": "partial",
+  "rate_keys": [
+   "water_supply_pvc_50",
+   "service_trench",
+   "trench_excavate_clay",
+   "gap65_placed",
+   "clay_filling_compacted",
+   "drainlayer"
+  ],
+  "missing": "No rates for water main above 50mm (63/75/100mm PE or PVC), no water meter assembly/manifold with backflow prevention, no network authority connection/tapping or valve and hydrant fittings, and no chlorination, disinfection or pressure testing rate.",
+  "claim_count": 3,
+  "title": "Site water main and meter"
+ },
+ {
+  "id": "roof-flashings-and-gutter-trims",
+  "bucket": "partial",
+  "rate_keys": [
+   "eaves_gutter_175_box",
+   "downpipe_100_round",
+   "scaffold_week",
+   "labourer"
+  ],
+  "missing": "No stand-alone rate for folded/fabricated flashings, cappings, ridge, apron and barge trims per linear metre to an existing roof \u2014 flashing is only an allowance of 0.1m per m2 inside new roof sheeting rates; also no rate for stripping/removing existing flashings.",
+  "claim_count": 3,
+  "title": "Metal flashing and gutter fabrication"
+ },
+ {
+  "id": "roof-access-walkways-ladders",
+  "bucket": "partial",
+  "rate_keys": [
+   "ladder_galvanised",
+   "handrail_moddex_ar150",
+   "balustrade_tubular_galv",
+   "balustrade_moddex_cb10",
+   "thrubolt_m16",
+   "steel_erector"
+  ],
+  "missing": "No rate for proprietary roof walkway/mesh platform systems with roof-mounted brackets and non-penetrating or flashed fixings, nor for ladder safety cages/landing platforms or anchor/static line points.",
+  "claim_count": 3,
+  "title": "Roof access walkway and ladder"
+ },
+ {
+  "id": "condensate-drainage-works",
+  "bucket": "partial",
+  "rate_keys": [
+   "waste_vent_pvc_100",
+   "water_pipe_copper_20",
+   "drainlayer",
+   "gully_trap_100"
+  ],
+  "missing": "No rate for small-bore (20-40mm) condensate pipework, tundish, trap or insulation of condensate lines; only 100mm SWV and 20mm copper water pipe exist, which are the wrong size/class. Tundish assembly must be sourced externally.",
+  "claim_count": 3,
+  "title": "Condensate drainage and tundish"
+ },
+ {
+  "id": "coordination-of-others-installations",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No preliminaries, attendance, programming or main contractor coordination/interface rates in the catalogue; requires P&G build-up or percentage allowance from an outside source.",
+  "claim_count": 3,
+  "title": "Coordination of others' installations"
+ },
+ {
+  "id": "protective-coating-structural",
+  "bucket": "partial",
+  "rate_keys": [
+   "steel_coating",
+   "paint_metalwork_general",
+   "steel_beam_galvanising",
+   "painter",
+   "paint_scaffold_6m_extra"
+  ],
+  "missing": "Structural steel coating is covered (blast + epoxy zinc primer + high-build epoxy), but there is no protective/anti-carbonation coating rate for exposed concrete surfaces (paint_acrylic_walls is a plasterboard-grade acrylic finish, not a protective system), and no urethane/topcoat finish rate.",
+  "claim_count": 3,
+  "title": "Protective coating to structural elements"
+ },
+ {
+  "id": "geotech-testing-compaction-certification",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No rates for NDM/CBR/Scala testing, proof rolling, laboratory testing or engineer's compaction certification; needs geotechnical consultant/testing lab pricing.",
+  "claim_count": 2,
+  "title": "Geotechnical testing and compaction certification"
+ },
+ {
+  "id": "exterior-aluminium-joinery",
+  "bucket": "covered",
+  "rate_keys": [
+   "window_alum_dg_fixed",
+   "window_alum_dg_opening",
+   "window_alum_sg_fixed",
+   "window_resi_dg_r046",
+   "shopfront_8mm_toughened",
+   "shopfront_8mm_float",
+   "entrance_door_steel_faced",
+   "auto_sliding_door_single",
+   "auto_sliding_door_biparting"
+  ],
+  "missing": "",
+  "claim_count": 2,
+  "title": "Exterior window and door joinery"
+ },
+ {
+  "id": "kitchen-bathroom-fixtures",
+  "bucket": "partial",
+  "rate_keys": [
+   "basin_wall_mercer",
+   "wc_pan_floor_caroma",
+   "wc_pan_floor_dux",
+   "urinal_single_push",
+   "carpenter"
+  ],
+  "missing": "No rates for kitchen joinery/cabinetry, benchtops, sink bowls, tapware sets, cabinet hardware/handles, or bathroom accessories (mirrors, rails, dispensers); sanitaryware only is priced.",
+  "claim_count": 2,
+  "title": "Kitchen and bathroom fixture fitout"
+ },
+ {
+  "id": "lighting-control-daylight-upgrade",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No rates for occupancy/daylight sensors, DALI or relay controllers, control cabling or lighting control commissioning; only an hourly electrician exists, which cannot carry equipment cost.",
+  "claim_count": 2,
+  "title": "Lighting control system upgrade"
+ },
+ {
+  "id": "generator-supply-test-commission",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No generator supply/hire, connection, load-bank testing, fuel or commissioning rates; requires supplier quotation.",
+  "claim_count": 2,
+  "title": "Generator provision testing and commissioning"
+ },
+ {
+  "id": "led-strip-lighting",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No luminaire rates of any type (LED strip/batten, suspension, final connection); requires external electrical rates.",
+  "claim_count": 2,
+  "title": "LED strip lighting supply install"
+ },
+ {
+  "id": "general-light-fitting-and-cabling",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No light fitting, final circuit cabling or accessory rates; catalogue contains no lighting or power reticulation items beyond buried conduit and an electrician hour.",
+  "claim_count": 2,
+  "title": "General light fitting and cabling"
+ },
+ {
+  "id": "photovoltaic-array-installation",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No PV module, mounting rail, DC string cabling or inverter rates; requires specialist supplier pricing.",
+  "claim_count": 2,
+  "title": "Photovoltaic array supply and install"
+ },
+ {
+  "id": "cable-and-switchboard-upsizing",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No cable supply/install rates by size and no switchboard or protective device rates, so no differential can be built; electrical_duct_50 covers conduit only.",
+  "claim_count": 2,
+  "title": "Cable upsizing for voltage drop"
+ },
+ {
+  "id": "digital-print-panel-finish",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No rate for digital printing, artwork setout or protective clear coating to panels; specialist supplier quotation required.",
+  "claim_count": 2,
+  "title": "Digital print panel finish"
+ },
+ {
+  "id": "glass-manifestation-application",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No rate for vinyl/frosted film manifestation supply, setout or application to glazing; requires signage/film subcontractor pricing.",
+  "claim_count": 2,
+  "title": "Glass manifestation to glazing"
+ },
+ {
+  "id": "facade-sealant-weatherproofing",
+  "bucket": "covered",
+  "rate_keys": [
+   "joint_seal_10",
+   "painter"
+  ],
+  "missing": "",
+  "claim_count": 2,
+  "title": "Facade and window sealant joints"
+ },
+ {
+  "id": "insulated-panel-penetration-seal",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No rate for cutting, trimming, flashing and sealing penetrations through insulated sandwich panels or making good the panel facing; retrofit_collar (fire collar to PVC pipe) and concrete_hole are different work classes.",
+  "claim_count": 2,
+  "title": "Insulated panel service penetrations"
+ },
+ {
+  "id": "vehicle-gate-and-automation",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No rate for vehicular sliding/swing gate leaf, track, posts, gate motor/controller or its power supply connection; only generic electrician hours exist, which cannot carry the gate hardware cost.",
+  "claim_count": 2,
+  "title": "Vehicle gate and automation"
+ },
+ {
+  "id": "kerb-and-mowing-strip",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No precast or in-situ concrete kerb/channel or mowing strip rate (per m), including bedding, haunching and jointing. Earthworks rates alone do not carry the item.",
+  "claim_count": 2,
+  "title": "Concrete kerb and mowing strip"
+ },
+ {
+  "id": "external-paving-and-signage",
+  "bucket": "partial",
+  "rate_keys": [
+   "topsoil_strip_150",
+   "excavate_clay",
+   "cart_clay",
+   "basecourse_100mm_small_area",
+   "basecourse",
+   "gap65_placed",
+   "asphalt"
+  ],
+  "missing": "No rate for unit paver, exposed aggregate or applied decorative surface finishes (asphalt is a different finish class), and no rate for wayfinding/site signage supply and installation.",
+  "claim_count": 2,
+  "title": "External paving and signage"
+ },
+ {
+  "id": "external-siteworks-scope-split",
+  "bucket": "partial",
+  "rate_keys": [
+   "topsoil_strip_150",
+   "excavate_clay",
+   "bulk_clay",
+   "cart_clay",
+   "clay_filling_compacted",
+   "service_trench",
+   "drain_100",
+   "channel_100_commercial",
+   "gap65_placed",
+   "basecourse",
+   "asphalt",
+   "lawn",
+   "shrubs"
+  ],
+  "missing": "Backbone earthworks, drainage and surfacing rates exist, but there is no rate covering boundary-strip items such as kerbing, fencing or the lump-sum scope-transfer/preliminaries content; quantities within the strip are undefined.",
+  "claim_count": 2,
+  "title": "External siteworks scope reallocation"
+ },
+ {
+  "id": "bollards-and-impact-barriers",
+  "bucket": "partial",
+  "rate_keys": [
+   "rhs_minor",
+   "steel_coating",
+   "thrubolt_m16",
+   "concrete_hole"
+  ],
+  "missing": "No proprietary fixed/removable bollard or vehicle impact barrier rate; no core drilling beyond 24mm/100mm, no footing excavation/concrete fill or hardstand reinstatement rate.",
+  "claim_count": 2,
+  "title": "Bollards and impact barriers"
+ },
+ {
+  "id": "manhole-lid-level-adjust",
+  "bucket": "partial",
+  "rate_keys": [
+   "manhole_ring",
+   "drainlayer",
+   "labourer",
+   "asphalt"
+  ],
+  "missing": "Source excludes frame lift/reset and surface reinstatement; no rate for removing and re-bedding the existing lid and frame or for mortar bedding works.",
+  "claim_count": 2,
+  "title": "Manhole lid level adjustment"
+ },
+ {
+  "id": "plinths-and-cover-slabs",
+  "bucket": "partial",
+  "rate_keys": [
+   "suspended_slab_150",
+   "insitu_wall_150",
+   "carpenter",
+   "labourer"
+  ],
+  "missing": "No rate for small isolated in-situ reinforced concrete plinths/pads or pit cover slabs (high formwork-to-volume ratio), and no cast-in fixing/holding-down bolt rate.",
+  "claim_count": 2,
+  "title": "Equipment plinths and cover slabs"
+ },
+ {
+  "id": "timber-treatment-hazard-upgrade",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No structural timber supply rate per m3 and no treatment hazard class (H1.2/H3.2/H4/H5) cost differential; noggings rate is a linear installed item only.",
+  "claim_count": 2,
+  "title": "Timber treatment hazard class upgrade"
+ },
+ {
+  "id": "crash-rail-pedestrian-barrier",
+  "bucket": "partial",
+  "rate_keys": [
+   "balustrade_tubular_galv",
+   "balustrade_moddex_cb10",
+   "rhs_minor",
+   "steel_coating",
+   "thrubolt_m16"
+  ],
+  "missing": "No impact-rated crash rail or vehicle guard barrier rate (heavier section, impact-resistant base plates/footings); pedestrian balustrade rates understate the duty.",
+  "claim_count": 2,
+  "title": "Crash rails and pedestrian barriers"
+ },
+ {
+  "id": "concrete-hardstand-ramp",
+  "bucket": "partial",
+  "rate_keys": [
+   "excavate_clay",
+   "cart_clay",
+   "gap65_placed",
+   "basecourse",
+   "under_slab_crushed_rock",
+   "labourer"
+  ],
+  "missing": "No reinforced concrete slab-on-grade rate (available slab rates are suspended/Hibond), no kerb edge rate and no non-slip/broomed ramp surface finish rate.",
+  "claim_count": 2,
+  "title": "Concrete hardstand ramp construction"
+ },
+ {
+  "id": "site-survey-setout",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No professional/consultant fee rate for licensed surveyor attendance, setout, levels or as-built plan.",
+  "claim_count": 2,
+  "title": "Site survey and setout"
+ },
+ {
+  "id": "foam-suppression-system",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No foam concentrate tank, proportioner, foam-compatible discharge device or system pipework rates; exposed_sprinkler is a water sprinkler head only and does not represent foam system cost.",
+  "claim_count": 2,
+  "title": "Foam suppression system installation"
+ },
+ {
+  "id": "water-pressure-booster-pump-set",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No packaged booster pump set, pressure vessel, control panel or pump commissioning rate; only pipework and hourly labour exist, which cannot carry the plant cost.",
+  "claim_count": 2,
+  "title": "Water pressure booster pump set"
+ },
+ {
+  "id": "ceiling-perimeter-seismic-detail",
+  "bucket": "partial",
+  "rate_keys": [
+   "ceiling_grid_600",
+   "ceiling_tile_acoustic_1200",
+   "ceiling_concealed_grid_gib"
+  ],
+  "missing": "No linear-metre rate for perimeter shadowline angle, seismic movement/clearance gap detailing, back-bracing or trim at columns and penetrations; grid rate includes only standard edge trim.",
+  "claim_count": 2,
+  "title": "Ceiling perimeter trim seismic detailing"
+ },
+ {
+  "id": "vinyl-coving-cove-capping",
+  "bucket": "partial",
+  "rate_keys": [
+   "vinyl_skirting_150",
+   "vinyl_sheet_commercial_mid",
+   "vinyl_safety_sheet_titan"
+  ],
+  "missing": "No rate for coved (set-up) vinyl skirting including cove former fillet, aluminium/PVC capping strip and hot-welded internal/external junctions; flat vinyl skirting rate understates this.",
+  "claim_count": 2,
+  "title": "Vinyl coving and cove capping"
+ },
+ {
+  "id": "carpet-tile-flooring",
+  "bucket": "covered",
+  "rate_keys": [
+   "carpet_tile_nylon_xhd",
+   "carpet_tile_polypropylene",
+   "labourer"
+  ],
+  "missing": "",
+  "claim_count": 2,
+  "title": "Carpet tile supply and lay"
+ },
+ {
+  "id": "interior-painting-application",
+  "bucket": "covered",
+  "rate_keys": [
+   "paint_acrylic_walls",
+   "paint_acrylic_ceilings",
+   "paint_prepare_plaster_walls",
+   "paint_scaffold_6m_extra"
+  ],
+  "missing": "",
+  "claim_count": 2,
+  "title": "Interior painting to walls ceilings"
+ },
+ {
+  "id": "service-roof-penetrations",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No rate for forming/trimming/flashing a roof penetration; roof sheeting rates only carry 0.1m generic flashing per m2 and there is no proprietary penetration flashing (Dektite/soaker), trimming or weatherproofing item. Needs supplier/first-principles build-up.",
+  "claim_count": 2,
+  "title": "Framed and flashed roof penetrations"
+ },
+ {
+  "id": "mechanical-plant-seismic-restraint",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No seismic restraint bracket/brace assembly rate. Only anchor components exist (thrubolt_m16, concrete_hole); restraint steel, cable/strut kits, engineering design and certification to NZS 1170.5 all unpriced.",
+  "claim_count": 2,
+  "title": "Seismic restraint to mechanical plant"
+ },
+ {
+  "id": "low-level-air-inlet-install",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No grille/louvre rate (frame, blades, insect mesh) and no wall opening/make-good item. spiral_duct only covers a short straight spigot, which is not the cost driver.",
+  "claim_count": 2,
+  "title": "Low level air inlet installation"
+ },
+ {
+  "id": "process-plant-room-install",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No mechanical plant set-down/installation, alignment, service connection or pre-commissioning rate for compressors or process equipment.",
+  "claim_count": 2,
+  "title": "Compressor and process plant installation"
+ },
+ {
+  "id": "embedded-heating-pipework",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No underfloor/buried heating pipe (PEX/PE-RT) per m2 or per m rate, no clipping, insulation, manifold or pressure-test items. water_pipe_copper_20 is a different service and configuration.",
+  "claim_count": 2,
+  "title": "Underfloor and underground heating pipework"
+ },
+ {
+  "id": "temporary-site-perimeter-fencing",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No temporary fencing supply/hire/erect/remove, gates, bracing or shade cloth rate.",
+  "claim_count": 2,
+  "title": "Temporary site perimeter fencing"
+ },
+ {
+  "id": "extended-preliminaries-delayed-possession",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No time-related preliminaries/site establishment or weekly on-site overhead rate. scaffold_week and light_truck_hour are isolated plant hires only, not prelims.",
+  "claim_count": 2,
+  "title": "Extended preliminaries for delayed possession"
+ },
+ {
+  "id": "lime-cement-subgrade-stabilisation",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No in-situ lime/cement stabilisation rate (binder supply, spreading, rotary mixing, compaction, curing). Aggregate rates (gap65_placed, basecourse) are a different work class.",
+  "claim_count": 1,
+  "title": "Lime cement subgrade stabilisation"
+ },
+ {
+  "id": "topsoil-stockpile-handling",
+  "bucket": "partial",
+  "rate_keys": [
+   "topsoil_strip_150",
+   "labourer",
+   "light_truck_hour",
+   "bulk_clay"
+  ],
+  "missing": "Strip and stockpile is covered (m2 basis only, needs conversion to m3), but no rate for double-handling/rehandling stockpiled topsoil, stockpile maintenance or erosion/sediment control.",
+  "claim_count": 1,
+  "title": "Topsoil stripping stockpiling and rehandling"
+ },
+ {
+  "id": "contaminated-soil-removal",
+  "bucket": "partial",
+  "rate_keys": [
+   "excavate_clay",
+   "bulk_clay",
+   "cart_clay",
+   "light_truck_hour",
+   "labourer"
+  ],
+  "missing": "Excavation and cartage backbone exists, but no rates for contaminated classification/validation sampling, segregation and stockpile containment, licensed landfill acceptance/disposal fees, or hazardous-material handling and PPE/controls loading on the excavation.",
+  "claim_count": 1,
+  "title": "Contaminated soil removal and disposal"
+ },
+ {
+  "id": "rigid-inclusion-ground-improvement",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No ground improvement column (rigid inclusion / stone or grout column) rate, no specialist rig mobilisation, spoil handling or load transfer platform item.",
+  "claim_count": 1,
+  "title": "Rigid inclusion ground improvement"
+ },
+ {
+  "id": "dock-leveller-and-shelter",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No dock leveller, dock shelter/seal, bumpers or commissioning rate; nothing in the catalogue is the right item class.",
+  "claim_count": 1,
+  "title": "Dock leveller and shelter"
+ },
+ {
+  "id": "builders-work-electrical-interface",
+  "bucket": "partial",
+  "rate_keys": [
+   "concrete_hole",
+   "retrofit_collar",
+   "electrical_duct_50",
+   "carpenter",
+   "labourer",
+   "painter",
+   "electrician"
+  ],
+  "missing": "Small fixing holes and 100mm PVC collars are covered, but no rate for large-diameter core drilling (>24mm dia / >100mm deep), chasing masonry or concrete, cutting openings in existing linings, generic fire-stopping of cable/mixed penetrations, or patch/make-good of linings and finishes.",
+  "claim_count": 1,
+  "title": "Builders work for electrical services"
+ },
+ {
+  "id": "door-track-hood-fabrication",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No folded/pressed sheet metal fabrication rate (hood, brackets, flashing and finish). rhs_minor and steel_coating are hot-rolled section and protective coating rates, not light-gauge folded metalwork.",
+  "claim_count": 1,
+  "title": "Door track hood fabrication"
+ },
+ {
+  "id": "cladding-insulation-spec-upgrade",
+  "bucket": "partial",
+  "rate_keys": [
+   "eifs_insulclad_60",
+   "acm_reynobond",
+   "acm_alupanel_straight",
+   "wall_insulation_r24_glasswool",
+   "wall_batten_50x25"
+  ],
+  "missing": "Base wall systems and R2.4 wall insulation exist, but no rates for the upgraded insulation thicknesses/types (e.g. thicker polystyrene than 60mm, higher R-value or rigid board), no thermal-break/extended cavity batten or longer fixing components, and no published differential (add-extra) rate, so the delta would have to be invented.",
+  "claim_count": 1,
+  "title": "Cladding insulation specification upgrade"
+ },
+ {
+  "id": "irrigation-controller-relocation",
+  "bucket": "partial",
+  "rate_keys": [
+   "electrician",
+   "labourer",
+   "electrical_duct_50",
+   "service_trench"
+  ],
+  "missing": "No rate for the irrigation controller itself (removal, re-mounting, solenoid/field wiring extension) or for zone re-testing and recommissioning by an irrigation specialist; only generic trade hours and buried conduit exist, so the specialist content must be sourced outside the catalogue.",
+  "claim_count": 1,
+  "title": "Irrigation controller relocation"
+ },
+ {
+  "id": "mulch-and-weed-mat",
+  "bucket": "partial",
+  "rate_keys": [
+   "bidim",
+   "labourer"
+  ],
+  "missing": "Bidim A29 geotextile is a structural filter fabric, not landscape weed mat, and there is no rate at all for supply and spreading of bark/pebble mulch to depth, pinning pegs or garden edging trim - the dominant cost of the item.",
+  "claim_count": 1,
+  "title": "Mulch and weed mat"
+ },
+ {
+  "id": "precast-concrete-wall",
+  "bucket": "partial",
+  "rate_keys": [
+   "precast_wall_panel_150",
+   "precast_wall_panel_125",
+   "trench_excavate_clay",
+   "cart_clay"
+  ],
+  "missing": "Panel rates assume a 3m x 8m warehouse wall panel spanning to a structural frame; no rate for the in-ground footing/foundation beam (concrete, reinforcement, formwork), panel grout/starter-bar connections, temporary propping, or crane hire for a freestanding boundary/retaining wall, and no allowance for retained-earth drainage behind the panels.",
+  "claim_count": 1,
+  "title": "Precast concrete wall construction"
+ },
+ {
+  "id": "manhole-with-orifice-control",
+  "bucket": "absent",
+  "rate_keys": [
+   "manhole_ring",
+   "pipe_connection",
+   "drain_100"
+  ],
+  "missing": "Only a 150mm adjustment ring exists - there is no rate for a complete precast manhole chamber to 2m depth (excavation, base, risers, benching, cover and frame) and nothing for the orifice plate flow-control device. The backbone item must come from an outside source.",
+  "claim_count": 1,
+  "title": "Stormwater manhole with orifice"
+ },
+ {
+  "id": "external-site-drainage-network",
+  "bucket": "partial",
+  "rate_keys": [
+   "service_trench",
+   "trench_excavate_clay",
+   "drain_100",
+   "gully_trap_100",
+   "pipe_connection",
+   "channel_100_commercial",
+   "drainlayer",
+   "cart_clay",
+   "gap65_placed"
+  ],
+  "missing": "No rates for sumps/catchpits or complete manhole chambers, no larger-diameter (150-300mm) reticulation pipe, and nothing for the council main connection/authority approval and inspection fees; 100mm drain is the only pipe size available.",
+  "claim_count": 1,
+  "title": "External site drainage network installation"
+ },
+ {
+  "id": "wastewater-pump-station",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No rate for a packaged pump station chamber, duty/standby pumps, level controls, valve/rising main assembly or pump switchboard and alarm. Entire item requires supplier pricing.",
+  "claim_count": 1,
+  "title": "Wastewater pump station installation"
+ },
+ {
+  "id": "stainless-overflow-cover",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No stainless steel fabrication rate; rhs_minor is mild-steel minor steelwork by weight and does not price bespoke stainless plate, frame, grinding/polishing and one-off fabrication. Requires a fabricator quote.",
+  "claim_count": 1,
+  "title": "Stainless steel overflow cover fabrication"
+ },
+ {
+  "id": "civil-site-services",
+  "bucket": "covered",
+  "rate_keys": [
+   "service_trench",
+   "electrical_duct_50",
+   "drain_100",
+   "gap65_placed",
+   "basecourse",
+   "asphalt",
+   "lawn"
+  ],
+  "missing": "",
+  "claim_count": 1,
+  "title": "Civil site services trenching works"
+ },
+ {
+  "id": "loading-dock-pit",
+  "bucket": "partial",
+  "rate_keys": [
+   "trench_excavate_clay",
+   "bulk_clay",
+   "cart_clay",
+   "sheet_pile_temp_600",
+   "insitu_wall_150",
+   "under_slab_crushed_rock",
+   "drain_100",
+   "gully_trap_100",
+   "rhs_minor"
+  ],
+  "missing": "No rate for a reinforced in-situ slab on ground (base slab with formwork, reinforcement and finish) - suspended_slab_150 is the wrong item - and no rate for cast-in galvanised edge angle/kerb angle with anchors or for the pit sump pump.",
+  "claim_count": 1,
+  "title": "Loading dock pit construction"
+ },
+ {
+  "id": "demolition-making-good",
+  "bucket": "partial",
+  "rate_keys": [
+   "labourer",
+   "light_truck_hour",
+   "cart_clay",
+   "basecourse",
+   "asphalt",
+   "paint_prepare_plaster_walls"
+  ],
+  "missing": "demolish_warehouse_light is a whole light-framed building rate per m2 GFA and does not apply to minor civil structures; no rates for breaking out concrete slabs/kerbs/pavement, saw-cutting, hydraulic breaker plant or tip fees for hardfill spoil.",
+  "claim_count": 1,
+  "title": "Demolition and making good"
+ },
+ {
+  "id": "pavement-deflection-testing",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No testing, investigation or specialist consultancy rates of any kind (FWD/Benkelman beam mobilisation, testing or reporting). Requires a specialist testing quote.",
+  "claim_count": 1,
+  "title": "Pavement deflection testing"
+ },
+ {
+  "id": "fire-alarm-devices",
+  "bucket": "partial",
+  "rate_keys": [
+   "smoke_detector",
+   "fire_bell",
+   "electrician",
+   "fire_board"
+  ],
+  "missing": "Only a photo-optical smoke detector is rated; no rates for heat detectors or manual call points, and nothing for loop programming, as-built/certification or re-testing of the existing system beyond generic electrician hours.",
+  "claim_count": 1,
+  "title": "Fire alarm detection device installation"
+ },
+ {
+  "id": "fire-rated-door",
+  "bucket": "covered",
+  "rate_keys": [
+   "single_fire_door_60",
+   "ordinary_lockset",
+   "classroom_lockset"
+  ],
+  "missing": "",
+  "claim_count": 1,
+  "title": "Fire rated door installation"
+ },
+ {
+  "id": "fire-rated-wall-upgrade",
+  "bucket": "partial",
+  "rate_keys": [
+   "gib_fyreline_13_lined",
+   "retrofit_collar",
+   "noggings",
+   "gib_f5_extra",
+   "labourer",
+   "painter"
+  ],
+  "missing": "No rate for stripping out and disposing of the existing lining, and no timber/steel stud framing rate (only noggings); also no fire-rated sealant/collar options other than 100mm PVC penetrations and no system certification allowance.",
+  "claim_count": 1,
+  "title": "Fire rated wall panel upgrade"
+ },
+ {
+  "id": "pressure-reducing-relief-valve-install",
+  "bucket": "absent",
+  "rate_keys": [
+   "water_pipe_copper_20",
+   "water_supply_pvc_50"
+  ],
+  "missing": "No rate for a pressure reducing/relief valve, isolating valves, pressure gauge or the associated draining, cutting-in and recommissioning labour; only plain pipe runs are rated and there is no plumber hourly rate.",
+  "claim_count": 1,
+  "title": "In-line pressure relief valve"
+ },
+ {
+  "id": "condensate-drain-pipework",
+  "bucket": "partial",
+  "rate_keys": [
+   "water_pipe_copper_20",
+   "waste_vent_pvc_100"
+  ],
+  "missing": "No rate for 32-40mm condensate/waste pipework (100mm SVP and 20mm copper water pipe are the only sizes), no pipe insulation rate, and no tundish/trap connection item.",
+  "claim_count": 1,
+  "title": "Condensate drain pipework installation"
+ },
+ {
+  "id": "floor-waste-and-trap-primer",
+  "bucket": "partial",
+  "rate_keys": [
+   "gully_trap_100",
+   "waste_vent_pvc_100",
+   "water_pipe_copper_20",
+   "drainlayer"
+  ],
+  "missing": "No rate for a floor waste gully/grate in a suspended slab, no trap primer line/valve, no core drilling of a suspended slab (concrete_hole is only 24mm dia x 100mm deep) and no puddle flange/flashing to the waterproof membrane.",
+  "claim_count": 1,
+  "title": "Floor waste and trap primer"
+ },
+ {
+  "id": "pipework-acoustic-lagging",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No mass-loaded acoustic lagging/pipe insulation rate of any kind; needs supplier or external source.",
+  "claim_count": 1,
+  "title": "Acoustic lagging to pipework"
+ },
+ {
+  "id": "wastewater-control-system",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No pump station control panel, level sensor, alarm or pump wiring rates; only a generic electrician hour exists, which cannot carry the equipment cost.",
+  "claim_count": 1,
+  "title": "Wastewater pump control system"
+ },
+ {
+  "id": "hydraulic-services-rough-in",
+  "bucket": "partial",
+  "rate_keys": [
+   "waste_vent_pvc_100",
+   "water_pipe_copper_20",
+   "water_supply_pvc_50"
+  ],
+  "missing": "Only 100mm SWV and 20mm copper are rated; no 40/50mm waste branches, no small-bore hot/cold branches or fixture connection sets, no insulation/valving, and no per-m2 rough-in basis to convert linear rates to the measured area.",
+  "claim_count": 1,
+  "title": "General hydraulic services rough-in"
+ },
+ {
+  "id": "plywood-wall-lining",
+  "bucket": "partial",
+  "rate_keys": [
+   "wall_batten_50x25",
+   "carpenter",
+   "painter"
+  ],
+  "missing": "No sheet plywood wall lining rate (gib_standard_10_lined is the equivalent item class but a different material and cost), and no clear sealer/joint treatment rate for timber lining.",
+  "claim_count": 1,
+  "title": "Plywood feature wall lining"
+ },
+ {
+  "id": "vinyl-sheet-flooring",
+  "bucket": "partial",
+  "rate_keys": [
+   "vinyl_sheet_commercial_mid",
+   "vinyl_safety_sheet_titan",
+   "vinyl_skirting_150"
+  ],
+  "missing": "Both vinyl rates assume a prepared floor; no rate for subfloor preparation, self-levelling compound or grinding. Welded seams are assumed within the sheet rate.",
+  "claim_count": 1,
+  "title": "Vinyl sheet flooring supply install"
+ },
+ {
+  "id": "entry-mat-system",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No proprietary entrance matting, recessed frame or infill rate.",
+  "claim_count": 1,
+  "title": "Recessed entry mat system"
+ },
+ {
+  "id": "stainless-chequer-plate-floor",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No stainless steel plate/chequer plate flooring rate; rhs_minor is hollow-section carbon steelwork by weight and is not comparable.",
+  "claim_count": 1,
+  "title": "Stainless chequer plate floor installation"
+ },
+ {
+  "id": "toilet-cubicle-partitions",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No toilet cubicle/pilaster/IPS partition system rate or cubicle hardware rate.",
+  "claim_count": 1,
+  "title": "Toilet cubicle partition installation"
+ },
+ {
+  "id": "multi-colour-feature-painting",
+  "bucket": "partial",
+  "rate_keys": [
+   "paint_acrylic_walls",
+   "painter"
+  ],
+  "missing": "No published extra-over for multiple colours; deep-tint base premium and colour-block setout would have to be invented, with painter hours only covering masking.",
+  "claim_count": 1,
+  "title": "Multi-colour feature painting tinting"
+ },
+ {
+  "id": "internal-blinds-supply-install",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No roller/venetian blind, pelmet or bracket rate.",
+  "claim_count": 1,
+  "title": "Internal window blinds installation"
+ },
+ {
+  "id": "builders-work-specialist-fitout",
+  "bucket": "covered",
+  "rate_keys": [
+   "carpenter",
+   "labourer",
+   "noggings",
+   "concrete_hole",
+   "thrubolt_m16",
+   "painter"
+  ],
+  "missing": "",
+  "claim_count": 1,
+  "title": "Builders work for specialist fitout"
+ },
+ {
+  "id": "roof-turbine-ventilator",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No roof turbine/passive ventilator, ventilator base or soaker flashing rate; axial_fan is a ducted powered fan, not comparable.",
+  "claim_count": 1,
+  "title": "Roof turbine ventilator supply install"
+ },
+ {
+  "id": "mech-plant-builderswork-power",
+  "bucket": "partial",
+  "rate_keys": [
+   "electrician",
+   "labourer",
+   "concrete_hole",
+   "thrubolt_m16",
+   "carpenter"
+  ],
+  "missing": "No concrete equipment plinth rate (only m2 wall/slab items), no isolator/sub-main cabling or final connection material rate, and no proprietary anti-vibration support rate.",
+  "claim_count": 1,
+  "title": "Builderswork and power connection"
+ },
+ {
+  "id": "services-commissioning-tuning",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No air/water balancing, BMS tuning, commissioning agent or witnessing rate; intruder_commission is a different discipline.",
+  "claim_count": 1,
+  "title": "Services commissioning and tuning"
+ },
+ {
+  "id": "mechanical-installation-revision",
+  "bucket": "partial",
+  "rate_keys": [
+   "spiral_duct",
+   "axial_fan",
+   "electrician",
+   "labourer"
+  ],
+  "missing": "No mechanical fitter/ductwork tradesman hourly rate, no strip-out or removal rate for installed ductwork/pipework, and no rates for bends, transitions, flexible connections or re-insulation on re-routing.",
+  "claim_count": 1,
+  "title": "Mechanical services installation revision"
+ },
+ {
+  "id": "refrigeration-pipework-termination",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No refrigeration pipework, brazing, pressure test/evacuation or gas charging rates exist; specialist refrigeration subcontract quote required.",
+  "claim_count": 1,
+  "title": "Refrigeration pipework termination"
+ },
+ {
+  "id": "glycol-circulation-pump",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No pump set, valve, strainer or flexible connection rates; only generic electrician hours exist, which do not carry the cost. Needs mechanical supplier quote.",
+  "claim_count": 1,
+  "title": "Glycol circulation pump installation"
+ },
+ {
+  "id": "laydown-storage-area-establishment",
+  "bucket": "covered",
+  "rate_keys": [
+   "topsoil_strip_150",
+   "bidim",
+   "gap65_placed",
+   "basecourse",
+   "basecourse_100mm_small_area",
+   "clay_filling_compacted",
+   "lawn",
+   "light_truck_hour",
+   "labourer"
+  ],
+  "missing": "",
+  "claim_count": 1,
+  "title": "Material laydown area establishment"
+ },
+ {
+  "id": "insurance-endorsement-amendment",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No insurance premium, endorsement or broker fee rates in the catalogue; requires broker/insurer quotation.",
+  "claim_count": 1,
+  "title": "Contract insurance endorsement amendment"
+ },
+ {
+  "id": "client-supplied-goods-handling",
+  "bucket": "partial",
+  "rate_keys": [
+   "labourer",
+   "carpenter",
+   "light_truck_hour",
+   "scaffold_week"
+  ],
+  "missing": "No rate for secure storage/protection of free-issue goods, no craneage/mechanical offloading rate, and no item-specific installation rate (installation content depends on the unknown goods).",
+  "claim_count": 1,
+  "title": "Client-supplied goods handling installation"
+ },
+ {
+  "id": "substitution-design-review",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No professional/engineering consultancy hourly rates (structural or fire engineer, PS1/PS4 documentation); trade labour hours are not a substitute.",
+  "claim_count": 1,
+  "title": "Engineering review of product substitutions"
+ },
+ {
+  "id": "evacuation-scheme-design",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No fire-engineering/consultant fee or FENZ lodgement rate exists.",
+  "claim_count": 1,
+  "title": "Evacuation scheme design and approval"
+ },
+ {
+  "id": "qa-software-licensing",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No software subscription/licence rates; requires vendor pricing.",
+  "claim_count": 1,
+  "title": "Quality assurance software licensing"
+ },
+ {
+  "id": "vehicle-boom-gate-installation",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No boom gate barrier, controller or inductive loop detector rate; only ancillary items (electrical_duct_50, service_trench, concrete_hole, thrubolt_m16, electrician) exist, which do not carry the cost. Needs supplier quote.",
+  "claim_count": 1,
+  "title": "Vehicle boom gate installation"
+ },
+ {
+  "id": "coolstore-panel-thermal-upgrade",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No insulated sandwich panel rates at any core thickness, so no base rate from which to derive a thickness/core rate difference. Batt/blanket insulation rates are a different item class.",
+  "claim_count": 1,
+  "title": "Insulated panel thermal specification upgrade"
+ },
+ {
+  "id": "licensed-asbestos-removal",
+  "bucket": "absent",
+  "rate_keys": [],
+  "missing": "No asbestos removal, containment/enclosure, air monitoring, clearance certification or hazardous waste disposal rates; requires licensed removalist quotation.",
+  "claim_count": 1,
+  "title": "Licensed asbestos removal and disposal"
+ }
+]

@@ -1,0 +1,48 @@
+SCENARIO
+id: network-supply-connection-hv-metering-pinned
+title: Network supply connection and metering
+family: electrical
+catalogue unit: sum (one complete new supply point, live and registered, for one building)
+
+SCOPE - FIXED. Do not substitute your own.
+  network operator:   Vector, Auckland urban, existing 11kV distribution in the berm
+                      at the site frontage, no network reinforcement required
+  nominal capacity:   300 kVA connected capacity, 415V 3-phase 4-wire, ~420A
+                      (this is the nominal quantity - amortise the sum to $/kVA)
+  connection form:    HV-supplied, one Vector-owned 300 kVA ground-mount 11kV/415V
+                      distribution transformer in a customer-provided substation site
+  nominal cable runs: 30m of 11kV 3-core 185mm2 XLPE from the street pillar to the
+                      transformer, plus 25m of LV service from transformer to main
+                      switchboard, both wholly within the site boundary
+  metering:           Category 4 metering installation, CT-operated, 3 no. 400/5A
+                      class 0.5 CTs, class 0.5S half-hour interval meter with cellular
+                      comms, MEP-owned, registered to the ICP
+  energisation:       one planned energisation, normal working hours, one Vector
+                      switching visit, no HV network outage of adjacent customers
+
+INCLUDED, amortised over the 300 kVA nominal capacity where not already per-unit:
+  - Vector connection application, network design fee and ICP creation
+  - Vector capital contribution for the 300 kVA connection, including the network-owned
+    transformer and HV protection/switchgear
+  - 30m HV service cable, supplied, laid and terminated both ends by an approved contractor
+  - 25m LV service cable, supplied, installed and terminated to the main switchboard
+  - metering cubicle / CT chamber, CTs, meter, modem and antenna, supplied and installed
+  - MEP commissioning, certification and ICP registration; electrical safety certificate
+  - coordination with the lines company and MEP, and attendance at energisation
+  - testing, phasing, load check and handover documentation
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, design and consent fees
+  - the substation site works - slab, enclosure, bollards, fencing, access crossing
+  - the main switchboard itself and everything on its load side
+  - trenching, ducting or reinstatement in the road reserve or footpath
+  - network reinforcement, transformer upgrade elsewhere, or any second feed
+  - retailer contract, prepayment, standby generation, UPS or power factor correction
+  - after-hours or weekend energisation, and any HV outage management for third parties
+
+Give the band as a lump sum for this exact scope, and also state it as $/kVA over the
+300 kVA so the amortisation is auditable. Break the sum into Vector fees and capital
+contribution, HV and LV cabling, the metering installation, and coordination, so a
+reviewer can reject one part without the others.
+
+Price it, or tell us honestly why you cannot.

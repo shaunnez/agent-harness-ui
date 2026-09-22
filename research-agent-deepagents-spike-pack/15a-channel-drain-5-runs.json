@@ -1,0 +1,525 @@
+[
+ {
+  "run": "run1.json",
+  "cost_usd": 1.3550214999999999,
+  "turns": 17,
+  "band": {
+   "unit": "m",
+   "low": 400,
+   "high": 800,
+   "centre": "Auckland",
+   "basis": "Channel and grate from QV Drainage/Channel Drains and Gratings table t16 at 100mm nominal width across all three load tiers (310-561/m AKL), plus a computed haunch allowance (40-60/m), plus a connection cost amortised over an assumed 15m run with 5m of 100mm outlet pipe and one break-in at <=1.5m depth (~50-110/m), plus ~0.5 m2/m of paving reinstatement (~60/m at the high end only). Low end = residential duty, minimal reinstatement, shallow short connection. High end = heavy transport duty, full haunch, reinstatement and a longer connection. Sub-bands: residential 400-500/m, light commercial 500-650/m, heavy transport 650-850/m. All GST exclusive, NZD"
+  },
+  "confidence": "medium",
+  "components": [
+   {
+    "role": "channel and grate, residential duty",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r11",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 297,
+     "high": 310
+    },
+    "centre": "AKL 310 / WLG 297 / CHC 306",
+    "caveat": "UNREVIEWED QV row; 100mm nominal width; unconfirmed whether haunching/bedding is included in the rate"
+   },
+   {
+    "role": "channel and grate, light commercial duty",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r14",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 403,
+     "high": 416
+    },
+    "centre": "AKL 416 / WLG 403 / CHC 412",
+    "caveat": "UNREVIEWED QV row; 100mm nominal width; QV load tier naming is not an AS/NZS 3996 class designation"
+   },
+   {
+    "role": "channel and grate, heavy transport duty",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r17",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 543,
+     "high": 561
+    },
+    "centre": "AKL 561 / WLG 543 / CHC 556",
+    "caveat": "UNREVIEWED QV row; 100mm nominal width; 160mm width is 661 AKL (t16:r18)"
+   },
+   {
+    "role": "haunch concrete allowance, 17.5MPa unreinforced",
+    "row_id": "3012e40c988aa035c47e34ff2ff827c2bcb29af24240a7bd826ab798d7476014:t1:r6",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 40,
+     "high": 61
+    },
+    "centre": "AKL",
+    "caveat": "COMPUTED, not a QV per-metre row: 0.08-0.12 m3/m (my assumption) x QV 508/m3 AKL. Do NOT add if the t16 channel rate already includes haunching. Do not combine with Drainage/Concrete Surrounds row t8:r2 (102/m) which is a pipe surround, not a channel haunch"
+   },
+   {
+    "role": "outlet pipe to nearest stormwater line, 100mm uPVC SN6 incl. excavation <=1.5m",
+    "row_id": "70e61b5b487d9cd10c154ca14e9bb57a35931b9e0cc2a0d0e5d83bf3db193d55:t0:r2",
+    "source": null,
+    "unit": "m of outlet pipe",
+    "amount": {
+     "low": 96,
+     "high": 105
+    },
+    "centre": "AKL 105 / WLG 96 / CHC 101",
+    "caveat": "UNREVIEWED QV row; priced per metre of outlet pipe, NOT per metre of channel run; complex-run rate including a pro-rata allowance for bends and junctions"
+   },
+   {
+    "role": "break into existing stormwater line and make connection",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t9:r2",
+    "source": null,
+    "unit": "each",
+    "amount": {
+     "low": 583,
+     "high": 637
+    },
+    "centre": "AKL 637 / WLG 583 / CHC 632",
+    "caveat": "UNREVIEWED QV row; not exceeding 1.5m deep. 3m deep is 1590 AKL (t9:r3), 4.5m is 3200 AKL (t9:r4). Depth is the single largest uncertainty"
+   },
+   {
+    "role": "paving reinstatement, in-situ concrete 100mm thick",
+    "row_id": "f8d9cf5aa0d2fe887d830f8c558cf798e2e97ca147ce5dffa40fba65e82bb294:t6:r4",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 112,
+     "high": 118
+    },
+    "centre": "AKL 118 / WLG 112 / CHC 113",
+    "caveat": "UNREVIEWED QV row; new in-situ paving rate used as a proxy for reinstatement. Assumed ~0.5 m2 of make-good per metre of run. Excludes sawcut and break-out of the existing surface"
+   }
+  ],
+  "not_established": [
+   "Whether the QV t16 channel rates are inclusive of concrete haunching and bedding - the table's parent header rows were not returned by the tool, so the inclusion scope is unverified",
+   "Mapping of QV load tiers (residential / light commercial / heavy transport) to AS/NZS 3996 load classes A through G",
+   "Brand-specific rates - QV publishes no ACO, Stormtech, Marley or Hynds channel pricing; no vendor list price was sought under the order of resort since QV covered the trade item",
+   "Actual invert depth to the nearest stormwater line, which swings the connection component from 637 to 3200 each",
+   "Sawcut and break-out rate for reinstating existing trafficable paving - the nearest QV row (d2f8402515bbdf813cdb14f78c04616b2379638bb82729718b17c996ec0683a1:t0:r14, 7.50/m2 AKL) has an ambiguous description mixing reinforced concrete and bitumen paving and was not relied on",
+   "End caps, outlet pits, silt buckets and grate locking-down hardware - not separately published in t16"
+  ]
+ },
+ {
+  "run": "run2.json",
+  "cost_usd": 1.506185,
+  "turns": 21,
+  "band": {
+   "unit": "m",
+   "low": 310,
+   "high": 860,
+   "centre": "Auckland",
+   "basis": "Per metre of straight channel run, supply and install, GST excl. Low = QV residential-duty 100mm channel+grate (t16:r11, $310) taken as haunch-inclusive. High = QV heavy-transport 160mm (t16:r18, $661) plus a 0.25 m3/m concrete surround proxy for haunching (t8:r5, $195). Excludes stormwater connection (one-off $637-$1,590 plus $105-$154/m lateral), paving breakout and reinstatement (~$75/m for a 600mm strip in bitumen), end caps, sumps, silt baskets and outlet bodies. Band is wide because QV does not state whether the channel rates include haunching."
+  },
+  "confidence": "medium",
+  "components": [
+   {
+    "role": "channel_and_grate_residential_100mm",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r11",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 310,
+     "high": 310
+    },
+    "centre": "Auckland",
+    "caveat": "Unreviewed QV row; duty wording not mapped to EN 1433 load class; inclusions (haunch/excavation) not stated in row text"
+   },
+   {
+    "role": "channel_and_grate_light_commercial_100mm",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r14",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 416,
+     "high": 416
+    },
+    "centre": "Auckland",
+    "caveat": "Unreviewed QV row; load class unconfirmed"
+   },
+   {
+    "role": "channel_and_grate_heavy_transport_100_160mm",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r17",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 561,
+     "high": 661
+    },
+    "centre": "Auckland",
+    "caveat": "Low = 100mm (r17), high = 160mm (r18); unreviewed; load class unconfirmed"
+   },
+   {
+    "role": "haunch_concrete_proxy",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t8:r3",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 102,
+     "high": 195
+    },
+    "centre": "Auckland",
+    "caveat": "Pipe-surround row used as proxy only (0.13-0.25 m3/m); no channel-specific haunch row exists in QV. Do NOT add if the t16 channel rate already includes haunching - inclusions unverified"
+   },
+   {
+    "role": "stormwater_connection_lateral_100mm",
+    "row_id": "70e61b5b487d9cd10c154ca14e9bb57a35931b9e0cc2a0d0e5d83bf3db193d55:t0:r2",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 105,
+     "high": 154
+    },
+    "centre": "Auckland",
+    "caveat": "Low = 100mm SN6, high = 150mm SN4 (r3); complex-run basis incl. excavation not exceeding 1500mm; one-off per run, not per metre of channel"
+   },
+   {
+    "role": "break_into_existing_line",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t9:r2",
+    "source": null,
+    "unit": "each",
+    "amount": {
+     "low": 637,
+     "high": 1590
+    },
+    "centre": "Auckland",
+    "caveat": "Low = not exceeding 1.5m deep (r2/r6), high = not exceeding 3m deep (r3/r7); one-off"
+   },
+   {
+    "role": "paving_breakout_bitumen",
+    "row_id": "d2f8402515bbdf813cdb14f78c04616b2379638bb82729718b17c996ec0683a1:t0:r14",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 7.5,
+     "high": 7.5
+    },
+    "centre": "Auckland",
+    "caveat": "Bitumen with basecourse only; reinforced concrete breakout rows in same table are unpriced"
+   },
+   {
+    "role": "paving_reinstatement",
+    "row_id": "f8d9cf5aa0d2fe887d830f8c558cf798e2e97ca147ce5dffa40fba65e82bb294:t6:r4",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 118,
+     "high": 137
+    },
+    "centre": "Auckland",
+    "caveat": "Low = 17.5MPa 100mm in-situ concrete, high = concrete brick pavers (f8d9cf5a...:t5:r13); retrofit only"
+   }
+  ],
+  "not_established": [
+   "Whether QV t16 channel rates include concrete haunching and excavation - sub-heading rows r3/r8/r9/r13/r16 not captured in the index",
+   "Mapping of QV duty wording (residential / light commercial / heavy transport) to EN 1433 load classes A15/B125/C250/D400",
+   "Channel-specific haunch concrete quantity per metre (m3/m) for a given channel width and invert depth",
+   "Rates for end caps, outlet/sump bodies, silt baskets, and stepped or sloped-invert channel",
+   "Reinforced concrete paving breakout rate - QV rows t0:r8/r10/r12 are unpriced",
+   "Connection depth to nearest stormwater line (scenario-specific)"
+  ]
+ },
+ {
+  "run": "run3.json",
+  "cost_usd": 1.3426209999999998,
+  "turns": 22,
+  "band": {
+   "unit": "m",
+   "low": 520,
+   "high": 1050,
+   "centre": "Auckland",
+   "basis": "Sum of QV channel-and-grate tier plus haunch proxy, sawcutting, paving reinstatement and amortised connection. Low = footpath duty, residential class 100mm, shallow connection over 25m. High = trafficable, heavy transport class 160mm, 200mm slab, connection over 15m. Light commercial midpoint approx $690/m. All rates UNREVIEWED QV, GST exclusive."
+  },
+  "confidence": "medium",
+  "components": [
+   {
+    "role": "channel and grate, residential class, 100mm nominal",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r11",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 310,
+     "high": 310
+    },
+    "centre": "Auckland",
+    "caveat": "UNREVIEWED QV row; group heading not indexed so inclusion of haunching/installation unconfirmed; load class not stated in AS/NZS 3996 terms"
+   },
+   {
+    "role": "channel and grate, light commercial class, 100mm nominal",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r14",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 416,
+     "high": 416
+    },
+    "centre": "Auckland",
+    "caveat": "UNREVIEWED; same heading uncertainty as r11"
+   },
+   {
+    "role": "channel and grate, heavy transport class, 160mm nominal",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r18",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 661,
+     "high": 661
+    },
+    "centre": "Auckland",
+    "caveat": "UNREVIEWED; upper bound of table; heading uncertainty as above"
+   },
+   {
+    "role": "haunch concrete (proxy)",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t8:r2",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 102,
+     "high": 172
+    },
+    "centre": "Auckland",
+    "caveat": "PROXY ONLY: QV rate is a 100mm concrete pipe surround (0.13-0.22 m3/m), not a channel haunch; high figure is t8:r4. Omit if t16 rate already includes haunching"
+   },
+   {
+    "role": "sawcut existing paving, two cuts",
+    "row_id": "3012e40c988aa035c47e34ff2ff827c2bcb29af24240a7bd826ab798d7476014:t17:r38",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 13.4,
+     "high": 50.2
+    },
+    "centre": "Auckland",
+    "caveat": "UNREVIEWED; 2 x $6.70/m at 100mm depth to 2 x $25.10/m at 200mm (t17:r41); rates based on 100m runs, short runs will cost more"
+   },
+   {
+    "role": "paving reinstatement strip",
+    "row_id": "f8d9cf5aa0d2fe887d830f8c558cf798e2e97ca147ce5dffa40fba65e82bb294:t6:r9",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 75,
+     "high": 118
+    },
+    "centre": "Auckland",
+    "caveat": "UNREVIEWED; $187/m2 for 100mm in-situ concrete paving applied over an assumed 0.4-0.6 m2 per metre of run; substitute paver or asphalt rate if paving differs"
+   },
+   {
+    "role": "connection to existing stormwater line, one-off amortised",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t9:r2",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 25,
+     "high": 42
+    },
+    "centre": "Auckland",
+    "caveat": "UNREVIEWED; $637 each for break-in to existing 100mm pipe not exceeding 1.5m deep, spread over an assumed 15-25m run; deeper connections rise steeply (t9:r3 = $1,590 at 3m)"
+   }
+  ],
+  "not_established": [
+   "Whether QV t16 load-class rates are supply-and-fix and whether they already include bedding and haunching - group heading not in the indexed rows",
+   "Shallow trench excavation for a 300-500mm channel invert - QV t0 trench rates start at 1.5m total depth and overstate",
+   "Actual AS/NZS 3996 load class behind QV's Residential / Light commercial / Heavy transport tiers",
+   "Auckland Council stormwater connection application fee where the run ties into a public line - schedule not retrieved",
+   "End caps, outlet sump and silt bucket counts - scenario-dependent quantities, not rates",
+   "Paving type and reinstatement width - assumed 100mm in-situ concrete over 0.4-0.6 m2/m"
+  ]
+ },
+ {
+  "run": "run4.json",
+  "cost_usd": 1.3276405,
+  "turns": 16,
+  "band": {
+   "unit": "m",
+   "low": 530,
+   "high": 1040,
+   "centre": "AKL",
+   "basis": "Sum of QV channel row (residential 75-100mm to heavy transport 160mm), derived haunch concrete, apportioned lateral and break-in connection, and concrete paving reinstatement strip. Mid case - 100mm light commercial channel, 10-20m run, concrete paving - lands near $700/m. WLG runs approx 3-5% below AKL, CHC approx 1-2% below, on the same rows."
+  },
+  "confidence": "medium",
+  "components": [
+   {
+    "role": "channel_and_grate_supply_install",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r14",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 310,
+     "high": 661
+    },
+    "centre": "AKL",
+    "caveat": "Range spans residential 100mm (r11, $310) to heavy transport 160mm (r18, $661). QV duty labels are Residential/Light commercial/Heavy transport, not AS 3996 classes. Aggregate row: inclusions (excavation, bedding, haunch) not visible in the index - verify in CostBuilder before adding the haunch line."
+   },
+   {
+    "role": "haunch_concrete_proxy",
+    "row_id": "3012e40c988aa035c47e34ff2ff827c2bcb29af24240a7bd826ab798d7476014:t1:r3",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 44,
+     "high": 66
+    },
+    "centre": "AKL",
+    "caveat": "Derived: 0.08-0.12 m3/m at $546/m3. Row is 10MPa blinding concrete by volume, not a channel haunch - no haunch row exists in QV. No formwork included. Drop this line entirely if the t16 rate already includes haunching."
+   },
+   {
+    "role": "stormwater_connection",
+    "row_id": "70e61b5b487d9cd10c154ca14e9bb57a35931b9e0cc2a0d0e5d83bf3db193d55:t0:r3",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 70,
+     "high": 141
+    },
+    "centre": "AKL",
+    "caveat": "Derived: 5m of 150mm uPVC lateral at $154/m plus one break-in at $637 each (915613f8...:t9:r2), spread over a 10-20m run. Assumes connection not exceeding 1.5m deep; deeper break-ins jump to $1590 each (t9:r3)."
+   },
+   {
+    "role": "paving_reinstatement",
+    "row_id": "f8d9cf5aa0d2fe887d830f8c558cf798e2e97ca147ce5dffa40fba65e82bb294:t6:r6",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 101,
+     "high": 169
+    },
+    "centre": "AKL",
+    "caveat": "Derived: 17.5MPa 200mm in-situ concrete paving at $169/m2 over a 0.6-1.0m wide strip. Asphalt or segmented paver reinstatement prices differently (see f8d9cf5a...:t1 and :t5)."
+   }
+  ],
+  "not_established": [
+   "Whether QV t16 channel rates already include excavation, bedding and haunching - table header not captured in the index",
+   "AS 3996 load class mapping for QV's Residential / Light commercial / Heavy transport labels",
+   "Haunch concrete quantity per channel size and depth - a manufacturer install-detail figure, not published by QV",
+   "Invert depth at the stormwater connection point - scenario-specific, drives whether t9:r2 ($637) or t9:r3 ($1590) applies",
+   "Grate locking/securing system cost and silt trap / end cap / outlet sump units",
+   "Proprietary channel brand list pricing (ACO, Hynds, Allproof) - ring for current rates"
+  ]
+ },
+ {
+  "run": "run5.json",
+  "cost_usd": 1.3896395000000001,
+  "turns": 18,
+  "band": {
+   "unit": "m",
+   "low": 520,
+   "high": 1050,
+   "centre": "AKL",
+   "basis": "Per m of channel run. Low = 100mm light commercial channel (t16:r14, 416) + amortised 100mm connection (~42) + reinstatement over 0.5m strip (~90, sawcut 28 + breakout 57 + repave 59, rounded). High = 160mm heavy transport channel (t16:r18, 661) + separate haunch 0.15m3/m (~76) + full connection (105) + reinstatement over 0.8m strip at 150mm (~210). Haunch included in high only, on the assumption t16 excludes it - verify before use. GST exclusive."
+  },
+  "confidence": "medium",
+  "components": [
+   {
+    "role": "channel+grate, footpath/residential duty, 100mm",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r11",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 297,
+     "high": 310
+    },
+    "centre": "AKL/WLG/CHC",
+    "caveat": "Unreviewed QV row. QV grades by duty, not EN 1433 class; footpath=residential is my mapping, not QV's. Heading row stating inclusions (haunch? excavation?) is not in the index."
+   },
+   {
+    "role": "channel+grate, light commercial duty, 100-160mm",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r14",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 416,
+     "high": 472
+    },
+    "centre": "AKL",
+    "caveat": "r14 100mm AKL 416, r15 160mm AKL 472. Unreviewed. Load class mapping unconfirmed."
+   },
+   {
+    "role": "channel+grate, heavy transport duty, 100-160mm",
+    "row_id": "915613f8a816d7765d17ab80b3f84417d8a74eda796620a26ab02c98421b1e70:t16:r17",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 561,
+     "high": 661
+    },
+    "centre": "AKL",
+    "caveat": "r17 100mm AKL 561, r18 160mm AKL 661. Unreviewed. Use for trafficable/vehicle crossing."
+   },
+   {
+    "role": "haunch concrete, 17.5MPa by volume",
+    "row_id": "3012e40c988aa035c47e34ff2ff827c2bcb29af24240a7bd826ab798d7476014:t1:r6",
+    "source": null,
+    "unit": "m3",
+    "amount": {
+     "low": 467,
+     "high": 510
+    },
+    "centre": "AKL 508 / WLG 510 / CHC 467",
+    "caveat": "DO NOT ADD if the t16 channel rate already includes haunching - that heading text is not indexed, so inclusion is unverified. Haunch volume 0.08-0.15 m3/m is my assumption, not a QV figure."
+   },
+   {
+    "role": "connection to nearest stormwater line, 100mm uPVC SN6 incl excavation nte 1.5m",
+    "row_id": "70e61b5b487d9cd10c154ca14e9bb57a35931b9e0cc2a0d0e5d83bf3db193d55:t0:r2",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 96,
+     "high": 105
+    },
+    "centre": "AKL 105 / WLG 96 / CHC 101",
+    "caveat": "Rate is for complex runs with 12 bends/5 junctions/1 manhole connection per 100m. Connection length and depth unknown - amortisation over run length is my assumption. 150mm SN4 equivalent is t0:r3, AKL 154."
+   },
+   {
+    "role": "sawcut existing paving, 150mm deep",
+    "row_id": "3012e40c988aa035c47e34ff2ff827c2bcb29af24240a7bd826ab798d7476014:t17:r40",
+    "source": null,
+    "unit": "m",
+    "amount": {
+     "low": 14.1,
+     "high": 14.1
+    },
+    "centre": "AKL/WLG/CHC 14.10",
+    "caveat": "Per m of cut; two cuts per m of channel run. Rate based on 100m of cutting - short runs will cost more."
+   },
+   {
+    "role": "break up and remove 100mm concrete paving",
+    "row_id": "1e431d3e9f4822173217f03e52bdab07b323b92dd9046304b513b2875344218e:t5:r7",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 113,
+     "high": 123
+    },
+    "centre": "AKL 114 / WLG 113 / CHC 123",
+    "caveat": "Row is for floor topping, applied here to external paving - dimensionally similar, not a like-for-like QV description."
+   },
+   {
+    "role": "reinstate in-situ concrete paving 100mm",
+    "row_id": "f8d9cf5aa0d2fe887d830f8c558cf798e2e97ca147ce5dffa40fba65e82bb294:t6:r4",
+    "source": null,
+    "unit": "m2",
+    "amount": {
+     "low": 112,
+     "high": 118
+    },
+    "centre": "AKL 118 / WLG 112 / CHC 113",
+    "caveat": "17.5MPa 19mm plain. 150mm thick is t6:r5, AKL 144. Disturbed strip width 0.5-0.8m is my assumption."
+   }
+  ],
+  "not_established": [
+   "Whether QV t16 channel rates include concrete haunching, bedding or excavation - the table heading row is not in the local index",
+   "EN 1433 load class (A15/B125/C250/D400) for each QV duty label - QV does not publish the mapping",
+   "Connection run length and invert depth - scenario does not state distance to the nearest stormwater line",
+   "Grate material and finish (ductile iron, galvanised steel, stainless, heelguard) - t16 does not disaggregate grate from channel",
+   "Paving reinstatement strip width and existing paving type/thickness",
+   "Sump/silt basket or end cap at head of run - priced separately, see QV Drainage/Cesspits and Sumps t10"
+  ]
+ }
+]

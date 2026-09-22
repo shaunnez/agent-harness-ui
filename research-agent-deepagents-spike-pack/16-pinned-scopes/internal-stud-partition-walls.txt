@@ -1,0 +1,42 @@
+SCENARIO
+id: internal-stud-partition-walls-pinned
+title: Internal stud partition wall construction
+family: fitout
+catalogue unit: m2 (per square metre of wall elevation, measured one face, floor to underside of ceiling)
+
+SCOPE - FIXED. Do not substitute your own.
+  wall type:        64mm steel stud at 600mm centres, one layer 13mm standard
+                    plasterboard each face, R1.8 glasswool acoustic infill
+  rating:           no fire rating, no formal STC certification (non-rated office
+                    partition, tenancy-internal)
+  height:           2700mm floor to underside of suspended ceiling grid,
+                    head deflection track to soffit above, no plasterboard above ceiling
+  nominal quantity: 120 m2 of wall elevation, approximately 44 lineal metres,
+                    in one Auckland CBD office fitout, level 3, lift access
+  stopping:         Level 4 to AS/NZS 2589, ready for paint
+  openings:         THREE standard 980 x 2100mm door openings, steel stud jambs,
+                    trimmers and lintels only - no doors, frames or hardware
+  substrate:        level concrete slab, bottom track fixed by powder-actuated pin
+
+INCLUDED, amortised over the 120 m2 where not already per-unit:
+  - steel studs, top and bottom track, deflection head track, noggings, fixings
+  - 13mm standard plasterboard both faces, supplied and fixed
+  - R1.8 glasswool acoustic infill to the full stud cavity
+  - Level 4 stopping to both faces, all internal and external corners, corner bead
+  - acoustic sealant to head, base and abutments both faces
+  - framing to the three door openings, amortised across the 120 m2
+  - set-out, mobile scaffold or trestles to 2700mm, and offcut waste removal to skip
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, design, consent fees
+  - painting, wallpaper or any decoration
+  - doors, door frames, hardware, glazing or vision panels
+  - any fire-rated or acoustic-rated system, and any fire or acoustic test report
+  - electrical, data, plumbing rough-in, and penetration patching for services
+  - skirting, cornice, bulkheads and plasterboard continuing above the ceiling line
+
+Give the band as $/m2 of wall elevation for this exact scope, and state the total for the
+120 m2 so the amortisation is auditable. Split the rate into framing, linings and
+insulation, and stopping, so a reviewer can reject one part without the others.
+
+Price it, or tell us honestly why you cannot.

@@ -1,0 +1,59 @@
+SCENARIO
+id: concrete-paving-slab-pinned
+title: External concrete paving and slabs
+family: civil
+catalogue unit: m2 (per square metre of finished slab, measured on plan)
+
+SCOPE - FIXED. Do not substitute your own.
+  slab:             150mm thick reinforced concrete, 25 MPa, 19mm aggregate, 100mm slump
+  reinforcement:    SE92 mesh (665 grade), single layer, 40mm bottom cover on bar chairs
+  subbase:          150mm GAP40 hardfill, compacted to 95% MDD, on trimmed subgrade
+  finish:           broomed non-slip finish, wood float edges, cured with sprayed curing compound
+  joints:           sawcut control joints at 4.0m centres both ways, 1/4 slab depth,
+                    plus one isolation joint strip at the building interface
+  falls:            1:100 falls to design levels, formed by subgrade profiling
+  nominal area:     300 m2 in one pour area, roughly 20m x 15m, level open site,
+                    truck access to the pour face
+
+INCLUDED, amortised over the 300 m2 where not already per-m2:
+  - concrete supply, place, screed, finish and cure
+  - SE92 mesh, chairs, laps and tying
+  - 150mm GAP40 subbase, supplied, spread and compacted
+  - trim and compact existing subgrade to level, cart of trim spoil
+  - edge formwork to the slab perimeter, set, strip and clean
+  - sawcutting of all control joints and the isolation joint filler
+  - concrete pump hire for the pour, amortised across the 300 m2
+  - set out and level control to the design falls
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, design, engineering and consent fees
+  - bulk earthworks, cut/fill, undercut of soft spots or imported fill below the subbase
+  - drainage, sumps, channel drains, service trenching or ducts under the slab
+  - sealer, hardener, line marking, kerbs, thickened edges or dowelled construction joints
+  - demolition or removal of any existing surface
+  - traffic management, dewatering, contaminated spoil
+
+Give the band as $/m2 of finished slab for this exact scope, and state the total for the
+300 m2 so the amortisation is auditable.
+
+---
+
+**PRICE — Auckland, Q3 2026, subcontract rate, excl. GST**
+
+| Component | $/m2 | 300 m2 total |
+|---|---|---|
+| Subgrade trim + 150mm GAP40 subbase | $28 – $38 | $8,400 – $11,400 |
+| Concrete supply (150mm + 5% waste, 25 MPa) | $46 – $56 | $13,800 – $16,800 |
+| Place, screed, broom finish, cure | $38 – $50 | $11,400 – $15,000 |
+| SE92 mesh, chairs, tying | $15 – $19 | $4,500 – $5,700 |
+| Edge formwork (70 lm over 300 m2) | $7 – $10 | $2,100 – $3,000 |
+| Sawcut joints (~150 lm) + isolation strip | $5 – $7 | $1,500 – $2,100 |
+| Pump hire, one pour | $6 – $8 | $1,800 – $2,400 |
+| Set out and level control | $3 – $4 | $900 – $1,200 |
+
+**Band: $148 – $192 /m2. Midpoint $170 /m2.**
+**300 m2 total: $44,400 – $57,600. Midpoint $51,000.**
+
+Two amortisation checks a reviewer can run: pump hire is a ~$1,800–$2,400 day rate divided by 300, so it collapses to ~$7/m2 and would roughly double at 150 m2. Edge formwork is ~70 lineal metres at $30–$43/lm — it scales with perimeter, not area, so a long thin slab of the same area prices higher.
+
+Confidence: good. This is a high-volume, well-tendered trade in Auckland with stable published rates. The band widens to roughly $135–$230/m2 once area drops below 150 m2 or access forces barrow/line-pump placement.

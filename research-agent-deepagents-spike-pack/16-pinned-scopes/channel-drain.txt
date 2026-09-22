@@ -1,0 +1,30 @@
+SCENARIO
+id: channel-drain-installation-pinned
+title: Channel drain installation to paving
+family: drainage
+catalogue unit: m (per lineal metre of channel run)
+
+SCOPE - these parameters are FIXED. Do not substitute your own.
+  duty class:       light commercial (vehicle car-park / service yard, not heavy transport)
+  channel width:    100mm nominal
+  nominal run:      20 lineal metres, in one continuous run
+  existing surface: 150mm reinforced concrete paving
+  connection:       ONE connection point to an existing stormwater line at 1.0m invert depth
+
+INCLUDED in the rate, amortised over the 20m run where the item is not per-metre:
+  - proprietary channel and grate, supplied and installed
+  - concrete haunch / surround to the channel
+  - trench excavation and spoil cart
+  - sawcut and break out the existing concrete paving along the channel line
+  - reinstate concrete paving 150mm to match
+  - the single stormwater connection, amortised across the 20m
+
+EXCLUDED - do not price these:
+  - GST, preliminaries, margin, design, consent fees
+  - contaminated spoil, dewatering, traffic management
+  - any second connection point, sump or cesspit
+
+Give the band as $/m of channel run for this exact scope. State the total for the
+20m run as well, so the amortisation is auditable.
+
+Price it, or tell us honestly why you cannot.

@@ -1,0 +1,54 @@
+SCENARIO
+id: glass-kitchen-splashback-pinned
+title: Glass splashback supply install
+family: fitout
+catalogue unit: m2 (per square metre of finished splashback face measured on the wall)
+
+SCOPE - FIXED. Do not substitute your own.
+  product:          6mm toughened low-iron float glass, back-painted single solid colour
+  finish:           polished flat edges all round, no bevel, no printed or digital graphic
+  panel sizing:     600mm high x 2400mm long panels, 3 panels, butt-jointed
+  nominal quantity: 4.32 m2 total (3 panels x 0.6m x 2.4m), one Auckland CBD office kitchenette
+  substrate:        13mm standard plasterboard on timber framing, level 4 stopped, plumb
+                    and flat within 3mm in 2m, ready to receive glass
+  cutouts:          3 cutouts total - 2 x double GPO (flush plate) and 1 x 40mm dia. tap
+                    penetration, all factory cut and polished before toughening
+  install:          neutral-cure silicone bed to the wall plus temporary support,
+                    ground floor, normal hours access
+
+INCLUDED, amortised over the 4.32 m2 nominal quantity:
+  - toughened back-painted glass panels, supplied to size
+  - site template / check measure visit, amortised over the 4.32 m2
+  - all 3 factory cutouts with polished arrises, amortised over the 4.32 m2
+  - delivery to an Auckland CBD site and two-person handling to a ground floor kitchenette
+  - neutral-cure silicone adhesive fixing and colour-matched perimeter silicone seal
+  - protection and clean off on completion
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, design and consent fees
+  - the plasterboard substrate, its stopping, painting or any wall making-good
+  - removal of an existing splashback or tiling
+  - benchtops, joinery, appliances, electrical or plumbing fit-off
+  - scaffold, hoist, after-hours access or live-site restrictions
+  - custom colour matching outside the supplier's standard range, digital print or mirror glass
+
+PRICE
+
+Band, this exact scope: **$460 - $620 /m2**, midpoint approximately $530/m2.
+
+Total for the 4.32 m2 nominal quantity: **$1,990 - $2,680**, midpoint approximately $2,290.
+
+Build-up at the midpoint (NZD, excl GST, excl margin):
+
+| item | basis | total | $/m2 |
+|---|---|---|---|
+| 6mm toughened back-painted low-iron glass, polished edges | 4.32 m2 @ ~$330/m2 | $1,425 | $330 |
+| 3 cutouts (2 GPO, 1 tap) | $85 ea | $255 | $59 |
+| template / check measure visit | 1 visit, 1.5 hr + travel | $180 | $42 |
+| delivery and 2-person handling, CBD ground floor | lump | $150 | $35 |
+| install labour, silicone fixing and seal | 2 people x 3 hr @ ~$48/hr | $288 | $67 |
+| **total** | | **$2,298** | **$532** |
+
+Why the band is wide at this size: the templating visit, delivery and the minimum install crew charge are nearly fixed, so they carry $144/m2 of the midpoint rate — about 27%. At 4.32 m2 you are close to most Auckland glaziers' minimum job charge (commonly $1,500-$1,800), which is why the bottom of the band does not fall further. A 15-20 m2 run of the identical specification would land nearer $380-$420/m2.
+
+Confidence: medium-high on the glass supply rate, medium on the fixed components, which vary most between suppliers. Figures are current Auckland market rates for a mid-market commercial fitout, subcontractor price to a main contractor.

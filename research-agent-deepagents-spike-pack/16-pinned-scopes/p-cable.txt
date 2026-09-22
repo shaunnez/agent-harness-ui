@@ -1,0 +1,32 @@
+SCENARIO
+id: mains-and-feeder-cable-install-pinned
+title: Mains and feeder cable installation
+family: electrical
+catalogue unit: m (per metre of installed run)
+
+SCOPE - FIXED. Do not substitute your own.
+  cable:            4 core + earth, 25mm2 copper XLPE/PVC sub-main
+  run length:       60 lineal metres, switchboard to distribution board
+  route:            40m on cable ladder in an exposed warehouse ceiling space,
+                    20m in existing buried conduit already in place
+  containment:      supply and install 150mm cable ladder for the 40m exposed section;
+                    the buried conduit exists and is not priced
+  terminations:     both ends, into existing boards, glanded
+
+INCLUDED, amortised over the 60m where not already per-metre:
+  - cable supply and installation
+  - 150mm cable ladder, brackets and fixings for the 40m section
+  - both terminations, glands and lugs
+  - cable marking and as-built notation
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, design
+  - switchboards, distribution boards, protective devices
+  - trenching, excavation or new conduit
+  - testing and commissioning beyond a standard insulation-resistance check
+  - scissor lift or access equipment
+
+State the copper price basis and date you are using. Give the band as $/m of installed
+run for this exact scope, and state the total for the 60m.
+
+Price it, or tell us honestly why you cannot.

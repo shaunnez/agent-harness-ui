@@ -1,0 +1,29 @@
+SCENARIO
+id: internal-doorset-supply-install-pinned
+title: Internal doorset supply and install
+family: joinery
+catalogue unit: ea (per doorset)
+
+SCOPE - FIXED. Do not substitute your own.
+  leaf:             single, solid core, paint grade, 1980 x 810 x 40mm
+  rating:           none - not fire rated, not acoustic rated
+  frame:            pine, rebated, for a 90mm timber stud wall with 13mm linings
+  finish:           primed only, no top coats
+  quantity basis:   one doorset, on a job where 12 identical doorsets are being fitted
+
+INCLUDED:
+  - leaf and frame supplied
+  - frame fixed, leaf hung and adjusted
+  - three hinges
+  - architraves both sides
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, design
+  - lockset, closer, seals, kick plate or any other ironmongery
+  - vision panel or glazing
+  - painting beyond the supplied primer
+  - the stud wall, lining or making good
+
+Give the band as $ each for this exact scope.
+
+Price it, or tell us honestly why you cannot.

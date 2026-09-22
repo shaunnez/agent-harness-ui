@@ -1,0 +1,30 @@
+SCENARIO
+id: suspended-ceiling-tile-grid-pinned
+title: Suspended tile ceiling supply and install
+family: fitout
+catalogue unit: m2
+
+SCOPE - FIXED. Do not substitute your own.
+  grid:             exposed 24mm tee grid, standard duty
+  tile:             600 x 600 mineral fibre lay-in, square edge, medium acoustic grade
+  area:             120 m2, one regular open office area, rectangular
+  ceiling height:   2.7m finished, suspended 600mm below the slab soffit
+  seismic:          NZS 1170.5 restraint required, standard commercial back-bracing
+  perimeter:        wall angle to all edges, 46 lineal metres
+
+INCLUDED, amortised over the 120 m2 where not already per-m2:
+  - grid, hangers and fixings to the soffit
+  - lay-in tiles
+  - perimeter wall angle
+  - seismic back-bracing to the current standard
+  - cutting tiles around a nominal 12 recessed light fittings and 4 diffusers
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, design
+  - the light fittings, diffusers, sprinkler heads or detectors themselves
+  - bulkheads, shadowline or concealed-grid detailing
+  - access equipment above 4m
+
+Give the band as $/m2 for this exact scope, and state the total for the 120 m2.
+
+Price it, or tell us honestly why you cannot.

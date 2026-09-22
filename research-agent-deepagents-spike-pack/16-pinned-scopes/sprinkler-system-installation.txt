@@ -1,0 +1,43 @@
+SCENARIO
+id: sprinkler-system-installation-pinned
+title: Fire sprinkler system installation
+family: fire
+catalogue unit: m2 (per square metre of sprinklered floor area)
+
+SCOPE - FIXED. Do not substitute your own.
+  standard:         NZS 4541:2020, wet pipe, single occupancy classification
+  hazard class:     Ordinary Hazard Group 3 (OH3) - warehouse/retail back-of-house
+  nominal area:     3,000 m2 sprinklered floor area on one level, single building
+  building type:    single-storey tilt-slab warehouse/light industrial, 8.0m to underside
+                    of portal, no in-rack or high-piled storage
+  head type:        pendent quick-response, 68degC, 15mm K80, chrome rosette, to a
+                    suspended grid over 400 m2 of office only; exposed upright elsewhere
+  head spacing:     4.0m x 3.0m maximum, 12 m2 per head coverage - approx 250 heads
+  pipework:         grooved/screwed galvanised steel to AS 1074 medium, threaded rod
+                    and clip hangers to steel purlins
+  valve set:        ONE alarm valve set with flow switch, drain, test connection and
+                    bell, amortised over the 3,000 m2
+
+INCLUDED, amortised over the nominal quantity where not already per-unit:
+  - all sprinkler heads, escutcheons and head guards where exposed
+  - distribution, range and main pipework, fittings, hangers and seismic restraint
+    (sway bracing and flexible drops) to NZS 4541
+  - the single alarm valve set, flow switch and external bell, amortised over 3,000 m2
+  - block plan, signage, hydraulic verification of the existing design, flushing,
+    pressure test and wet commissioning
+  - sprinkler monitoring interface to the fire alarm panel (terminals only)
+  - EWOF-supporting documentation: as-builts and Form 6A/PS3 for the sprinkler works
+  - scissor lift / EWP access within the warehouse for installation
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, hydraulic design, PS1 and consent fees
+  - fire pump, pump shed, tanks, town main upgrade and incoming connection
+  - fire alarm panel, detection, sounders and any electrical supply or containment
+  - in-rack sprinklers, ESFR heads, dry/pre-action systems and antifreeze loops
+  - penetration fire-stopping through rated walls/floors and structural steel modifications
+  - after-hours work, staged occupied-building handovers and builder's work in existing ceilings
+
+Give the band as $/m2 of sprinklered floor area for this exact scope, and state the total
+for the 3,000 m2 so the amortisation is auditable.
+
+Price it, or tell us honestly why you cannot.

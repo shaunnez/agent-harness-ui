@@ -1,0 +1,56 @@
+SCENARIO
+id: deflection-head-acoustic-seal-pinned
+title: Deflection head and acoustic seal
+family: envelope
+catalogue unit: m (per lineal metre of partition head, measured along the wall line)
+
+SCOPE - FIXED. Do not substitute your own.
+  partition:          92mm steel stud at 600mm centres, 0.55mm BMT, 2 layers 13mm
+                      standard plasterboard each face, one 75mm R1.8 glasswool infill
+  rating:             STC 55 / -/60/60 fire rated, head detail to match the tested system
+  deflection:         20mm total (±10mm) vertical movement at the slab soffit
+  head track:         proprietary slotted deflection head track, 0.55mm BMT galvanised,
+                      50mm legs, studs unfixed to the track (slip connection)
+  seal:               two-part - 25mm compressible mineral wool head packer at 30%
+                      compression, plus intumescent acoustic sealant bead 12mm x 15mm
+                      both faces over a bond breaker
+  substrate:          underside of 200mm precast hollowcore soffit, 3.0m stud height
+  nominal run:        60 lineal metres of wall head, in 6 runs of 10m, ceiling void access
+                      from a mobile scaffold at 3.0m
+
+INCLUDED, amortised over the 60m nominal quantity where not already per-unit:
+  - proprietary slotted deflection head track, supplied and fixed
+  - powder-actuated or screw fixings to the soffit at 600mm centres, incl. soffit drilling
+  - 25mm mineral wool compressible packer, cut and installed to 30% compression
+  - intumescent acoustic sealant to both faces over bond breaker, tooled
+  - slip connection of studs to track (no fixing through the slotted legs)
+  - deflection-head-specific plasterboard trimming and edge taping at the head
+  - mobile scaffold hire and relocation for the 60m, amortised
+  - fire-rated system compliance labelling at the head, amortised across the 60m
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, design, consent fees, producer statements
+  - the partition itself - studs, board, insulation, stopping and paint below the head
+  - penetration seals, control joints, or junctions to columns and mullions
+  - services coordination, ductwork or tray passing through the head zone
+  - fixed scaffold, EWP hire beyond the mobile scaffold, or work above 4.0m
+  - independent acoustic or fire testing, commissioning or IANZ certification
+
+Price it, or tell us honestly why you cannot.
+
+**Band: $48 – $78/m, midpoint $62/m.** Total for the 60m nominal run: **$2,880 – $4,680**, midpoint **$3,720**.
+
+Split at the midpoint, per metre:
+
+| Component | $/m |
+|---|---|
+| Slotted deflection track, supplied | 14 |
+| Soffit fixings + drilling | 6 |
+| Mineral wool packer, supplied and fitted | 9 |
+| Intumescent acoustic sealant, both faces | 16 |
+| Head trimming, taping, slip connection labour | 12 |
+| Mobile scaffold, amortised (≈$300 over 60m) | 5 |
+
+Auckland, subcontract rates, 2026. Excludes GST, prelims and margin as scoped. The sealant line is the volatile one: two-face intumescent bead at a -/60/60 rating carries most of the spread, and a single-face or non-intumescent substitution drops the band to roughly $38 – $58/m.
+
+Next: confirm whether the tested system your specifier nominated requires intumescent sealant both faces — if it accepts one face, repin at $38 – $58/m before pricing.

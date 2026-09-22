@@ -1,0 +1,48 @@
+SCENARIO
+id: acp-facade-cladding-install-pinned
+title: Aluminium composite panel cladding
+family: envelope
+catalogue unit: m2 (per square metre of net cladding face area, window and door openings deducted)
+
+SCOPE - FIXED. Do not substitute your own.
+  panel:            4mm aluminium composite, fire-retardant mineral-filled core,
+                    0.5mm aluminium skins, PVDF/PVF2 two-coat factory finish,
+                    plain solid colour, single colour across the job
+  panel system:     routed-and-returned cassette trays, 1200 x 2400mm nominal,
+                    concealed fix to proprietary aluminium carrier, 10mm open joint
+                    with black EPDM baffle, no wet sealant to panel joints
+  subgirt / cavity: proprietary aluminium top-hat subgirts at 600mm centres over
+                    thermally broken brackets, 40mm drained and vented cavity
+  substrate:        existing 1.15mm steel-framed wall at 600mm centres with
+                    existing rigid air barrier already installed and weathertight
+  nominal quantity: 450 m2 net face area over two elevations, 9.5m maximum height,
+                    15 openings at 2.0 x 1.6m deducted
+  flashing extent:  108 lm window/door reveal, head and sill flashings; 60 lm base
+                    closure with vermin mesh; 60 lm parapet capping; 38 lm external
+                    corners - all 3mm folded solid aluminium, matching PVDF finish
+  access:           one 14m diesel articulating boom lift, 6 week hire, hardstand
+                    ground on all sides, single day shift, no night work
+
+INCLUDED, amortised over the nominal quantity where not already per-unit:
+  - ACP sheet supply, factory routing, folding and cassette fabrication
+  - aluminium carrier, subgirts, thermal-break brackets, stainless and rivet fixings
+  - set out, install and align panels including joint baffles
+  - all 266 lineal metres of folded aluminium flashings listed above, supplied and fixed
+  - the 6 week boom lift hire, delivery and pickup, amortised across the 450 m2
+  - site measure, shop drawings for fabrication, and panel numbering
+  - cut-outs and returns at the 15 openings
+  - protective film removal, final clean down and waste removal to landfill
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, design, consent fees
+  - the rigid air barrier, building wrap, sealing to windows, or any substrate repair
+  - cavity fire barriers, fire-stopping and any C-clause verification
+  - windows, doors, louvres, soffit linings, balustrades and roofing
+  - structural steel, framing modification or strengthening to carry the system
+  - perimeter scaffold, edge protection, traffic management and public footpath cover
+  - PS1, PS3, weathertightness or facade-engineer producer statements
+
+Give the band as $/m2 of net cladding face area for this exact scope, and state the total
+for the 450 m2 so the amortisation is auditable.
+
+Price it, or tell us honestly why you cannot.

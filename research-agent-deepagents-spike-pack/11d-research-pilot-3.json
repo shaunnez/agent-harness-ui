@@ -1,0 +1,521 @@
+[
+ {
+  "id": "retaining-wall-construction",
+  "error": "unparseable: Expecting value: line 1 column 1 (char 0)",
+  "raw": "```json\n{\n  \"id\": \"retaining-wall-construction\",\n  \"researchable\": true,\n  \"researchable_reason\": \"This is real physical work with real cost drivers (excavation, foundation/embedment, structure, drainage, backfill, spoil) and the rate moves by an order of magnitude with wall type and retained height. It is not a deferred aesthetic selection, so it warrants pricing. However, see 'not_established': I could only reach NZ contractor/consumer published price guides, not a professional NZ cost reference, so the output is an indicative band at low confidence rather than a catalogue-grade rate.\",\n  \"search_strategy\": \"Written before searching. Target, in priority order: (1) published NZ cost references - Rawlinsons NZ Construction Handbook 'external works / site works' section, QV CostBuilder, BRANZ, CoreLogic/Cordell - for a $/m2 of retained face rate; (2) NZ agency and council unit-rate schedules - NZTA/Waka Kotahi SM014 cost estimation material, Auckland Transport cost estimation guide, council contract schedules of prices and published tender results for civil retaining structures; (3) NZ supplier published installed rates and productivity data - Firth, Envirocon/Interbloc, Allan Block, Stonebloc, gabion suppliers, plus H5 pole/sleeper merchant pricing for a bottom-up supply-only sanity check; (4) NZ trade press / industry bodies. Secondary aims: find the height/consent threshold that changes the structural system (1.5 m Schedule 1 exemption), find an NZ uplift for surcharge loading, and find an NZ spoil cartage/cleanfill rate. Explicitly planned to discard US/UK/AU 'cost guide' pages and undated content-farm results, and to strip GST from any consumer-facing NZ price.\",\n  \"confidence\": \"low\",\n  \"proposal\": {\n    \"title\": \"Retaining wall construction, up to 3 m retained height\",\n    \"scope\": \"Supply and install retaining wall to a maximum retained height of 3.0 m, measured per m2 of retained face. Includes site excavation and batter to form the wall line, foundation (pole embedment/concrete footing as applicable), wall structure, drainage layer (filter fabric, drainage metal, subsoil drain), compacted backfill and standard surface finish. Excludes specific engineering design, geotechnical investigation, consent fees and the items listed under exclusions.\",\n    \"family\": \"civil\",\n    \"quantities\": [\n      {\n        \"key\": \"wall_face_area\",\n        \"unit\": \"m2\",\n        \"label\": \"Retained face area (wall length x retained height)\",\n        \"default\": { \"low\": 20, \"high\": 60 },\n        \"assumption\": \"Measured on the exposed retained face only. Embedment, footing and any wall below finished ground level are not measured but are in the rate.\"\n      },\n      {\n        \"key\": \"retained_height\",\n        \"unit\": \"m\",\n        \"label\": \"Maximum retained height\",\n        \"default\": { \"low\": 1.5, \"high\": 3.0 },\n        \"assumption\": \"1.5 m is the NZ Building Act Schedule 1 exemption threshold above which consent and engineered design are normally triggered; the structural system, and therefore the $/m2, typically changes at that point. Rate per m2 is NOT linear with height.\"\n      },\n      {\n        \"key\": \"wall_length\",\n        \"unit\": \"m\",\n        \"label\": \"Wall length on plan\",\n        \"default\": { \"low\": 10, \"high\": 25 },\n        \"assumption\": \"Used only where a source rate is published per lineal metre rather than per m2 of face.\"\n      },\n      {\n        \"key\": \"spoil_volume\",\n        \"unit\": \"m3\",\n        \"label\": \"Spoil excavated and removed from site\",\n        \"default\": { \"low\": 0, \"high\": 0 },\n        \"assumption\": \"NOT ESTABLISHED - no NZ cartage/cleanfill rate was sourced. Defaults deliberately left at zero so the gap is visible rather than silently priced.\"\n      }\n    ],\n    \"components\": [\n      {\n        \"key\": \"wall_structure_engineered\",\n        \"label\": \"Engineered retaining wall 1.5-3.0 m retained height, supplied and installed incl. excavation, foundation, drainage layer and backfill (SELECT ONE structural option)\",\n     ",
+  "_meta": {
+   "searches": 10,
+   "in": 144258,
+   "out": 19536,
+   "stop": "max_tokens"
+  }
+ },
+ {
+  "id": "channel-drain-installation",
+  "researchable": true,
+  "researchable_reason": "This is not a deferred aesthetic selection. Load class (A15 pedestrian through to D400 trafficable), channel body material (recycled plastic vs polymer concrete vs precast concrete), grate material (polymer / galvanised / ductile iron / stainless), haunch and bedding concrete volume, invert depth, stormwater connection length and paving reinstatement all change the work, the plant, the labour hours and the product family. Real money moves, so it is worth pricing. However, after searching, only a narrow supply-only component could be sourced to a published NZ number; the installed per-metre rate could not be. Both facts are reported below rather than filling the gap with an invented figure.",
+  "search_strategy": "Written before searching. Target: an NZ installed rate per lineal metre for proprietary channel drainage in paving, decomposed into (a) channel + grate supply by load class, (b) trench excavation and spoil disposal, (c) in-situ concrete bed and haunch (m3/m), (d) connection to nearest stormwater line (lm plus fitting/sump), (e) paving cut-out and reinstatement (m2). Source order planned: 1) published NZ cost references - Rawlinsons NZ Construction Handbook external works/drainage section, BRANZ cost information, QV CostBuilder, CoreLogic Cordell; 2) NZ manufacturer/merchant published prices - ACO NZ, Hynds (Hauraton RECYFIX), Allproof, Marley, Hygrade Water, Everhard/Reln via Bunnings NZ, Mitre 10, Plumbing World, ITM; 3) public agency and council schedules of rates and released priced schedules - Auckland Transport / Auckland Council maintenance contracts, Christchurch City Council, Wellington Water, NZTA, LGOIMA-released tender schedules; 4) NZ trade press / industry bodies (Civil Contractors NZ, BRANZ Build) quoting rates. Explicitly excluded from use as a rate source: unattributed 'cost guide' pages, drainage lead-generation sites, forums, and Australian/UK/US retail or cost-guide figures.",
+  "confidence": "low",
+  "proposal": {
+   "title": "Channel drain installation to paving",
+   "scope": "Supply and install proprietary channel drain with load-classed grate to footpath or trafficable paving, including trench excavation, concrete bed and haunch, end caps/outlet, connection to nearest stormwater line, and reinstatement of surrounding paving. Measured per metre of channel run.",
+   "family": "drainage",
+   "quantities": [
+    {
+     "key": "channel_run",
+     "unit": "m",
+     "label": "Length of channel drain run",
+     "default": {
+      "low": 3,
+      "high": 12
+     },
+     "assumption": "Typical variation run for a garage threshold, courtyard or footpath crossing. Longer runs pull the per-metre rate down (fixed set-up, outlet and connection amortised); runs under ~3 m are dominated by set-up and connection and should be priced as a lump sum, not per metre."
+    },
+    {
+     "key": "haunch_concrete",
+     "unit": "m3/m",
+     "label": "In-situ concrete bed and side haunch per metre of channel",
+     "default": {
+      "low": 0.05,
+      "high": 0.15
+     },
+     "assumption": "Derived geometrically, NOT from a priced source. Based on published NZ installation guidance (Hygrade Water, 'How to Install a Channel Drain', 30 Aug 2023) requiring a compacted base and a minimum 100 mm concrete surround. Low end = ~130 mm wide shallow domestic channel with 100 mm bed and 100 mm haunch each side; high end = ~200 mm wide polymer-concrete channel to trafficable duty with 150 mm bed and 150 mm haunch, often specified to 25 MPa or higher with mesh. The actual figure must be taken from the specified manufacturer's installation detail for the nominated load class - it is a specification input, not a cost input, and it is the single biggest swing item in this rate."
+    },
+    {
+     "key": "sw_connection",
+     "unit": "m",
+     "label": "Connection pipe run from channel outlet to nearest stormwater line",
+     "default": {
+      "low": 2,
+      "high": 15
+     },
+     "assumption": "Not established from any source. Must be scaled off the drainage plan. Depth to invert drives it more than length: a shallow surface connection and a 1.5-2.0 m deep connection into an existing main are materially different jobs (shoring, dewatering, traffic management, possible network owner approval and inspection)."
+    },
+    {
+     "key": "paving_reinstatement",
+     "unit": "m2",
+     "label": "Paving cut out and reinstated either side of the channel and over the connection trench",
+     "default": {
+      "low": 0.6,
+      "high": 1.6
+     },
+     "assumption": "Per metre of run. Low end = lifting and relaying existing unit pavers over a ~600 mm wide working width. High end = saw-cut, break-out and replacement of reinforced concrete or asphalt over a ~1.2-1.6 m working width. Assumes no exotic paving (no natural stone, no exposed aggregate match, no coloured/stamped concrete match)."
+    },
+    {
+     "key": "outlet_components",
+     "unit": "no",
+     "label": "End caps, outlet units, silt/sump boxes, corners",
+     "default": {
+      "low": 2,
+      "high": 4
+     },
+     "assumption": "Typically two end caps plus one outlet or sump box per run; sediment sump box added where the channel discharges directly to the network. Priced as items, not spread per metre, on runs under 6 m."
+    }
+   ],
+   "components": [
+    {
+     "key": "channel_supply",
+     "label": "Channel and grate supply to nominated load class",
+     "effect": "addition",
+     "factor": 1.0,
+     "rate_key": "channel_classA_domestic_supply_only_m",
+     "quantity_key": "channel_run"
+    },
+    {
+     "key": "channel_supply_heavy",
+     "label": "Polymer-concrete channel and ductile/galvanised grate supply, Class C/D",
+     "effect": "addition",
+     "factor": 1.0,
+     "rate_key": "channel_polymerconc_classC_D_supply_only_m",
+     "quantity_key": "channel_run"
+    },
+    {
+     "key": "install_labour",
+     "label": "Trench, set to level, bed, haunch, joint and commission",
+     "effect": "addition",
+     "factor": 1.0,
+     "rate_key": "channel_drain_install_labour_m",
+     "quantity_key": "channel_run"
+    },
+    {
+     "key": "haunch",
+     "label": "Concrete bed and haunch, supplied and placed",
+     "effect": "addition",
+     "factor": 1.0,
+     "rate_key": "insitu_concrete_haunch_m3",
+     "quantity_key": "haunch_concrete"
+    },
+    {
+     "key": "connection",
+     "label": "Connection to nearest stormwater line",
+     "effect": "addition",
+     "factor": 1.0,
+     "rate_key": "sw_connection_pipe_m",
+     "quantity_key": "sw_connection"
+    },
+    {
+     "key": "reinstate",
+     "label": "Paving break-out and reinstatement",
+     "effect": "addition",
+     "factor": 1.0,
+     "rate_key": "paving_reinstatement_m2",
+     "quantity_key": "paving_reinstatement"
+    }
+   ],
+   "exclusions": [
+    "Network owner / council application, inspection and connection fees (Auckland Council, Watercare, Wellington Water, CCC and Dunedin all levy these separately and they are published per-council)",
+    "Design, drainage calculations, PS1/PS4 and as-built survey",
+    "Traffic management and temporary pedestrian management on road-corridor or retail sites",
+    "Rock, contaminated spoil, asbestos-containing material, dewatering and shoring",
+    "Existing services location, hand digging around live services and service protection",
+    "Trafficable cover slabs, kerb cut-down, threshold ramps and level transitions",
+    "Grate security systems (bolt-down, anti-theft), stainless or architectural slot-drain upgrades",
+    "Sediment control, out-of-hours work and after-hours access",
+    "GST",
+    "Preliminaries, margin, escalation and contingency (add per the head contract)"
+   ]
+  },
+  "rates": [
+   {
+    "rate_key": "channel_classA_domestic_supply_only_m",
+    "unit": "m",
+    "amount": {
+     "low": 25.2,
+     "high": 42.0
+    },
+    "currency": "NZD",
+    "gst_basis": "excl",
+    "centre": "New Zealand national (retail merchant shelf pricing)",
+    "as_of": "2026-09-22",
+    "basis": "SUPPLY ONLY, light-duty domestic plastic/polymer channel with polymer grate, pedestrian duty only (no published load class stated by either retailer). Excludes fittings, end caps, outlets, concrete, labour and all installation. Both source prices are retail and GST-inclusive; converted by dividing by 1.15. Low = Bunnings NZ Everhard EasyDRAIN 1 m compact channel and polymer grate at NZ$29.00 incl GST = NZ$25.22 excl. High = Mitre 10 NZ Connecto Trade channel and standard grate 3000 x 130 x 135 mm at NZ$145.00 incl GST for 3 m = NZ$42.03/m excl. This is a floor for the supply element of the cheapest possible specification and MUST NOT be used as, or grossed up into, an installed rate.",
+    "source": {
+     "url": "https://www.mitre10.co.nz/shop/building-hardware/plumbing/exterior-drainage/c/RS4122",
+     "publisher": "Mitre 10 (New Zealand)",
+     "locator": "Exterior Drainage category listing, row 'CONNECTO TRADE Channel & Standard Grate 3000 x 130 x 135mm Black', SKU 353359, $145 each; cross-checked against Bunnings New Zealand 'Drainage Channel & Grate' category listing, row 'Everhard EasyDRAIN 1m Compact Channel And Polymer Grate', $29 (https://www.bunnings.co.nz/products/bathroom-plumbing/plumbing/drainage/channel-grate)",
+     "publication_date": "undated live retail listing, accessed 2026-09-22",
+     "effective_date": "2026-09-22"
+    }
+   },
+   {
+    "rate_key": "channel_drain_installed_all_in_m",
+    "unit": "m",
+    "amount": {
+     "low": null,
+     "high": null
+    },
+    "currency": "NZD",
+    "gst_basis": "excl",
+    "centre": "not established",
+    "as_of": "2026-09-22",
+    "basis": "Intended to be the catalogue rate: supplied and installed channel drain per metre including bed, haunch, outlet and local reinstatement. NOT ESTABLISHED - no NZ published source located. See not_established.",
+    "source": {
+     "url": null,
+     "publisher": null,
+     "locator": null,
+     "publication_date": null,
+     "effective_date": null
+    }
+   },
+   {
+    "rate_key": "channel_polymerconc_classC_D_supply_only_m",
+    "unit": "m",
+    "amount": {
+     "low": null,
+     "high": null
+    },
+    "currency": "NZD",
+    "gst_basis": "excl",
+    "centre": "not established",
+    "as_of": "2026-09-22",
+    "basis": "Supply only, polymer-concrete channel (e.g. ACO Drain, Hauraton RECYFIX via Hynds, Allproof polymer concrete 100/200 mm) with galvanised or ductile iron grate to EN 1433 Class B125/C250/D400. NOT ESTABLISHED - all NZ suppliers found publish technical data only, pricing is quote/account-based.",
+    "source": {
+     "url": null,
+     "publisher": null,
+     "locator": null,
+     "publication_date": null,
+     "effective_date": null
+    }
+   },
+   {
+    "rate_key": "insitu_concrete_haunch_m3",
+    "unit": "m3",
+    "amount": {
+     "low": null,
+     "high": null
+    },
+    "currency": "NZD",
+    "gst_basis": "excl",
+    "centre": "not established",
+    "as_of": "2026-09-22",
+    "basis": "Concrete supplied and placed as bed and haunch to channel, small-load minor works placing. NOT ESTABLISHED from a public NZ source within this search; no Rawlinsons or ready-mix schedule page carrying a number was reachable.",
+    "source": {
+     "url": null,
+     "publisher": null,
+     "locator": null,
+     "publication_date": null,
+     "effective_date": null
+    }
+   },
+   {
+    "rate_key": "sw_connection_pipe_m",
+    "unit": "m",
+    "amount": {
+     "low": null,
+     "high": null
+    },
+    "currency": "NZD",
+    "gst_basis": "excl",
+    "centre": "not established",
+    "as_of": "2026-09-22",
+    "basis": "Excavate, lay and backfill 100-150 mm uPVC stormwater lateral from channel outlet to existing line, including junction/saddle. NOT ESTABLISHED from a source meeting the quality bar.",
+    "source": {
+     "url": null,
+     "publisher": null,
+     "locator": null,
+     "publication_date": null,
+     "effective_date": null
+    }
+   },
+   {
+    "rate_key": "paving_reinstatement_m2",
+    "unit": "m2",
+    "amount": {
+     "low": null,
+     "high": null
+    },
+    "currency": "NZD",
+    "gst_basis": "excl",
+    "centre": "not established",
+    "as_of": "2026-09-22",
+    "basis": "Saw-cut, break out, cart away and reinstate paving (unit pavers relaid, or new concrete/asphalt) either side of channel and over connection trench. NOT ESTABLISHED.",
+    "source": {
+     "url": null,
+     "publisher": null,
+     "locator": null,
+     "publication_date": null,
+     "effective_date": null
+    }
+   }
+  ],
+  "not_established": [
+   "THE HEADLINE RATE IS NOT ESTABLISHED. No published New Zealand source was found giving an installed NZD rate per lineal metre for proprietary channel drainage in paving. Do not price the 23 tender occurrences off this output alone - the only number below is a supply-only retail floor for the lightest possible specification.",
+   "Load-class channel supply pricing is unobtainable publicly. Hynds (Hauraton RECYFIX STANDARD / PRO / ductile iron slot), ACO Drain NZ, Allproof (100 mm and 200 mm polymer concrete, polymer concrete slot) and Marley all publish product and technical/load-class data but no prices; they are account/quote based. ACTION: request current trade price lists direct from Hynds, ACO NZ, Allproof and Hygrade Water for A15/B125/C250/D400 channel plus grate, and for end caps, outlets and sediment boxes, and rebuild the supply element from those. This is a half-day of phone calls and is the single highest-value thing a QS can do here.",
+   "Rawlinsons NZ Construction Handbook could not be consulted. Search returned only bookseller, library catalogue and third-party listings, not the drainage/external works rate tables. Rawlinsons is the correct primary reference for this item (site works and drainage section, channel and grate per m). ACTION: open the current edition at the drainage / external works schedule. Same for QV CostBuilder and CoreLogic Cordell - both are paywalled and neither exposed a channel drain line item publicly.",
+   "No council or agency schedule of rates carrying a 'channel drain per m' line item was located. Auckland Transport's Road Drainage Standard was found but it is a technical standard (sump depth, lintel and grate configuration, kerb reinstatement) and carries no rates. ACTION: request, under LGOIMA, the priced schedules of rates from an Auckland Council / Auckland Transport or Christchurch City Council road and stormwater maintenance contract, and from Wellington Water; these typically do carry grated channel and sump items per m and per no.",
+   "The concrete haunch quantity is a geometric assumption, not a sourced figure. The 0.05-0.15 m3/m band was derived from installation guidance (minimum 100 mm concrete surround) rather than from a priced schedule. The load class drives it: D400 trafficable installations commonly require a wider, deeper, sometimes mesh-reinforced surround and a specified concrete strength. Until the manufacturer's detail for the nominated class is read, the haunch component carries an error band of roughly 3x.",
+   "Connection depth is entirely unestablished and is the second biggest swing. A 0.5 m deep surface connection into an adjacent sump and a 1.8 m deep connection into an existing main (shoring, dewatering, network owner inspection, possible live-main tapping) can differ by an order of magnitude on the same 6 m run. ACTION: get invert levels off the drainage plan before applying any rate.",
+   "Paving reinstatement is unestablished and specification-sensitive. Relaying existing concrete unit pavers, versus matching exposed-aggregate or coloured concrete, versus asphalt reinstatement with a compaction and finished-level requirement, are three different rates. Matching existing paving that is no longer manufactured is a scope risk, not a rate risk, and should be raised as an RFI.",
+   "Regional spread not established. All figures below are national retail listings; no Auckland vs Wellington vs Christchurch vs provincial differential could be evidenced. Expect a material Auckland/Wellington premium on labour and a provincial premium on delivery, neither of which is quantified here.",
+   "Sources rejected and why, so this is not re-walked: multiple NZ 'drainage costs' pages (drainagewhangarei.co.nz, drainunblockingwhangarei.co.nz, earthworkstauranga.co.nz) quote $80-$150/m for channel drains and $100-$500+/m for drainage generally, but these are drainage lead-generation sites with no named author, no method and no stated GST basis. They were NOT used and their numbers should not be adopted. bromleygroup.co.nz gives 2026 Auckland drainage package ranges ($8,000-$25,000 for a residential new-build drainage package) but nothing per metre of channel, and it is contractor marketing content. A priced NZ civil schedule of quantities (Whangarei, Apr 2024) surfaced on Scribd and did contain a 'Channel Drain / m' line - but it was entered nil with no quantity and no rate, so it yielded nothing.",
+   "No offshore figure has been imported into the band above. Australian, UK and US channel drain prices and 'per linear foot' installation guides were returned by the searches and were deliberately discarded; they are not used even as a sanity check in the rate, and no conversion appears anywhere in this output.",
+   "GST treatment to watch: the only established rate is converted from GST-inclusive retail shelf prices by dividing by 1.15. It is retail, not trade, so it also carries an unquantified merchant retail margin - trade account pricing will sit below it, which is the opposite direction to normal caution and another reason not to gross it up.",
+   "Escalation not applied. The established rate is a live listing accessed today (2026-09-22) so needs no escalation, but if Rawlinsons or a council schedule is used later, note its base date and escalate on the appropriate index - no escalation factor has been embedded in anything above."
+  ],
+  "_meta": {
+   "searches": 10,
+   "in": 189965,
+   "out": 12336,
+   "stop": "end_turn"
+  }
+ },
+ {
+  "id": "suspended-ceiling-tile-grid",
+  "researchable": true,
+  "researchable_reason": "This is not a deferred aesthetic selection. Exposed-grid suspended ceilings are a discrete measured trade (grid, hangers, perimeter trim, lay-in panels, seismic restraint) with real labour and material content that varies by tile specification, grid type, drop height and seismic design. A defensible NZ $/m2 band is in principle establishable. However, after searching I could NOT establish a NZ-sourced installed rate from public, dated, named sources - see not_established. The amounts below are therefore null by design rather than invented.",
+  "search_strategy": "Written before searching. (1) Published NZ cost references first: Rawlinsons NZ Construction Handbook (Trade/Measured Rates - Ceilings section), QV CostBuilder (element 'suspended ceilings', six main centres), RLB NZ Riders Digest (free public PDF - check whether it carries measured ceiling rates or only $/m2 GFA benchmarks), BRANZ Build / BRANZ cost articles. (2) NZ supplier and distributor published price lists for grid and lay-in panels - Potter Interior Systems (AMF/USG Boral, Rondo grid), Forman Building Systems (Armstrong Dune/Optra, Donn DX grid), T&R Interior Systems, Asona, Autex Quietspace - looking for supply-only $/m2 to build up an installed rate. (3) NZ public-sector schedules of rates and tender price schedules - Ministry of Education school property rates, Kainga Ora, Health NZ, council maintenance SoRs, GETS tender results - for supplied-and-installed $/m2. (4) Seismic driver: NZS 1170.5:2004 (2016 amendment) and AS/NZS 2785 requirements for ULS ceiling design, back-bracing density and producer statements, because that is the single biggest non-catalogue cost variable and separates a pre-2016 rate from a current one. (5) Sanity check only, clearly labelled: UK/AU guides, never presented as NZ.",
+  "confidence": "low",
+  "proposal": {
+   "title": "Suspended tile ceiling - supply and install, exposed grid with mineral fibre lay-in panels",
+   "scope": "Supply and install proprietary exposed-tee suspension grid to regular open ceiling areas, including hanger wires/rods to structure above, perimeter wall angle or shadowline trim, lay-in mineral fibre (or similar) acoustic panels, seismic restraint (back-bracing and/or perimeter fixing) to the consented design, cutting to services penetrations, and clean-off at completion.",
+   "family": "fitout",
+   "quantities": [
+    {
+     "key": "ceiling_area",
+     "unit": "m2",
+     "label": "Net suspended ceiling area measured on plan",
+     "default": {
+      "low": 0,
+      "high": 0
+     },
+     "assumption": "Measured net of bulkheads, shafts and full-height partitions; no deduction for penetrations under 1.0 m2. Regular rectangular rooms/open plan; not rate-applicable to small cellular rooms under ~10 m2 or to heavily raked/irregular soffits."
+    },
+    {
+     "key": "perimeter_trim",
+     "unit": "m",
+     "label": "Perimeter wall angle / shadowline trim",
+     "default": {
+      "low": 0.25,
+      "high": 0.6
+     },
+     "assumption": "Ratio of perimeter metres per m2 of ceiling. ~0.25 m/m2 for large open plan (>200 m2), ~0.60 m/m2 for cellular offices/classrooms. Shadowline trim carries a higher rate than plain angle."
+    },
+    {
+     "key": "drop_height",
+     "unit": "m",
+     "label": "Plenum depth (soffit to ceiling face) and floor-to-ceiling height",
+     "default": {
+      "low": 0.3,
+      "high": 1.2
+     },
+     "assumption": "Hanger length and access method. Assume trestle/podium access to 3.0 m FFL; above ~3.6 m assume mobile scaffold or EWP and price access separately."
+    },
+    {
+     "key": "seismic_braces",
+     "unit": "no",
+     "label": "Seismic back-brace / strut assemblies",
+     "default": {
+      "low": 0,
+      "high": 0
+     },
+     "assumption": "Quantity is a design output, not an assumption. Set by the supplier's seismic calculator / engineer to NZS 1170.5 (as amended 2016) and the grid supplier's AS/NZS 2785-type system documentation, and varies with importance level, site hazard factor (Wellington/Christchurch vs Auckland), ceiling area, tile weight and whether the ceiling is perimeter-fixed (two-way) or floating/braced."
+    },
+    {
+     "key": "penetration_cuts",
+     "unit": "no",
+     "label": "Cuts/trims to lights, diffusers, sprinklers, detectors, speakers",
+     "default": {
+      "low": 0,
+      "high": 0
+     },
+     "assumption": "Counted from services layouts; typically absorbed in the m2 rate for normal density (<= ~1 penetration per 4 m2) and priced as an extra above that."
+    }
+   ],
+   "components": [
+    {
+     "key": "grid_and_tile",
+     "label": "Exposed grid, hangers and lay-in panels supplied and installed",
+     "effect": "addition",
+     "factor": 1.0,
+     "rate_key": "ceiling_grid_tile_installed_m2",
+     "quantity_key": "ceiling_area"
+    },
+    {
+     "key": "perimeter",
+     "label": "Perimeter wall angle / shadowline trim",
+     "effect": "addition",
+     "factor": 1.0,
+     "rate_key": "ceiling_perimeter_trim_installed_m",
+     "quantity_key": "perimeter_trim"
+    },
+    {
+     "key": "seismic",
+     "label": "Seismic back-bracing and restraint to consented design",
+     "effect": "addition",
+     "factor": 1.0,
+     "rate_key": "ceiling_seismic_brace_each",
+     "quantity_key": "seismic_braces"
+    },
+    {
+     "key": "tile_upgrade",
+     "label": "Panel specification uplift (high NRC / hygiene / washable / metal) over base mineral fibre",
+     "effect": "addition",
+     "factor": 1.0,
+     "rate_key": "ceiling_tile_spec_uplift_m2",
+     "quantity_key": "ceiling_area"
+    },
+    {
+     "key": "access",
+     "label": "Height access uplift above 3.6 m (scaffold/EWP, longer hangers)",
+     "effect": "addition",
+     "factor": 1.0,
+     "rate_key": "ceiling_height_access_uplift_m2",
+     "quantity_key": "ceiling_area"
+    }
+   ],
+   "exclusions": [
+    "Seismic design, calculations, PS1/PS4 and any specific engineering design fee",
+    "Building consent fees and BCA inspections",
+    "Insulation or acoustic blanket laid over tiles, and plenum barriers",
+    "Bulkheads, upstands, shadowline perimeter details in plasterboard, and access panels",
+    "Fire-rated, smoke-stop or acoustically rated ceiling systems (separate family)",
+    "Light fittings, diffusers, sprinkler drops, detectors and their support - supply and connection by others",
+    "Setting out coordination and BWIC with services, penetration trims to non-standard fittings",
+    "Removal/disposal of existing ceilings, asbestos survey and removal",
+    "Scaffolding, EWP hire and after-hours/occupied-building working unless separately measured",
+    "Preliminaries and general, contractor margin, escalation, contingency",
+    "GST"
+   ]
+  },
+  "rates": [
+   {
+    "rate_key": "ceiling_grid_tile_installed_m2",
+    "unit": "m2",
+    "amount": {
+     "low": null,
+     "high": null
+    },
+    "currency": "NZD",
+    "gst_basis": "excl",
+    "centre": "New Zealand national (would need to be stated as Auckland / Wellington / Christchurch once sourced - QV CostBuilder holds this element separately for six centres)",
+    "as_of": "2026-09-22",
+    "basis": "Supplied and installed: 24 mm exposed tee grid, hangers to structure, standard 600x600 mineral fibre lay-in panels, normal penetration density, access to 3.0 m. NOT ESTABLISHED - no public, dated NZ source carrying a $/m2 number was found.",
+    "source": {
+     "url": "https://www.qv.co.nz/news/latest-qv-costbuilder-update-good-news-for-builders-and-developers/",
+     "publisher": "Quotable Value (QV) - QV CostBuilder quarterly update",
+     "locator": "News article body - confirms CostBuilder carries a discrete 'suspended ceiling' element built from panel and grid rates across six main centres, and reports movement of that element (approx -4.5% in the Aug update, -4.6% in Q2 2025). The underlying $/m2 rate itself is behind the subscription and was not sighted.",
+     "publication_date": "2025 (quarterly update reporting to Q2 2025)",
+     "effective_date": "2025"
+    }
+   },
+   {
+    "rate_key": "ceiling_perimeter_trim_installed_m",
+    "unit": "m",
+    "amount": {
+     "low": null,
+     "high": null
+    },
+    "currency": "NZD",
+    "gst_basis": "excl",
+    "centre": "not established",
+    "as_of": "2026-09-22",
+    "basis": "Supplied and installed perimeter wall angle or shadowline trim, including fixing to substrate. NOT ESTABLISHED - no public NZ source found.",
+    "source": {
+     "url": "https://devstack.co.nz/development-tools/rawlinsons-construction-handbook",
+     "publisher": "DevStack (listing describing Rawlinsons NZ Construction Handbook)",
+     "locator": "Tool listing entry - confirms the Rawlinsons Handbook contains detailed trade rates and regional cost factors and is sold at approx NZ$500/yr print; the Ceilings trade-rate table was not sighted because the handbook is not publicly published.",
+     "publication_date": "2026-05-30 (listing)",
+     "effective_date": "n/a - rate not obtained"
+    }
+   },
+   {
+    "rate_key": "ceiling_seismic_brace_each",
+    "unit": "no",
+    "amount": {
+     "low": null,
+     "high": null
+    },
+    "currency": "NZD",
+    "gst_basis": "excl",
+    "centre": "not established",
+    "as_of": "2026-09-22",
+    "basis": "Supply and install of one back-brace/strut assembly including fixings to structure. NOT ESTABLISHED. Note that post-2016 NZS 1170.5 ULS requirements materially changed this item, so any rate predating 2016 is unusable.",
+    "source": {
+     "url": "https://www.branz.co.nz/design-build/articles/seismic-design-for-suspended-ceilings",
+     "publisher": "BRANZ",
+     "locator": "Article 'Seismic design for suspended ceilings' - section stating suspended ceilings are not exempt and must be designed to ultimate limit state, that NZ grid suppliers provide seismic calculators, and that many BCAs now require producer statements and post-completion sign-off. Carries no cost figure.",
+     "publication_date": "2026-05-19 (BRANZ page date; content derives from the post-2016 NZS 1170.5 amendment)",
+     "effective_date": "2016 onward"
+    }
+   },
+   {
+    "rate_key": "ceiling_tile_spec_uplift_m2",
+    "unit": "m2",
+    "amount": {
+     "low": null,
+     "high": null
+    },
+    "currency": "NZD",
+    "gst_basis": "excl",
+    "centre": "not established",
+    "as_of": "2026-09-22",
+    "basis": "Uplift over base economy mineral fibre panel for higher NRC acoustic, hygiene/washable (e.g. AMF Thermatex Thermaclean, Freshtone), woodwool or metal panels. NOT ESTABLISHED - NZ distributors publish product data but no prices.",
+    "source": {
+     "url": "https://potters.co.nz/catalogue/ceiling/",
+     "publisher": "Potter Interior Systems",
+     "locator": "Ceiling Solutions catalogue page - confirms the NZ product families in play (mineral fibre, woodwool, metal, timber panels; AMF/USG Boral panels; Rondo grid) and that they are specified to seismic, acoustic, hygiene and fire requirements. No pricing published on the page.",
+     "publication_date": "undated product catalogue page (accessed 2026-09-22)",
+     "effective_date": "n/a - no price published"
+    }
+   },
+   {
+    "rate_key": "ceiling_height_access_uplift_m2",
+    "unit": "m2",
+    "amount": {
+     "low": null,
+     "high": null
+    },
+    "currency": "NZD",
+    "gst_basis": "excl",
+    "centre": "not established",
+    "as_of": "2026-09-22",
+    "basis": "Labour/access uplift for ceilings above approx 3.6 m FFL and long-drop hangers. NOT ESTABLISHED - no NZ published source; normally derived from plant hire schedules plus labour constants.",
+    "source": {
+     "url": "https://devstack.co.nz/development-tools/rawlinsons-construction-handbook",
+     "publisher": "DevStack (listing describing Rawlinsons NZ Construction Handbook)",
+     "locator": "Listing notes the handbook includes labour and plant constants and wage/charge rate build-ups - the correct public-domain route to build this uplift, not sighted.",
+     "publication_date": "2026-05-30 (listing)",
+     "effective_date": "n/a - rate not obtained"
+    }
+   }
+  ],
+  "not_established": [
+   "THE CORE NUMBER. No public, dated, NZ-authored source carrying a supplied-and-installed $/m2 for exposed-grid mineral fibre ceilings was found. Every credible NZ dataset that holds it is paywalled: QV CostBuilder (subscription; holds 'suspended ceilings' as a discrete element built from panel and grid rates, priced for Auckland, Hamilton, Palmerston North, Wellington, Christchurch and Dunedin) and Rawlinsons NZ Construction Handbook (approx NZ$500/yr, contains detailed trade rates plus regional cost factors and labour/plant constants). Buying one quarter of CostBuilder or the current Rawlinsons is the cheapest route to closing this and should be the first hour of QS time spent.",
+   "SOURCES CHECKED AND RULED OUT. RLB New Zealand Riders Digest 2025 (8th edition, free public PDF) was checked - it carries building $/m2 GFA benchmarks and fitout scope descriptions (e.g. 'partially finished suspended ceilings and painted walls' as an inclusion/exclusion note) but not measured ceiling trade rates. BRANZ / Build magazine articles on suspended ceiling seismic design carry the compliance requirement but no cost. QV's public news releases give percentage movement of the suspended ceiling element but never the level.",
+   "SUPPLIER PRICING. Potter Interior Systems, Forman Building Systems, T&R Interior Systems and Autex publish product/technical data on their own sites, EBOSS and miproducts but no list prices. A supply-only build-up is achievable only by requesting written trade pricing for (a) grid - e.g. Rondo or Donn DX 24 mm exposed tee, per m2 of grid including main tees, cross tees, wall angle, hangers; and (b) panel - e.g. AMF Thermatex, Armstrong Dune/Optra 600x600x15-19 mm, per m2 or per carton. Until that is in hand the material half of the rate is unquantified.",
+   "SEISMIC RESTRAINT IS UNPRICED AND IS THE LARGEST UNKNOWN. Post-2016 amendments to NZS 1170.5:2004 require suspended ceilings to be designed to ultimate limit state, BCAs commonly require a producer statement and post-installation sign-off, and grid suppliers run proprietary seismic calculators. Brace quantity per m2, the choice between perimeter-fixed two-way and floating/braced systems, tile hold-down clips, importance level (IL2 office vs IL4 post-disaster), and site hazard factor (Wellington and Christchurch materially worse than Auckland) all move the rate and none of them are fixed by the scenario. Any single national $/m2 that does not state its seismic assumption is not usable for tender pricing.",
+   "SCENARIO VARIABLES STILL OPEN (as your clustering flagged). Tile type and NRC - economy mineral fibre vs high-NRC acoustic vs washable/hygiene vs woodwool/metal spans a very wide material cost. Grid - 24 mm white exposed tee vs 15 mm slimline vs slotted/seismic-rated vs corrosion-resistant for wet areas. Ceiling height and plenum depth - hanger length, and whether trestle access or scaffold/EWP. Room geometry - large open plan vs cellular rooms changes the perimeter-to-area ratio by roughly 2.5x and is a bigger driver than tile choice in small rooms. Penetration density from lighting/HVAC/sprinklers. Occupied-building or after-hours working.",
+   "REGIONAL SPREAD NOT QUANTIFIED. No public NZ regional factor for this specific trade was obtained. Rawlinsons publishes regional cost factors and QV CostBuilder prices six centres - both would need to be purchased to state, e.g., a Queenstown or Northland loading against Auckland.",
+   "PUBLIC-SECTOR SCHEDULES OF RATES NOT YET EXHAUSTED. My search budget ran out before I could work through Ministry of Education property schedules of rates, Kainga Ora, Health NZ and territorial authority maintenance schedules of rates, and GETS published tender price schedules. These are the most likely free public NZ sources of a supplied-and-installed ceiling $/m2 and are the second place I would spend QS time. Treat this as an open line of enquiry, not a dead end.",
+   "OFFSHORE FIGURES - EXPLICITLY NOT USED AS NZ RATES. The only per-m2 figures the search surfaced were UK: MyBuilder's suspended ceiling price guide quotes grid installation labour of roughly GBP 10-20/m2 with tiling included. That is a UK lead-generation/price-guide site, it is labour-only, it carries no seismic content at all (the UK has no equivalent bracing requirement), and it has not been converted or applied. It is recorded here purely so the next reader knows it was seen and rejected.",
+   "NZ DATAPOINT SEEN BUT NOT COMPARABLE. Decorative Building Products (NZ) list a 100x25 linear 'suspended ceiling' at $29/m2 plus GST. That is a PVC/woodgrain linear plank ceiling supply-only, a different product family from exposed-grid mineral fibre lay-in, and it excludes grid, hangers, seismic restraint and all labour. It must not be used as a proxy for this class.",
+   "VOLATILITY / ESCALATION. QV's public updates show the suspended ceiling element moving both ways within short periods (approx +5% in one update, then approx -4.5 to -4.6% in 2025 updates) driven by panel and grid material rates. Whatever rate is eventually adopted must be date-stamped and escalated to the tender date; do not carry a rate older than ~12 months on this element without adjustment.",
+   "CONSEQUENCE FOR THE 19 UNPRICED TENDERS. Until the above is closed, these should be carried as a provisional sum or a rate-only item with the seismic design and bracing quantity expressly excluded and the tile/grid specification named, rather than a lump sum. Pricing them off an unsourced m2 rate would transfer an unquantified seismic-bracing risk into the contract sum."
+  ],
+  "_meta": {
+   "searches": 10,
+   "in": 115173,
+   "out": 11717,
+   "stop": "end_turn"
+  }
+ }
+]

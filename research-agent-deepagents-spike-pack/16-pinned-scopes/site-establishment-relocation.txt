@@ -1,0 +1,68 @@
+SCENARIO
+id: site-establishment-relocation-pinned
+title: Site establishment and compound relocation
+family: civil
+catalogue unit: sum (one complete relocation event of a single site compound, in-place on an operating site)
+
+SCOPE - FIXED. Do not substitute your own.
+  site type:        operating commercial building site, Auckland, 3,000 m2 site area,
+                    existing sealed/compacted hardstand at both old and new positions
+  fencing:          120 lineal metres of 1.8m temporary panel fence, galvanised welded
+                    mesh panel on concrete feet, incl. one 4.0m double swing gate leaf
+  sheds:            2 x containerised units - one 6.0m (20ft) site office fitout with
+                    power/lighting, one 6.0m (20ft) lockable store - relocated 60m
+                    within the site boundary
+  lifting:          8-tonne truck-mounted hiab, 4 hours on site, 2 lifts per unit
+  stockpile areas:  2 storage bays reformed, 10m x 6m each, with 60 lineal metres of
+                    concrete-block bay walls (1 course, 0.6m blocks) re-set
+  number of moves:  ONE move event (one mobilisation, one demobilisation of plant)
+  standing time:    labour gang of 3 (1 leading hand + 2 labourers) for 1 x 8-hour day
+
+INCLUDED, amortised over the nominal quantity where not already per-unit:
+  - dismantle, shift and re-erect 120m of panel fence incl. gate, on existing hardstand
+  - disconnect, shift and reconnect 2 x 20ft containers, hiab hire and hookup labour
+  - re-level container bearing points with timber packers / precast pads
+  - electrical disconnect and reconnect of the office container to an existing
+    distribution board within 20m (certificate of compliance included)
+  - lift and re-set 60m of concrete-block bay walls with the same hiab visit
+  - relocate and re-fix site signage, hazard tape and pedestrian barriers at the
+    new compound position
+  - the 3-person gang for one 8-hour day, and the single plant mobilisation,
+    both amortised across the whole event
+  - tidy and sweep the vacated compound footprint back to existing hardstand level
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, design and consent fees
+  - any new hardstand, aggregate, geotextile or seal construction at either position
+  - new fence panels, new containers, or purchase of concrete blocks (relocation of
+    existing items only)
+  - new sub-mains, switchboard, water or wastewater connections beyond the 20m
+    reconnect
+  - traffic management, road-occupancy licence or works outside the site boundary
+  - a second move event, ongoing weekly fence or shed hire, or overnight security
+
+Give the band as $/sum for this exact scope, and state the total for the nominal
+quantity so the amortisation is auditable.
+
+---
+
+**Band: $10,500 – $16,500 per relocation event (median ~$13,200), excl. GST**
+
+Build-up for the nominal quantity (median column):
+
+| Item | Nominal qty | Rate | Total |
+|---|---|---|---|
+| Fence dismantle / shift / re-erect, 1.8m panel + 1 gate | 120 m | $22/m | $2,640 |
+| Container relocation, 2 x 20ft (hiab + hookup labour) | 2 no. | $950 ea | $1,900 |
+| Hiab 8t incl. operator, mob + 4 hrs on site | 1 visit | $1,450 | $1,450 |
+| Re-level bearing points, packers / precast pads | 2 no. | $260 ea | $520 |
+| Electrical disconnect / reconnect + CoC, ≤20m | 1 no. | $1,350 | $1,350 |
+| Concrete-block bay walls, lift and re-set | 60 m | $34/m | $2,040 |
+| Signage, hazard tape, pedestrian barriers relocated | 1 lot | $650 | $650 |
+| Gang of 3, 1 x 8-hr day (labour standing / general handling) | 24 hrs | $78/hr | $1,872 |
+| Vacated footprint tidy and sweep | 1 lot | $780 | $780 |
+| **Total (median)** | | | **$13,202** |
+
+Band drivers, in order of weight: hiab standing time if the lifts spill to a second visit (+$1,400), electrical reconnect if the nearest board is beyond 20m (+$900–$1,500), and gang productivity on a live site with concurrent trades (±20% on the labour lines). Low end assumes one clean uninterrupted day; high end assumes a second part-day and a stretched electrical run.
+
+Rate basis: Auckland labour at $78/hr all-up for a mixed 3-person civil gang, 8t hiab at $180–$200/hr plus mobilisation, registered electrician at $125–$145/hr. Mid-market subcontract pricing, 2026 Q3.
