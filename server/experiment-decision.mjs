@@ -20,10 +20,27 @@ function round(value, places = 6) {
  * and "higher pass rate" cannot share a comparator.
  */
 export const DECISION_METRICS = {
+  "deterministic-delivery-rate": {
+    label: "Deterministic delivery rate",
+    direction: "higher",
+    describe:
+      "Share of samples whose full verification manifest passed on the exact final candidate revision.",
+    // The only metric here that no model produces. The other five are derived from gate
+    // verdicts or operator scores; three of the gate stages — dev-review, test and
+    // final-review — are themselves model runs, so an arm running a more permissive
+    // reviewer scores higher on them without delivering more. This one reads the
+    // verification manifest at the final candidate's head, so an arm can only move it by
+    // shipping code that passes provider-independent commands.
+    // `unknown` samples stay out of the denominator, so an arm with no admissible evidence
+    // scores `null` and is reported ineligible rather than ranked on a partial denominator.
+    value: (variant) =>
+      variant.deterministicEvidenceSamples ? (variant.deterministicDeliveryRate ?? null) : null,
+  },
   "first-pass-gate-success-rate": {
     label: "First-pass gate success rate",
     direction: "higher",
-    describe: "Share of dev-review, test and final-review gates that passed on their first attempt.",
+    describe:
+      "Share of dev-review, test and final-review gates that passed on their first attempt. Diagnostic: these gates are model runs, so a more permissive reviewer raises this without improving delivery.",
     value: (variant) => (variant.gateAttempts ? variant.firstPassGateSuccessRate : null),
   },
   "eventual-gate-success-rate": {
@@ -52,7 +69,13 @@ export const DECISION_METRICS = {
   },
 };
 
-export const DEFAULT_DECISION_METRIC = "first-pass-gate-success-rate";
+/**
+ * Deterministic delivery is the default because it is the only metric a model cannot move
+ * by being more lenient about its own work. Defaulting to a gate rate would let an
+ * undeclared experiment be decided by reviewer strictness, which is the failure this
+ * module exists to prevent.
+ */
+export const DEFAULT_DECISION_METRIC = "deterministic-delivery-rate";
 
 export function normalizeDecisionMetric(value) {
   if (value == null) return DEFAULT_DECISION_METRIC;

@@ -1,0 +1,430 @@
+{
+  "groupId": "model-baseline-2026-09",
+  "decisionMetric": "deterministic-delivery-rate",
+  "notes": [
+    "Phase A of docs/model-eval-baseline-proposal.md. One role bundle varies per arm, so a",
+    "measured difference can be attributed to a bundle rather than to ten simultaneous changes.",
+    "Every role is pinned in every arm: a pinned role reports task-override as its policy",
+    "source, and automatic repair escalation applies only to unpinned roles.",
+    "Cases are replays of completed real tasks. Each has a known delivered implementation to",
+    "anchor the rubric against, which an invented case does not.",
+    "The baseline matrix is written out explicitly so the reference arm is a frozen record",
+    "rather than whatever the shipped defaults happen to be on the day of the run.",
+    "Every repositoryPath is a dedicated eval worktree pinned at that case's frozen base,",
+    "not the operator's live checkout. Task creation requires HEAD == frozenBaseSha, so the",
+    "checkout has to sit still for the whole of a case's arms; doing that in a live checkout",
+    "would detach the branch an operator or another agent is working on. A disposable",
+    "worktree can be moved between cases freely and is not shared with any other work."
+  ],
+  "bundles": {
+    "understand": [
+      "triage",
+      "scouts",
+      "grill",
+      "specification",
+      "test"
+    ],
+    "decide": [
+      "plan",
+      "dev-review",
+      "final-review"
+    ],
+    "build": [
+      "implement",
+      "repair"
+    ]
+  },
+  "arms": {
+    "B0-baseline": {
+      "description": "Shipped Codex standard matrix. Reference arm.",
+      "providerConstraint": "codex",
+      "stagePolicies": {
+        "triage": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "scouts": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "grill": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "specification": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "plan": {
+          "model": "gpt-5.6-sol",
+          "reasoning": "high"
+        },
+        "implement": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "repair": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "dev-review": {
+          "model": "gpt-5.6-sol",
+          "reasoning": "high"
+        },
+        "test": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "final-review": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "medium"
+        }
+      }
+    },
+    "A1-build": {
+      "description": "Build bundle on Claude Sonnet 5 xhigh; every other role baseline.",
+      "stagePolicies": {
+        "triage": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "scouts": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "grill": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "specification": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "plan": {
+          "model": "gpt-5.6-sol",
+          "reasoning": "high"
+        },
+        "implement": {
+          "model": "claude-sonnet-5",
+          "reasoning": "xhigh"
+        },
+        "repair": {
+          "model": "claude-sonnet-5",
+          "reasoning": "xhigh"
+        },
+        "dev-review": {
+          "model": "gpt-5.6-sol",
+          "reasoning": "high"
+        },
+        "test": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "final-review": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "medium"
+        }
+      }
+    },
+    "A2-decide": {
+      "description": "Decide bundle on Claude Opus 5 xhigh; every other role baseline.",
+      "stagePolicies": {
+        "triage": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "scouts": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "grill": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "specification": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "plan": {
+          "model": "claude-opus-5",
+          "reasoning": "xhigh"
+        },
+        "implement": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "repair": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "dev-review": {
+          "model": "claude-opus-5",
+          "reasoning": "xhigh"
+        },
+        "test": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "final-review": {
+          "model": "claude-opus-5",
+          "reasoning": "xhigh"
+        }
+      }
+    },
+    "A3-understand-cheap": {
+      "description": "Understand bundle dropped from xhigh to high; every other role baseline. Tests whether the cheap majority of stages can be cheaper for free.",
+      "providerConstraint": "codex",
+      "stagePolicies": {
+        "triage": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "high"
+        },
+        "scouts": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "high"
+        },
+        "grill": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "high"
+        },
+        "specification": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "high"
+        },
+        "plan": {
+          "model": "gpt-5.6-sol",
+          "reasoning": "high"
+        },
+        "implement": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "repair": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "xhigh"
+        },
+        "dev-review": {
+          "model": "gpt-5.6-sol",
+          "reasoning": "high"
+        },
+        "test": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "high"
+        },
+        "final-review": {
+          "model": "gpt-5.6-luna",
+          "reasoning": "medium"
+        }
+      }
+    }
+  },
+  "cases": [
+    {
+      "caseId": "C1-narrow",
+      "shape": "narrow single-surface UI behaviour",
+      "sourceTaskId": "AH-082",
+      "repositoryPath": "/Users/shaun/projects/.worktrees/eval-baseline-2026-09-agent-harness-ui",
+      "frozenBaseSha": "f18c567374e9ec42f2e4d4ac2598948ec0698100",
+      "workflow": "implement",
+      "workflowProfile": "standard",
+      "priority": "medium",
+      "repetitions": 1,
+      "title": "Tasks  selection in task modal window",
+      "description": "IN the frontier ui, in the tasks table, i can only select the task by clicking the first cell in the row, as I hover over the entire row it should be showing a proper hover state and i should be able to click anywhere to select it",
+      "acceptanceCriteria": [
+        "Hovering anywhere on a task row in the Frontier tasks table shows a row hover state.",
+        "Clicking anywhere in a task row selects that task, not only the first cell.",
+        "No other table's selection or keyboard behaviour regresses."
+      ],
+      "verificationCommands": [
+        "lint",
+        "typecheck",
+        "test",
+        "build",
+        "test-sites"
+      ],
+      "arms": [
+        "B0-baseline",
+        "A1-build",
+        "A2-decide",
+        "A3-understand-cheap"
+      ],
+      "sourceRepositoryPath": "/Users/shaun/projects/agent-harness-ui"
+    },
+    {
+      "caseId": "C2-feature",
+      "shape": "additive feature across two surfaces",
+      "sourceTaskId": "AH-069",
+      "repositoryPath": "/Users/shaun/projects/.worktrees/eval-baseline-2026-09-agent-harness-ui",
+      "frozenBaseSha": "06d5ed0b9eec66388749a75ad0518e1f8ab2dbfb",
+      "workflow": "implement",
+      "workflowProfile": "standard",
+      "priority": "medium",
+      "repetitions": 1,
+      "title": "Update task journal in frontier ui",
+      "description": "In the tasks page in the frontier ui, we have filters that show different tables. In those tables we see tokens, but we do not see estimated cost. I wish to add this in. Also in the agents tab there is a tokens column, it is empty under active runs but visible under run history.",
+      "acceptanceCriteria": [
+        "Every Frontier tasks-page filter table that shows tokens also shows an estimated cost.",
+        "The agents tab tokens column is populated under active runs, not only run history.",
+        "Cost is presented as an estimate and is absent rather than invented where no rate exists."
+      ],
+      "verificationCommands": [
+        "lint",
+        "typecheck",
+        "test",
+        "build",
+        "test-sites"
+      ],
+      "arms": [
+        "B0-baseline",
+        "A1-build",
+        "A2-decide",
+        "A3-understand-cheap"
+      ],
+      "sourceRepositoryPath": "/Users/shaun/projects/agent-harness-ui"
+    },
+    {
+      "caseId": "C3-flow",
+      "shape": "interaction redesign with a small state machine",
+      "sourceTaskId": "AH-068",
+      "repositoryPath": "/Users/shaun/projects/.worktrees/eval-baseline-2026-09-agent-harness-ui",
+      "frozenBaseSha": "04d05e59cb880729530b9aceb562650ed77e6ede",
+      "workflow": "implement",
+      "workflowProfile": "standard",
+      "priority": "medium",
+      "repetitions": 1,
+      "title": "Improve next step buttons flow",
+      "description": "Currently whenever I need to click a button in the agent harness UI to proceed to the next step, it opens a text box where i can add an optional text and then a button to proceed. I want to change this so that when i click the first button to proceed it shows a drop down list, that drop down list is \"proceed\" or \"proceed with reason\". If i click the first one the task continues to the next step, if i click \"proceed with reason\" then it opens the textbox and scrolls the view down.",
+      "acceptanceCriteria": [
+        "A proceed control opens a dropdown offering 'proceed' and 'proceed with reason'.",
+        "'proceed' advances the task immediately with no text box.",
+        "'proceed with reason' reveals the text box and scrolls it into view.",
+        "The existing optional-reason payload still reaches the same endpoint."
+      ],
+      "verificationCommands": [
+        "lint",
+        "typecheck",
+        "test",
+        "build",
+        "test-sites"
+      ],
+      "arms": [
+        "B0-baseline",
+        "A1-build",
+        "A2-decide",
+        "A3-understand-cheap"
+      ],
+      "sourceRepositoryPath": "/Users/shaun/projects/agent-harness-ui"
+    },
+    {
+      "caseId": "C4-backend",
+      "shape": "consequential backend aggregation following an existing pattern",
+      "sourceTaskId": "AH-058",
+      "repositoryPath": "/Users/shaun/projects/.worktrees/eval-baseline-2026-09-eversor-plancheck",
+      "frozenBaseSha": "21b63f5c6f3d686e6142cc82276a565cd425909a",
+      "workflow": "implement",
+      "workflowProfile": "high-risk",
+      "priority": "medium",
+      "repetitions": 1,
+      "title": "Prompt A \u2014 shared-remedy fee grouping",
+      "description": "Implement shared-remedy fee grouping in eversor-plancheck. Branch off\nevesor-plancheck/main (the remote is `evesor-plancheck`, NOT origin).\n\nProblem: when six claims are all closed by one deliverable \u2014 one Schedule of\nPrices, one responsibility matrix \u2014 each claim currently carries its own\nPRODUCE_SCHEDULE fee and the tender's remedy subtotal bills it six times. Every\nclaim must be retained; only the fee is counted once.\n\nFOLLOW THE EXISTING PATTERN, do not invent one. Construction pricing already\nsolved the equivalent problem: read backend/variation_costs/aggregation.py,\nwhich groups by `change_group_id` (a reviewer-set group) falling back to\n`event_key`, counts one amount per event, reports `shared_claims`, and marks a\ngroup `disputed` when members disagree rather than silently picking one.\nMirror that design and its safety property.\n\nRequirements:\n- A reviewer attaches claims to a named remedy group with one common\n  deliverable and one editable fee. Append-only revisions, consistent with\n  backend/remedy_prices' existing revision model.\n- The fee counts ONCE per group in every subtotal. Separately-priced extra work\n  on a member claim is preserved and still counted.\n- No claim is deleted, hidden or merged. A grouped claim still renders.\n- Where members disagree, follow aggregation.py: report it, do not pick one.\n- Surface the group and the shared count on Review, All Tenders and Command\n  Deck, and make the three agree. Read backend/deck/ and backend/tenders/\n  measurements.py (`cost_to_close`) \u2014 they must not double-count.\n- dbmate migration for any new table. Never create tables from Python.\n\nRead AGENTS.md and backend/AGENTS.md first. backend/remedy_prices/models.py's\ndocstring states the invariants \u2014 the table prices the FIX, never what the\nvariation is worth unfixed. Do not add a confidence, probability or expected\nvalue field.\n\nVerify: python -m pytest, make integration-test (asserts zero skips),\ncd frontend && npm run test, make backend-quality, npm run api:types.\n`make e2e-native` has a floor of 2 failed (03-tender-parity colspan, broken on\nmain too) \u2014 that is not your regression.\n\nReport before/after remedy subtotals per tender. Do not merge. No detection,\nREMEDY, adjudication or model runs. No Azure changes.",
+      "acceptanceCriteria": [
+        "A shared remedy group counts its deliverable fee exactly once in every subtotal.",
+        "No claim is deleted, hidden or merged; a grouped claim still renders.",
+        "Disagreeing group members are reported as disputed rather than silently resolved.",
+        "Review, All Tenders and Command Deck agree on the group and its shared count.",
+        "Any new table arrives via a dbmate migration, never from Python."
+      ],
+      "verificationCommands": [
+        "frontend-lint",
+        "frontend-test",
+        "frontend-build",
+        "runtime-ports",
+        "backend-quality",
+        "backend-compile",
+        "backend-test"
+      ],
+      "arms": [
+        "B0-baseline",
+        "A1-build",
+        "A2-decide",
+        "A3-understand-cheap"
+      ],
+      "sourceRepositoryPath": "/Users/shaun/projects/eversor-plancheck"
+    },
+    {
+      "caseId": "C5-schema",
+      "shape": "migration plus read model plus UI",
+      "sourceTaskId": "AH-060",
+      "repositoryPath": "/Users/shaun/projects/.worktrees/eval-baseline-2026-09-eversor-plancheck",
+      "frozenBaseSha": "21b63f5c6f3d686e6142cc82276a565cd425909a",
+      "workflow": "implement",
+      "workflowProfile": "high-risk",
+      "priority": "medium",
+      "repetitions": 1,
+      "title": "Prompt C \u2014 persist match candidates and surface ambiguity",
+      "description": "In eversor-plancheck, `backend/variation_costs/scenarios.py` `match_claim`\nreturns a Match carrying `candidates` \u2014 every scenario whose asset AND work\nterms fired. `construction_pricing_results` has no candidates column, so it is\ncomputed and thrown away at persist time. The UI therefore cannot say WHAT a\nclaim was ambiguous between. There is no recorded reason for the omission in\ndb/migrations/20260909002000_construction_pricing.sql; treat it as an oversight.\n\nBranch off evesor-plancheck/main (remote is `evesor-plancheck`, NOT origin).\n\n1. dbmate migration adding a candidates column to construction_pricing_results.\n   Never create or alter tables from Python.\n2. Persist candidates for every result, not only ambiguous ones.\n3. Expose them on the read model and render on Review: an ambiguous claim shows\n   \"N scenarios fit this claim, needs review\" and lists them by title, each\n   selectable in one click. Selecting records a user link \u2014 that path already\n   recomputes via calculate(origin=\"user\") from the catalogue, so it cannot\n   carry bad provenance.\n4. CRITICAL: an ambiguous claim's amount must NOT enter any subtotal until a\n   reviewer picks. Follow the existing `outcome_excluded` pattern in\n   backend/variation_costs/service.py \u2014 the value exists, the UI explains it,\n   and it is withheld from every total. Make the ambiguous state visually loud;\n   the exclusion from the subtotal is the load-bearing half.\n5. Same treatment for `incompatible` (currently 2 claims). Today it renders\n   identically to \"we have nothing\", but it means \"we found something and\n   deliberately refused it\" \u2014 a different conversation. Say which scenario was\n   refused and why.\n\nCurrent counts on the live local DB: 21 matched, 125 no_match, 2 incompatible,\n1 ambiguous of 149 claims. Subtotals must not move for the 21.\n\nRead AGENTS.md and backend/AGENTS.md first. Verify with python -m pytest,\nmake integration-test (zero skips), cd frontend && npm run test,\nmake backend-quality, npm run api:types. `make e2e-native` has a floor of\n2 failed (03-tender-parity colspan, broken on main too).\n\nDo not merge. No detection, REMEDY, adjudication or model runs. No Azure.",
+      "acceptanceCriteria": [
+        "A dbmate migration adds a candidates column to construction_pricing_results.",
+        "Candidates are persisted for every result, not only ambiguous ones.",
+        "Review shows how many scenarios fit an ambiguous claim and lists them selectably.",
+        "Selecting a candidate recomputes through the catalogue with user origin."
+      ],
+      "verificationCommands": [
+        "frontend-lint",
+        "frontend-test",
+        "frontend-build",
+        "runtime-ports",
+        "backend-quality",
+        "backend-compile",
+        "backend-test"
+      ],
+      "arms": [
+        "B0-baseline",
+        "A1-build",
+        "A2-decide",
+        "A3-understand-cheap"
+      ],
+      "sourceRepositoryPath": "/Users/shaun/projects/eversor-plancheck"
+    },
+    {
+      "caseId": "C6-ambiguous",
+      "shape": "vague bug report - specification ambiguity under test",
+      "sourceTaskId": "AH-070",
+      "repositoryPath": "/Users/shaun/projects/.worktrees/eval-baseline-2026-09-eversor-mystrataassist",
+      "frozenBaseSha": "3b402267704fdc1af27691b2da3c0b1f6e7bbf78",
+      "workflow": "implement",
+      "workflowProfile": "standard",
+      "priority": "medium",
+      "repetitions": 1,
+      "title": "Command Deck - Should load new data after update overdue",
+      "description": "Issue: \nonce update overdue task Command Deck should load new data after saved\nremove system warning msg- dev \u00b7 narration fallback: grounding_validation_failed\n\nExpected result: \nShould load new data after update overdue\nremove system warning msg\n\nI think we fixed this before but it doesn't seem to be working. Have a look.",
+      "acceptanceCriteria": [
+        "Command Deck reloads its data after an overdue task is updated and saved.",
+        "The grounding-validation narration-fallback system warning no longer appears.",
+        "The fix identifies why the previous attempt did not hold, rather than re-applying it."
+      ],
+      "verificationCommands": [
+        "frontend-lint",
+        "frontend-test",
+        "frontend-build",
+        "openapi-types",
+        "playwright-config",
+        "playwright-e2e",
+        "runtime-port-contract",
+        "backend-quality",
+        "backend-compile",
+        "backend-test",
+        "backend-tooling-test",
+        "check-retired-references"
+      ],
+      "arms": [
+        "B0-baseline",
+        "A1-build",
+        "A2-decide",
+        "A3-understand-cheap"
+      ],
+      "sourceRepositoryPath": "/Users/shaun/projects/eversor-mystrataassist"
+    }
+  ]
+}

@@ -54,6 +54,20 @@ const DEPENDENCY_DIRECTORY_NAMES = ["node_modules", ".venv", "venv", ".tox", "ve
 const DEPENDENCY_SCAN_DEPTH = 4;
 const PROVISION_MANIFEST = "agent-harness-provisioned-dependencies.json";
 
+/**
+ * Recognize the `commit:<sha>` target-ref sentinel written by `RepositoryAuthority`
+ * (server/repository-authority.mjs) for a checkout with no branch to advance: a frozen
+ * experiment base, or a detached HEAD with no upstream. It is harness notation, not a
+ * git revision expression, and must be unwrapped before it reaches git.
+ *
+ * Returns the bare SHA, or `null` when `ref` is an ordinary git ref.
+ */
+export function parseCommitSentinel(ref) {
+  if (typeof ref !== "string") return null;
+  const match = /^commit:([0-9a-f]{7,40})$/i.exec(ref.trim());
+  return match ? match[1] : null;
+}
+
 export class GitWorktreeManager {
   #root;
   #prepareQueue = Promise.resolve();
@@ -501,9 +515,19 @@ export class GitWorktreeManager {
     if (!candidate.headRevision || candidateRevision !== candidate.headRevision) {
       throw new Error("The candidate worktree no longer matches the reviewed revision.");
     }
-    const targetResult = await git(repositoryRoot, ["rev-parse", "--verify", targetRef], {
-      allowFailure: true,
-    });
+    // `commit:<sha>` is a harness sentinel, not git syntax. `RepositoryAuthority` mints it
+    // for a checkout with no branch to advance — a frozen experiment base, or a detached
+    // HEAD — and `<rev>:<path>` means something else entirely to git, so passing it to
+    // `rev-parse --verify` looks for a *file* named after the SHA and always fails. A
+    // frozen base is pinned by definition, so the recorded commit is the target revision.
+    const frozenRevision = parseCommitSentinel(targetRef);
+    const targetResult = frozenRevision
+      ? await git(repositoryRoot, ["rev-parse", "--verify", `${frozenRevision}^{commit}`], {
+          allowFailure: true,
+        })
+      : await git(repositoryRoot, ["rev-parse", "--verify", targetRef], {
+          allowFailure: true,
+        });
     if (targetResult.code !== 0) throw new Error("The candidate target ref no longer exists.");
     const targetRevision = targetResult.stdout.trim();
     if (targetRevision === candidate.headRevision) return "merged";
@@ -1314,9 +1338,28 @@ function safeSegment(value) {
     .slice(0, 80);
 }
 
+/**
+ * Config forced onto every harness git invocation.
+ *
+ * The harness writes machine commits on the operator's behalf, into worktrees of the
+ * operator's own repositories, so it inherits their `commit.gpgsign`. That puts an
+ * interactive signer in the middle of an unattended pipeline: with SSH signing backed by
+ * 1Password, a dropped lease fails the commit with "failed to fill whole buffer" *after*
+ * the implementation agent has finished its work, discarding the whole run. Four EXP-001
+ * samples died that way (AH-024, AH-026, AH-033, AH-034), each after a successful
+ * multi-minute agent run.
+ *
+ * A harness commit is not a claim of human authorship and should not carry the operator's
+ * signature, so signing is disabled for the commits this process creates rather than
+ * being made more reliable. Nothing in the operator's git configuration is modified: `-c`
+ * applies to this invocation only, and a person committing in the same repository still
+ * signs exactly as they configured.
+ */
+const GIT_FORCED_CONFIG = ["-c", "commit.gpgsign=false", "-c", "tag.gpgsign=false"];
+
 function git(cwd, args, options = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn("git", args, {
+    const child = spawn("git", [...GIT_FORCED_CONFIG, ...args], {
       cwd,
       windowsHide: true,
       stdio: [options.input === undefined ? "ignore" : "pipe", "pipe", "pipe"],

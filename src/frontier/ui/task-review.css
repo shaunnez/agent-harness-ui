@@ -1,0 +1,424 @@
+/* Later task stages share the existing workspace surfaces and command region. */
+.task-layout-top .candidate-ribbon {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  flex-wrap: wrap;
+}
+.task-layout-top .candidate-ribbon > button {
+  margin-left: auto;
+}
+.task-layout-top .candidate-ribbon code {
+  color: #b9cfdd;
+}
+.task-layout-top .panel-content {
+  padding: 16px;
+}
+.task-layout-top .panel-content > :first-child {
+  margin-top: 0;
+}
+.task-layout-top .panel-content > :last-child {
+  margin-bottom: 0;
+}
+.task-layout-top .review-intro {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  padding: 16px 20px;
+  background: linear-gradient(110deg, #1b3545, #122630);
+}
+.task-layout-top .review-intro img {
+  width: 66px;
+  height: 86px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.task-layout-top .review-intro h3 {
+  font-size: 20px;
+  margin: 6px 0;
+}
+.task-layout-top .review-intro p {
+  margin: 6px 0;
+}
+.task-layout-top .review-finding-grid {
+  display: grid;
+  grid-template-columns: minmax(230px, 0.85fr) minmax(0, 1.15fr);
+  gap: 14px;
+}
+.task-layout-top .finding-list,
+.task-layout-top .finding-detail,
+.task-layout-top .test-evidence,
+.task-layout-top .journey-evidence,
+.task-layout-top .readiness-panel,
+.task-layout-top .revision-history,
+.task-layout-top .approval-brief,
+.task-layout-top .delivery-evidence {
+  padding: 0;
+  overflow: hidden;
+}
+.task-layout-top .finding-list nav button {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid #29424f;
+  border-radius: 0;
+  background: transparent;
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  text-align: left;
+  gap: 12px;
+}
+.task-layout-top .finding-list nav button[aria-pressed="true"],
+.task-layout-top .test-result-list button[aria-pressed="true"] {
+  background: #1c3850;
+  box-shadow: inset 3px 0 #70b5ff;
+}
+.task-layout-top .finding-list nav button:hover,
+.task-layout-top .test-result-list button:hover {
+  background: #203e4f;
+}
+.task-layout-top .finding-list strong,
+.task-layout-top .finding-list small,
+.task-layout-top .test-result-list strong,
+.task-layout-top .test-result-list small {
+  display: block;
+}
+.task-layout-top .finding-list small {
+  margin-top: 5px;
+}
+.task-layout-top .severity {
+  font-size: 12px;
+  padding: 3px 7px;
+  border: 1px solid #755551;
+  border-radius: 4px;
+  white-space: nowrap;
+  background: #422c2b;
+  color: #f0b4a9;
+}
+.task-layout-top .severity-P2,
+.task-layout-top .severity-P3 {
+  background: #353322;
+  border-color: #706847;
+  color: #e1cb8f;
+}
+.task-layout-top .finding-detail h4,
+.task-layout-top .test-detail h4 {
+  color: #a7bdc9;
+  font-size: 12px;
+  font-weight: 400;
+  margin: 0 0 8px;
+}
+.task-layout-top .finding-detail .panel-content > section {
+  padding-top: 16px;
+  margin-top: 16px;
+  border-top: 1px solid #29424f;
+}
+.task-layout-top .finding-detail button {
+  margin-top: 16px;
+}
+.task-layout-top .review-blocking-reason {
+  color: #f0b4a9;
+}
+.task-layout-top .test-attempt-picker label {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.task-layout-top .test-attempt-picker select {
+  flex: 1;
+  min-width: 0;
+  padding: 8px;
+  background: #0b202b;
+  color: #e6eef2;
+  border: 1px solid #425e6d;
+  border-radius: 5px;
+  font: inherit;
+}
+.task-layout-top .test-counts {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 14px 0 8px;
+}
+.task-layout-top .test-counts span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.task-layout-top .test-counts span:first-child,
+.task-layout-top .test-result-list .passed > svg {
+  color: #96c8a7;
+}
+.task-layout-top .test-counts span:nth-child(2),
+.task-layout-top .test-result-list .failed > svg,
+.task-layout-top .test-outcome.failed {
+  color: #ed9a87;
+}
+.task-layout-top .test-inspection-grid {
+  display: grid;
+  grid-template-columns: minmax(235px, 0.9fr) minmax(0, 1.1fr);
+  border-top: 1px solid #29424f;
+}
+.task-layout-top .test-result-list {
+  border-right: 1px solid #29424f;
+}
+.task-layout-top .test-result-list button {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid #29424f;
+  border-radius: 0;
+  background: transparent;
+  padding: 15px;
+  display: flex;
+  gap: 12px;
+  text-align: left;
+  align-items: flex-start;
+}
+.task-layout-top .test-result-list svg {
+  flex-shrink: 0;
+}
+.task-layout-top .test-detail {
+  padding: 16px;
+  min-width: 0;
+}
+.task-layout-top .test-detail > h3 {
+  font-size: 18px;
+  margin: 18px 0 8px;
+}
+.task-layout-top .test-detail dl,
+.task-layout-top .approval-brief dl,
+.task-layout-top .delivery-evidence dl {
+  display: grid;
+  grid-template-columns: 115px minmax(0, 1fr);
+  gap: 10px 16px;
+  margin: 16px 0;
+}
+.task-layout-top .test-detail dd,
+.task-layout-top .approval-brief dd,
+.task-layout-top .delivery-evidence dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.task-layout-top .test-detail dt {
+  color: #a7bdc9;
+  font-size: 12px;
+}
+.task-layout-top .test-detail pre {
+  background: #081a24;
+  border: 1px solid #29424f;
+  padding: 14px;
+  border-radius: 5px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 340px;
+  overflow: auto;
+  font-size: 12px;
+}
+.task-layout-top .test-detail-empty {
+  padding: 32px 14px;
+  color: #a7bdc9;
+}
+.task-layout-top .test-assertion {
+  border-top: 1px solid #29424f;
+  padding-top: 16px;
+  margin: 16px 0;
+}
+.task-layout-top .readiness-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.task-layout-top .readiness-grid article {
+  padding: 16px;
+  border-right: 1px solid #29424f;
+}
+.task-layout-top .readiness-grid article:last-child {
+  border: 0;
+}
+.task-layout-top .readiness-grid h3 {
+  margin: 8px 0;
+}
+.task-layout-top .readiness-grid strong {
+  color: #e1bd7a;
+}
+.task-layout-top .readiness-grid [data-fresh="true"] strong {
+  color: #96c8a7;
+}
+.task-layout-top .readiness-grid p {
+  font-size: 12px;
+  color: #a7bdc9;
+}
+.task-layout-top .journey-table-scroll {
+  overflow: auto;
+}
+.task-layout-top .journey-table {
+  font-size: 12px;
+  min-width: 710px;
+  width: 100%;
+  border-collapse: collapse;
+}
+.task-layout-top .journey-table th,
+.task-layout-top .journey-table td {
+  padding: 12px;
+  border-bottom: 1px solid #29424f;
+  text-align: left;
+}
+.task-layout-top .journey-table th {
+  font-weight: 400;
+  color: #a7bdc9;
+}
+.task-layout-top .journey-table .plain-link {
+  padding: 0;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.task-layout-top .revision-list {
+  display: flex;
+  gap: 14px;
+  overflow: auto;
+  padding: 16px;
+}
+.task-layout-top .revision-list article {
+  min-width: 240px;
+  flex: 1;
+  border: 1px solid #425e6d;
+  border-radius: 6px;
+  padding: 14px;
+}
+.task-layout-top .revision-list strong,
+.task-layout-top .revision-list small {
+  display: block;
+  margin-bottom: 8px;
+}
+.task-layout-top .delivery-timeline {
+  padding: 20px 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  list-style: none;
+  margin: 0;
+  border-block: 1px solid #29424f;
+  gap: 16px;
+}
+.task-layout-top .delivery-timeline li {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.task-layout-top .delivery-timeline [data-recorded="true"] svg {
+  color: #96c8a7;
+}
+.task-layout-top .retained-report {
+  border: 1px solid #29424f;
+  border-radius: 6px;
+  margin: 16px 0;
+}
+.task-layout-top .retained-report summary {
+  padding: 12px 16px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  cursor: pointer;
+}
+.task-layout-top .retained-report summary svg:last-child {
+  margin-left: auto;
+}
+.task-layout-top .retained-report summary:hover {
+  background: #193441;
+}
+.task-layout-top .stage-usage > small {
+  display: block;
+  margin-top: 10px;
+}
+.task-layout-top .task-usage-total {
+  background: #0d2531;
+}
+@media (max-width: 1000px) {
+  .task-layout-top .review-finding-grid,
+  .task-layout-top .test-inspection-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.task-layout-top .stage-usage .inspector-key-values,
+.task-layout-top .task-usage-total .inspector-key-values {
+  grid-template-columns: minmax(105px, 1fr) minmax(0, 1fr);
+}
+.task-layout-top .finding-list nav button {
+  justify-content: flex-start;
+}
+.task-layout-top .review-evidence {
+  display: grid;
+  gap: 14px;
+}
+.task-layout-top .review-evidence > .workflow-card {
+  margin-bottom: 0;
+}
+.task-layout-top .candidate-ribbon,
+.task-layout-top .test-evidence,
+.task-layout-top .journey-evidence,
+.task-layout-top .readiness-panel,
+.task-layout-top .revision-history,
+.task-layout-top .approval-brief,
+.task-layout-top .delivery-evidence {
+  margin-bottom: 0;
+}
+.task-layout-top .test-result-list button {
+  justify-content: flex-start;
+}
+.task-layout-top .test-attempt-picker {
+  padding: 12px 16px;
+}
+.task-layout-top .stage-summary {
+  margin-bottom: 0;
+}
+.task-layout-top .approval-evidence-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.task-layout-top .approval-evidence-grid .readiness-grid {
+  grid-template-columns: 1fr;
+}
+.task-layout-top .approval-evidence-grid .readiness-grid article {
+  border-right: 0;
+  border-bottom: 1px solid #29424f;
+  padding: 12px 16px;
+}
+.task-layout-top .approval-evidence-grid .readiness-grid article > svg {
+  float: left;
+  margin-right: 10px;
+}
+.task-layout-top .approval-evidence-grid .readiness-grid h3 {
+  margin: 0 0 4px;
+}
+.task-layout-top .delivery-stack {
+  display: grid;
+  gap: 14px;
+}
+@media (max-width: 1000px) {
+  .task-layout-top .approval-evidence-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.task-layout-top .test-list-column {
+  border-right: 1px solid #29424f;
+  min-width: 0;
+}
+.task-layout-top .test-result-list {
+  border-right: 0;
+}
+.task-layout-top .test-attempt-picker label {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  font-size: 12px;
+}
+.task-layout-top .test-attempt-picker .quiet {
+  font-size: 12px;
+}
+.task-layout-top .test-counts {
+  gap: 10px;
+}
+.task-layout-top .test-detail > .form-error {
+  margin-top: 0;
+}

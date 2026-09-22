@@ -11,6 +11,8 @@ export const liveGateway: FrontierGateway = {
   exactRun: (id, runId, sourceId) => api.getExactRun(id, runId, sourceId, readOptions()),
   status: () => api.getRuntimeStatus(readOptions()),
   saveSettings: api.updateRuntimeSettings,
+  linearIntegration: () => api.getLinearIntegration(readOptions()),
+  setLinearIntegration: api.setLinearIntegration,
   worktrees: async (id) => (await api.getRuntimeWorktreeInventory(id)).rows,
   removeWorktree: async (id, row) => (await api.removeRuntimeWorktree(id, row)).rows,
   projects: () => api.listProjects(readOptions()),

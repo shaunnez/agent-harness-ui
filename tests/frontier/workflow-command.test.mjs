@@ -114,3 +114,39 @@ test("Grill keeps its independent answer and specification controls", async () =
     assert.doesNotMatch(markup, /Proceed with reason/);
   });
 });
+
+test("implementation package summaries preserve failures and distinguish ready work from dependency waits", async () => {
+  await withFrontierViews(async ({ WorkflowCommand }) => {
+    const gateway = createFixtureGateway(undefined, true);
+    const task = await gateway.core("PC-142");
+    const failure = {
+      ...task,
+      status: "failed",
+      attention: {
+        ...task.attention,
+        kind: "failed",
+        label: "Qualification failed",
+        reason: "Verification exited with code 1",
+      },
+    };
+    const failedMarkup = renderToStaticMarkup(
+      React.createElement(WorkflowCommand, workflowProps(failure, gateway)),
+    );
+    assert.match(failedMarkup, /Verification exited with code 1/);
+    assert.doesNotMatch(failedMarkup, /S2 running/);
+    const waitingMarkup = renderToStaticMarkup(
+      React.createElement(WorkflowCommand, workflowProps(task, gateway)),
+    );
+    assert.match(waitingMarkup, /S3 waiting on S2/);
+    const ready = {
+      ...task,
+      workPackages: task.workPackages.map((item) =>
+        item.id === "S3" ? { ...item, dependencies: ["S1"] } : item,
+      ),
+    };
+    const readyMarkup = renderToStaticMarkup(
+      React.createElement(WorkflowCommand, workflowProps(ready, gateway)),
+    );
+    assert.match(readyMarkup, /S3 ready to start/);
+  });
+});

@@ -1,5 +1,5 @@
-import type { RuntimeRun, RuntimeUsage } from "../../domain.ts";
-import type { TaskSummary } from "./contracts.ts";
+import type { RuntimeRun, RuntimeUsage, StageId } from "../../domain.ts";
+import type { TaskEvidence, TaskSummary } from "./contracts.ts";
 
 export function finite(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : null;
@@ -37,4 +37,22 @@ export function runTime(run: RuntimeRun, now: number, active = false) {
   if (!run.startedAt) return null;
   const end = run.completedAt ? Date.parse(run.completedAt) : active && run.status === "running" ? now : NaN;
   return finite(end - Date.parse(run.startedAt));
+}
+
+/** Loaded run pages are a subtotal until the task's complete run history is present. */
+export function stageUsage(evidence: TaskEvidence, stage: StageId, now: number) {
+  const runs = [...new Map(evidence.runs.items.map((run) => [run.id, run])).values()].filter(
+    (run) => run.stage === stage,
+  );
+  const partialHistory =
+    Boolean(evidence.runs.nextCursor) || evidence.runs.items.length < evidence.runs.total;
+  return {
+    ...usageTotals(runs.map((run) => run.usage)),
+    tokens: sumRecorded(runs.map((run) => run.usage?.totalTokens)),
+    execution: sumRecorded(
+      runs.map((run) => runTime(run, now, evidence.core.activeRunIds?.includes(run.id) ?? false)),
+    ),
+    runCount: runs.length,
+    partialHistory,
+  };
 }

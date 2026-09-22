@@ -1,4 +1,5 @@
 import { supportsRetainedPackageContinuation } from "../src/retained-package-continuation.ts";
+import { assertLinearGrillReply } from "./linear-grill-contract.mjs";
 import {
   candidateRepairCircuitExhausted,
   candidateRepairCircuitReason,
@@ -521,7 +522,10 @@ export class TaskControlOrchestrator {
   }
 
   async answerGrillQuestion(id, input) {
-    if (input.source !== "operator") throw new Error("Grill answers require an explicit operator action.");
+    if (!["operator", "linear"].includes(input.source))
+      throw new Error("Grill answers require an explicit operator action.");
+    const remote = input.source === "linear" ? input.linear : null;
+    if (input.source === "linear" && !remote) throw new Error("Linear reply provenance is required.");
     const answer = String(input.answer ?? "")
       .trim()
       .slice(0, 5_000);
@@ -529,6 +533,14 @@ export class TaskControlOrchestrator {
     const updated = await this._store.transition(
       id,
       (draft) => {
+        if (remote && draft.decisions.some((item) => item.linearReply?.eventId === remote.eventId))
+          return false;
+        if (remote)
+          assertLinearGrillReply(
+            draft,
+            remote,
+            draft.grillSession?.questions.find((item) => item.id === input.questionId),
+          );
         if (draft.status !== "awaiting-grill" || draft.grillSession?.status !== "open") {
           throw new Error("This task does not have an open Grill Me session.");
         }
@@ -541,6 +553,7 @@ export class TaskControlOrchestrator {
         const target = draft.grillSession.questions.find((item) => item.id === input.questionId);
         target.answer = answer;
         target.answerSource = "operator-answer";
+        if (remote) target.linearReply = remote;
         target.resolvedAt = now();
         const existing = draft.decisions.find((decision) => decision.grillQuestionId === target.id);
         if (existing) {
@@ -556,6 +569,7 @@ export class TaskControlOrchestrator {
           });
         }
         const decision = draft.decisions.find((item) => item.grillQuestionId === target.id);
+        if (remote) decision.linearReply = remote;
         draft.events.push(
           activity("grill", "Grill answer recorded", `${target.id}: ${answer}`, "success", "decision", {
             decisionId: decision?.id ?? null,
@@ -563,18 +577,31 @@ export class TaskControlOrchestrator {
         );
       },
     );
+    if (!updated && remote) {
+      const task = await this._store.get(id);
+      if (task?.decisions.some((item) => item.linearReply?.eventId === remote.eventId)) return task;
+    }
     if (!updated) throw new Error("Task not found.");
     return updated;
   }
 
-  async finishGrill(id, { acceptRemaining = false, source = null } = {}) {
-    if (source !== "operator") throw new Error("Finishing Grill requires an explicit operator action.");
+  async finishGrill(id, { acceptRemaining = false, source = null, linear = null } = {}) {
+    if (!["operator", "linear"].includes(source))
+      throw new Error("Finishing Grill requires an explicit operator action.");
+    if (source === "linear" && (!linear || acceptRemaining))
+      throw new Error("Linear continuation requires explicit answers and reply provenance.");
     const task = await this._store.get(id);
+    if (source === "linear") {
+      if (task?.grillSession?.linearCompletion?.eventId === linear.eventId)
+        return { started: false, recorded: true };
+      assertLinearGrillReply(task, linear);
+    }
     if (task?.designRequest?.requested === true) {
-      return this._startDesigns(id, { acceptRemaining, source });
+      return this._startDesigns(id, { acceptRemaining, source, linear });
     }
     const started = await this.start(id, "specification", {
       canStart: (draft) => {
+        if (source === "linear") assertLinearGrillReply(draft, linear);
         if (draft.status !== "awaiting-grill" || draft.grillSession?.status !== "open") {
           throw new Error("This task does not have an open Grill Me session.");
         }
@@ -583,7 +610,10 @@ export class TaskControlOrchestrator {
         }
         return true;
       },
-      onReserve: (draft) => completeGrillSession(draft, { source: "operator", acceptRemaining }),
+      onReserve: (draft) => {
+        completeGrillSession(draft, { source, acceptRemaining });
+        if (source === "linear") draft.grillSession.linearCompletion = linear;
+      },
     });
     if (!started) throw new Error("Task is already running.");
     return { started: true };
@@ -847,11 +877,13 @@ export class TaskControlOrchestrator {
           current.retainedForRequalification = true;
           current.retainedContinuation = null;
         } else {
-          draft.stageTimeoutOverridesMs ??= {};
-          draft.stageTimeoutOverridesMs.implement = Math.max(
-            draft.stageTimeoutOverridesMs.implement ?? 0,
-            1_800_000,
-          );
+          // A continuation used to raise the implement ceiling here, because the stage
+          // default was 900_000 and resuming a slice that had already exhausted it needed
+          // headroom. The default is now 3_600_000 — the same value `stageTimeoutMs`
+          // clamps an override to — so there is no headroom left to grant and a write
+          // here would be silently ignored. The continuation gets the full hour by
+          // default; if the stage default is ever lowered again, restore an escalation
+          // that is expressed relative to it rather than as a second magic number.
           current.retainedContinuation = {
             requestedAt: now(),
             files: retained.files,

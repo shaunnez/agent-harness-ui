@@ -14,6 +14,9 @@ test("execution defaults round-trip through the real API without rewriting exist
     };
     const send = (url, body = {}, method = "POST") =>
       fetch(`${api.origin}${url}`, { method, headers, body: JSON.stringify(body) });
+    const linear = await (await fetch(`${api.origin}/api/integrations/linear`)).json();
+    assert.deepEqual(linear, { configured: false, enabled: false, changing: false });
+    assert.equal((await send("/api/integrations/linear", { enabled: true }, "PUT")).status, 409);
     const draft = {
       title: "Settings snapshot",
       description: "Investigate revision comparison without changes",
@@ -39,6 +42,7 @@ test("execution defaults round-trip through the real API without rewriting exist
     settings.profileStagePolicies.standard.grill = policy;
     settings.stagePolicies = structuredClone(settings.profileStagePolicies.standard);
     settings.grillPolicy = "auto-accept-recommendations";
+    settings.repairLimits = { package: 3, candidate: { fast: 2, standard: 5, "high-risk": 6 } };
     settings.gatePolicies = { "dev-review": "auto-accept-recommendations" };
     const saved = await send("/api/settings", settings, "PUT");
     assert.equal(saved.status, 200, await saved.clone().text());
@@ -48,12 +52,24 @@ test("execution defaults round-trip through the real API without rewriting exist
     const next = (await fresh.json()).task;
     assert.deepEqual(next.agentConfig.stagePolicies.grill, policy);
     assert.equal(next.grillPolicy, "auto-accept-recommendations");
+    assert.deepEqual(next.repairLimits, settings.repairLimits);
+    assert.equal(next.stageRunLimits.implement, 6);
+    assert.equal(next.stageRunLimits.test, 6);
     assert.equal(next.status, "queued");
     assert.equal(next.runs.length, 0);
     const read = await (await fetch(`${api.origin}/api/settings`)).json();
     assert.deepEqual(read.settings.profileStagePolicies.standard.grill, policy);
     assert.equal(read.settings.gatePolicies?.["dev-review"], "auto-accept-recommendations");
     assert.equal(read.settings.gatePolicies?.test ?? "manual", "manual");
+    for (const invalid of [-1, 11, 1.5, "2", null]) {
+      const rejectedLimit = await send(
+        "/api/settings",
+        { ...settings, repairLimits: { ...settings.repairLimits, package: invalid } },
+        "PUT",
+      );
+      assert.equal(rejectedLimit.status, 400);
+      assert.deepEqual(await api.store.settings(), read.settings);
+    }
     const rejected = await send("/api/settings", { ...settings, defaultReasoning: "unsupported" }, "PUT");
     assert.ok(rejected.status >= 400);
     assert.deepEqual(await api.store.settings(), read.settings);

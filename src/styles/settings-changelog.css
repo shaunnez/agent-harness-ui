@@ -488,3 +488,22 @@
 .changelog-skeleton span:nth-child(3) {
   height: 52px;
 }
+
+/* A variant whose pooled samples do not share one brief, base and policy is labelled
+   rather than hidden: the honest reading is "this is not a comparison", not a number. */
+.evaluation-table__warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--warning, #d08700);
+}
+
+.evaluation-evidence__confounds {
+  margin: 0;
+  padding: 11px 13px 11px 30px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  display: grid;
+  gap: 4px;
+}

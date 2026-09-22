@@ -1,0 +1,85 @@
+[
+  {
+    "name": "frontier-final",
+    "command": [
+      "npm",
+      "run",
+      "test:frontier"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "typecheck-final",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "lint-final",
+    "command": [
+      "npm",
+      "run",
+      "lint"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "changed-format-final",
+    "command": [
+      "node_modules/.bin/biome",
+      "format",
+      "src/frontier/fixtures/gateway.ts",
+      "src/frontier/fixtures/review-scenarios.ts",
+      "src/frontier/fixtures/workspace-scenarios.ts",
+      "src/frontier/runtime/presentation.ts",
+      "src/frontier/views/JourneyEvidence.tsx",
+      "src/frontier/views/StageEvidence.tsx",
+      "src/frontier/views/TaskPanel.tsx",
+      "tests/frontier/task-workspace-early.test.mjs",
+      "tests/frontier/task-workspace-review.test.mjs",
+      "src/frontier/fixtures/qualification-scenarios.ts",
+      "tests/frontier/task-workspace-qualification.test.mjs"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "build-frontier-final",
+    "command": [
+      "npm",
+      "run",
+      "build:frontier"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "build-final",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "sites-final",
+    "command": [
+      "npm",
+      "run",
+      "test:sites"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "format-final",
+    "command": [
+      "npm",
+      "run",
+      "format:check"
+    ],
+    "exitCode": 1,
+    "note": "Earlier full check: three unchanged baseline files; later changed files verified separately."
+  }
+]

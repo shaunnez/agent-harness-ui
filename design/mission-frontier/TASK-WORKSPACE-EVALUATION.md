@@ -1,6 +1,6 @@
 # Task workspace design evaluation
 
-21 September 2026 · Proposal for review · No application implementation
+21 September 2026 · Visual refinement requested · No application implementation
 
 ## Outcome
 
@@ -12,7 +12,7 @@ This evaluation uses the eleven supplied screenshots, `src/frontier/views/TaskPa
 
 The current screen already has borders. The problem is that too many regions have similar surface colour, border strength and textual emphasis. The repeated task title and description, general “Working” banner, nested package metadata, candidate notice and empty evidence area compete for attention. Meanwhile a small number of important facts—what is running, what it depends on and what needs the operator—lack a strong visual centre.
 
-The concepts improve this through deliberate grouping, panel headers, stronger type hierarchy, aligned subdivisions, inset evidence and a clear primary action. The world and robot art contribute identity, but importing a large decorative hero into every stage would displace operational content. Preserve the world around the overlay; use a compact worker identity and Watch access inside it.
+The concepts improve this through deliberate grouping, panel headers, stronger type hierarchy, aligned subdivisions, inset evidence and a clear primary action. The world and robot art contribute identity. Following Shaun's review, give that identity greater prominence through illustrated scout cards, a portrait-led Grill introduction, stronger worker portraits and a bounded workshop image for Implement. Preserve space for operational content and label concept illustrations so they do not imply a live worker feed.
 
 | Reference | Retain | Normalise or correct |
 | --- | --- | --- |
@@ -63,7 +63,9 @@ Selected packages, findings and tests own their detail in the centre. The inspec
 - Body and controls 14–16px; metadata at least 12px. Stage headings 20–24px; panel headings 14–16px. Use regular/medium weight and consistent line height.
 - Use a shared 8px spacing rhythm: 8px between related controls, 12–16px panel gaps, 16–20px panel padding. Shared modest corner radii of about 6–8px.
 - Primary actions consistently appear in the stage command bar. Local form submission remains near the edited fields, with the command bar linking to that form rather than duplicating an independent submission path.
-- Decorative images must not consume a fixed large slice of the workspace. Add art only when it conveys the selected worker or actual spatial context.
+- Use prominent robot imagery where it establishes the worker or role: scout cards, Grill introduction and the inspector. Implement may use the user-supplied workshop illustration in a bounded banner; identify it as an illustration and keep recorded task state outside the image. Match its character and framing without assuming the art represents the current live scene.
+- Use one consistent outline-icon family for section headings, actions, package metadata and artifact access. Icons supplement text labels. Specification sections use Outcome, Scope, Acceptance criteria and Verification symbols; acceptance criteria use numbered markers.
+- Show the plan as three clearly bounded dependency batches with connected, selectable package cards. S1 branches to S2 and S3 in parallel, then both join S4. The selected card and its relevant dependency paths share a blue emphasis. Package details must change with selection, including ownership, interfaces, dependencies, verification and role policy. All nodes remain explicitly Planned until recorded execution exists.
 - Visible keyboard focus, semantic controls, readable disabled explanations and preserved drafts are part of acceptance.
 
 ## Centre templates across stages
@@ -115,6 +117,8 @@ Application implementation, PR creation and publication require their own task s
 
 ## Study verification
 
+### First study
+
 The accompanying interactive study is explicitly fictional and has no backend/network mutation path. It is available in this task's response and in the local preview at `http://127.0.0.1:5279/` while that preview server is running.
 
 - Rendered all twelve study screens at a 1280px browser width; each produced its expected heading and content with no root horizontal overflow.
@@ -123,3 +127,52 @@ The accompanying interactive study is explicitly fictional and has no backend/ne
 - Inspected rendered Implement, Review and Test layouts in the browser. No page warnings or errors were captured during the initial twelve-screen run.
 
 These checks qualify the study, not the application. The inline study grows vertically to fit its host; fixed-window local scrolling, sticky commands, full keyboard/focus behaviour, all exceptional runtime states and live task parity remain implementation acceptance work. No application build or runtime test suite was required or run for the documentation and isolated study.
+
+### Visual refinement after review
+
+Shaun accepted the high-level direction and requested the original designs' robot imagery, icons and batch/package presentation. The revised study now includes:
+
+- Existing standard robot portrait art in the inspector, illustrated scout cards and a portrait-led Grill introduction.
+- The supplied `Screenshot 2026-09-21 at 12.16.15 PM.png` workshop image as an Implement banner, visibly labelled Concept illustration. The source image is embedded unchanged; it is not a new production scene or live worker feed.
+- Consistent outline icons on section headings, actions and plan metadata; numbered Specification acceptance criteria.
+- A responsive S1 → S2 + S3 → S4 diagram with dashed batch containers, arrowed dependencies, selection emphasis and package-specific detail. Selecting any of the four packages updates its purpose, owned files, interface, dependencies, verification, notes and expected output.
+
+Verification: the final script passed syntax checking; all twelve screens rendered at 1280px with loaded imagery, rendered icons and no root horizontal overflow. Scouts, Grill, Specification, Plan and Implement were checked in both navigation modes at 1440px, 1024px and 320px (30 combinations), with no detected horizontal overflow or clipping in visible panels and controls. All four plan selections displayed the matching detail and retained four dependency connections. An initial preview syntax error was corrected before this verification. Visual inspection covered the plan, scout cards, Grill, Implement and Specification.
+
+Artwork and icon additions do not change the retained workflow semantics. The application and its runtime remain outside this study update.
+
+## Later-stage refinement, grounded in current code
+
+Shaun requested Implement, Dev review, Test, Final review and Approval under the same established design. His latest instruction gives the current code and this study precedence over the older reference images. This pass updates the interactive proposal, not application source or workflow behavior.
+
+The code was inspected on local `main` at `48ca6b5`. The records, repository names, file paths, counts and revision identifiers in the study are fictional examples of these contracts, not observations of a live task.
+
+| Current source | Grounding used in the study |
+| --- | --- |
+| `src/frontier/views/WorkPackages.tsx` and `src/domain/runtime.ts` | Dependency batches, selected package, owned paths, dependencies, verification, attempts, slice commit, retained worktree and run access. Preserve `ready_for_integration` versus `integrated`; waiting is derived from planned dependencies. |
+| `src/frontier/views/CandidateEvidence.tsx` | Candidate revision/head/target, exact diff access, integrated slices, gate evidence, repair history, selected test assertions/output, prior-stage journey and PR delivery identity. |
+| `src/frontier/views/StageEvidence.tsx` | Independent gate verdict, typed finding severity/kind, detail, file/line, reproduction evidence and acceptance criterion. Suggested code is explicitly unapplied. |
+| `src/components/runtime/runtimeCommandPolicy.ts` and `src/frontier/runtime/workflow.ts` | An execution failure alone does not authorize code repair. The test example includes a candidate-defect finding; repair/retry controls stay global and eligibility-driven. Historical evidence does not gain mutation controls. |
+| `src/components/runtime/operatorFinalReviewModel.ts` | Eight prior stages, usage aggregation, key outcome and candidate freshness. Unsupported pricing appears once beside the journey. |
+| `src/frontier/views/WorkflowCommand.tsx` | Exact candidate-bound approval, operator note, identity/eligibility revalidation, and explicit publication action. The current app offers Proceed / Proceed with reason; the study's consolidated approval review is a proposed presentation of that existing boundary. |
+| `src/frontier/runtime/diff.ts` | File-grouped unified diff lines with old/new line numbers and addition/removal/context distinction. Inline placement reuses the existing candidate-diff capability; no package-diff endpoint is assumed. |
+
+The old tests image includes skipped rows. `RuntimeFocusedTestRow.status` currently permits only `passed` and `failed`, so the revised structured list uses those states. Any skip explanation remains in retained output unless the underlying contract changes. Likewise, a structured implementation rubric is not invented; the implementation report remains distinct from the independent review verdict.
+
+### Stage treatments
+
+- **Implement:** the same connected four-package plan now shows execution states. S1 is integrated, S2 runs, S3 is ready for integration, and S4 waits for both parallel slices. A clearly labelled study snapshot switches to an assembled candidate, enabling a main-canvas diff excerpt. The worktree path and slice qualification remain local package detail; the shared inspector remains stage-scoped.
+- **Dev review:** portrait-led reviewer identity, two selectable severity-labelled findings, issue/impact, reproduction, acceptance linkage and an unapplied code suggestion. Current C1 r1 and a possible future repair are visually distinct; the future revision is not represented as already created.
+- **Test:** four selectable recorded checks with command, duration, exit code, candidate, expected/actual values and retained output. Back to results clears selection. The C1 r2 example has a fresh passed Dev review but fails source preservation; Final review has not started. Revision history retains the earlier review evidence.
+- **Final review:** candidate-bound gate cards, all eight prior stages with tokens, summed agent time and outcome, acceptance/readiness summary, and retained artifacts. The fictional journey totals 134K tokens plus 10K for Final review, matching the 144K task total. Prior-stage agent time is 26m 50s plus 2m Final review, distinct from 18m 42s task wall time.
+- **Approval:** exact head and target, current evidence checklist, approval note, read-only diff access and a publication review preview. A separate illustrative delivery state shows awaiting PR merge; the mock confirmation never approves, pushes or opens a real PR.
+
+The inspector, navigation choices, command placement, panel borders, colour semantics and icon family are preserved. Earlier screens and the existing PR-delivery surface remain available.
+
+### Verification of this refinement
+
+- The final script passed syntax checking. The fragment is approximately 674KB and reuses the existing embedded artwork.
+- Implement, Dev review, Test, Final review and Approval were checked in both navigation modes at 1440px, 1024px and 320px browser widths: 30 combinations, with no detected root horizontal overflow, clipped visible controls/panels, unloaded imagery or missing icons. The wrapper consumes 32px, so content widths were 1408px, 992px and 288px respectively.
+- Browser checks covered all four package selections and four dependency connections; the assembled-candidate snapshot and file switching; both review findings; passed and failed test detail, Back to results and disabled same-candidate retry; prior-stage evidence inspection; exact-revision diff and approval review; approval-note retention; and the explicitly simulated transition to awaiting-merge delivery.
+- Desktop visual inspection covered all five requested stages at normal 1280–1440px widths. The final browser session reported no warning/error entries during the checked interactions.
+- No application build, backend execution or live task mutation was run. These checks qualify the interactive design study, not implementation or live workflow parity.

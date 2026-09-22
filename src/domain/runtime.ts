@@ -1,3 +1,4 @@
+import type { RepairLimits } from "../repair-limits";
 import type { StageId } from "../domain";
 import type {
   AutoRunStage,
@@ -217,6 +218,7 @@ export interface RuntimeFocusedTestEvidence {
 export interface RuntimeDecision {
   id: string;
   grillQuestionId?: string;
+  linearReply?: RuntimeLinearGrillReply;
   question: string;
   answer: string;
   createdAt: string;
@@ -289,10 +291,21 @@ export type RuntimeGrillAnswerSource =
 
 export type RuntimeGrillCompletionSource =
   | "operator"
+  | "linear"
   | "automation-policy"
   | "no-questions"
   | "legacy-unverified"
   | null;
+
+export interface RuntimeLinearGrillReply {
+  eventId: string;
+  userId: string;
+  userName: string;
+  sessionId: string;
+  issueId: string;
+  organizationId: string;
+  reference: string;
+}
 
 export interface RuntimeGrillQuestion {
   id: string;
@@ -302,6 +315,7 @@ export interface RuntimeGrillQuestion {
   allowCustom: boolean;
   answer: string | null;
   answerSource: RuntimeGrillAnswerSource;
+  linearReply?: RuntimeLinearGrillReply;
   resolvedAt: string | null;
 }
 
@@ -312,6 +326,7 @@ export interface RuntimeGrillSession {
   completedAt: string | null;
   completionReason: string | null;
   completionSource?: RuntimeGrillCompletionSource;
+  linearCompletion?: RuntimeLinearGrillReply;
   policySnapshot?: RuntimeGrillPolicy;
   acceptedRecommendationCount?: number;
 }
@@ -328,9 +343,11 @@ export interface RuntimeWorkPackage {
   verificationRuns?: RuntimeFocusedTestEvidence[];
   status: "planned" | "running" | "ready_for_integration" | "failed" | "integrated";
   attempts: number;
+  automaticRepairAttempts?: number;
   branch: string | null;
   worktreePath: string | null;
   baseRevision: string | null;
+  preparedRevision?: string | null;
   headRevision: string | null;
   files: string[];
   error: string | null;
@@ -533,6 +550,7 @@ export interface RuntimeTask {
     createdAt: string;
   }>;
   automaticRepairCycles?: number;
+  repairLimits?: RepairLimits;
   sameCandidateTestRetries?: Array<{
     id: string;
     candidateId: string;
@@ -843,6 +861,7 @@ export interface RuntimeAgentPolicy {
 }
 
 export type RuntimeExperimentDecisionMetric =
+  | "deterministic-delivery-rate"
   | "first-pass-gate-success-rate"
   | "eventual-gate-success-rate"
   | "repairs-per-task"
@@ -923,6 +942,7 @@ export interface RuntimeModelCatalog {
 }
 
 export interface RuntimeSettings {
+  repairLimits?: RepairLimits;
   projects?: RuntimeProject[];
   grillPolicy: RuntimeGrillPolicy;
   gatePolicies?: RuntimeGatePolicies;
@@ -1005,13 +1025,49 @@ export interface RuntimeExperimentDecision {
   note: string | null;
 }
 
+export interface RuntimeDeterministicOutcomes {
+  passed: number;
+  failed: number;
+  incomplete: number;
+  unknown: number;
+}
+
+export interface RuntimeVariantComparability {
+  status: "comparable" | "mixed-identity";
+  reasons: string[];
+  briefHashCount: number;
+  baseShaCount: number;
+  policyMatrixCount: number;
+  acceptanceDefinitionCount: number;
+  verificationDefinitionCount: number;
+}
+
+export interface RuntimePolicyDivergence {
+  taskId: string;
+  role: string | null;
+  selected: string;
+  effective: string;
+  reason: string;
+}
+
 export interface RuntimeExperimentVariant {
   groupId: string;
   variantId: string;
   frozenBaseSha: string;
+  /**
+   * Fields below are optional because this summary is fetched from a separately started
+   * harness process that may predate this bundle. The scorecard reads each through a
+   * default rather than crashing the settings screen on an older payload.
+   */
+  frozenBaseShas?: string[];
   taskIds: string[];
   sampleCount: number;
   taskBriefHashes: string[];
+  comparability?: RuntimeVariantComparability;
+  policyDivergences?: RuntimePolicyDivergence[];
+  deterministicOutcomes?: RuntimeDeterministicOutcomes;
+  deterministicEvidenceSamples?: number;
+  deterministicDeliveryRate?: number | null;
   policyMatrices: Array<Record<string, RuntimeAgentPolicy>>;
   acceptanceDefinitions: string[][];
   verificationDefinitions: string[][];

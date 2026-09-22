@@ -21,6 +21,7 @@ import {
   defaultWorktreeRoot,
   discoverDependencyDirectories,
   GitWorktreeManager,
+  parseCommitSentinel,
   provisionedDependencyEntries,
 } from "../server/git-worktree.mjs";
 
@@ -889,4 +890,53 @@ test("a leftover candidate branch does not block the next candidate", async () =
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("reads merge state for a frozen base pinned to a commit rather than a branch", async () => {
+  // A frozen experiment base is checked out at a detached HEAD, so RepositoryAuthority
+  // records `commit:<sha>` as the target ref. That is harness notation: git reads
+  // `<rev>:<path>` as a file lookup, so handing it to `rev-parse --verify` reported
+  // "The candidate target ref no longer exists" for a commit that was present the whole
+  // time, and every candidate built on a frozen base parked at dev-review forever.
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-frozen-"));
+  const repository = path.join(directory, "repository");
+  try {
+    await git(directory, ["init", "repository"]);
+    await git(repository, ["config", "user.name", "Agent Harness Test"]);
+    await git(repository, ["config", "user.email", "agent-harness@example.test"]);
+    await writeFile(path.join(repository, "README.md"), "base\n", "utf8");
+    await git(repository, ["add", "README.md"]);
+    await git(repository, ["commit", "-m", "base"]);
+    const frozenRevision = (await git(repository, ["rev-parse", "HEAD"])).stdout.trim();
+    // Detach, the way a pinned eval worktree is.
+    await git(repository, ["checkout", "--detach", frozenRevision]);
+
+    const manager = new GitWorktreeManager(path.join(directory, "worktrees"));
+    const task = { id: "AH-FROZEN", repositoryPath: repository };
+    const base = await manager.base(task);
+    const candidate = await manager.prepare(task, "C1", { baseRevision: base.baseRevision });
+    await writeFile(path.join(candidate.worktreePath, "feature.txt"), "candidate\n", "utf8");
+    const committed = await manager.commit(candidate, "candidate");
+    candidate.headRevision = committed.headRevision;
+    candidate.baseRevision = frozenRevision;
+    candidate.baseBranch = "detached";
+    candidate.baseRef = `commit:${frozenRevision}`;
+
+    // The candidate sits ahead of a base that cannot move: pending, not an error.
+    assert.equal(await manager.mergeState(candidate), "pending");
+  } finally {
+    await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
+});
+
+test("parses the commit target-ref sentinel and leaves ordinary refs alone", () => {
+  assert.equal(
+    parseCommitSentinel("commit:0123456789abcdef0123456789abcdef01234567"),
+    "0123456789abcdef0123456789abcdef01234567",
+  );
+  assert.equal(parseCommitSentinel("commit:f18c5673"), "f18c5673");
+  assert.equal(parseCommitSentinel("refs/heads/main"), null);
+  assert.equal(parseCommitSentinel("commit:not-a-sha"), null);
+  assert.equal(parseCommitSentinel(null), null);
+  assert.equal(parseCommitSentinel(undefined), null);
 });

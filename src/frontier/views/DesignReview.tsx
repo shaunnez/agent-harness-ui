@@ -1,4 +1,4 @@
-import { ArrowSquareOut, CircleNotch, Warning } from "@phosphor-icons/react";
+import { ArrowSquareOut, CircleNotch, SquaresFour, Warning } from "@phosphor-icons/react";
 import { useState } from "react";
 import type { RuntimePrototypeVariant } from "../../domain";
 import { canonicalClaudeDesignUrl, claudePreviewImageUrl } from "../../prototype-design";
@@ -91,12 +91,15 @@ export function DesignReview({
   const hasPreview = (url: string | null) =>
     Boolean(url && (/^\/api\//.test(url) || (gateway.mode === "fixture" && url.startsWith("/assets/"))));
   return (
-    <section className="design-review">
-      <div className="section-heading">
-        <div>
-          <small>Optional design gate · {request.status.replaceAll("-", " ")}</small>
-          <h2>Choose a design direction</h2>
-        </div>
+    <section className="design-review workspace-design">
+      <div className="panel-heading">
+        <span>
+          <SquaresFour size={18} />
+          <div>
+            <small>Optional design gate · {request.status.replaceAll("-", " ")}</small>
+            <h3>Compare directions</h3>
+          </div>
+        </span>
         {request.status === "failed" && (
           <button
             type="button"
@@ -114,7 +117,7 @@ export function DesignReview({
       <div className="design-variants">
         {[...latest.values()].map((variant) => (
           <article
-            className={`workflow-card ${request.selectedVariantId === variant.id ? "selected" : ""}`}
+            className={`workflow-card ${(chosen ?? request.selectedVariantId) === variant.id ? "selected" : ""}`}
             key={variant.id}
           >
             <div className="section-heading">
@@ -177,7 +180,7 @@ export function DesignReview({
         ))}
       </div>
       {active && (
-        <div className="action-review">
+        <div className="action-review workspace-selected-design">
           <h3>
             Approve {active.title} r{active.revision}?
           </h3>

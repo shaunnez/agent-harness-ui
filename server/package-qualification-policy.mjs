@@ -11,7 +11,15 @@ export function packageQualificationFailure(workPackageId, qualification, retain
     error.baselineVerification = qualification.baselineVerification;
     return error;
   }
-  return new Error(
-    `${workPackageId}${retained ? " retained slice" : ""} did not qualify: ${failed?.id ?? "repository verification"} failed${failed?.failureDetails ? ` — ${failed.failureDetails}` : "."}`,
+  const error = new Error(
+    `${workPackageId}${retained ? " retained slice" : ""} did not qualify: ${
+      (qualification.rows ?? [])
+        .filter((row) => row.status !== "passed")
+        .map((row) => `${row.id} failed${row.failureDetails ? ` — ${row.failureDetails}` : "."}`)
+        .join("\n") || "repository verification failed."
+    }`,
   );
+  error.code = "PACKAGE_QUALIFICATION_FAILED";
+  error.qualification = qualification;
+  return error;
 }

@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { WorldPreferences } from "../app/preferences";
 import type { FrontierGateway, FrontierSnapshot } from "../runtime/contracts";
 import { EnvironmentSettings } from "./EnvironmentSettings";
+import { LinearSettings } from "./LinearSettings";
 import { RetainedWorktrees } from "./RetainedWorktrees";
 
 export function WorldSettings({
@@ -53,6 +54,13 @@ export function WorldSettings({
           onClick={() => setTab("storage")}
         >
           Retained worktrees
+        </button>
+        <button
+          type="button"
+          className={tab === "integrations" ? "selected" : ""}
+          onClick={() => setTab("integrations")}
+        >
+          Integrations
         </button>
         <button type="button" onClick={onExecution}>
           Agent execution
@@ -223,6 +231,15 @@ export function WorldSettings({
                 </a>
               </p>
             </>
+          )}
+          {tab === "integrations" && (
+            <LinearSettings
+              gateway={gateway}
+              connected={connected}
+              busy={busy}
+              error={error}
+              command={command}
+            />
           )}
           {tab === "storage" && (
             <RetainedWorktrees

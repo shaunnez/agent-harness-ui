@@ -1,3 +1,4 @@
+import { normalizeRepairLimits, repairLimitsIssue } from "../src/repair-limits.ts";
 import { validateDesignPolicies } from "./design-policies.mjs";
 import { validateGatePolicies } from "./gate-policies.mjs";
 import { normalizeModelId, readExecutionProviderCatalog } from "./model-catalog.mjs";
@@ -56,6 +57,11 @@ export function createRuntimeSettingsRoutes({
         input.grillPolicy === undefined ? currentSettings.grillPolicy : String(input.grillPolicy);
       if (!GRILL_POLICIES.has(grillPolicy)) throw new Error("Choose a supported Grill interaction policy.");
       const gatePolicies = validateGatePolicies(input.gatePolicies, currentSettings.gatePolicies);
+      if (input.repairLimits !== undefined) {
+        const issue = repairLimitsIssue(input.repairLimits);
+        if (issue) throw new Error(issue);
+      }
+      const repairLimits = normalizeRepairLimits(input.repairLimits ?? currentSettings.repairLimits);
       const stagePolicies = validateStagePolicies(
         input.stagePolicies,
         known,
@@ -85,6 +91,7 @@ export function createRuntimeSettingsRoutes({
         draft.defaultReasoning = defaultReasoning;
         draft.grillPolicy = grillPolicy;
         draft.gatePolicies = gatePolicies;
+        draft.repairLimits = repairLimits;
         draft.stagePolicies = stagePolicies;
         draft.profileStagePolicies = profileStagePolicies;
         draft.designPolicies = designPolicies;

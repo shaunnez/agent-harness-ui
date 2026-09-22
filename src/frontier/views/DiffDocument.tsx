@@ -1,10 +1,30 @@
 import { CaretDown, FileCode } from "@phosphor-icons/react";
+import { useState } from "react";
 import { parseDiff } from "../runtime/diff";
 
-export function DiffDocument({ diff }: { diff: string }) {
+export function DiffDocument({ diff, selectable = false }: { diff: string; selectable?: boolean }) {
+  const files = parseDiff(diff);
+  const [selected, setSelected] = useState<string | null>(null);
+  const current = files.find((file) => file.name === selected) ?? files[0];
+  const visible = selectable && current ? [current] : files;
   return (
     <div className="unified-diff diff-document">
-      {parseDiff(diff).map((file) => (
+      {selectable && (
+        <nav className="candidate-file-tabs" aria-label="Candidate diff files">
+          {files.map((file) => (
+            <button
+              type="button"
+              key={file.id}
+              aria-pressed={current?.id === file.id}
+              onClick={() => setSelected(file.name)}
+            >
+              <FileCode size={16} />
+              {file.name}
+            </button>
+          ))}
+        </nav>
+      )}
+      {visible.map((file) => (
         <details key={file.id} open>
           <summary>
             <FileCode size={17} />

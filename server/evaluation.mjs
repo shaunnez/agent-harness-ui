@@ -8,6 +8,12 @@ import {
 } from "./experiment-decision.mjs";
 
 const GATE_STAGES = ["dev-review", "test", "final-review"];
+
+/**
+ * Only a whole-manifest execution is admissible as a delivery outcome. A focused run
+ * declares a subset, so its `passed` says nothing about the commands it never selected.
+ */
+const FULL_MANIFEST_EXECUTION = "full-manifest";
 const TERMINAL_STATUSES = new Set([
   "awaiting-human-approval",
   "merged-to-target",
@@ -32,6 +38,79 @@ function safeDuration(startedAt, completedAt) {
 
 function passesGate(artifact) {
   return artifact?.gateResult?.verdict === "PASS";
+}
+
+/**
+ * Deterministic delivery on the exact final candidate revision.
+ *
+ * Model-run gate verdicts cannot rank model policies against each other, because
+ * `dev-review` and `final-review` are themselves model stages: a laxer reviewer model
+ * produces *more* PASSes, so a policy comparison scored on gate verdicts rewards the
+ * wrong thing. The repository verification manifest has no such property, so it is the
+ * primary outcome a controlled comparison reports, and the model gates become a
+ * separate measure of reviewer strictness.
+ *
+ * States are kept distinct rather than collapsed into pass/fail: `incomplete` means the
+ * manifest stopped before every declared command ran, and `unknown` means no admissible
+ * evidence exists. Neither is a pass, and neither is evidence of a defect.
+ */
+function finalCandidateVerification(task) {
+  const candidate = (task.candidates ?? []).at(-1);
+  if (!candidate) return { status: "unknown", reason: "no-candidate" };
+  const admissible = (candidate.verificationRuns ?? []).filter(
+    (run) =>
+      run?.executionKind === FULL_MANIFEST_EXECUTION &&
+      run?.headRevision != null &&
+      run.headRevision === candidate.headRevision,
+  );
+  const newest = admissible.at(-1);
+  if (!newest) {
+    return {
+      status: "unknown",
+      reason: "no-full-manifest-execution-at-the-final-candidate-revision",
+      candidateId: candidate.id ?? null,
+      candidateRevision: candidate.revisionNumber ?? null,
+    };
+  }
+  const declared = newest.declaredCommandIds ?? [];
+  const executed = new Set(newest.executedCommandIds ?? []);
+  const unexecuted = declared.filter((id) => !executed.has(id));
+  const status = newest.status === "passed" ? (unexecuted.length ? "incomplete" : "passed") : "failed";
+  return {
+    status,
+    reason: null,
+    candidateId: candidate.id ?? null,
+    candidateRevision: candidate.revisionNumber ?? null,
+    headRevision: candidate.headRevision ?? null,
+    declaredCommandCount: declared.length,
+    executedCommandCount: executed.size,
+    unexecutedCommandIds: unexecuted,
+  };
+}
+
+/**
+ * Any run whose effective policy diverged from the selected one. The experiment record
+ * snapshots the *selected* matrix, so an escalation is invisible there: without this an
+ * escalated repair silently changes an arm and the scorecard still reports the arm's
+ * nominal policy.
+ */
+function policyDivergences(task) {
+  const divergences = [];
+  for (const run of task.runs ?? []) {
+    const escalated =
+      run?.policyEscalationReason != null ||
+      (run?.selectedModel != null &&
+        run?.effectiveModel != null &&
+        (run.selectedModel !== run.effectiveModel || run.selectedReasoning !== run.effectiveReasoning));
+    if (!escalated) continue;
+    divergences.push({
+      role: run.policyRole ?? run.role ?? run.stage ?? null,
+      selected: `${run.selectedModel ?? "unknown"}:${run.selectedReasoning ?? "unknown"}`,
+      effective: `${run.effectiveModel ?? run.model ?? "unknown"}:${run.effectiveReasoning ?? run.reasoning ?? "unknown"}`,
+      reason: run.policyEscalationReason ?? "selected and effective policy differ with no recorded reason",
+    });
+  }
+  return divergences;
 }
 
 function qualityScore(evaluation, kind) {
@@ -278,6 +357,8 @@ function experimentTaskMetrics(task) {
     roleDurations,
     contextCharacters,
     estimatedContextTokens,
+    deterministicVerification: finalCandidateVerification(task),
+    policyDivergences: policyDivergences(task),
     humanScore: qualityScore(task.evaluation, "human"),
     blindScore: qualityScore(task.evaluation, "blind"),
   };
@@ -290,6 +371,46 @@ function experimentBudgetStatus(group) {
   return group.budgetMeasuredSamples ? "within" : "unmeasured";
 }
 
+/**
+ * Whether the samples inside one variant describe the same treatment at all.
+ *
+ * Grouping is `groupId|variantId`, and nothing stops two different briefs or two
+ * different bases carrying the same pair. A pooled rate over mixed identity is not a
+ * result, so it is labelled rather than presented as one. The recommended naming
+ * contract is `variantId = <caseId>__<armId>`, which keeps one brief and one base per
+ * variant and makes per-case pairing a string split.
+ */
+function comparabilityOf(group) {
+  const reasons = [];
+  if (group.taskBriefHashes.size > 1)
+    reasons.push(`${group.taskBriefHashes.size} distinct task briefs are pooled under one variant`);
+  if (group.frozenBaseShas.size > 1)
+    reasons.push(`${group.frozenBaseShas.size} distinct frozen base commits are pooled under one variant`);
+  if (group.policyMatrices.size > 1)
+    reasons.push(`${group.policyMatrices.size} distinct policy matrices are pooled under one variant`);
+  if (group.acceptanceDefinitions.size > 1)
+    reasons.push(
+      `${group.acceptanceDefinitions.size} distinct acceptance definitions are pooled under one variant`,
+    );
+  if (group.verificationDefinitions.size > 1)
+    reasons.push(
+      `${group.verificationDefinitions.size} distinct verification definitions are pooled under one variant`,
+    );
+  if (group.policyDivergences.length)
+    reasons.push(
+      `${group.policyDivergences.length} run${group.policyDivergences.length === 1 ? "" : "s"} executed a policy other than the selected one`,
+    );
+  return {
+    status: reasons.length ? "mixed-identity" : "comparable",
+    reasons,
+    briefHashCount: group.taskBriefHashes.size,
+    baseShaCount: group.frozenBaseShas.size,
+    policyMatrixCount: group.policyMatrices.size,
+    acceptanceDefinitionCount: group.acceptanceDefinitions.size,
+    verificationDefinitionCount: group.verificationDefinitions.size,
+  };
+}
+
 function controlledSummary(tasks) {
   const groups = new Map();
   for (const task of tasks.filter((item) => item.experiment)) {
@@ -299,6 +420,7 @@ function controlledSummary(tasks) {
       groupId: experiment.groupId,
       variantId: experiment.variantId,
       frozenBaseSha: experiment.frozenBaseSha,
+      frozenBaseShas: new Set(),
       taskBriefHashes: new Set(),
       policyMatrices: new Map(),
       acceptanceDefinitions: new Set(),
@@ -307,6 +429,8 @@ function controlledSummary(tasks) {
       budgets: new Map(),
       budgetExceededTaskIds: [],
       budgetMeasuredSamples: 0,
+      deterministicOutcomes: { passed: 0, failed: 0, incomplete: 0, unknown: 0 },
+      policyDivergences: [],
       taskIds: [],
       gateAttempts: 0,
       firstPassGateSuccesses: 0,
@@ -330,7 +454,11 @@ function controlledSummary(tasks) {
     };
     const metrics = experimentTaskMetrics(task);
     group.taskIds.push(task.id);
+    group.frozenBaseShas.add(experiment.frozenBaseSha);
     group.taskBriefHashes.add(experiment.taskBriefHash);
+    group.deterministicOutcomes[metrics.deterministicVerification.status] += 1;
+    for (const divergence of metrics.policyDivergences)
+      group.policyDivergences.push({ taskId: task.id, ...divergence });
     group.policyMatrices.set(JSON.stringify(experiment.policyMatrix), experiment.policyMatrix);
     group.acceptanceDefinitions.add(JSON.stringify(experiment.acceptanceCriteria));
     group.verificationDefinitions.add(JSON.stringify(experiment.verificationCommands));
@@ -367,6 +495,7 @@ function controlledSummary(tasks) {
       frozenBaseSha: group.frozenBaseSha,
       taskIds: group.taskIds,
       sampleCount: group.taskIds.length,
+      frozenBaseShas: [...group.frozenBaseShas],
       taskBriefHashes: [...group.taskBriefHashes],
       policyMatrices: [...group.policyMatrices.values()],
       acceptanceDefinitions: [...group.acceptanceDefinitions].map(JSON.parse),
@@ -377,6 +506,11 @@ function controlledSummary(tasks) {
       budgetDrift: group.budgets.size > 1,
       budgetStatus: experimentBudgetStatus(group),
       budgetExceededTaskIds: group.budgetExceededTaskIds,
+      comparability: comparabilityOf(group),
+      policyDivergences: group.policyDivergences,
+      deterministicOutcomes: { ...group.deterministicOutcomes },
+      deterministicEvidenceSamples: evidenceSamples(group.deterministicOutcomes),
+      deterministicDeliveryRate: deterministicRate(group.deterministicOutcomes),
       gateAttempts: group.gateAttempts,
       firstPassGateSuccesses: group.firstPassGateSuccesses,
       firstPassGateSuccessRate: group.gateAttempts ? group.firstPassGateSuccesses / group.gateAttempts : null,
@@ -408,6 +542,19 @@ function controlledSummary(tasks) {
     );
 }
 
+/**
+ * Samples carrying admissible manifest evidence. `unknown` stays out of the denominator
+ * instead of being counted as a failure: no evidence is not a defect.
+ */
+function evidenceSamples(outcomes) {
+  return outcomes.passed + outcomes.failed + outcomes.incomplete;
+}
+
+function deterministicRate(outcomes) {
+  const samples = evidenceSamples(outcomes);
+  return samples ? outcomes.passed / samples : null;
+}
+
 export function buildEvaluationSummary(tasks) {
   const observations = observationalSummary(tasks);
   const experiments = controlledSummary(tasks);
@@ -425,7 +572,7 @@ export function buildEvaluationSummary(tasks) {
     },
     experiments: {
       methodology:
-        "Controlled task variants grouped by explicit experiment and variant IDs with frozen briefs, bases, policies, acceptance criteria, and verification commands.",
+        "Controlled task variants grouped by explicit experiment and variant IDs with frozen briefs, bases, policies, acceptance criteria, and verification commands. Deterministic delivery — the full verification manifest passing on the exact final candidate revision — is the primary outcome; model gate verdicts measure reviewer strictness and cannot rank reviewer policies against each other. Variants whose pooled samples do not share one brief, base, policy and acceptance definition are labelled mixed-identity and are not a result.",
       taskCount: tasks.filter((task) => task.experiment).length,
       variants: experiments,
       decisions: buildExperimentDecisions(experiments),
