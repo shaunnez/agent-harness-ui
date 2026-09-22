@@ -12,6 +12,8 @@ const { TaskOrchestrator } = await load("server/orchestrator.mjs");
 const { createApiServer } = await load("server/api.mjs");
 const { readExecutionProviderCatalog } = await load("server/model-catalog.mjs");
 const results = [];
+// The brief requires a task snapshot, not a particular nesting within the task.
+const taskPolicy = (task) => task.grillPolicy ?? task.agentConfig?.grillPolicy;
 const check = async (id, body) => {
   try { await body(); results.push({ id, passed: true }); }
   catch (error) { results.push({ id, passed: false, detail: error.message }); }
@@ -78,12 +80,12 @@ await check("task-snapshot", () => fixture(async ({ store, create, request }) =>
   const before = await create();
   await store.updateSettings((settings) => { settings.grillPolicy = "auto-accept-recommendations"; });
   const after = await create();
-  assert.equal((await store.get(before.id)).grillPolicy, "manual");
-  assert.equal(after.grillPolicy, "auto-accept-recommendations");
+  assert.equal(taskPolicy(await store.get(before.id)), "manual");
+  assert.equal(taskPolicy(after), "auto-accept-recommendations");
   await store.updateSettings((settings) => { settings.grillPolicy = "manual"; });
-  assert.equal((await store.get(after.id)).grillPolicy, "auto-accept-recommendations");
+  assert.equal(taskPolicy(await store.get(after.id)), "auto-accept-recommendations");
   const attemptedOverride = await request("/api/tasks", "POST", { title: "Preserve compatibility", description: "Investigate compatibility", repositoryPath: repository, workflow: "investigate", priority: "medium", grillPolicy: "auto-accept-recommendations" });
-  if (attemptedOverride.status === 201) assert.equal((await attemptedOverride.json()).task.grillPolicy, "manual");
+  if (attemptedOverride.status === 201) assert.equal(taskPolicy((await attemptedOverride.json()).task), "manual");
   else assert.equal(attemptedOverride.status, 400, await attemptedOverride.clone().text());
 }));
 await check("manual-decisions", () => fixture(async ({ store, create, orchestrator }) => {
@@ -125,11 +127,12 @@ await check("legacy-evidence", () => fixture(async ({ store, create, reopen }) =
   const task = await create();
   await store.update(task.id, (draft) => {
     delete draft.grillPolicy;
+    if (draft.agentConfig) delete draft.agentConfig.grillPolicy;
     draft.grillSession = { status: "completed", questions: [{ id: "Q1", question: "Compatibility", options: [], answer: "Preserve compatibility", answerSource: "accepted-assumption" }], completionReason: "Historical reason", completedAt: "2026-08-01T12:00:00Z" };
   });
   const reopened = await reopen();
   const migrated = await reopened.get(task.id);
-  assert.equal(migrated.grillPolicy, "manual");
+  assert.equal(taskPolicy(migrated), "manual");
   assert.equal(migrated.grillSession.completionSource, "legacy-unverified");
   assert.equal(migrated.grillSession.completionReason, "Historical reason");
   assert.equal(migrated.grillSession.questions[0].answer, "Preserve compatibility");
@@ -160,6 +163,6 @@ await check("settings-browser", () => fixture(async ({ origin, store }) => {
     await page.screenshot({ path: outputPath.replace(/\.json$/, ".png"), fullPage: true });
   } finally { await browser?.close(); await vite.close(); }
 }));
-await writeFile(outputPath, JSON.stringify({ graderVersion: "h02-v1", repository, checks: results, passed: results.every((result) => result.passed), inferenceCalls: 0 }, null, 2) + "\n");
+await writeFile(outputPath, JSON.stringify({ graderVersion: "h02-v2", repository, checks: results, passed: results.every((result) => result.passed), inferenceCalls: 0 }, null, 2) + "\n");
 console.log(JSON.stringify(results));
 process.exitCode = results.every((result) => result.passed) ? 0 : 1;
