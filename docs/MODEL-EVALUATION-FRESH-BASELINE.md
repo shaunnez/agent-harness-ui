@@ -1,5 +1,7 @@
 # Fresh H02 baseline — 22 September 2026
 
+**Cancelled by Shaun during implementation after he reported reaching his Claude five-hour allowance. No evaluation or review is active. Do not restart or substitute a model without a new instruction.**
+
 Shaun explicitly authorized the next unit with “Do it”: qualify the missing independent handoff check, then run one fresh balanced baseline and at most one blind review. No repeat or model comparison is part of this unit.
 
 ## Frozen scope
@@ -29,7 +31,11 @@ Current harness regressions: 33 frozen-target/Grill/context checks passed. Prior
 
 ## Execution record
 
-Campaign preparation and exact-base preflight are next. No inference has started at this checkpoint. The campaign will be `feasibility-v5`, one `F1` slot, with public isolated work under `/private/tmp/h-eval-f5` and private evidence under `/Users/shaun/.codex/model-evaluation/20260922/feasibility-v5`.
+Campaign `feasibility-v5/F1` ran from 02:14 UTC until user cancellation at 02:34 UTC. Source freeze: `a8bfd00`. Exact-base lint, types, 371 tests, build and four Sites checks passed before dispatch; API admission, persisted allowances and provider-native permissions also passed. An initial zero-inference baseline attempt waited on inherited Git signing; it was stopped and the complete baseline passed with process-only signing disabled. Its interruption record is retained.
+
+Triage, two scouts, Grill, Specification and Plan completed. The plan selected one coupled package. Sonnet 5 High was implementing it when Shaun requested cancellation. The normal task cancellation API returned success; task and implementation run are cancelled, the worker and provider processes exited, and all nine ledger attempts are settled. There is no integrated candidate or acceptance result. The cancellation is not a model-quality failure.
+
+Known completed usage is 996,869 tokens. The cancelled Sonnet call has unknown usage, so that is a lower bound, not the complete consumption. The two Haiku adapter probes completed before implementation. No blind review or replacement was launched. Preserve `/private/tmp/h-eval-f5/F1/w/AH-001/S1-A1` and all private evidence under `/Users/shaun/.codex/model-evaluation/20260922/feasibility-v5`, especially `cancellation.json`, `preflight-summary.json`, `F1/provider-ledger.json`, SQLite, task export and delivery-ended receipt.
 
 Before dispatch, verify the actual isolated task base's complete manifest, API admission, persisted overrides, native provider permissions, clean source and frozen identities. Use process-scoped idle-sleep prevention. The laptop is on battery; a lid-close or power interruption must be recorded as host interruption, never silently retried or attributed to a model.
 
