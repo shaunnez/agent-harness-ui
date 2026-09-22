@@ -117,11 +117,23 @@ await check("automatic-provenance", () => fixture(async ({ store, create, orches
 }, { policy: "auto-accept-recommendations" }));
 // Trace the actual dispatch, then vary only resolved decision records. Merely
 // forwarding the original question/recommendation artifact cannot satisfy this.
+function suppliesAnswerSource(prompt, answer, source) {
+  // The contract requires truthful provenance, not a specific prompt serialization.
+  // Accept explicit readable tags as well as the retained enum, bound to the answer.
+  const readableTags = {
+    "automation-policy": "[automated (policy-accepted recommendation)]",
+    "operator-answer": "[operator decision]",
+  };
+  return prompt.split("\n").some((line) => line.includes(answer) && (
+    line.includes(source) || line.toLowerCase().includes(readableTags[source])
+  ));
+}
+
 function assertDecisionHandoff(task, prompts, expectedSource) {
   assert.equal(prompts.length, 1, "Expected one captured specification dispatch");
   const answer = task.grillSession.questions[0].answer;
   assert.ok(prompts[0].includes(answer), "Dispatched specification omitted the selected answer");
-  assert.ok(prompts[0].includes(expectedSource), "Dispatched specification omitted the recorded answer source");
+  assert.ok(suppliesAnswerSource(prompts[0], answer, expectedSource), "Dispatched specification omitted truthful provenance for the selected answer");
   const artifact = task.artifacts.find((item) => item.stage === "specification");
   assert.ok(artifact?.contextManifest?.sources.some((source) => source.includedCharacters > 0 && /decision|grill|answer/i.test(`${source.kind} ${source.id} ${source.label}`)), "Specification manifest omitted supplied Grill decision context");
   if (expectedSource === "automation-policy") {
@@ -138,6 +150,15 @@ function assertDecisionHandoff(task, prompts, expectedSource) {
   const alteredRequest = buildStageRequest(altered, "specification");
   assert.ok(!originalRequest.prompt.includes(marker));
   assert.ok(alteredRequest.prompt.includes(marker), "Specification ignores resolved answers and only sees proposed recommendations");
+  const changedSource = structuredClone(task);
+  const alternateSource = expectedSource === "automation-policy" ? "operator-answer" : "automation-policy";
+  for (const question of changedSource.grillSession.questions) question.answerSource = alternateSource;
+  for (const decision of changedSource.decisions ?? []) {
+    if (decision.grillQuestionId === task.grillSession.questions[0].id || decision.answer === answer) decision.source = alternateSource;
+  }
+  const changedRequest = buildStageRequest(changedSource, "specification");
+  assert.ok(suppliesAnswerSource(changedRequest.prompt, answer, alternateSource), "Specification ignores changes to recorded answer provenance");
+  assert.ok(!suppliesAnswerSource(changedRequest.prompt, answer, expectedSource), "Specification retains stale provenance after the recorded source changes");
 }
 
 await check("automatic-specification-context", () => fixture(async ({ store, create, orchestrator, specificationPrompts }) => {
@@ -212,6 +233,6 @@ await check("settings-browser", () => fixture(async ({ origin, store }) => {
     await page.screenshot({ path: outputPath.replace(/\.json$/, ".png"), fullPage: true });
   } finally { await browser?.close(); await vite.close(); }
 }));
-await writeFile(outputPath, JSON.stringify({ graderVersion: "h02-v4", repository, checks: results, passed: results.every((result) => result.passed), inferenceCalls: 0 }, null, 2) + "\n");
+await writeFile(outputPath, JSON.stringify({ graderVersion: "h02-v5", repository, checks: results, passed: results.every((result) => result.passed), inferenceCalls: 0 }, null, 2) + "\n");
 console.log(JSON.stringify(results));
 process.exitCode = results.every((result) => result.passed) ? 0 : 1;
