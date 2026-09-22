@@ -1,0 +1,67 @@
+SCENARIO
+id: garden-bed-planting-pinned
+title: Garden bed planting installation
+family: external_works
+catalogue unit: m2 (per square metre of planted garden bed, measured on plan)
+
+SCOPE - FIXED. Do not substitute your own.
+  nominal quantity:  200 m2 of garden bed, in beds of 15-40 m2, ground level, on-grade
+  bed location:      Auckland commercial carpark / office forecourt landscape strip,
+                     site access by 1.5t digger and hand barrow, no crane or hoist
+  planting mix:      per 100 m2 - 1 no. specimen tree PB95 (2.0-2.5m ht, single leader,
+                     e.g. Pittosporum / Sophora), 25 no. shrubs PB5 (0.5-0.8m ht,
+                     e.g. Corokia / Coprosma / Hebe), 400 no. groundcover PB2/1.5L
+                     (e.g. Libertia / Carex / Dianella) at 4 plants/m2
+  topsoil:           300mm depth screened garden mix topsoil, imported, spread and
+                     lightly consolidated, to the full 200 m2 bed area
+  fertiliser:        controlled-release fertiliser tablets at planting, one per plant
+  staking:           2 no. 50x50 H4 timber stakes plus hessian ties per PB95 tree only;
+                     shrubs and groundcover unstaked
+  maintenance:       12-month establishment period, monthly visit (12 visits): weeding,
+                     hand watering, plant replacement of losses up to 5%, form pruning
+
+INCLUDED, amortised over the 200 m2 nominal quantity where not already per-unit:
+  - supply and delivery of all plants at the grades and densities above
+  - supply, cart and place 300mm imported screened garden mix topsoil
+  - cultivate / rip existing subgrade 150mm and remove debris before topsoil placement
+  - set out, pit excavation, plant, backfill, fertiliser tablet, firm and water in
+  - tree staking and ties, amortised across the 200 m2 (2 trees total)
+  - initial watering at planting and site clean-up on completion
+  - 12-month establishment maintenance, 12 visits, amortised across the 200 m2
+  - replacement plants for losses up to 5% during the establishment period
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, design, landscape architect fees, consent fees
+  - mulch, turf, irrigation (supply or install) - excluded per the scenario
+  - bed edging, kerbing, headers, geotextile, root barriers and weed mat
+  - bulk earthworks, subsoil drainage, subgrade removal or contaminated spoil disposal
+  - retaining, planter walls, raised planter construction and waterproofing
+  - traffic management, temporary fencing and out-of-hours access
+  - losses above 5%, vandalism, drought failure and post-12-month maintenance
+
+---
+
+**Price: $145 - $215 / m2** (mid point ~$175 / m2), NZD, excluding GST.
+
+**Total for the 200 m2 nominal quantity: $29,000 - $43,000** (mid point ~$35,000).
+
+Build-up at the mid point, per 200 m2:
+
+| Item | Qty | Rate | Total | $/m2 |
+|---|---|---|---|---|
+| Topsoil, screened garden mix, supply + cart + spread 300mm | 60 m3 | $155/m3 | $9,300 | 46.50 |
+| Subgrade cultivation / rip 150mm + debris removal | 200 m2 | $9/m2 | $1,800 | 9.00 |
+| Trees PB95 supply | 2 no. | $180 ea | $360 | 1.80 |
+| Trees plant + stake (2 stakes, ties, pit, fertiliser) | 2 no. | $220 ea | $440 | 2.20 |
+| Shrubs PB5 supply | 50 no. | $22 ea | $1,100 | 5.50 |
+| Shrubs plant + fertiliser tablet | 50 no. | $16 ea | $800 | 4.00 |
+| Groundcover PB2/1.5L supply | 800 no. | $6.50 ea | $5,200 | 26.00 |
+| Groundcover plant + fertiliser tablet | 800 no. | $6.00 ea | $4,800 | 24.00 |
+| Initial water-in, set-out, clean-up | 200 m2 | $6/m2 | $1,200 | 6.00 |
+| Establishment maintenance, 12 monthly visits | 12 visits | $700/visit | $8,400 | 42.00 |
+| Replacement plants, 5% allowance | item | — | $1,600 | 8.00 |
+| **Total** | | | **$35,000** | **175.00** |
+
+Where the band comes from: the low end assumes 200 m2 in few large beds, easy plant access, topsoil at $135/m3 and maintenance visits at $500. The high end assumes narrow strips, more set-out per m2, topsoil at $180/m3 delivered and maintenance at $900/visit.
+
+Two line items dominate and are worth a reviewer's attention independently: topsoil at ~27% of the rate, and the 12-month establishment maintenance at ~24%. Strip the maintenance out and the installed-only rate is $115 - $165/m2.

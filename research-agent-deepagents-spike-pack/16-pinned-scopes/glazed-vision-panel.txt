@@ -1,0 +1,58 @@
+SCENARIO
+id: glazed-vision-panel-pinned
+title: Glazed vision panel to door
+family: joinery
+catalogue unit: ea (one vision panel, cut framed and glazed into one door leaf)
+
+SCOPE - FIXED. Do not substitute your own.
+  door leaf:        44mm solid-core paint-grade flush leaf, 920 x 2040mm, -/30/30 fire
+                    rated, hung in an existing rated timber frame
+  panel size:       300 x 900mm clear vision opening, vertical, sighted at 1200mm AFFL
+  glass:            6mm monolithic fire-rated clear glazing to -/30/30 (Pyrostop /
+                    Contraflam class), Grade A safety glass, polished edges
+  beads:            hardwood fire-rated glazing beads both faces, intumescent seal to
+                    the rebate, beads primed ready for paint
+  work location:    SITE cut into an already-hung leaf, occupied building, one trade visit
+  nominal quantity: 12 panels, 12 separate leaves, one floor of one building, one visit
+  certification:    fire-rated glazing installer's certificate covering the 12 leaves
+
+INCLUDED, amortised over the nominal quantity where not already per-unit:
+  - set out, cut and rout the 300 x 900mm aperture in the hung leaf
+  - lipping / edge reinstatement to the cut aperture to maintain the leaf rating
+  - supply of the 6mm fire-rated glass unit cut to size, Grade A, polished edges
+  - intumescent glazing seal and fire-rated hardwood beads both faces, fixed
+  - rehang, re-check clearances and adjust closer / latch after the cut
+  - dust protection, on-floor cutting station, vacuum extraction and clean-up
+  - the single installer certificate, amortised across the 12 panels
+  - one mobilisation to site, amortised across the 12 panels
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, design, consent or BCA inspection fees
+  - paint or clear finish to the leaf, beads or lipping after the cut
+  - the door leaf, frame, hardware, closer or replacement of a failed leaf
+  - laboratory test evidence, third-party fire engineer review or PS4
+  - after-hours or weekend work, decanting rooms, temporary doors
+  - non-fire-rated, laminated acoustic, wired or georgian variants
+  - any panel cut off-site / in a factory (that is a different scope)
+
+**Band: $680 – $980 per panel.** Point estimate $820/ea.
+**Total for the nominal 12 panels: $8,160 (band $8,160 – $11,760).**
+
+Amortisation audit, at the $820 point:
+
+| Component | Per panel | 12 panels |
+|---|---|---|
+| Fire-rated glass, 0.27m² cut, polished, Grade A | $270 | $3,240 |
+| FR beads, intumescent seal, lipping material | $85 | $1,020 |
+| Site cut, rout, glaze, rehang — 3.0 hr @ $95 | $285 | $3,420 |
+| Dust protection, extraction, clean-up | $55 | $660 |
+| Mobilisation, one visit ÷ 12 | $75 | $900 |
+| Installer certificate, one ÷ 12 | $50 | $600 |
+| **Total** | **$820** | **$9,840** |
+
+Correction to the line above: the total at the point estimate is **$9,840**, not $8,160. Band total **$8,160 – $11,760**.
+
+Two drivers worth knowing, since they were the open questions:
+
+1. **Factory vs site.** Factory-cut and glazed before hanging runs roughly $480 – $620/ea on the same spec — about 30% under. The gap is the site cutting station, dust control and the rehang. Pin factory as a separate id if you want both.
+2. **Rating impact.** Drop the -/30/30 requirement and go 6.38mm clear laminated Grade A with plain hardwood beads: **$310 – $420/ea**, roughly 55% below the rated rate. The glass alone falls from ~$270 to ~$60/panel. Rating is the single largest driver in this scope — never leave it unpinned.

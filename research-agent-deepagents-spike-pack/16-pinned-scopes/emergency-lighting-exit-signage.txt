@@ -1,0 +1,61 @@
+SCENARIO
+id: emergency-lighting-exit-signage-pinned
+title: Emergency lighting and exit signage
+family: electrical
+catalogue unit: ea (per emergency fitting, averaged across the mixed luminaire/exit-sign count)
+
+SCOPE - FIXED. Do not substitute your own.
+  building:         single-storey commercial fitout, 800 m2 suspended grid ceiling,
+                    Auckland, occupied tenancy, normal hours access
+  nominal quantity: 40 fittings total - 28 maintained LED emergency downlights
+                    (3W LED, 90 min integral LiFePO4 battery, non-maintained
+                    changeover, recessed, IP20, 100mm cut-out, white bezel)
+                    and 12 maintained LED exit signs (single/double-sided
+                    blade, 24m viewing distance, green pictogram to AS/NZS 2293.1,
+                    ceiling or wall mount, integral 90 min battery)
+  test facility:    manual test switch per fitting, NOT addressable or
+                    self-testing / DALI monitored
+  wiring:           1.5mm2 TPS on a dedicated emergency sub-circuit, clipped and
+                    cable-tray / ceiling-void run, average 12m of run per fitting,
+                    3 x 16A circuits from an existing distribution board with
+                    spare ways
+  certification:    initial 90-minute discharge test, AS/NZS 2293.2 log book,
+                    CoC and ESC for the emergency circuits
+  procurement:      mid-market NZ-stocked brand (equivalent to Legrand/Clevertronics
+                    standard range), trade-supplied, not specified imported premium
+
+INCLUDED, amortised over the 40 fittings where not already per-unit:
+  - luminaire or exit sign supplied and installed, including ceiling cut-out
+    and grid-tile trim
+  - 12m average of 1.5mm2 emergency sub-circuit cable per fitting, clipped, plus
+    junction/loop connections and terminations
+  - 3 circuit breakers and board terminations, amortised across the 40
+  - scissor lift / trestle access to 3.0m ceiling, amortised across the 40
+  - initial 90-minute discharge test of every fitting, witnessed
+  - AS/NZS 2293.2 log book, fitting schedule and as-built marked-up plan,
+    amortised across the 40
+  - CoC and ESC issue for the emergency circuits, amortised across the 40
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, design, consent and BWOF/IQP fees
+  - the initial IQP/BWOF inspection and Compliance Schedule entry
+  - ongoing 6-monthly and annual re-testing beyond the initial discharge test
+  - central battery, inverter, addressable or self-test monitoring systems
+  - new distribution board, sub-main, or board upgrade works
+  - ceiling grid alteration, patching, plasterboard cutting or redecoration
+  - fire alarm interface, exit door hardware or illuminated signage to signage plan
+
+**Price: $315 – $430 per fitting. Nominal 40 fittings = $12,600 – $17,200.**
+
+Breakdown at midpoint ($370/ea, $14,800 total):
+
+| Component | $/ea | 40-off total |
+|---|---|---|
+| Fitting supply (28 downlights @ ~$95, 12 exit signs @ ~$135) | $107 | $4,280 |
+| Cable + accessories, 12m avg 1.5mm² TPS | $48 | $1,920 |
+| Install labour, ~1.6 hr/fitting @ $95/hr | $152 | $6,080 |
+| Breakers + board terminations (3 circuits, ~$550) | $14 | $550 |
+| Access equipment (lift hire 3 days, ~$900) | $23 | $900 |
+| 90-min discharge test + log book + CoC/ESC (~$1,070) | $27 | $1,070 |
+
+Band drivers: the low end assumes clear ceiling void, short cable pulls and a single continuous install visit; the high end assumes congested void, out-of-hours access in an occupied tenancy and split visits. Confidence: moderate — fitting supply and test/certification are well-bounded; the 12m average cable run is the single largest source of drift and is pinned here specifically to stop it.

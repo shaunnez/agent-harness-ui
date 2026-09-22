@@ -1,0 +1,62 @@
+SCENARIO
+id: solar-connection-switchboard-works-pinned
+title: Solar connection switchboard works
+family: electrical
+catalogue unit: ea (one complete PV grid-connection switchboard package for one building)
+
+SCOPE - FIXED. Do not substitute your own.
+  inverter:          30 kW, three-phase 400V, one inverter, wall-mounted in the main
+                     switchroom within 5m cable run of the main switchboard
+  nominal quantity:  ONE package, serving ONE existing main switchboard
+  main switchboard:  existing 400A TP&N form 2 board, ~15 years old, with two spare
+                     ways; fit one 63A 4-pole MCCB, one 4-pole solar supply main
+                     switch lockable in the off position, and relabel the board
+  solar board:       new dedicated PV distribution board, 12-way TP&N, surface-mounted
+                     IP44 metal enclosure, with 4-pole 63A main switch, 4-pole RCBO
+                     30mA Type B, and AC isolator at the inverter
+  metering/export:   one export-capable revenue meter allowance plus one CT-based
+                     export-limit relay set to zero export, interfaced to the inverter
+  compliance:        CoC, ESC and as-built schedule to AS/NZS 3000 and AS/NZS 4777.2,
+                     Vector Auckland distributed-generation application, <=30 kW
+
+INCLUDED, amortised over the one package where not already per-unit:
+  - solar supply main switch, MCCB and relabelling of the existing main switchboard
+  - new 12-way dedicated PV board, enclosure, main switch, RCBO and AC isolator
+  - 5m of 16mm2 4-core TPS/XLPE sub-main from PV board to main switchboard, on cable tray
+  - export-limit relay, CTs and inverter interface wiring and commissioning
+  - registered electrician labour, live-side make-safe and one out-of-hours shutdown
+    of the existing board (2 hours) to install the main switch
+  - testing, CoC/ESC, as-built schedule and Vector DG application paperwork
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, design fees, consent fees
+  - Vector / network application and connection charges, and any meter rental
+  - the inverter, PV modules, mounting, DC cabling, DC isolators or array-side work
+  - replacement or upgrade of the existing main switchboard, or any asbestos/
+    switchboard-remediation work
+  - trenching, building fabric penetrations, scaffolding or EWP hire
+  - monitoring platform subscriptions, data logger SIM or comms cabling beyond 5m
+
+Give the band as $/ea for this exact scope, and state the total for the nominal
+quantity of ONE package so the amortisation is auditable.
+
+---
+
+**Price: NZD $9,500 – $14,500 per package (mid-point ~$11,800), excl. GST.**
+
+Nominal quantity is one package, so $/ea = the total: **$9,500 – $14,500 for the one package.**
+
+Build-up (mid-point):
+
+| Item | $ |
+|---|---|
+| Solar supply main switch, 63A MCCB, relabel existing MSB | 1,400 |
+| New 12-way TP&N PV board, IP44, main switch, Type B RCBO, AC isolator | 3,200 |
+| 5m 16mm² 4C sub-main, tray, glands, terminations | 900 |
+| Export-limit relay, CTs, inverter interface, commissioning | 2,300 |
+| Out-of-hours shutdown, live-side make-safe (2 hrs, penal rate) | 1,100 |
+| Testing, CoC/ESC, as-built schedule, Vector DG application | 1,600 |
+| Contingency on unknown condition of 15-year-old board | 1,300 |
+| **Total** | **11,800** |
+
+Band drivers: the low end assumes the existing board takes the new switchgear without modification and the shutdown happens in a normal window; the high end assumes a busbar extension kit, a chassis rebuild in the existing board, and weekend shutdown rates.

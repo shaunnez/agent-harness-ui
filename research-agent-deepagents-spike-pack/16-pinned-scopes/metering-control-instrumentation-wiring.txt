@@ -1,0 +1,46 @@
+SCENARIO
+id: metering-control-instrumentation-wiring-pinned
+title: Metering and control wiring installation
+family: electrical
+catalogue unit: m (per lineal metre of installed control/instrumentation cable, measured along the cable route including containment)
+
+SCOPE - FIXED. Do not substitute your own.
+  cable:            2 pair 0.5mm2 overall-screened instrumentation cable, PVC/PVC,
+                    tinned copper drain wire, 300/500V (e.g. Belden 8723 equivalent)
+  containment:      20mm heavy-duty orange PVC conduit, saddled to existing concrete
+                    block wall / steel structure at 1.2m centres, surface run,
+                    accessible plant-room and covered-walkway environment
+  nominal quantity: 200 lineal metres total, made up of 8 field runs averaging 25m each
+  terminations:     16 field-end terminations (2 per run: device end and cabinet end),
+                    ferruled and landed on DIN-rail terminals, screened and earthed
+                    at the panel end only
+  field devices:    8 devices - 4 pulse-output water meters, 2 irrigation controller
+                    stations, 2 4-20mA pressure transmitters (devices supplied by others)
+  BMS interface:    ONE existing BMS field controller cabinet, 8 points landed to
+                    existing spare terminals, point-to-point continuity and loop
+                    testing per point
+  location:         Auckland, single-storey commercial site, work at 2.5m maximum
+                    height off a mobile scaffold or podium step
+
+INCLUDED, amortised over the 200m nominal quantity where not already per-unit:
+  - supply and install the instrumentation cable, drawn into conduit
+  - supply and install 20mm PVC conduit, saddles, bends, couplings and glands
+  - 16 terminations, ferrules, gland plates and cable identification at both ends
+  - screen earthing and continuity of the drain wire to the panel earth bar
+  - cable schedule markup and as-installed labelling of each run
+  - point-to-point continuity and insulation testing, 4-20mA loop injection on 2 loops
+  - the single BMS cabinet interface labour, amortised across the 200m
+  - mobile scaffold / podium step hire for the duration of the cable install
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, design, consent fees
+  - the field devices, water meters, irrigation controllers and transmitters
+  - the BMS controller, any BMS software, point mapping, graphics or commissioning
+  - any new switchboard, panel, enclosure, circuit protection or 230V power supply
+  - underground trenching, directional drilling, core drilling or concrete penetrations
+  - after-hours work, live-site isolation permits, asbestos or working above 3m
+
+Give the band as $/m of installed cable route for this exact scope. State the total
+for the 200m nominal quantity as well, so the amortisation is auditable.
+
+Price it, or tell us honestly why you cannot.

@@ -1,0 +1,61 @@
+SCENARIO
+id: interior-finishes-to-schedule-pinned
+title: Interior finishes to schedule
+family: fitout
+catalogue unit: sum (for the whole finishes-schedule package on one tenancy floor)
+
+SCOPE - FIXED. Do not substitute your own.
+  building / area:   Auckland CBD office tenancy fitout, one floor, 800 m2 NLA,
+                     level 4 of an existing multi-storey building, lift access only
+  wall finish A:     vinyl wall covering, Type II 20 oz/lin yd commercial, to
+                     plasterboard - 220 m2 (reception, lift lobby, meeting room walls)
+  wall finish B:     acrylic feature paint to plasterboard, 2 coats over sealer,
+                     low-sheen, one accent colour - 340 m2
+  floor finish:      loose-lay carpet tile, 500x500mm, solution-dyed nylon,
+                     EN 1307 Class 33 heavy commercial, ~800 g/m2 pile - 640 m2
+  hard floor finish: LVT plank, 2.5mm gauge, 0.55mm wear layer, loose-lay, to
+                     tea point and circulation - 90 m2
+  feature finish:    vertical timber batten wall, 42x19mm pine battens at 60mm
+                     centres, clear lacquer, on painted MDF substrate - 24 m2
+  skirting / trim:   MDF skirting 100x18mm, painted, 260 lineal metres
+
+INCLUDED, amortised over the nominal quantity where not already per-unit:
+  - supply and install of all six finishes listed above, to the stated quantities
+  - substrate preparation: sanding, stopping and sealing of already-lined and
+    stopped plasterboard; latex smoothing compound to 100% of floor area
+  - adhesives, trims, edge strips, carpet-to-LVT transition strips, nosings
+  - the timber batten substrate (painted MDF backing) and its fixing
+  - protection of finished surfaces to practical completion
+  - offcut waste allowance and rubbish removal from site to skip
+  - one site measure and one set of shop-standard setout drawings
+  - out-of-hours access loading for a live building, amortised over the package
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, design fees, consent fees
+  - plasterboard linings, partitions, framing, stopping to Level 4 (base build trade)
+  - ceilings, acoustic tile, suspended grid and ceiling paint
+  - joinery, benchtops, splashbacks, glazing film and signage
+  - floor levelling beyond latex smoothing compound - no grinding or self-levelling screed
+  - asbestos survey, removal of existing finishes, or make-good of existing substrates
+  - scaffolding, hoists and permanent lift protection
+
+**Price: $148,000 - $196,000 excl GST for the whole package.** Midpoint $170,000, which is $213/m2 over the 800 m2 NLA.
+
+Auditable build-up at the midpoint:
+
+| Item | Qty | Rate (excl GST) | Total |
+|---|---|---|---|
+| Vinyl wall covering, Type II | 220 m2 | $88/m2 | $19,400 |
+| Acrylic feature paint, 2 coats + sealer | 340 m2 | $38/m2 | $12,900 |
+| Carpet tile, Class 33 SDN | 640 m2 | $105/m2 | $67,200 |
+| LVT plank, 0.55mm wear layer | 90 m2 | $145/m2 | $13,100 |
+| Timber batten feature wall incl. MDF substrate | 24 m2 | $560/m2 | $13,400 |
+| MDF skirting, supplied and painted | 260 m | $42/m | $10,900 |
+| Latex smoothing compound, 100% of floor | 730 m2 | $22/m2 | $16,100 |
+| Trims, transitions, nosings, protection, waste | package | — | $9,800 |
+| Site measure, setout, out-of-hours access loading | package | — | $7,200 |
+| **Total** | | | **$170,000** |
+
+Band drivers: carpet tile is the largest single line, and the $80–$135/m2 supply-and-lay range for Class 33 solution-dyed nylon alone swings the package by ±$16,000. The vinyl wall covering and batten wall carry the next-widest spread, because both are labour-dominant and sensitive to how much of the work falls outside normal hours.
+
+Next: if your real schedule has different quantities, swap the six quantity lines and keep the rates — the build-up is linear except for the two package lines.

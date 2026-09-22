@@ -1,0 +1,41 @@
+SCENARIO
+id: benchtop-and-laminate-panel-pinned
+title: Benchtop and laminate panel
+family: joinery
+catalogue unit: m (per lineal metre of finished benchtop run, measured along the front edge)
+
+SCOPE - FIXED. Do not substitute your own.
+  benchtop:         33mm postformed HPL benchtop on E1 MR MDF substrate, 600mm deep,
+                    matt finish, postformed bullnose front edge, 100mm coved upstand
+  splashback:       6mm compact laminate panel (CDF core), 600mm high, matt, 2mm arris
+                    to exposed edges, full length of the run
+  nominal run:      6 lineal metres of benchtop, in two runs (4.0m + 2.0m), one 90-degree
+                    junction, both ends scribed to wall
+  cutouts:          ONE 900x500 undermount-ready sink cutout with sealed edges, and
+                    ONE 600x500 hob cutout - two cutouts over the 6m
+  substrate:        existing cabinetry, already installed, level and set out at 900mm AFFL
+  access:           ground floor, fit-out of an occupied-adjacent tenancy, normal hours
+
+INCLUDED, amortised over the 6m nominal run:
+  - benchtop supply, fabrication, cut to size, joints and mitres
+  - postformed front edge and 100mm coved upstand as part of the benchtop profile
+  - 6mm compact laminate splashback panel, supplied, cut, drilled and fixed
+  - two cutouts, edge-sealed, amortised across the 6m
+  - the one 90-degree junction joint (biscuit/butterfly, clamped and sealed)
+  - scribe and fit to wall at both ends
+  - silicone seal to benchtop/splashback and splashback/wall junctions
+  - fixing to existing cabinetry, delivery to site and installation labour
+
+EXCLUDED - do not price:
+  - GST, preliminaries, margin, design fees, consent fees
+  - cabinetry, carcasses, doors, drawers, hardware and any substructure
+  - sink, tapware, hob, appliances, and all plumbing and electrical work
+  - stone, solid surface or engineered stone alternatives
+  - any third or further cutout, power/data grommets, or upstand to a second wall
+  - wall lining, framing, preparation or making good behind the splashback
+  - after-hours work, hoisting above ground floor, protection of adjacent finishes
+
+Give the band as $/m of benchtop run for this exact scope, and state the total for the
+6m nominal quantity so the amortisation is auditable.
+
+Price it, or tell us honestly why you cannot.
