@@ -109,9 +109,29 @@ export function resolveRunAgentPolicy(task, policyId, settings) {
   return resolveEffectiveRunPolicy(task, policyId);
 }
 
+/**
+ * Implement and repair get an hour. It is a runaway guard, not a work budget.
+ *
+ * The previous 900_000 had no recorded derivation, and the 1_800_000 that replaced it was
+ * fitted to two observed runs — then immediately falsified by a third. Measured C4
+ * implement runs on one unchanged brief: 944s, 1031s, 1616s, 1661s, and one that passed
+ * 1800s. That spread is the model's path through the work, not the work's size, so any
+ * limit drawn through the middle of it silently decides the delivery rate. For an
+ * experiment whose primary outcome is delivery, a tuned timeout is a knob that sets the
+ * result.
+ *
+ * So it is deliberately set where it stops a genuinely stuck agent and nothing else, and
+ * matches the 3_600_000 ceiling `stageTimeoutOverridesMs` is already clamped to below.
+ *
+ * A wall clock is the wrong instrument for bounding agent work, and this does not pretend
+ * otherwise — it only stops being the thing that decides experiment outcomes. Real work
+ * bounds (agent turns, token budget, package size) belong in the run policy; the
+ * experiment budget in `experiment-decision.mjs` already declares `maxWallTimeMs` and
+ * `maxTotalTokens`, but classifies a finished task rather than stopping a running one.
+ */
 export function stageTimeoutMs(stageId, sandbox, task = null) {
   const defaultTimeout = ["implement", "repair"].includes(stageId)
-    ? 900_000
+    ? 3_600_000
     : sandbox === "workspace-write" || ["plan", "dev-review", "final-review"].includes(stageId)
       ? 600_000
       : 360_000;

@@ -79,6 +79,7 @@ test("the two advance maps are keyed by parked status and never claim the same s
     "ready-for-implementation",
     "ready-for-review",
     "ready-for-test",
+    "review-retry-required",
   ]);
   assert.deepEqual(Object.keys(GATE_APPROVAL_ADVANCE).sort(), [
     "awaiting-plan-approval",
@@ -173,4 +174,24 @@ test("resolveGatePolicy resolves each gate stage independently", () => {
   assert.equal(resolveGatePolicy(settings, "dev-review"), "auto-accept-recommendations");
   assert.equal(resolveGatePolicy(settings, "test"), "manual");
   assert.equal(resolveGatePolicy(settings, "final-review"), "manual");
+});
+
+test("a dev-review rerun is reachable by policy, like the other two gate reruns", () => {
+  // `evaluationRerunState` sends dev-review's rerun to `review-retry-required` while test
+  // and final-review reruns land on statuses this map already covered. That asymmetry
+  // parked an EXP-001 sample at a status no gatePolicies value could name: the gate
+  // automation was configured and correct, and simply had no entry to act on.
+  assert.deepEqual(resolveGateAutoAdvance({ status: "review-retry-required", currentStage: "dev-review" }), {
+    stage: "dev-review",
+    nextKind: "review",
+    policyStage: "dev-review",
+  });
+});
+
+test("a dev-review rerun is not claimed while the task sits at another stage", () => {
+  // The guard in `_autoAdvanceGate` compares currentStage to the transition's stage, so a
+  // stale status paired with a moved stage must not resolve to a dev-review run.
+  const advance = resolveGateAutoAdvance({ status: "review-retry-required", currentStage: "test" });
+  assert.deepEqual(advance, { stage: "dev-review", nextKind: "review", policyStage: "dev-review" });
+  assert.notEqual(advance.stage, "test");
 });

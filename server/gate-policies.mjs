@@ -83,6 +83,20 @@ export function resolveGatePolicy(settings, stage) {
 export const GATE_AUTO_ADVANCE = Object.freeze({
   "ready-for-implementation": { stage: "implement", nextKind: "implementation" },
   "ready-for-review": { stage: "dev-review", nextKind: "review" },
+  // A dev-review that cannot accept its own evidence — a reviewer diagnostic command
+  // failed, say — reruns the same candidate through `review-retry-required`
+  // (`evaluationRerunState`, server/orchestrator-run-policy.mjs). `test` and
+  // `final-review` rerun through statuses already listed here, so omitting this one left
+  // dev-review as the single gate whose rerun no policy could reach: the task parked with
+  // no settable key covering it, and an otherwise healthy sample was lost to a status
+  // rather than to a verdict. `canStartRun` already admits a `review` run from this
+  // status, so only the mapping was missing.
+  //
+  // This does not make the retry unbounded. `orchestrator-gate-evaluation.mjs` clamps the
+  // stage limit to the attempts already spent when the same reason code repeats for the
+  // same candidate revision, so the policy buys exactly one automatic retry per distinct
+  // reason and a repeat still stops for a person.
+  "review-retry-required": { stage: "dev-review", nextKind: "review" },
   "ready-for-test": { stage: "test", nextKind: "test" },
   "ready-for-final-review": { stage: "final-review", nextKind: "final-review" },
 });

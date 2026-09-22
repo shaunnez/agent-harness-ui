@@ -491,7 +491,9 @@ for (const scenario of [
       assert.equal(ready.workPackages[0].attempts, dependency.attempts);
       assert.equal(ready.workPackages[1].attempts, 5);
       assert.equal(ready.stageRunLimits.implement, 5);
-      assert.equal(request.timeoutMs, 1_800_000);
+      // The stage default is the hour-long runaway guard; a continuation no longer
+      // escalates past it because that value is also the override clamp ceiling.
+      assert.equal(request.timeoutMs, 3_600_000);
       assert.match(
         request.prompt,
         /restore every retained path outside declared ownership: src\/outside\.ts/i,

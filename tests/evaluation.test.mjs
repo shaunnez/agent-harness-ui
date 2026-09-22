@@ -147,6 +147,75 @@ function makeDecisionTask({ variantId, taskId, gates, experiment = {}, ...overri
   });
 }
 
+function manifestRun(status, headRevision = "head1") {
+  return {
+    executionKind: "full-manifest",
+    headRevision,
+    status,
+    declaredCommandIds: ["lint", "test"],
+    executedCommandIds: ["lint", "test"],
+  };
+}
+
+function makeDeliveryTask({ variantId, taskId, status, gates, decisionMetric }) {
+  return makeDecisionTask({
+    variantId,
+    taskId,
+    gates,
+    experiment: decisionMetric === undefined ? {} : { decisionMetric },
+    candidates: [
+      { id: "C1", revisionNumber: 1, headRevision: "head1", verificationRuns: [manifestRun(status)] },
+    ],
+  });
+}
+
+test("an undeclared experiment is decided on deterministic delivery, not gate passes", () => {
+  // The arm that delivers fails its gates; the arm that passes every gate delivers nothing.
+  // Defaulting to a gate rate would crown v2, which is the confound this default exists to avoid.
+  const summary = buildEvaluationSummary([
+    makeDeliveryTask({
+      variantId: "v1",
+      taskId: "AH-1",
+      status: "passed",
+      gates: ["REPAIR"],
+      decisionMetric: null,
+    }),
+    makeDeliveryTask({
+      variantId: "v2",
+      taskId: "AH-2",
+      status: "failed",
+      gates: ["PASS"],
+      decisionMetric: null,
+    }),
+  ]);
+  const [decision] = summary.experiments.decisions;
+  assert.equal(decision.decisionMetric, "deterministic-delivery-rate");
+  assert.deepEqual(decision.leader, { variantId: "v1", value: 1 });
+});
+
+test("an arm with no admissible delivery evidence is ineligible, not ranked at zero", () => {
+  const summary = buildEvaluationSummary([
+    makeDeliveryTask({
+      variantId: "v1",
+      taskId: "AH-1",
+      status: "passed",
+      gates: ["PASS"],
+      decisionMetric: null,
+    }),
+    makeDecisionTask({
+      variantId: "v2",
+      taskId: "AH-2",
+      gates: ["PASS"],
+      experiment: { decisionMetric: null },
+    }),
+  ]);
+  const [decision] = summary.experiments.decisions;
+  const unscored = decision.variants.find((variant) => variant.variantId === "v2");
+  assert.equal(unscored.value, null);
+  assert.equal(unscored.eligible, false);
+  assert.match(unscored.ineligibleReason, /no recorded value/);
+});
+
 test("names the leader on the declared decision metric alone", () => {
   const summary = buildEvaluationSummary([
     makeDecisionTask({ variantId: "v1", taskId: "AH-1", gates: ["PASS"] }),
@@ -226,4 +295,184 @@ test("reports the recorded value for an arm the decision metric cannot score", (
   assert.equal(unscored.value, null);
   assert.equal(unscored.eligible, false);
   assert.match(unscored.ineligibleReason, /no recorded value/);
+});
+
+function variantOf(summary, groupId = "g1", variantId = "v1") {
+  return summary.experiments.variants.find(
+    (item) => item.groupId === groupId && item.variantId === variantId,
+  );
+}
+
+function candidateWith(verificationRuns, headRevision = "head1") {
+  return { id: "C1", revisionNumber: 1, headRevision, verificationRuns };
+}
+
+test("deterministic delivery counts a full-manifest pass on the exact final revision", () => {
+  const task = makeExperimentTask({
+    status: "completed",
+    candidates: [
+      candidateWith([
+        {
+          executionKind: "full-manifest",
+          headRevision: "head1",
+          status: "passed",
+          declaredCommandIds: ["lint", "test"],
+          executedCommandIds: ["lint", "test"],
+        },
+      ]),
+    ],
+  });
+  const variant = variantOf(buildEvaluationSummary([task]));
+  assert.deepEqual(variant.deterministicOutcomes, {
+    passed: 1,
+    failed: 0,
+    incomplete: 0,
+    unknown: 0,
+  });
+  assert.equal(variant.deterministicDeliveryRate, 1);
+  assert.equal(variant.deterministicEvidenceSamples, 1);
+});
+
+test("a manifest execution against a superseded revision is not delivery evidence", () => {
+  const task = makeExperimentTask({
+    status: "completed",
+    candidates: [
+      candidateWith(
+        [
+          {
+            executionKind: "full-manifest",
+            headRevision: "stale",
+            status: "passed",
+            declaredCommandIds: ["test"],
+            executedCommandIds: ["test"],
+          },
+        ],
+        "head2",
+      ),
+    ],
+  });
+  const variant = variantOf(buildEvaluationSummary([task]));
+  assert.equal(variant.deterministicOutcomes.unknown, 1);
+  assert.equal(
+    variant.deterministicDeliveryRate,
+    null,
+    "no admissible evidence leaves the rate unknown rather than zero",
+  );
+});
+
+test("a focused execution is never admissible as deterministic delivery", () => {
+  const task = makeExperimentTask({
+    status: "completed",
+    candidates: [
+      candidateWith([
+        {
+          executionKind: "focused",
+          headRevision: "head1",
+          status: "passed",
+          declaredCommandIds: ["test"],
+          executedCommandIds: ["test"],
+        },
+      ]),
+    ],
+  });
+  const variant = variantOf(buildEvaluationSummary([task]));
+  assert.equal(variant.deterministicOutcomes.unknown, 1);
+  assert.equal(variant.deterministicOutcomes.passed, 0);
+});
+
+test("a pass that skipped a declared command is incomplete, not delivered", () => {
+  const task = makeExperimentTask({
+    status: "completed",
+    candidates: [
+      candidateWith([
+        {
+          executionKind: "full-manifest",
+          headRevision: "head1",
+          status: "passed",
+          declaredCommandIds: ["lint", "test", "build"],
+          executedCommandIds: ["lint", "test"],
+        },
+      ]),
+    ],
+  });
+  const variant = variantOf(buildEvaluationSummary([task]));
+  assert.equal(variant.deterministicOutcomes.incomplete, 1);
+  assert.equal(variant.deterministicOutcomes.passed, 0);
+  assert.equal(variant.deterministicDeliveryRate, 0);
+});
+
+test("pooling two briefs under one variant is labelled mixed-identity", () => {
+  const summary = buildEvaluationSummary([
+    makeExperimentTask({ id: "AH-1", status: "completed" }),
+    makeExperimentTask({
+      id: "AH-2",
+      status: "completed",
+      experiment: {
+        groupId: "g1",
+        variantId: "v1",
+        frozenBaseSha: "b".repeat(40),
+        taskBriefHash: "other-hash",
+        policyMatrix: {},
+        acceptanceCriteria: ["done"],
+        verificationCommands: ["npm test"],
+      },
+    }),
+  ]);
+  const variant = variantOf(summary);
+  assert.equal(variant.comparability.status, "mixed-identity");
+  assert.equal(variant.comparability.briefHashCount, 2);
+  assert.equal(variant.comparability.baseShaCount, 2);
+  assert.deepEqual(variant.frozenBaseShas.length, 2, "every pooled base is reported, not just the first");
+  assert.ok(
+    variant.comparability.reasons.some((reason) => reason.includes("task briefs")),
+    "the reason names the pooled briefs",
+  );
+});
+
+test("one brief, base, policy and acceptance definition is comparable", () => {
+  const variant = variantOf(buildEvaluationSummary([makeExperimentTask({ status: "completed" })]));
+  assert.equal(variant.comparability.status, "comparable");
+  assert.deepEqual(variant.comparability.reasons, []);
+});
+
+test("a run that executed a policy other than the selected one contaminates the variant", () => {
+  const task = makeExperimentTask({
+    status: "completed",
+    runs: [
+      {
+        stage: "repair",
+        policyRole: "repair",
+        selectedModel: "gpt-5.6-luna",
+        selectedReasoning: "xhigh",
+        effectiveModel: "gpt-5.6-sol",
+        effectiveReasoning: "high",
+        policyEscalationReason: "Verified P1 candidate defect from dev-review",
+      },
+    ],
+  });
+  const variant = variantOf(buildEvaluationSummary([task]));
+  assert.equal(variant.policyDivergences.length, 1);
+  assert.equal(variant.policyDivergences[0].role, "repair");
+  assert.equal(variant.policyDivergences[0].effective, "gpt-5.6-sol:high");
+  assert.equal(variant.comparability.status, "mixed-identity");
+});
+
+test("a run whose effective policy matches its selection is not a divergence", () => {
+  const task = makeExperimentTask({
+    status: "completed",
+    runs: [
+      {
+        stage: "implement",
+        policyRole: "implement",
+        selectedModel: "gpt-5.6-luna",
+        selectedReasoning: "xhigh",
+        effectiveModel: "gpt-5.6-luna",
+        effectiveReasoning: "xhigh",
+        policyEscalationReason: null,
+      },
+    ],
+  });
+  const variant = variantOf(buildEvaluationSummary([task]));
+  assert.deepEqual(variant.policyDivergences, []);
+  assert.equal(variant.comparability.status, "comparable");
 });
