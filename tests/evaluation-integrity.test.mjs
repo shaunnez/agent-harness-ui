@@ -1,12 +1,56 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { makeRuntimeRun, makeFocusedTestSummary } from "./orchestrator-test-support.mjs";
-import { trialResources } from "../server/evaluation-outcomes.mjs";
+import { loadEvaluationCase } from "../scripts/evaluation/case-contract.mjs";
 import {
   buildEvaluationSummary,
   normalizeEvaluationInput,
   normalizeExperimentInput,
 } from "../server/evaluation.mjs";
+import { trialResources } from "../server/evaluation-outcomes.mjs";
+import { makeFocusedTestSummary, makeRuntimeRun } from "./orchestrator-test-support.mjs";
+
+test("the default case retains the exact historical H02 public brief and rubric", async () => {
+  const selected = await loadEvaluationCase();
+  assert.equal(selected.item.id, "H02");
+  assert.equal(selected.workflowProfile, "high-risk");
+  assert.equal(selected.grader, "evaluations/graders/h02.mjs");
+  assert.equal(selected.graderOutput, "file");
+  assert.equal(selected.checkIds.length, 11);
+  assert.equal(
+    selected.contract,
+    await readFile(new URL("../evaluations/cases/h02-public-contract.md", import.meta.url), "utf8"),
+  );
+  assert.deepEqual(
+    selected.rubric,
+    JSON.parse(await readFile(new URL("../evaluations/rubric-v1.json", import.meta.url), "utf8")),
+  );
+});
+
+test("H05 selects its own acceptance contract without reducing delivery review allowance", async () => {
+  const selected = await loadEvaluationCase("H05");
+  assert.equal(selected.workflowProfile, "standard");
+  assert.equal(selected.grader, "evaluations/graders/h05.mjs");
+  assert.equal(selected.graderOutput, "directory");
+  assert.equal(selected.checkIds.length, 7);
+  assert.ok(selected.checkIds.includes("actual-policy-editor"));
+  assert.match(selected.contract, /discovered Claude/);
+  assert.equal(selected.rubric.version, "delivery-rubric-h05-v1");
+  assert.equal(selected.rubric.maxWallTimeMs, 3_600_000);
+  assert.equal(selected.rubric.maxTotalTokens, 30_000_000);
+  assert.equal(selected.rubric.maxProviderInvocations, 1);
+  assert.match(selected.rubric.criteria[1], /catalog projection/);
+  assert.doesNotMatch(selected.rubric.criteria[1], /manual default/);
+  // A caller cannot change another preparation's returned contract.
+  selected.checkIds.length = 0;
+  assert.equal((await loadEvaluationCase("H05")).checkIds.length, 7);
+});
+
+test("selected but unqualified cases cannot enter the Harness-only runner", async () => {
+  for (const id of ["M01", "P03", "H01", "H03", "unknown", "../H05"]) {
+    await assert.rejects(loadEvaluationCase(id), /no qualified runner integration/);
+  }
+});
 
 test("external provider receipts count helper calls once and preserve unknown consumption", () => {
   const input = task("provider-accounting", {

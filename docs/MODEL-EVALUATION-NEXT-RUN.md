@@ -1,5 +1,7 @@
 # Model evaluation continuation after H02 v7
 
+**Current continuation:** [MODEL-EVALUATION-PREPARATION.md](MODEL-EVALUATION-PREPARATION.md) records the completed zero-inference preparation on `codex/model-evaluation-cross-project-prep`. M01 and P03 are blocked by historical baseline failures. H05 is qualified as the proposed small Harness alternative, pending the other agent's retained-package failure-routing fix, a new source freeze and dispatch instruction. No new model run was launched. The original plan below is retained as history; use the preparation handoff for current checkout state and next actions.
+
 Updated 22 September 2026. Read this before older execution briefs. **No evaluation worker or reviewer is running.** This handoff prepares the next unit; it does not authorize a new paid campaign merely by being read.
 
 ## Latest decisions and scope
@@ -79,4 +81,4 @@ After different cases work, repeat selected cases under the same frozen setup to
 
 ## Copyable continuation
 
-Continue from `docs/MODEL-EVALUATION-NEXT-RUN.md` in `/Users/shaun/.codex/worktrees/model-evaluation/agent-harness-ui`. Final Review improvement is deferred to ENG-977. Keep H02 and its repair exercise parked unless I explicitly unpark it. Preserve all closed-run evidence. Reconcile a new evaluation source branch with current merged main, including PR #123, then begin zero-inference qualification of M01, followed by P03 and the small Harness case. Verify exact project baselines and qualify case-specific graders before proposing the first new paid trial. Do not restart H02, change model policy, invoke providers, publish a PR, merge or deploy during preparation.
+Continue from `docs/MODEL-EVALUATION-PREPARATION.md` in `/Users/shaun/.codex/worktrees/model-evaluation/agent-harness-ui`. Preserve the completed preparation and closed H02 evidence. Confirm the other agent's retained-package failure-routing fix is merged, rebase and requalify the preparation branch. H05 is the proposed next single trial; M01/P03 are baseline-blocked. Do not dispatch a model run, restart H02, publish a PR, merge or deploy merely by reading this handoff.

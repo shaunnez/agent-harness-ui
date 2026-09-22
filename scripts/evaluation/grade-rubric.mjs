@@ -1,18 +1,18 @@
 import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { chmod, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { runCodex } from "../../server/codex-runtime.mjs";
+import { loadEvaluationCase } from "./case-contract.mjs";
 
 const exec = promisify(execFile);
 const root = fileURLToPath(new URL("../../", import.meta.url));
-const [source, baseSha, output] = process.argv.slice(2);
+const [source, baseSha, output, caseId = "H02"] = process.argv.slice(2);
 if (!source || !baseSha || !output)
-  throw new Error("Usage: grade-rubric.mjs <source-checkout> <base-sha> <new-output-directory>");
-const rubric = JSON.parse(await readFile(path.join(root, "evaluations/rubric-v1.json"), "utf8"));
-const brief = await readFile(path.join(root, "evaluations/cases/h02-public-contract.md"), "utf8");
+  throw new Error("Usage: grade-rubric.mjs <source-checkout> <base-sha> <new-output-directory> [H02|H05]");
+const { rubric, contract: brief } = await loadEvaluationCase(caseId);
 const git = (args) => exec("git", args, { cwd: source, maxBuffer: 2_000_000 });
 const head = (await git(["rev-parse", "HEAD"])).stdout.trim();
 const diff = (

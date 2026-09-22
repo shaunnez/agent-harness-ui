@@ -3,15 +3,18 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import { SqliteTaskStore } from "../../server/sqlite-store.mjs";
 import { normalizeEvaluationInput } from "../../server/evaluation.mjs";
 import { candidateBinding } from "../../server/evaluation-outcomes.mjs";
+import { SqliteTaskStore } from "../../server/sqlite-store.mjs";
+import { loadEvaluationCase } from "./case-contract.mjs";
 
 const exec = promisify(execFile);
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const [directory] = process.argv.slice(2);
 if (!directory) throw new Error("Usage: finalize-trial.mjs <private-trial-directory>");
 const config = JSON.parse(await readFile(path.join(directory, "config.json"), "utf8"));
+const caseId = config.taskInput.experiment.evaluationContract.caseId;
+const selectedCase = await loadEvaluationCase(caseId);
 if (config.playwrightModule) process.env.EVAL_PLAYWRIGHT_MODULE = config.playwrightModule;
 await readFile(path.join(directory, "delivery-ended.json"), "utf8");
 const taskId = (await readFile(path.join(directory, "task-id.txt"), "utf8")).trim();
@@ -31,7 +34,9 @@ try {
       throw new Error("Candidate identity or cleanliness drifted before grading.");
     const gradeRoot = path.join(directory, "independent-grade");
     await mkdir(gradeRoot);
-    const checksFile = path.join(gradeRoot, "checks.json");
+    const checksDirectory =
+      selectedCase.graderOutput === "directory" ? path.join(gradeRoot, "behavior") : gradeRoot;
+    const checksFile = path.join(checksDirectory, "checks.json");
     const gradingProfile = path.join(gradeRoot, "checks.sb");
     // Repository imports/tests cannot access the private reference or other candidates.
     const originalProfile = await readFile(config.workerProfile, "utf8");
@@ -49,9 +54,9 @@ try {
           "-f",
           gradingProfile,
           process.execPath,
-          path.join(root, "evaluations/graders/h02.mjs"),
+          path.join(root, selectedCase.grader),
           candidate.worktreePath,
-          checksFile,
+          selectedCase.graderOutput === "directory" ? checksDirectory : checksFile,
         ],
         { cwd: candidate.worktreePath, env: process.env, maxBuffer: 5_000_000, timeout: 180000 },
       );
@@ -63,7 +68,7 @@ try {
     const checks = JSON.parse(await readFile(checksFile, "utf8"));
     let rubricPassed = false;
     if (checks.passed) {
-      const rubric = JSON.parse(await readFile(path.join(root, "evaluations/rubric-v1.json"), "utf8"));
+      const { rubric } = selectedCase;
       const result = await exec(
         process.execPath,
         [
@@ -71,6 +76,7 @@ try {
           candidate.worktreePath,
           config.taskInput.experiment.frozenBaseSha,
           path.join(gradeRoot, "rubric"),
+          caseId,
         ],
         { cwd: root, env: process.env, maxBuffer: 5_000_000, timeout: rubric.maxWallTimeMs + 30000 },
       );

@@ -7,10 +7,11 @@ import { promisify } from "node:util";
 import { readExecutionProviderCatalog } from "../../server/model-catalog.mjs";
 import { formatArgv, parseVerificationManifest } from "../../server/verification.mjs";
 import { DEFAULT_REPAIR_LIMITS } from "../../src/repair-limits.ts";
+import { loadEvaluationCase } from "./case-contract.mjs";
 
 const exec = promisify(execFile);
 const root = fileURLToPath(new URL("../../", import.meta.url));
-const [campaignRoot, publicRoot, sourceRepository, mode = "prepare"] = process.argv.slice(2);
+const [campaignRoot, publicRoot, sourceRepository, mode = "prepare", caseId = "H02"] = process.argv.slice(2);
 if (
   !campaignRoot ||
   !publicRoot ||
@@ -18,14 +19,15 @@ if (
   !["prepare", "dry-run", "feasibility"].includes(mode)
 )
   throw new Error(
-    "Usage: prepare-batch.mjs <new-private-root> <new-public-root> <source-repository> [dry-run|feasibility]",
+    "Usage: prepare-batch.mjs <new-private-root> <new-public-root> <source-repository> [dry-run|feasibility] [H02|H05]",
   );
 const read = (relative) => readFile(path.join(root, relative), "utf8");
 const git = (cwd, args) => exec("git", args, { cwd, maxBuffer: 30_000_000 });
 const sha = (text) => createHash("sha256").update(text).digest("hex");
-const bank = JSON.parse(await read("evaluations/cases/delivery-v1.json"));
-const item = bank.cases.find((entry) => entry.id === "H02");
-const contract = await read("evaluations/cases/h02-public-contract.md");
+const selectedCase = await loadEvaluationCase(caseId);
+const { item, contract, rubric } = selectedCase;
+if (caseId !== "H02" && !["dry-run", "feasibility"].includes(mode))
+  throw new Error("New cases support one trial only; no automatic comparison campaign.");
 const incumbent = JSON.parse(await read("evaluations/incumbent-settings-snapshot.json"));
 const policy = (model, reasoning = "high") => ({ model, reasoning });
 const balanced = {
@@ -40,7 +42,7 @@ const balanced = {
   test: policy("gpt-5.6-luna", "medium"),
   "final-review": policy("gpt-5.6-sol"),
 };
-const feasibility = mode === "feasibility";
+const feasibility = mode === "feasibility" || caseId === "H05";
 // Pin the incumbent's real high-risk profile because every arm uses that assurance level.
 const policies = feasibility
   ? { balanced }
@@ -100,7 +102,6 @@ const order = feasibility
       "incumbent",
       "balanced",
     ];
-const rubric = JSON.parse(await read("evaluations/rubric-v1.json"));
 const playwrightModule = process.env.EVAL_PLAYWRIGHT_MODULE;
 if (mode !== "dry-run" && !playwrightModule)
   throw new Error("Freeze EVAL_PLAYWRIGHT_MODULE before preparing a campaign.");
@@ -127,7 +128,7 @@ const environment = {
   packageConcurrency: 1,
   trialConcurrency: 1,
   gitSigning: "disabled only in isolated process/repositories",
-  workflowProfile: "high-risk",
+  workflowProfile: selectedCase.workflowProfile,
   grill: "manual with frozen benchmark-user answers",
   stageTimeoutOverridesMs,
   repairLimits,
@@ -160,8 +161,8 @@ const freeze = {
   harnessVersion,
   caseId: item.id,
   baseSha: item.baseSha,
-  caseVersion: `h02-${sha(contract)}`,
-  graderVersion: `h02-${sha(await read("evaluations/graders/h02.mjs"))}`,
+  caseVersion: `${caseId.toLowerCase()}-${sha(contract)}`,
+  graderVersion: `${caseId.toLowerCase()}-${sha(await read(selectedCase.grader))}`,
   rubricVersion: `${rubric.version}-${sha(JSON.stringify(rubric))}`,
   environmentVersion: sha(JSON.stringify(environment)),
   executionVersion: "fixed-policy-native-permissions-v3-package-repair",
@@ -280,10 +281,10 @@ for (const trial of trials) {
       repositoryPath: repository,
       workflow: "implement",
       priority: "medium",
-      workflowProfile: "high-risk",
+      workflowProfile: selectedCase.workflowProfile,
       rolePolicyOverrides: policies[trial.variant],
       experiment: {
-        groupId: `h02-${path.basename(campaignRoot)}`,
+        groupId: `${caseId.toLowerCase()}-${path.basename(campaignRoot)}`,
         variantId: trial.variant,
         frozenBaseSha: item.baseSha,
         acceptanceCriteria: item.acceptanceCriteria,
@@ -304,19 +305,7 @@ for (const trial of trials) {
               "executionVersion",
             ].map((key) => [key, freeze[key]]),
           ),
-          checkIds: [
-            "default-and-persistence",
-            "api-validation",
-            "task-snapshot",
-            "manual-decisions",
-            "automatic-provenance",
-            "automatic-specification-context",
-            "manual-specification-context",
-            "zero-questions",
-            "operator-api-boundary",
-            "legacy-evidence",
-            "settings-browser",
-          ],
+          checkIds: selectedCase.checkIds,
         },
       },
     },

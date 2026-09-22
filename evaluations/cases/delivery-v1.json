@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "status": "12 selected cases; H02 live-qualified, H01/M01/P04 partially qualified; per-case remaining gates are authoritative",
+  "status": "13 selected cases; H05 is the proposed small Harness alternative; per-case qualification gates remain authoritative",
   "cases": [
     {
       "id": "H01",
@@ -194,7 +194,20 @@
         "Review controls display the correct editable fields"
       ],
       "qualification": "selected-not-qualified",
-      "referenceScope": "task changes in source commit; exclude historical documentation from agent inputs"
+      "referenceScope": "task changes in source commit; exclude historical documentation from agent inputs",
+      "latestPreparation": {
+        "status": "baseline-blocked",
+        "baseSha": "21c20c8ffeeb2b8a4a19ccff6be286d23a2dbad3",
+        "backendLint": "passed",
+        "formatting": "12 files fail pinned Ruff formatting",
+        "typing": "7 errors in scripts/report_uplift_join.py and scripts/diagnose_worksheet_provider.py",
+        "remaining": [
+          "Green exact baseline",
+          "Reference and independent acceptance qualification",
+          "Portable cross-project execution"
+        ],
+        "privateEvidence": "cross-project-prep-v1/P03/quality-checks.json"
+      }
     },
     {
       "id": "P04",
@@ -269,6 +282,26 @@
           "Case-specific rubric calibration"
         ],
         "privateEvidence": "evaluator/M01/qualification.json"
+      },
+      "latestPreparation": {
+        "status": "baseline-blocked",
+        "baseSha": "58cc69098fc99f2381b89b3449ab75a5a6b34ecf",
+        "blocker": "Disclosure export test expects an old template version; stored version matches the actual tracked DOCX hash. Reproduced with corrected CI-style environment.",
+        "frontendTests": 1402,
+        "backendFirstRun": {
+          "passed": 4835,
+          "failed": 3,
+          "skipped": 7
+        },
+        "environmentDiagnostic": "Two storage-matrix failures came from local-runtime env overrides; both pass without those overrides. Disclosure template assertion still fails. No claim of a clean full rerun.",
+        "independentModelChecks": 6,
+        "referenceAndAlternativeValidPasses": 6,
+        "remaining": [
+          "Green complete base without hiding the target defect",
+          "Remaining backend/tooling/API/E2E/package gates",
+          "Portable cross-project execution and browser/rubric qualification"
+        ],
+        "privateEvidence": "cross-project-prep-v1/M01/base-checks.json"
       }
     },
     {
@@ -333,6 +366,45 @@
       ],
       "qualification": "selected-not-qualified",
       "referenceScope": "task changes in source commit; exclude historical documentation from agent inputs"
+    },
+    {
+      "id": "H05",
+      "version": 1,
+      "repository": "harness",
+      "baseSha": "56524724e31d17968383d1e24a2b1c70a0a46ca9",
+      "referenceSha": "f105a0b8a0498a3fc2c9b38a2f4bcf2f89cb2908",
+      "difficulty": "small",
+      "risk": "low",
+      "split": "development",
+      "title": "Keep discovered models selectable when settings reference them",
+      "brief": "A discovered Claude model disappears from the stage-policy choices after it is selected in Settings. Preserve the runtime-discovered model metadata and selection eligibility when defaults, allowlists or stage policies reference it. Configured models the runtime cannot confirm must remain non-editable and visible. Preserve uniqueness and the existing Codex behavior. Scope is model-catalog projection and its UI effects; onboarding-provider routing is separate.",
+      "acceptanceCriteria": [
+        "Discovered Codex and Claude entries retain selection eligibility and metadata when configured",
+        "Undiscovered configured entries remain visible and non-editable",
+        "No duplicate catalog entries or mutation of the input catalog"
+      ],
+      "qualification": "behavior-browser-and-baseline-qualified-awaiting-source-freeze",
+      "referenceScope": "Only catalog projection and its regression test from the reviewed change; exclude bundled onboarding-provider routing",
+      "referencePaths": [
+        "server/model-catalog.mjs",
+        "tests/claude-runtime.test.mjs"
+      ],
+      "qualificationEvidence": {
+        "independentChecks": 7,
+        "basePasses": 3,
+        "referencePasses": 7,
+        "selectableUnsupportedMutantPasses": 6,
+        "alternativeValidPasses": 7,
+        "baseRegressionTests": 282,
+        "referenceRegressionTests": 283,
+        "baseAndReferenceManifest": "all five commands passed",
+        "runnerPreflight": "one standard-profile task, balanced policy, 2h/200M, 1h calls, zero provider invocations",
+        "remaining": [
+          "Retained-package failure routing fix, source reconciliation and new freeze",
+          "Dispatch preflight and explicit single-trial run instruction"
+        ],
+        "privateEvidence": "cross-project-prep-v1/H05/qualification.json"
+      }
     }
   ]
 }

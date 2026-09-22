@@ -4,7 +4,7 @@ The primary question is whether a frozen model policy delivers independently acc
 
 ## Current scope
 
-The checked-in delivery runner supports the qualified H02 Harness case on the inspected macOS native CLI environment. It is not a generic cross-repository or cross-platform runner. The case bank selects 12 real historical tasks and 4 readiness controls; qualification status is explicit on each case. H01/M01/P04 have additional private preparation evidence, with remaining gates recorded. Do not launch them by substituting their IDs into the H02-specific runner.
+The checked-in delivery runner explicitly supports H02 and H05 on the inspected macOS native CLI environment. It is not a generic cross-repository or cross-platform runner. The case bank selects 13 real historical tasks; qualification status is explicit on each case. H05 is the proposed next small trial, pending source reconciliation and a new freeze. M01/P03 have confirmed historical baseline blockers; H01/P04 also retain unresolved gates. Unsupported case IDs are rejected. See [the current preparation handoff](../docs/MODEL-EVALUATION-PREPARATION.md).
 
 `prepare-case.mjs` can create clean private base/reference checkouts for a selected case, but does not qualify that case. Reference patches, later history, independent grading inputs and retained sibling candidates must remain inaccessible to evaluated agents.
 
@@ -22,17 +22,19 @@ All commands run from the isolated harness source. Preparation refuses an existi
 
 ```text
 node scripts/evaluation/prepare-case.mjs CASE_ID SOURCE_REPOSITORY NEW_PRIVATE_CASE_DIRECTORY
-EVAL_PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node scripts/evaluation/prepare-batch.mjs NEW_PRIVATE_BATCH NEW_PUBLIC_ROOT SOURCE_REPOSITORY
+EVAL_PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node scripts/evaluation/prepare-batch.mjs NEW_PRIVATE_BATCH NEW_PUBLIC_ROOT SOURCE_REPOSITORY feasibility H05
 node scripts/evaluation/trial-worker.mjs PRIVATE_TRIAL/config.json
 node scripts/evaluation/finalize-trial.mjs PRIVATE_TRIAL
 node scripts/evaluation/report-batch.mjs PRIVATE_BATCH
 ```
 
-`prepare-batch.mjs ... dry-run` prepares zero-inference task-creation checks; it does not demonstrate model delivery. The worker must run directly with Node. Provider-native tool confinement is configured by the guard; verification runs in its own OS-confined child. Do not nest native provider sandboxes inside an outer `sandbox-exec` process.
+The optional final case argument defaults to H02. H05 accepts only `dry-run` or `feasibility`, with one balanced trial. `prepare-batch.mjs ... dry-run H05` prepares zero-inference task-creation checks; it does not demonstrate model delivery. Use `trial-worker.mjs PRIVATE_TRIAL/config.json --preflight` for task admission without dispatch. A plain worker invocation starts delivery and requires run authorization. Never promote a dirty-source dry-run bundle to live execution; prepare anew from clean committed source.
 
-`prepare-batch.mjs ... feasibility` prepares one balanced-policy H02 trial (`F1`) with the two-hour task allowance, 200M total tokens and one-hour calls for every model stage. Shaun authorized the larger single-trial allowance on 22 September after the prior completed implementation consumed about 30M tokens before repairs. Other preparation modes retain 30M; all modes retain 100 agent-run / 1,000 provider-invocation safeguards. New preparations freeze the repair limits (two automatic corrections per package; three shared candidate repairs for the high-risk profile) into the environment and isolated task settings. The model matrix remains unchanged. The stage overrides are frozen in the environment and persisted onto the isolated task before dispatch. This is a feasibility probe, not a policy ranking; inspect its result before preparing any repeats.
+Place new live campaigns directly under the established private date root, and verify the resulting protected paths cover all earlier private campaigns, references and public candidates. Nested preparation-only directories do not establish that containment. The worker must run directly with Node. Provider-native tool confinement is configured by the guard; verification runs in its own OS-confined child. Do not nest native provider sandboxes inside an outer `sandbox-exec` process.
 
-Independent review uses `delivery-rubric-v5`: one hour / 30M tokens, accounted separately from delivery. Its parent timeout follows that allowance; no one-to-three inspection-command cap remains. Historical frozen campaigns and grades retain their original limits. See [the Grill correction record](../docs/MODEL-EVALUATION-GRILL-FIX.md) for qualification and the remaining independent-checker gate before dispatch.
+`prepare-batch.mjs ... feasibility H02` or `... feasibility H05` prepares one balanced-policy trial (`F1`) with the two-hour task allowance, 200M total tokens and one-hour calls for every model stage. Shaun authorized the larger single-trial allowance on 22 September after the prior completed implementation consumed about 30M tokens before repairs. Legacy H02 comparison/dry-run modes retain 30M; H05 dry-run uses the intended 200M configuration. All modes retain 100 agent-run / 1,000 provider-invocation safeguards. New preparations freeze numeric repair limits: two automatic corrections per package, three shared candidate repairs for H02's high-risk profile or two for H05's standard profile. The model matrix remains unchanged. Stage overrides are frozen in the environment and persisted onto the isolated task before dispatch. This is a feasibility probe, not a policy ranking; inspect its result before preparing any repeats.
+
+Independent review uses H02's unchanged `delivery-rubric-v5` or the case-specific `delivery-rubric-h05-v1`: one hour / 30M tokens, accounted separately from delivery. Its parent timeout follows that allowance; no one-to-three inspection-command cap remains. Historical frozen campaigns and grades retain their original limits. See [the Grill correction record](../docs/MODEL-EVALUATION-GRILL-FIX.md) for H02 history and the current preparation handoff for remaining dispatch gates.
 
 Run the complete required quality baseline on the exact isolated case revision before model dispatch, including linting and typing. Qualification of a different checkout is insufficient. PlanCheck and MyStrataAssist remain ineligible until their complete manifests, synthetic environments, references and graders pass; do not spend model calls against an unexplained broken baseline.
 
