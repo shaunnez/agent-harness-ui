@@ -25,7 +25,7 @@ test("calculates an API-rate estimate after cached-input discounts", () => {
       cacheWriteTokens: 0,
       outputTokens: 500,
     }),
-    0.0164,
+    0.01112,
   );
 });
 

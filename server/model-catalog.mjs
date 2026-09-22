@@ -24,7 +24,7 @@ export const MODEL_PRICING = {
   "gpt-6-astra": rate(10, 1, 12.5, 50, 20, 2, 25, 75),
   "gpt-6-sol": rate(2, 0.2, 2.5, 10, 4, 0.4, 5, 15),
   "gpt-6-luna": rate(0.1, 0.01, 0.125, 0.5, 0.2, 0.02, 0.25, 0.75),
-  "gpt-5.6-sol": rate(5, 0.5, 6.25, 30, 10, 1, 12.5, 45),
+  "gpt-5.6-sol": rate(4, 0.4, 5, 20, 8, 0.8, 10, 30),
   "gpt-5.6-terra": rate(2, 0.2, 2.5, 12, 4, 0.4, 5, 18),
   "gpt-5.6-luna": rate(0.2, 0.02, 0.25, 1.2, 0.4, 0.04, 0.5, 1.8),
   "gpt-5.5": rate(5, 0.5, null, 30, 10, 1, null, 45),
@@ -67,7 +67,7 @@ export const MODEL_CREDIT_RATES = {
   "gpt-6-astra": { input: 250, cachedInput: 25, output: 1250 },
   "gpt-6-sol": { input: 50, cachedInput: 5, output: 250 },
   "gpt-6-luna": { input: 2.5, cachedInput: 0.25, output: 12.5 },
-  "gpt-5.6-sol": { input: 125, cachedInput: 12.5, output: 750 },
+  "gpt-5.6-sol": { input: 100, cachedInput: 10, output: 500 },
   "gpt-5.6-terra": { input: 50, cachedInput: 5, output: 300 },
   "gpt-5.6-luna": { input: 5, cachedInput: 0.5, output: 30 },
 };
