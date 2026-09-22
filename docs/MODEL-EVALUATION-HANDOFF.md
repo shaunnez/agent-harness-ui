@@ -2,9 +2,9 @@
 
 ## Read this first
 
-Shaun requested this handoff before going offline, after expressing concern about time and usage. **No evaluations or model graders are running. Do not launch anything from this document alone.** On an explicit continuation, the first bounded unit is one independent blind review of the retained fresh candidate, followed by an honest closeout. Do not restart delivery or launch a comparison matrix as part of that unit.
+Shaun explicitly resumed the bounded blind review after the offline handoff. **That unit is now closed; nothing is running.** Read [the blind review closeout](MODEL-EVALUATION-BLIND-REVIEW.md) first. The single reviewer rejected the candidate on substance but exceeded its grading allowance, so the formal rubric result remains ungraded. A zero-inference diagnostic confirms the blocking automatic-answer context defect. Do not retry grading or restart delivery from this document.
 
-The original goal remains unfinished: establish reliable baseline model/effort groupings for tasks of different difficulty, then optimize cost and latency using repeated real-project tasks. We have demonstrated end-to-end delivery on one Harness case. We have not established an optimal policy, a dependable pass rate across task classes, or cross-project reliability. No production policy was promoted and no benchmark PR was published.
+The original goal remains unfinished: establish reliable baseline model/effort groupings for tasks of different difficulty, then optimize cost and latency using repeated real-project tasks. We have demonstrated workflow completion on one Harness case, but the fresh candidate has a confirmed acceptance gap. We have not established an optimal policy, a dependable pass rate across task classes, or cross-project reliability. No production policy was promoted and no benchmark PR was published.
 
 ## Working location and identity
 
@@ -12,7 +12,8 @@ The original goal remains unfinished: establish reliable baseline model/effort g
 | --- | --- |
 | Canonical evaluation checkout | `/Users/shaun/.codex/worktrees/model-evaluation/agent-harness-ui` |
 | Branch | `codex/model-evaluation-20260922` |
-| Latest code commit before this handoff | `33e3c53d3930bf6415081b32d72fd47f395860a6` |
+| Latest code commit (later changes are documentation) | `33e3c53d3930bf6415081b32d72fd47f395860a6` |
+| Original offline handoff commit | `614b297facf87171abdd9e38f36f6f2c8d895ba0` |
 | Fresh delivery harness freeze | `982894e023e98b07188dd1edd1532c8e5ad08dc2` |
 | Main incorporated into that harness | `3878a2419979465a53171cd59a5cff455a6a2646` |
 | Original checkout, clean at handoff | `/Users/shaun/projects/agent-harness-ui` at `3878a24` |
@@ -24,7 +25,7 @@ The original goal remains unfinished: establish reliable baseline model/effort g
 
 The current harness runs against a historical task base so the target feature is absent at the start. Rebasing the harness onto main does not change that case base. The candidate is an evaluation result, not a patch to apply to current main, where the feature already exists.
 
-Both retained candidates were checked again for exact HEAD and a clean working tree when writing this handoff. Preserve all candidate checkouts, commits, ledgers, original receipts, failed slices and diagnostic copies. Temporary paths under `/private/tmp` are retained evidence; do not clean them. Keep reference patches, model inputs, databases and other private evidence out of Git. The main checkout was left clean; source/evaluation changes are local on the isolated branch, not pushed. No remote CI, merge, deployment or default activation occurred.
+Both retained candidates were checked for exact HEAD and cleanliness at the offline handoff. The fresh candidate was checked again before and after the resumed review and diagnostic; it remains unchanged and clean. Preserve all candidate checkouts, commits, ledgers, original receipts, failed slices and diagnostic copies. Temporary paths under `/private/tmp` are retained evidence; do not clean them. Keep reference patches, model inputs, databases and other private evidence out of Git. Main was clean at the start of this continuation. At closeout it has concurrent edits to `src/components/runtime/runtimeCommandPolicy.ts` and `tests/runtime-command-dispatch.test.mjs`; this evaluation did not touch them. Source/evaluation changes are local on the isolated branch, not pushed. No remote CI, merge, deployment or default activation occurred.
 
 ## What the fresh run actually did
 
@@ -58,7 +59,7 @@ User-selected allowances: **2 hours per task, 30M measured tokens including cach
 - Sol review found that `createTaskRecord` allowed `input.grillPolicy` to override Settings. One ordinary Sonnet repair made Settings the sole source and updated tests.
 - Exact repaired candidate passed fresh Dev Review, Test and Final Review. Full manifest: lint, typecheck, **387 repository tests**, build and **four Sites tests**.
 - Final state: **awaiting-human-approval**. This is workflow completion for the benchmark, not PR publication or full external acceptance.
-- Corrected independent behavior checks: **9/9, including browser persistence**. **Fresh independent blind rubric: NOT STARTED.**
+- Corrected independent behavior checks: **9/9, including browser persistence**. **Fresh independent blind rubric: finished but invalid over its token allowance; raw rejection and confirmed blocking defect.**
 
 ### Remaining nonblocking issue
 
@@ -81,33 +82,19 @@ Commit `33e3c53` adds a narrow h02-v2 checker correction: recognize either task 
 Old checker SHA256: `c8b65e79c02e46f95fe18d2716f27507a852bf819e88778ab6467abd18c2a644`.
 New checker SHA256: `667c8bef2abcd699103965158a2e780d06163f01a6da748b114e0504689c0674`.
 
-**The original `feasibility-v4/report.json`, F1 task receipt and original checks intentionally still show the frozen rejection.** Do not silently overwrite them or present that stale raw score as the corrected verdict. The separate versioned replay is `grading-replay-v2/`, including `correction.json`, controls, candidate bindings, original copies and `summary.json`. Corrected full acceptance remains ungraded until the fresh blind rubric finishes.
+**The original `feasibility-v4/report.json`, F1 task receipt and original checks intentionally still show the frozen rejection.** Do not silently overwrite them or present that stale raw score as the corrected verdict. The separate versioned replay is `grading-replay-v2/`, including `correction.json`, controls, candidate bindings, original copies and `summary.json`. Corrected formal acceptance remains ungraded because the completed blind review exceeded its allowance. Its raw rejection identifies a context defect confirmed by a separate deterministic diagnostic; do not count the candidate as accepted.
 
 Do not rerun `finalize-trial.mjs` on F1: it already finalized the old checker outcome and its output directory exists. Running `report-batch.mjs` again only reproduces the old receipt. Close out the corrected replay explicitly, retaining original and corrected outcomes plus checker identities. Do not manufacture a second delivery trial or change the original frozen contract to conceal the correction.
 
-## First action on explicit resume: one blind review
+## Bounded continuation completed: do not redispatch
 
-This is a single fixed **Sol High** read-only external grading call: maximum **5 minutes, 200,000 tokens, one provider invocation**. It uses an anonymous archive, original public brief and base-to-candidate diff, excludes Git history/model labels/reference solutions, and records grading overhead separately. It is not another implementation run.
+One fixed Sol High blind review ran after the user said “continue.” It completed in 118.629 seconds with known usage: 229,204 tokens including 187,904 cached input. It exceeded the frozen 200,000-token allowance, so no valid `grade.json` was emitted. Four successful read-only inspection commands also exceeded the prompt's requested maximum of three. No retry occurred.
 
-1. Read this document, private `CURRENT.md`, `feasibility-v4/RUN.md` and `grading-replay-v2/summary.json`. Inspect durable ledgers and output directories before dispatch. All earlier workers/finalizers/replays are finished; do not resume their old exec sessions.
-2. Check source branch/HEAD, dirty state and current remote main. Preserve the historical delivery freeze. If main advanced, rebase and requalify before a **future delivery campaign**; do not mutate or rebase retained candidates or rerun their successful tests solely because current main changed.
-3. Verify the fresh candidate is still clean at the exact SHA above. If it is missing or dirty, stop and recover from retained Git/evidence; do not substitute a new candidate or patch it manually.
-4. Verify `evaluations/rubric-v1.json`, `evaluations/cases/h02-public-contract.md`, `scripts/evaluation/grade-rubric.mjs`, `scripts/evaluation/provider-guard.py` and the Codex runtime have not drifted from the qualified source behavior. The h02-v2 behavior correction is separate from this unchanged blind rubric. Confirm the installed CLI and fixed model/effort are still available; never silently substitute.
-5. Before dispatch, ensure proposed output `grading-replay-v2/fresh-rubric/` does not exist. If it exists, inspect its ledger/results rather than rerunning. Add this new output's ledger to the private `account-usage.py` accounting patterns (currently it covers `independent-grade/rubric` paths, but not this proposed replay path), classifying it as grading and deduplicating invocation IDs.
-6. On resume, from the canonical checkout, run the command below exactly once. Use a process-scoped sleep assertion and preserve any interruption; do not reset budgets or silently retry a failed/unknown grader.
+The raw verdict was rejection, with P1 missing downstream automatic-answer context and P2 misleading zero-question completion wording. Direct code tracing and a zero-inference diagnostic confirmed the P1: automatic selections persist in `grillSession` but do not enter the specification prompt or context manifest. Manual accepted recommendations do. The original recommended options remain visible as proposals; the actual selection and its provenance are missing.
 
-```sh
-caffeinate -is node scripts/evaluation/grade-rubric.mjs \
-  /private/tmp/h-eval-f4/F1/w/AH-001/C1 \
-  4b303a8da4fafd7a78149ddad40cbf714411d08b \
-  /Users/shaun/.codex/model-evaluation/20260922/grading-replay-v2/fresh-rubric
-```
+Evidence: private `grading-replay-v2/closeout.json`, `fresh-rubric/`, `grill-context-diagnostic.json`, and `workflow-evidence-verification.json`. The candidate, delivery receipt, SQLite, original checker result and report remain unchanged. The review ledger is included in `account-usage.py`. Exec session 75384 finished; never resume or redispatch it.
 
-7. Require a settled ledger with known usage, successful candidate-file inspection, a valid output contract within the rubric allowance, exact matching `headRevision`, and unchanged candidate HEAD/cleanliness afterward. Preserve failure or unknown usage as ungraded; do not call it zero cost or an accepted result.
-8. Combine that verdict with the existing nine corrected checks and fresh candidate-bound full-manifest/gate evidence in an explicitly versioned replay closeout. A passed rubric would establish **one corrected independently accepted autonomous delivery, with one repair**. It would not establish first-pass success, an optimal model policy or a reliable population success rate. A rejection remains a rejection; do not repair the candidate merely to improve the benchmark score.
-9. Update private accounting and the handoff/checkpoint/results. Report the result and incremental grading usage. **Do not roll straight into another campaign.** Present the smallest next comparison and its total run/call budget for Shaun to decide after the usage checkpoint.
-
-The command above has not been run. No automation, delayed job or new task was created to run it while Shaun is offline.
+The old pending-review command is intentionally removed from this current handoff. Git commit `614b297` preserves the offline instructions. [MODEL-EVALUATION-BLIND-REVIEW.md](MODEL-EVALUATION-BLIND-REVIEW.md) records the result, diagnostic, runner limitations, and a proposed two-arm comparison with an explicit aggregate budget. The next recommended unit is zero-inference grader coverage and calibration, before any further delivery campaign. No further unit has been launched.
 
 ## How far the comparison got
 
@@ -118,7 +105,7 @@ The command above has not been run. No automation, delayed job or new task was c
 | feasibility-v2 | Valid ownership failure, 14m00s / 5,079,377 tokens. Plan omitted a coupled fixture. No candidate. |
 | feasibility-v3 | Generic planning treatment assembled a qualified candidate, then a frozen-target Git-ref bug stopped Dev Review. Original trial invalid. |
 | v3 diagnostic continuation | After the runtime fix, same candidate/policies/original deadline and ledger reached approval after one automatic repair. 29,802,410 cumulative delivery tokens; nine checks and blind rubric passed. Grader used 152,371 separate tokens. Diagnostic only: do not count as clean autonomous delivery. |
-| feasibility-v4 | Fresh corrected-harness delivery completed autonomously as described above; corrected behavior passed, blind rubric outstanding. |
+| feasibility-v4 | Fresh corrected-harness delivery completed autonomously as described above; corrected behavior passed; blind rubric invalid over budget, raw rejection, blocking context defect independently reproduced. |
 
 The v3 cumulative total includes its original delivery; never add those two components twice. The v3 diagnostic final candidate is `65f02c6786574a476ce0b33733167919cf67abc3` in `/private/tmp/h-eval-f3/F1/w/AH-001/C1`.
 
@@ -147,11 +134,11 @@ The selected bank has 12 historical cases and four readiness controls; selection
 
 ## Usage and authority
 
-At handoff: **154 instrumented provider attempts**, **zero active**, **at least 115,319,158 tokens**, including **108,913,104 cached input tokens** (about 94%). Five settled attempts have unknown usage. Accounting includes failed setup, earlier trials and recorded grading, but excludes this authoring conversation and unrelated shared-account activity. Cached totals are not billed dollars.
+After the bounded continuation: **155 instrumented provider attempts**, **zero active**, **at least 115,548,362 tokens**, including **109,101,008 cached input tokens** (about 94%). The one new review used 229,204 tokens; the supplemental diagnostic used no model calls. Five settled attempts have unknown usage. Accounting includes failed setup, earlier trials and recorded grading, but excludes this authoring conversation and unrelated shared-account activity. Cached totals are not billed dollars.
 
 The last live Codex usage lookup on 22 September showed 21% weekly usage consumed / 79% remaining **account-wide**; that percentage will drift and cannot be attributed solely to this task. Claude's account allowance was not checked. Do not use this snapshot as a fresh budget authorization.
 
-Prior user authorization covers isolated evaluation with authenticated Codex/Claude subscriptions, and the selected per-task limits persist. The latest instruction is this handoff before offline time. It does not start further work. No purchases/API-key fallback, production activation, PR publication, merges, deployments, user-service restarts or default changes are authorized by writing or reading this document. On explicit continuation, complete the bounded pending grading step without reopening settled choices; a larger comparison needs an explicit total campaign scope before spending.
+Prior user authorization covers isolated evaluation with authenticated Codex/Claude subscriptions, and the selected per-task limits persist. The latest continuation completed the one pending review and closeout. It does not automatically start a wider campaign. No purchases/API-key fallback, production activation, PR publication, merges, deployments, user-service restarts or default changes are authorized by writing or reading this document. The bounded grading step is finished and must not be retried automatically; a larger comparison needs an explicit total campaign scope before spending.
 
 On macOS, `caffeinate -is` prevents idle sleep but does not guarantee execution with the lid closed on battery. Record actual host power/sleep conditions. Preserve interrupted trials as such; do not blame the model for host sleep or silently extend the task deadline. No global power settings were changed.
 
@@ -159,7 +146,8 @@ On macOS, `caffeinate -is` prevents idle sleep but does not guarantee execution 
 
 All following relative paths are under `/Users/shaun/.codex/model-evaluation/20260922`:
 
-- `CURRENT.md`: current dispatch pointer; no active work.
+- `CURRENT.md`: completed blind-review closeout pointer; no active work.
+- `grading-replay-v2/closeout.json`: versioned formal-ungraded/raw-rejected result, confirmed context diagnostic, preserved hashes and incremental usage.
 - `feasibility-v4/freeze.json`, `preflight-summary.json`, `baseline-verification.json`: fresh frozen inputs and preflight.
 - `feasibility-v4/F1/{config.json,tasks.sqlite3,task.json,provider-ledger.json,delivery-ended.json}`: authoritative fresh delivery and original frozen acceptance.
 - `feasibility-v4/F1/{stage-summary.json,package-summary.json}` and `feasibility-v4/diagnostics.json`: derived summaries; these retain the original checker rejection.
@@ -172,6 +160,6 @@ All following relative paths are under `/Users/shaun/.codex/model-evaluation/202
 
 Repository companions: [feasibility results](MODEL-EVALUATION-FEASIBILITY.md), [checkpoint](MODEL-EVALUATION-CHECKPOINT.md), [historical Batch A results](MODEL-EVALUATION-RESULTS.md), [follow-ups](MODEL-EVALUATION-FOLLOW-UPS.md), [method and proposed policies](MODEL-BASELINE-AND-EVALUATION.md), [runner scope](../evaluations/README.md). The older execution brief is historical programme context; this handoff supersedes its dispatch instructions and starting-state snapshot.
 
-## Copyable continuation prompt
+## Suggested next-unit prompt (zero inference)
 
-> Resume from `/Users/shaun/.codex/worktrees/model-evaluation/agent-harness-ui/docs/MODEL-EVALUATION-HANDOFF.md`. First verify the saved state and that no work is active. Finish only the pending independent blind review of fresh feasibility-v4 candidate `0389a30f502e63fe8cbccac399dcc874a4792afd`, using the fixed Sol High rubric with its existing five-minute/200k-token/one-call allowance. Preserve original checker results and record the corrected acceptance as a versioned replay; do not edit or rerun the candidate. Include the grading call in accounting, update the checkpoint, and report the verdict and incremental usage. Do not launch another delivery campaign, other-project evaluation or production change. Then propose the smallest useful model comparison with an explicit total run and usage budget.
+> Read `docs/MODEL-EVALUATION-BLIND-REVIEW.md` and this handoff in the canonical evaluation worktree. Qualify a new versioned H02 check that verifies automatically accepted answers and their provenance reach the specification prompt and context manifest; use the preserved fresh candidate as a known-bad subject, a reviewed reference, and appropriate controls. Diagnose and qualify the review-runner allowance and command limits without live model calls. Preserve every existing candidate and receipt; do not modify candidate code, change production defaults, retry the completed blind review, or launch a delivery campaign. Report the proposed next comparison and aggregate budget for a separate decision.

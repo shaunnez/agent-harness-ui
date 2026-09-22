@@ -1,6 +1,6 @@
 # Model evaluation execution brief
 
-Updated: 22 September 2026. **Offline handoff: no active evaluations or graders. Start with [MODEL-EVALUATION-HANDOFF.md](MODEL-EVALUATION-HANDOFF.md).** The fresh larger-limit run reached human approval autonomously and passed corrected behavior checks; its independent blind rubric has not started. This older programme brief is historical context, not dispatch authority. The handoff supersedes its execution order and starting-state snapshot.
+Updated: 22 September 2026. **Bounded blind-review continuation closed; no active evaluations or graders. Start with [MODEL-EVALUATION-HANDOFF.md](MODEL-EVALUATION-HANDOFF.md) and [the closeout](MODEL-EVALUATION-BLIND-REVIEW.md).** The fresh larger-limit run reached human approval and passed corrected behavior checks, but the completed blind review rejected a context defect confirmed by a zero-inference diagnostic. Formal grading remains invalid after exceeding its allowance; do not retry automatically. This older programme brief is historical context, not dispatch authority. The handoff supersedes its execution order and starting-state snapshot.
 
 ## User intent and authority
 

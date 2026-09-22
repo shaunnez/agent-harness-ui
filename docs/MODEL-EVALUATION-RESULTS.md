@@ -2,6 +2,8 @@
 
 Status: Batch A delivery complete. No production policy has changed. Results are bound to the frozen batch-a-v4 receipts; see the scoring-audit note below.
 
+Latest continuation: [the fresh blind review closeout](MODEL-EVALUATION-BLIND-REVIEW.md) records a confirmed automatic-answer context defect. Its review exceeded the frozen grading allowance; the raw verdict rejected the candidate and formal acceptance remains ungraded. The historical Batch A scores below are unchanged.
+
 ## Decision
 
 A reliable autonomous workflow must reach a candidate suitable for human PR review, pass the original acceptance criteria and regression commands, and do so within its declared allowance without evaluator repair. A green implementation slice, passing model self-review or a low token price is insufficient.
