@@ -174,3 +174,39 @@ Nothing in the sizing above. It does sharpen the ordering: the harness runtime i
 genuinely unproven rather than lightly used, so a CLI-backed runtime registered beside
 it is not replacing something that works, it is giving the registry its first entry
 that has ever produced a finding end to end.
+
+---
+
+## Correction: the CLI keeps almost all of it
+
+I wrote above that a CLI-backed runtime "gives up the planner / researcher / verifier /
+synthesiser decomposition, the checkpointer, and the model-call ceiling". That was
+wrong, and wrong in a way that made the trade look worse than it is.
+
+Verified by running it, on the subscription:
+
+```
+claude -p "..." --mcp-config mcp.json --max-budget-usd 0.50 \
+  --agents '{"qv-verifier":{"description":"Verifies a rate exists in the local QV
+             capture","prompt":"You search the local QV capture with
+             mcp__qv__search_qv and report only what you found, with row ids.",
+             "model":"haiku","tools":["mcp__qv__search_qv"]}}'
+```
+
+It spawned the subagent, completed it, returned `subagent_stats: {spawned: 1,
+completed: 1, failed: 0, max_depth: 1}`, and found three chain-link fencing rates with
+row ids. $0.048.
+
+| claimed loss | actual |
+|---|---|
+| Role decomposition | **Kept.** `--agents` takes a JSON object of named agents, each with its own description, prompt, model and tool allowlist. Per-role model selection is a single flag — verifier on Opus, planner on Haiku — which is easier than the equivalent in the graph. |
+| Model-call ceiling | **Kept, in dollars.** `--max-budget-usd` caps spend rather than counting calls. A hard call count, if wanted, is a turn counter in the runtime wrapper; the stream emits every turn. |
+| Checkpointer | **Equivalent for this shape of work.** `--session-id`, `--resume` and `--fork-session` restore a conversation. LangGraph's `SqliteSaver` restores an arbitrary graph node. Same thing for a linear research flow, not the same for a branching DAG. |
+
+What is genuinely given up: a typed, compiled graph in favour of prompt-defined agents.
+Less structural rigidity, and no mid-DAG resume.
+
+`subagent_stats` in the result also maps cleanly onto the `worker.started` /
+`worker.completed` / `worker.failed` events already declared in
+`src/domain/research.ts`, so the role split shows up in the activity window without
+inventing an event type.
