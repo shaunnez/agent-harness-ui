@@ -1,4 +1,61 @@
 import { SCOUT_NAMES } from "./scouts.mjs";
+import { normalizeRepairLimits } from "../src/repair-limits.ts";
+
+// A package may have several sequential calls in one implementation reservation.
+// Only a recorded automatic correction of a retained failed check can supersede one.
+export function effectivePackageRuns(task, runs) {
+  const groups = new Map();
+  for (const run of runs) {
+    const group = groups.get(run.workPackageId) ?? [];
+    group.push(run);
+    groups.set(run.workPackageId, group);
+  }
+  const effective = [];
+  for (const [packageId, group] of groups) {
+    if (group[0].packageRepairOfRunId) return null;
+    const workPackage = task.workPackages?.find((item) => item.id === packageId);
+    if (
+      group.length > 1 &&
+      (group.length - 1 > normalizeRepairLimits(task.repairLimits).package ||
+        group.length - 1 > (workPackage?.automaticRepairAttempts ?? 0))
+    )
+      return null;
+    for (let index = 1; index < group.length; index++) {
+      const prior = group[index - 1];
+      const current = group[index];
+      const artifacts = task.artifacts?.filter((item) => item.id === prior.artifactId) ?? [];
+      const artifact = artifacts[0];
+      if (
+        current.packageRepairOfRunId !== prior.id ||
+        current.retryOfRunId !== prior.id ||
+        current.attempt !== prior.attempt + 1 ||
+        current.workflowReservationId !== prior.workflowReservationId ||
+        current.workflowAttempt !== prior.workflowAttempt ||
+        prior.status !== "completed" ||
+        [prior, current].some(
+          (run) =>
+            run.stage !== "implement" ||
+            run.role !== "implement" ||
+            run.kind !== "implementation" ||
+            run.candidateId != null ||
+            run.candidateRevision != null ||
+            run.candidateHeadRevision != null,
+        ) ||
+        artifacts.length !== 1 ||
+        artifact.runId !== prior.id ||
+        artifact.workPackageId !== packageId ||
+        artifact.focusedTest?.status !== "failed" ||
+        artifact.focusedTest.candidateId !== packageId ||
+        !validPersistedTimestamp(artifact.createdAt) ||
+        !validPersistedTimestamp(current.startedAt) ||
+        Date.parse(current.startedAt) < Date.parse(artifact.createdAt)
+      )
+        return null;
+    }
+    effective.push(group.at(-1));
+  }
+  return effective;
+}
 
 export function validRetryCandidate(candidate) {
   return (
@@ -142,7 +199,11 @@ export function validateRetryRunScopes(task, reservation, reservationRuns) {
       return "The exhausted Scout reservation does not match its persisted dispatch; resolve the inconsistent history before granting a retry.";
     }
   }
-  const runScopes = reservationRuns.map((run) =>
+  const effectiveRuns =
+    reservation.kind === "implementation" ? effectivePackageRuns(task, reservationRuns) : reservationRuns;
+  if (!effectiveRuns)
+    return "The exhausted multi-run reservation contains duplicate or unauthorized run scopes; resolve the inconsistent history before granting a retry.";
+  const runScopes = effectiveRuns.map((run) =>
     reservation.kind === "implementation" ? run.workPackageId : run.role,
   );
   if (
@@ -180,7 +241,11 @@ export function validInitialCandidateProducer(task, candidate, reservation) {
   ) {
     return false;
   }
-  const producerRuns = (task.runs ?? []).filter((run) => run.workflowReservationId === reservation.id);
+  const producerRuns = effectivePackageRuns(
+    task,
+    (task.runs ?? []).filter((run) => run.workflowReservationId === reservation.id),
+  );
+  if (!producerRuns) return false;
   if (!authorized.length) return producerRuns.length === 0;
   const runScopes = producerRuns.map((run) => run.workPackageId);
   return (

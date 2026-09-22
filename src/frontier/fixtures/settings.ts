@@ -1,3 +1,4 @@
+import { normalizeRepairLimits } from "../../repair-limits.ts";
 import type { RuntimeModelCatalog, RuntimeSettings } from "../../domain.ts";
 import { policyRoles } from "../runtime/policies.ts";
 
@@ -14,6 +15,7 @@ export function fixtureSettings(): { settings: RuntimeSettings; catalog: Runtime
   return {
     settings: {
       grillPolicy: "manual",
+      repairLimits: normalizeRepairLimits(null),
       gatePolicies: {},
       allowedModels: ["gpt-5.6-luna", "gpt-5.6-sol", "claude-opus-5"],
       defaultModel: "gpt-5.6-luna",

@@ -1,5 +1,8 @@
 # Prototype Instructions
 
+- On 22 September 2026 Shaun requested a Linear tagging integration in an isolated worktree. Import the issue title, description, project and relevant metadata into a Harness task. Use explicit project-to-repository mapping and retain source provenance; duplicate deliveries must reuse the same task. Task creation alone does not authorize task execution.
+- Shaun then approved creating the private Harness Linear app and using his local Harness for now; an internal URL is planned later. The local activation uses a dedicated signed-webhook tunnel, with the operator interface kept local. Live verification and restart/hosting details are recorded in `docs/integrations/linear.md`.
+
 - On 22 September 2026 Shaun requested a compact task-workspace reading state: Task assessment and Task brief show a three-line preview with an explicit full-content disclosure, the persisted running current stage uses a loading marker, and unstarted Dev review, Test and Final review stages retain their numbers rather than inheriting stale-gate warning icons. Preserve genuine recorded error and rerun-required markers. This is frontend presentation work only; no API changes are authorized.
 
 - Later on 22 September 2026 Shaun refined the Scouts presentation. Align the compact Requested outcome disclosure with the other assessment copy. On Scouts, lead with the recorded scope/risk banner, show a completed repository-scout handoff above the selected scouts, link completed scouts directly to their retained artifacts, and render every explicitly skipped taxonomy member in the same card anatomy with a truthful Not used state. Do not replace structured cards with selected/skipped summary prose or infer that a skipped scout ran.
@@ -99,6 +102,8 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - Make the selected task route lightly animated or dashed, keep handoff labels above room copy, and place the two-line Return to Implement label above its red road.
 
 ## Durable workflow decisions
+
+- On 22 September 2026 Shaun requested bounded automatic correction of failed package checks and configurable repair attempts in Frontier Settings. Use the existing Repair manual/automatic choice for package and candidate fixes, snapshot numeric limits on new tasks, preserve every failed attempt and the exact retained package, and rerun qualification before integration. Candidate repair limits are shared across Dev Review, Test and Final Review; cancellation, baseline failures and invalid plans still require attention. This change does not authorize a new paid evaluation.
 
 - Grill is manual by default: when material questions exist, pause for operator answers while still offering a manual **accept all remaining recommendations** action. Automatic recommendation acceptance is opt-in in Settings, snapshots onto new tasks, runs inside orchestration rather than through operator endpoints, and records automation provenance. Zero-question Grill sessions may continue automatically.
 - Treat parallel implementation slices as isolated worktree units that become **ready for integration** after local qualification; never present a green slice as proof that the whole task passed.

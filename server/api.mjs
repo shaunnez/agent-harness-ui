@@ -13,6 +13,7 @@ import { createRetainedEvidenceRoutes } from "./retained-evidence-routes.mjs";
 import { createProjectRoutes } from "./project-routes.mjs";
 import { createResearchRoutes } from "./research/research-routes.mjs";
 import { createRuntimeSettingsRoutes } from "./runtime-settings-routes.mjs";
+import { createTaskCreator } from "./task-creator.mjs";
 import { createTaskCreationRoutes } from "./task-creation-routes.mjs";
 import { createTaskActionRoutes } from "./task-action-routes.mjs";
 import { createTaskLifecycleRoutes } from "./task-lifecycle-routes.mjs";
@@ -197,6 +198,7 @@ export function createApiServer({
   repositoryAuthorityService = orchestrator?._repositoryAuthority ?? new RepositoryAuthorityService(),
   runCompanionAgent,
   researchService = null,
+  linearIntake = null,
 }) {
   // Reads resolve each entry's recorded absolute path, so this root only matters for
   // `prepare`, which the API never calls. It still uses the shared default rather than a
@@ -240,16 +242,16 @@ export function createApiServer({
     readJson,
     validateRepository,
   });
-  const taskCreationRoutes = createTaskCreationRoutes({
+  const createTask = createTaskCreator({
     store,
-    send,
-    readJson,
     validateAttachments,
     validateRepository,
     git,
     repositoryAuthorityService,
     validWorkflows: VALID_WORKFLOWS,
   });
+  const taskCreationRoutes = createTaskCreationRoutes({ createTask, send, readJson });
+  linearIntake?.setTaskCreator(createTask);
   const taskLifecycleRoutes = createTaskLifecycleRoutes({
     store,
     orchestrator,
@@ -296,6 +298,16 @@ export function createApiServer({
 
     try {
       assertHttpBoundary(request, csrfToken);
+      if (url.pathname === "/api/integrations/linear" && request.method === "GET") {
+        send(response, 200, linearIntake?.status() ?? { enabled: false });
+        return;
+      }
+      if (url.pathname === "/api/integrations/linear/retry" && request.method === "POST" && linearIntake) {
+        const { sessionId } = await readJson(request);
+        linearIntake.retry(sessionId);
+        send(response, 202, { queued: true });
+        return;
+      }
       if (await runtimeSettingsRoutes(request, response, url)) return;
       if (await changelogRoutes(request, response, url)) return;
       if (await candidateWorktreeRoutes(request, response, url)) return;

@@ -1,3 +1,4 @@
+import { GateEvaluationOrchestrator } from "../server/orchestrator-gate-evaluation.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { TaskControlOrchestrator } from "../server/orchestrator-task-control.mjs";
@@ -408,4 +409,25 @@ test("a candidate the repair circuit breaker blocked is never repaired automatic
   assert.deepEqual(starts, []);
   assert.equal(current.status, "blocked");
   assert.deepEqual(current.events, [], "a blocked task is not a gate, so nothing is recorded against it");
+});
+
+test("manual Repair mode also prevents the fast-profile automatic repair shortcut", async () => {
+  let repairs = 0;
+  const evaluation = new GateEvaluationOrchestrator({
+    store: {
+      get: async () => ({
+        workflowProfile: { selected: "fast" },
+        status: "repair-required",
+        currentStage: "dev-review",
+        candidates: [{ status: "repair_required", revisions: [] }],
+      }),
+      settings: async () => ({ gatePolicies: { repair: "manual" } }),
+    },
+    runRepair: async () => {
+      repairs++;
+    },
+  });
+  evaluation._runEvaluation = async () => {};
+  await evaluation._runReviewWithFastRepair("AH-1", new AbortController().signal);
+  assert.equal(repairs, 0);
 });

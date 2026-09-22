@@ -1,3 +1,6 @@
+import { normalizeRepairLimits } from "../src/repair-limits.ts";
+import { DEFAULT_STAGE_RUN_LIMIT } from "./run-activity.mjs";
+
 export const WORKFLOW_PROFILE_IDS = Object.freeze(["fast", "standard", "high-risk"]);
 
 const HIGH_RISK_SIGNALS = Object.freeze([
@@ -115,6 +118,13 @@ export function recordWorkflowProfile(task, selected, reason, source = "automati
     ],
   };
   if (nextPolicies) task.agentConfig.stagePolicies = nextPolicies;
+  if (task.repairLimits) {
+    const required = 1 + normalizeRepairLimits(task.repairLimits).candidate[selected];
+    for (const stage of ["implement", "dev-review", "test", "final-review"]) {
+      task.stageRunLimits ??= {};
+      task.stageRunLimits[stage] = Math.max(task.stageRunLimits[stage] ?? DEFAULT_STAGE_RUN_LIMIT, required);
+    }
+  }
   return true;
 }
 
