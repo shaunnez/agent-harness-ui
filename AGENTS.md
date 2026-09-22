@@ -1,6 +1,7 @@
 # Prototype Instructions
 
 - On 22 September 2026 Shaun requested a Linear tagging integration in an isolated worktree. Import the issue title, description, project and relevant metadata into a Harness task. Use explicit project-to-repository mapping and retain source provenance; duplicate deliveries must reuse the same task. Task creation alone does not authorize task execution.
+- Shaun then approved creating the private Harness Linear app and using his local Harness for now; an internal URL is planned later. The local activation uses a dedicated signed-webhook tunnel, with the operator interface kept local. Live verification and restart/hosting details are recorded in `docs/integrations/linear.md`.
 
 - On 21 September 2026 Shaun explicitly resumed the bounded post-Slice-4 polish. Primary actions are consistently right aligned, review blocker copy is consolidated into the verdict panel, and Test initially opens a failed check while remembering explicit selection or Back per attempt. The implementation and browser qualification are recorded in `design/mission-frontier/build-evidence/TASK-WORKSPACE/polish/REVIEW.md`. Stop for visual review; no fifth slice, merge, deployment or live task execution is authorized.
 

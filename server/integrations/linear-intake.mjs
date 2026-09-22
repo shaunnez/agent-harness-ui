@@ -177,10 +177,10 @@ export class LinearIntake {
             );
           const input = linearTaskInput(issue, JSON.parse(row.payload_json), project);
           task = await this.#createTask(input, { externalSource: input.externalSource });
-          this.#db
-            .prepare("UPDATE linear_intake SET task_id = ? WHERE session_id = ?")
-            .run(task.id, row.session_id);
         }
+        this.#db
+          .prepare("UPDATE linear_intake SET task_id = ? WHERE session_id = ?")
+          .run(task.id, row.session_id);
         await this.#client.linkSession(
           row.session_id,
           `${this.#config.harnessUrl.replace(/\/$/, "")}#task/${encodeURIComponent(task.id)}`,

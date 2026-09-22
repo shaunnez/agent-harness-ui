@@ -1,18 +1,18 @@
 import "./git-env.mjs";
 import assert from "node:assert/strict";
-import { createHmac } from "node:crypto";
 import { execFile } from "node:child_process";
+import { createHmac } from "node:crypto";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { promisify } from "node:util";
 import test from "node:test";
+import { promisify } from "node:util";
 import { createApiServer } from "../server/api.mjs";
+import { createLinearClient } from "../server/integrations/linear-client.mjs";
+import { LinearIntake, linearTaskInput, readLinearConfig } from "../server/integrations/linear-intake.mjs";
+import { createLinearWebhookServer, verifyLinearWebhook } from "../server/integrations/linear-webhook.mjs";
 import { SqliteTaskStore } from "../server/sqlite-store.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
-import { LinearIntake, linearTaskInput, readLinearConfig } from "../server/integrations/linear-intake.mjs";
-import { createLinearClient } from "../server/integrations/linear-client.mjs";
-import { createLinearWebhookServer, verifyLinearWebhook } from "../server/integrations/linear-webhook.mjs";
 
 const exec = promisify(execFile);
 const config = {
@@ -190,6 +190,7 @@ test("duplicate delivery, second mention and task edits preserve one original ta
   await f.intake.drain();
   assert.equal((await f.store.list()).length, 1);
   assert.equal((await f.store.get(task.id)).description, "Operator edited this brief.");
+  assert.ok(f.intake.status().recent.every((receipt) => receipt.taskId === task.id));
   assert.deepEqual(
     f.intake.status().counts.map((row) => ({ ...row })),
     [{ status: "completed", count: 2 }],
@@ -215,6 +216,7 @@ test("durable receipt survives restart; crash after task commit cannot duplicate
   await restarted.stop();
   assert.equal((await reopenedStore.list()).length, 1);
   assert.equal(restarted.status().recent[0].status, "completed");
+  assert.equal(restarted.status().recent[0].taskId, a.id);
   reopenedStore.close();
 });
 
