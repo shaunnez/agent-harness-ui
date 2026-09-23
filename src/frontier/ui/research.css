@@ -590,3 +590,9 @@
   min-width: 210px;
   max-width: 280px;
 }
+.research-units-differ {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--amber);
+  font-size: 14px;
+}

@@ -179,6 +179,7 @@ async function withRuntime(body, overrides = {}) {
     env: {
       PATH: process.env.PATH,
       HOME: directory,
+      RESEARCH_QV_SOURCE: "local",
       RESEARCH_QV_INDEX: path.join(directory, "capture.jsonl"),
     },
     transcriptDirectory: path.join(directory, "transcripts"),
@@ -272,6 +273,7 @@ test("the child cannot inherit an API key, a token or a base URL", async () => {
       env: {
         PATH: process.env.PATH,
         HOME: os.tmpdir(),
+        RESEARCH_QV_SOURCE: "local",
         RESEARCH_QV_INDEX: "/tmp/capture.jsonl",
         ANTHROPIC_API_KEY: "sk-would-move-this-onto-metered-billing",
         ANTHROPIC_AUTH_TOKEN: "token",
@@ -287,6 +289,15 @@ test("a run with no configured corpus fails rather than searching nothing", asyn
   await withRuntime(
     async ({ runtime }) => {
       await assert.rejects(runtime.start(request("RSCH-CLI-NO-CORPUS")), /RESEARCH_QV_INDEX/);
+    },
+    { env: { PATH: process.env.PATH, RESEARCH_QV_SOURCE: "local" }, run: replayRunner(streamLines()) },
+  );
+});
+
+test("PlanCheck's library is the default, and without a way to get a token the run says so", async () => {
+  await withRuntime(
+    async ({ runtime }) => {
+      await assert.rejects(runtime.start(request("RSCH-CLI-NO-TOKEN")), /RESEARCH_PLANCHECK_TOKEN_COMMAND/);
     },
     { env: { PATH: process.env.PATH }, run: replayRunner(streamLines()) },
   );

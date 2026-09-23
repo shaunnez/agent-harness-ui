@@ -1,7 +1,18 @@
 import * as api from "../../api.ts";
 import type { FrontierGateway } from "./contracts.ts";
+import type { ResearchGateway } from "./research.ts";
 
 const readOptions = () => ({ signal: AbortSignal.timeout(12_000) });
+
+const liveResearch: ResearchGateway = {
+  mode: "live",
+  available: () => api.researchAvailable(readOptions()),
+  questions: (projectId) => api.listResearchQuestions(projectId, readOptions()),
+  question: (id) => api.getResearchQuestion(id, readOptions()),
+  review: api.reviewResearchQuestion,
+  ask: (projectId, input) =>
+    api.askResearchQuestion({ projectId, objective: input.objective, runs: input.runs }),
+};
 
 export const liveGateway: FrontierGateway = {
   mode: "live",
@@ -21,6 +32,7 @@ export const liveGateway: FrontierGateway = {
   repository: api.getRepositoryContract,
   proposeSetup: api.proposeRepositorySetup,
   approveSetup: api.approveRepositorySetup,
+  research: liveResearch,
   updateRole: (id, role, policy) => api.updateTaskRolePolicy(id, { role, ...policy }),
   cancel: api.cancelTask,
   closeTask: (id, input) => api.closeTask(id, input.reason, input.note, input.supersededBy),

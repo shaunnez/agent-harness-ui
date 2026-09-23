@@ -222,6 +222,9 @@ export class ResearchService {
     const status = await runtime.status(runId).catch(() => null);
     const result = await runtime.result(runId).catch(() => null);
     if (result) await this.#store.recordResult(runId, result, { now: this.#now() });
+    // A research question compares its runs' bands, which only a cost-band runtime reports.
+    const outcome = typeof runtime.outcome === "function" ? safely(() => runtime.outcome(runId)) : null;
+    if (outcome) await this.#store.recordOutcome(runId, outcome);
     const terminal = status?.status && isTerminal(status.status) ? status.status : "failed";
     const usage = normalizeUsage(status?.usage ?? result?.usage, terminal);
     const overruns = researchSoftOverruns(record.budget, usage);
@@ -278,6 +281,14 @@ function snapshotResearchPolicy(runtimeId, policies, named) {
       reasoning: policies.agent.reasoning,
     };
   return null;
+}
+
+function safely(read) {
+  try {
+    return read() ?? null;
+  } catch {
+    return null;
+  }
 }
 
 function isTerminal(state) {

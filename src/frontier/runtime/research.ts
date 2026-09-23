@@ -1,7 +1,7 @@
 /**
  * Research projects: one question, answered by three runs (or a labelled one-run Quick ask), with
- * every cited figure marked by how it was checked. Only the sample world provides a gateway for
- * this today; the shapes are the ones slice A of the research-projects plan will serve.
+ * every cited figure marked by how it was checked. The sample world serves recorded questions;
+ * the live gateway serves the companion's `/api/research/questions`, in the same shape.
  */
 
 export type ResearchQuestionStatus =
@@ -20,7 +20,9 @@ export type ResearchCheck =
   | "web-unverified"
   | "web-not-fetched"
   | "allowance"
-  | "unsourced";
+  | "unsourced"
+  /** The host could not check this run's citations (no capture, or the check failed). */
+  | "unchecked";
 
 export interface ResearchComponent {
   role: string;
@@ -56,6 +58,8 @@ export interface ResearchActivity {
 
 export interface ResearchRunRecord {
   run: string;
+  /** The stored run behind this label, on live questions. */
+  runId?: string;
   status: "completed" | "failed" | "running" | "queued";
   low: number | null;
   high: number | null;
@@ -132,12 +136,24 @@ export interface ResearchQuestion {
   elapsedMs: number | null;
   evidenceSha: string;
   review: ResearchReview | null;
-  /** Where a sample record came from, so the window can say so. */
-  provenance: "recorded" | "sample-activity" | "prototype-ask";
+  /** Where a record came from, so the window can say so. */
+  provenance: "recorded" | "sample-activity" | "prototype-ask" | "live";
   provenanceNote: string;
+  /** Who asked: by hand, or an external request (a Linear issue, a PlanCheck tender line). */
+  source?: ResearchQuestionSource;
+  /** Each banded run's unit, when the runs priced in different measures and so cannot be compared. */
+  unitsDiffer?: string[] | null;
 }
 
+export type ResearchQuestionSource =
+  | { kind: "manual" }
+  | { kind: "external"; provider: string; requestId: string; url?: string };
+
 export interface ResearchGateway {
+  /** `fixture` answers from recorded data in this tab; `live` starts real runs on the operator's plan. */
+  readonly mode: "fixture" | "live";
+  /** Whether this runtime serves research questions at all (the JSON-store companion does not). */
+  available(): Promise<boolean>;
   questions(projectId: string): Promise<ResearchQuestion[]>;
   question(id: string): Promise<ResearchQuestion>;
   review(
@@ -194,6 +210,11 @@ export const researchCheckCopy: Record<ResearchCheck, { label: string; tone: str
     label: "No source",
     tone: "answer",
     detail: "The component names no QV row, page or allowance basis.",
+  },
+  unchecked: {
+    label: "Not checked",
+    tone: "answer",
+    detail: "The host could not check this run's citations, so nothing here is confirmed.",
   },
 };
 
@@ -279,6 +300,7 @@ export function componentCounts(question: ResearchQuestion) {
     "web-not-fetched": 0,
     allowance: 0,
     unsourced: 0,
+    unchecked: 0,
   };
   for (const run of question.runs) for (const component of run.components) counts[component.check]++;
   return counts;

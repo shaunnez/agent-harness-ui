@@ -6,11 +6,14 @@ import { createLinearClient } from "./integrations/linear-client.mjs";
 import { LinearIntake, readLinearConfig } from "./integrations/linear-intake.mjs";
 import { createLinearWebhookServer } from "./integrations/linear-webhook.mjs";
 import { TaskOrchestrator } from "./orchestrator.mjs";
+import { withProjectKind } from "./project-policy.mjs";
 import { startPullRequestPolling } from "./pull-request-poller.mjs";
 import { ClaudeCliRolesResearchRuntime } from "./research/claude-cli/roles-runtime.mjs";
 import { ClaudeCliResearchRuntime } from "./research/claude-cli/runtime.mjs";
 import { CodexCliResearchRuntime } from "./research/codex-cli/runtime.mjs";
 import { FakeResearchRuntime } from "./research/fake-research-runtime.mjs";
+import { ResearchQuestionService } from "./research/research-question-service.mjs";
+import { ResearchQuestionStore } from "./research/research-question-store.mjs";
 import { createResearchRuntimeRegistry } from "./research/research-runtime-registry.mjs";
 import { ResearchService } from "./research/research-service.mjs";
 import { ResearchStore } from "./research/research-store.mjs";
@@ -80,10 +83,11 @@ try {
 // 2026 and what it did well moved into `claude-cli` (host-owned tools, checked citations).
 // `codex-cli` is the same recipe and harness on the ChatGPT plan, with GPT-6 Sol by default;
 // it has no baseline of its own yet, so nothing selects it unless a request names it.
+const researchStore = jsonStore ? null : new ResearchStore(store.databaseHandle());
 const researchService = jsonStore
   ? null
   : new ResearchService({
-      store: new ResearchStore(store.databaseHandle()),
+      store: researchStore,
       // Settings → Research agent picks the engine and model for a run that names neither.
       settings: () => store.settings(),
       registry: createResearchRuntimeRegistry([
@@ -93,6 +97,15 @@ const researchService = jsonStore
         new ClaudeCliRolesResearchRuntime(),
       ]),
     });
+// Questions group one or three runs under a research project; they add no runtime of their own.
+const researchQuestions = researchService
+  ? new ResearchQuestionService({
+      questions: new ResearchQuestionStore(store.databaseHandle()),
+      research: researchService,
+      runs: researchStore,
+      projects: async () => (await store.listProjects()).map(withProjectKind),
+    })
+  : null;
 const configuredPullRequestPollIntervalMs = Number(process.env.AGENT_HARNESS_GITHUB_POLL_MS ?? 30_000);
 const pullRequestPollIntervalMs = Number.isFinite(configuredPullRequestPollIntervalMs)
   ? Math.max(5_000, configuredPullRequestPollIntervalMs)
@@ -121,6 +134,7 @@ const server = createApiServer({
   orchestrator,
   suggestedRepository,
   researchService,
+  researchQuestions,
   linearIntake,
   reportHttpMetric(metric) {
     if (

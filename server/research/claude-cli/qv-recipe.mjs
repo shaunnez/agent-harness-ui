@@ -64,8 +64,18 @@ export function qvMcpConfig({
   serverPath = QV_CORPUS_SERVER_PATH,
   indexPath,
   hostTools = null,
+  qvRelay = null,
 }) {
-  const mcpServers = { qv: { command: pythonBin, args: [serverPath, indexPath] } };
+  // PlanCheck's rate library is answered by the host, so `qv` is then the relay, with the same
+  // tool names; otherwise it is the local capture's own server.
+  const mcpServers = {
+    qv: qvRelay
+      ? {
+          command: qvRelay.nodeBin ?? process.execPath,
+          args: [qvRelay.relayPath ?? HOST_TOOL_RELAY_PATH, qvRelay.socketPath, qvRelay.tools.join(",")],
+        }
+      : { command: pythonBin, args: [serverPath, indexPath] },
+  };
   if (hostTools)
     mcpServers[HOST_TOOL_SERVER_NAME] = {
       command: hostTools.nodeBin ?? process.execPath,

@@ -78,9 +78,7 @@ export function ResearchQuestions({
   if (!research)
     return (
       <div className="overlay-body">
-        <p className="empty-state">
-          Research projects are a prototype in the sample world. The research backend does not serve them yet.
-        </p>
+        <p className="empty-state">This runtime does not serve research questions.</p>
       </div>
     );
   const all = questions ?? [];
@@ -204,11 +202,7 @@ export function ResearchQuestions({
                         <strong>{question.title}</strong>
                         <span>
                           {[question.family, question.unit].filter(Boolean).join(" · ") ||
-                            {
-                              recorded: "Recorded question",
-                              "sample-activity": "Sample activity",
-                              "prototype-ask": "Asked in this tab",
-                            }[question.provenance]}
+                            provenanceLabel(question)}
                         </span>
                       </button>
                     </td>
@@ -267,4 +261,14 @@ export function ResearchQuestions({
       )}
     </div>
   );
+}
+
+function provenanceLabel(question: ResearchQuestion) {
+  if (question.provenance === "live")
+    return question.source?.kind === "external" ? `From ${question.source.provider}` : "Asked here";
+  return {
+    recorded: "Recorded question",
+    "sample-activity": "Sample activity",
+    "prototype-ask": "Asked in this tab",
+  }[question.provenance];
 }

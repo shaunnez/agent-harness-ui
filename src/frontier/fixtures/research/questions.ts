@@ -486,6 +486,8 @@ export function fixtureResearch(online: () => void): ResearchGateway {
   };
   let asks = 0;
   return {
+    mode: "fixture",
+    available: async () => true,
     async questions(projectId) {
       online();
       return structuredClone([...(await store()).values()].filter((item) => item.projectId === projectId));

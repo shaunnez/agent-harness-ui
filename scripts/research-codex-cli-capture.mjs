@@ -17,6 +17,9 @@ import path from "node:path";
 import process from "node:process";
 import { CodexCliResearchRuntime } from "../server/research/codex-cli/runtime.mjs";
 
+// Measured against the recorded baseline, which was run on the local capture.
+process.env.RESEARCH_QV_SOURCE ??= "local";
+
 if (process.env.RUN_CODEX_CLI_CAPTURE !== "1")
   throw new Error("Set RUN_CODEX_CLI_CAPTURE=1 to confirm one live Codex run on the ChatGPT plan.");
 

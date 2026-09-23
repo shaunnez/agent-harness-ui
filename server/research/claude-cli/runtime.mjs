@@ -35,6 +35,7 @@ import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { runProcess } from "../../process-runtime.mjs";
+import { PlanCheckQvSession, planCheckQvConfig } from "../qv-plancheck.mjs";
 import { DEFAULT_RESEARCH_SOURCE_DIRECTORY } from "../research-web-tools.mjs";
 import { checkCostBandCitations } from "./citations.mjs";
 import { claudeCliDriver } from "./driver.mjs";
@@ -163,7 +164,10 @@ export class ClaudeCliResearchRuntime {
   async start(request) {
     if (this.#runs.has(request.id)) throw new Error(`Research run ${request.id} has already started.`);
     const { binary } = await this.#assertAuth({ binary: this.#binary });
-    const corpusIndexPath = resolveCorpusIndexPath(this.#env, this.#corpusIndexPath);
+    // PlanCheck's rate library, or the local capture: one of the two, decided per run.
+    // A capture path passed to the constructor is an explicit choice of the local file.
+    const planCheck = this.#corpusIndexPath ? null : planCheckQvConfig(this.#env);
+    const corpusIndexPath = planCheck ? null : resolveCorpusIndexPath(this.#env, this.#corpusIndexPath);
     const systemPrompt = await readFile(this.#systemPromptPath, "utf8");
     const startedAtMs = this.#now();
 
@@ -203,7 +207,7 @@ export class ClaudeCliResearchRuntime {
       providerUsage: [],
     };
     this.#runs.set(request.id, run);
-    this.#enqueue(() => this.#spawn(run, { binary, corpusIndexPath, systemPrompt }));
+    this.#enqueue(() => this.#spawn(run, { binary, corpusIndexPath, planCheck, systemPrompt }));
 
     return {
       runId: request.id,
@@ -296,6 +300,20 @@ export class ClaudeCliResearchRuntime {
     return this.#require(runId).citations?.summary ?? null;
   }
 
+  /** What a research question needs from one finished run: its cost band and how each of the
+   *  band's components checked out, in component order. `citations` is null when no check ran
+   *  (no band, or the capture could not be read), which is "unchecked", never "passed". */
+  outcome(runId) {
+    const run = this.#require(runId);
+    if (!run.closed) return null;
+    return {
+      costBand: run.costBand,
+      citations: run.citations
+        ? { summary: run.citations.summary, checks: run.citations.components.map((item) => item.check) }
+        : null,
+    };
+  }
+
   /** The parsed cost band, for a caller computing three-run agreement. Outside the neutral
    *  contract on purpose: agreement is a property of a set of runs, not of one, and the shape
    *  it needs is the recipe's, not the contract's. */
@@ -325,7 +343,7 @@ export class ClaudeCliResearchRuntime {
 
   // --- the run ---------------------------------------------------------------------------------
 
-  async #spawn(run, { binary, corpusIndexPath, systemPrompt }) {
+  async #spawn(run, { binary, corpusIndexPath, planCheck = null, systemPrompt }) {
     if (run.closed) return;
     const request = run.request;
     const workingDirectory = await mkdtemp(path.join(os.tmpdir(), "research-claude-cli-"));
@@ -344,8 +362,10 @@ export class ClaudeCliResearchRuntime {
       run.controller.abort();
     };
     try {
-      if (this.#hostTools.length)
+      const qv = planCheck ? new PlanCheckQvSession(planCheck) : null;
+      if (this.#hostTools.length || qv)
         session = await openHostToolSession({
+          qv,
           runId: request.id,
           budget: request.budget,
           context: request.context ?? [],
@@ -362,6 +382,7 @@ export class ClaudeCliResearchRuntime {
         pythonBin: this.#pythonBin,
         indexPath: corpusIndexPath,
         hostTools: session?.mcpEntry,
+        qvRelay: session?.qvEntry ?? null,
       });
 
       run.state = "running";
@@ -425,7 +446,9 @@ export class ClaudeCliResearchRuntime {
     if (!costBand) return;
     try {
       run.citations = await checkCostBandCitations(costBand, {
-        rows: await loadQvRows(corpusIndexPath),
+        // PlanCheck's library is checked against the rows this run was shown; the local capture
+        // against the whole file.
+        rows: session?.qv ? session.qv.citationRows() : await loadQvRows(corpusIndexPath),
         webTools: session?.webTools ?? null,
         snapshotDirectory: this.#sourceSnapshotDirectory,
         emitSource: (data) => this.#emit(run, "source.retrieved", data),

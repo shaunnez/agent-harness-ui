@@ -25,8 +25,8 @@ import {
 import {
   assertChatGptAuth,
   isChatGptAuth,
-  readCodexAuth,
   REQUIRED_CODEX_AUTH,
+  readCodexAuth,
 } from "../server/research/codex-cli/auth.mjs";
 import {
   CODEX_DISABLED_FEATURES,
@@ -637,6 +637,7 @@ async function withRuntime(body, { run, env = {} } = {}) {
     env: {
       PATH: process.env.PATH,
       HOME: directory,
+      RESEARCH_QV_SOURCE: "local",
       RESEARCH_QV_INDEX: path.join(directory, "capture.jsonl"),
       ...env,
     },

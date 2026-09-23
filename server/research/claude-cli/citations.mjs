@@ -23,7 +23,9 @@ import { rowIdsIn } from "./qv-rows.mjs";
 
 /**
  * Returns `{ components, summary }`. `components[i].evidence` is the neutral `EvidenceRef[]`
- * for component `i`, and `components[i].problems` names every citation that did not verify.
+ * for component `i`, `components[i].problems` names every citation that did not verify, and
+ * `components[i].check` is the one label a reviewer reads for it (`qv-found`, `web-verified`,
+ * `allowance`, ...), taken from its weakest citation.
  *
  * `emitSource` is called once per retained QV row with the `source.retrieved` payload, so a
  * row reaches the store's sources table before the evidence that points at it.
@@ -52,6 +54,7 @@ export async function checkCostBandCitations(
   for (const component of costBand.components) {
     const evidence = [];
     const problems = [];
+    const outcomes = [];
     if (component.basis === "allowance") {
       summary.allowances += 1;
       problems.push("Allowance: an amount the model assumed, not a cited price.");
@@ -66,11 +69,13 @@ export async function checkCostBandCitations(
       const row = rows?.get(rowId) ?? null;
       if (!row) {
         summary.rowsMissing += 1;
+        outcomes.push("qv-missing");
         problems.push(`Row ${rowId} is not in the priced-rate capture.`);
         evidence.push(internalRecord(rowId, { now, excerpt: component.caveat }));
         continue;
       }
       summary.rowsFound += 1;
+      outcomes.push("qv-found");
       if (!row.priced) {
         summary.rowsUnpriced += 1;
         problems.push(`Row ${rowId} carries no price, so this component's amount came from elsewhere.`);
@@ -83,15 +88,30 @@ export async function checkCostBandCitations(
     if (component.source || component.sourceId) {
       summary.webCited += 1;
       const checked = checkWebCitation(component, webTools);
-      if (checked.evidence.quoteVerified) summary.webVerified += 1;
-      else if (checked.notFetched) summary.webNotFetched += 1;
-      else summary.webExcerptRejected += 1;
+      if (checked.evidence.quoteVerified) {
+        summary.webVerified += 1;
+        outcomes.push("web-verified");
+      } else if (checked.notFetched) {
+        summary.webNotFetched += 1;
+        outcomes.push("web-not-fetched");
+      } else {
+        summary.webExcerptRejected += 1;
+        outcomes.push("web-unverified");
+      }
       if (checked.problem) problems.push(checked.problem);
       evidence.push(checked.evidence);
     }
-    components.push({ evidence, problems });
+    components.push({ evidence, problems, check: componentCheck(component, outcomes) });
   }
   return { components, summary };
+}
+
+// One label per component, the weakest thing about it first: a reader deciding whether to trust
+// the component needs its worst citation, not its best.
+const CHECK_ORDER = ["qv-missing", "web-unverified", "web-not-fetched", "web-verified", "qv-found"];
+function componentCheck(component, outcomes) {
+  if (component.basis === "allowance") return "allowance";
+  return CHECK_ORDER.find((check) => outcomes.includes(check)) ?? "unsourced";
 }
 
 async function retainRow(row, { snapshotDirectory, now, emitSource }) {

@@ -1,8 +1,8 @@
-import { researchPoliciesOf } from "../src/research-policies.ts";
-import { normalizeRepairLimits } from "../src/repair-limits.ts";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
+import { normalizeRepairLimits } from "../src/repair-limits.ts";
+import { researchPoliciesOf } from "../src/research-policies.ts";
 import { cleanupOrphanAttachmentSets } from "./attachment-storage.mjs";
 import { acquireJsonStoreLock } from "./json-store-lock.mjs";
 import {
@@ -14,7 +14,12 @@ import {
   providerForModelId,
   resolveTaskProvider,
 } from "./model-catalog.mjs";
-import { assertProjectAcceptsTask, changeProject } from "./project-policy.mjs";
+import {
+  assertProjectAcceptsTask,
+  changeProject,
+  isResearchRepositoryPath,
+  RESEARCH_REPOSITORY_PREFIX,
+} from "./project-policy.mjs";
 import {
   CANONICAL_RUN_STAGES,
   DEFAULT_STAGE_RUN_LIMIT,
@@ -390,20 +395,38 @@ function configuredModels(stagePolicies) {
 
 export function assertProjectIsUnique(projects, input) {
   const name = input.name.trim().toLowerCase();
-  const repositoryPath = path.resolve(input.repositoryPath);
   if (projects.some((project) => project.name.trim().toLowerCase() === name)) {
     throw new Error("A project with that name already exists.");
   }
-  if (projects.some((project) => path.resolve(project.repositoryPath) === repositoryPath)) {
+  // A research project has no repository, so only delivery projects can collide on one.
+  if (input.kind === "research") return;
+  const repositoryPath = path.resolve(input.repositoryPath);
+  if (
+    projects.some(
+      (project) =>
+        !isResearchRepositoryPath(project.repositoryPath) &&
+        path.resolve(project.repositoryPath) === repositoryPath,
+    )
+  ) {
     throw new Error("That repository is already registered as a project.");
   }
 }
 
 export function projectRecord(input) {
+  const id = crypto.randomUUID();
+  if (input.kind === "research")
+    return {
+      id,
+      name: input.name.trim(),
+      repositoryPath: `${RESEARCH_REPOSITORY_PREFIX}${id}`,
+      kind: "research",
+      createdAt: new Date().toISOString(),
+    };
   return {
-    id: crypto.randomUUID(),
+    id,
     name: input.name.trim(),
     repositoryPath: path.resolve(input.repositoryPath),
+    kind: "delivery",
     createdAt: new Date().toISOString(),
   };
 }

@@ -96,6 +96,56 @@ export function createResearchSchema(db) {
   `);
   if (rebuilding) copyLegacySourceIdentity(db);
   addResearchRunModelColumn(db);
+  createResearchQuestionSchema(db);
+}
+
+/** A research question groups one or three runs of the same objective under a research project,
+ *  and carries the reviews made of it. The question's status is not stored: it is computed from
+ *  its runs every time it is read, so it cannot drift from them.
+ *
+ *  `source_key` is how a repeated external request (a Linear issue, a PlanCheck tender line)
+ *  finds the question it already raised instead of starting three more runs. It is null for a
+ *  question asked by hand, and SQLite's UNIQUE allows any number of nulls. */
+function createResearchQuestionSchema(db) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS research_questions (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      title TEXT NOT NULL,
+      objective TEXT NOT NULL,
+      profile TEXT NOT NULL,
+      runs_planned INTEGER NOT NULL,
+      source_json TEXT NOT NULL,
+      source_key TEXT UNIQUE
+    );
+    CREATE TABLE IF NOT EXISTS research_reviews (
+      question_id TEXT NOT NULL REFERENCES research_questions(id) ON DELETE CASCADE,
+      ordinal INTEGER NOT NULL,
+      decision TEXT NOT NULL,
+      note TEXT NOT NULL,
+      reviewer TEXT NOT NULL,
+      decided_at TEXT NOT NULL,
+      evidence_sha256 TEXT NOT NULL,
+      PRIMARY KEY (question_id, ordinal)
+    );
+    CREATE INDEX IF NOT EXISTS research_questions_project_idx
+      ON research_questions(project_id, created_at DESC, id DESC);
+  `);
+  const columns = new Set(
+    db
+      .prepare("PRAGMA table_info(research_runs)")
+      .all()
+      .map((column) => column.name),
+  );
+  // Null on every run that predates questions, and on a run submitted on its own.
+  if (!columns.has("question_id")) db.exec("ALTER TABLE research_runs ADD COLUMN question_id TEXT");
+  if (!columns.has("run_label")) db.exec("ALTER TABLE research_runs ADD COLUMN run_label TEXT");
+  // The run's cost band and per-component citation checks, as the runtime reported them when the
+  // run ended. Null for a runtime with no cost-band recipe (the fake) and for any run that failed
+  // before producing one.
+  if (!columns.has("outcome_json")) db.exec("ALTER TABLE research_runs ADD COLUMN outcome_json TEXT");
+  db.exec("CREATE INDEX IF NOT EXISTS research_runs_question_idx ON research_runs(question_id, run_label)");
 }
 
 /** `model_json` arrived after `research_runs` existed, so a database created before it needs

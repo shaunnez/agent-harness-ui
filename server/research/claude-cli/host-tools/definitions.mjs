@@ -104,6 +104,54 @@ export const HOST_TOOL_DEFINITIONS = Object.freeze({
   },
 });
 
+/** The QV tools, when the rate library is PlanCheck's API rather than the local capture. The
+ *  host answers them (`qv-plancheck.mjs`) because the API needs a token; the CLI sees them under
+ *  the `qv` server, with the names and inputs the local capture's server always had. */
+export const QV_TOOL_DEFINITIONS = Object.freeze({
+  search_qv: {
+    description:
+      "Keyword search over PlanCheck's QV CostBuilder rate library. Returns row id, trade / section, group, " +
+      "description, unit and Auckland/Wellington/Christchurch prices (NZD, GST exclusive). Search this BEFORE " +
+      'the web. Rows containing every word rank first. Write numbers as QV does: "30,000", not "30000". ' +
+      "Rows marked [elemental] or [benchmark] are priced per m² of a whole building's floor area, not per m² of " +
+      "the work; [percent] rows are percentage adjustments; [fee] rows are consultant fees as a percentage of " +
+      "construction cost; [build_up] rows are a rate's total or its components, so never add a total to the " +
+      "components it is built from.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["query"],
+      properties: {
+        query: { type: "string", minLength: 1, maxLength: 500 },
+        section_contains: { type: "string", maxLength: 200 },
+        limit: { type: "integer", minimum: 1, maximum: 40 },
+      },
+    },
+  },
+  get_qv_table: {
+    description:
+      "Return every row of the QV table a row id belongs to, to see siblings, size variants and price tiers. " +
+      "Pass a row id returned by search_qv in this run.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["row_id"],
+      properties: { row_id: { type: "string", minLength: 1, maxLength: 200 } },
+    },
+  },
+  list_qv_sections: {
+    description: "List QV trade / section pairs with row counts.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: { contains: { type: "string", maxLength: 200 } },
+    },
+  },
+});
+
+/** What the relay can list: the host research tools, then the QV tools. */
+export const RELAY_TOOL_DEFINITIONS = Object.freeze({ ...HOST_TOOL_DEFINITIONS, ...QV_TOOL_DEFINITIONS });
+
 export const HOST_TOOL_NAMES = Object.freeze(Object.keys(HOST_TOOL_DEFINITIONS));
 
 /** The name `--allowed-tools` needs for a host tool. */

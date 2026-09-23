@@ -133,9 +133,16 @@ export function ResearchAsk({
             Each run researches the question on its own: QV CostBuilder first, then the web for what QV does
             not publish. Every figure is marked by how it was checked.
           </p>
-          <p className="sample-note">
-            Prototype: asking adds the question to this tab only. Nothing is sent to a model.
-          </p>
+          {research?.mode === "live" ? (
+            <p className="sample-note">
+              Asking starts {runs === 3 ? "three runs" : "one run"} on your plan with the engine shown. Three
+              Claude runs measured about 2½ minutes and $4–5 of plan usage.
+            </p>
+          ) : (
+            <p className="sample-note">
+              Prototype: asking adds the question to this tab only. Nothing is sent to a model.
+            </p>
+          )}
         </aside>
       </div>
       <footer className="overlay-footer">

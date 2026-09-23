@@ -15,7 +15,7 @@
 import { createConnection } from "node:net";
 import process from "node:process";
 import readline from "node:readline";
-import { HOST_TOOL_DEFINITIONS, HOST_TOOL_SERVER_NAME } from "./definitions.mjs";
+import { HOST_TOOL_SERVER_NAME, RELAY_TOOL_DEFINITIONS } from "./definitions.mjs";
 
 /** What the CLI negotiated with the recorded Python server. Echoed back when the client asks
  *  for something else, because the tools-only subset used here is unchanged across versions. */
@@ -33,7 +33,7 @@ if (!socketPath) {
 const tools = toolList
   .split(",")
   .map((name) => name.trim())
-  .filter((name) => Object.hasOwn(HOST_TOOL_DEFINITIONS, name));
+  .filter((name) => Object.hasOwn(RELAY_TOOL_DEFINITIONS, name));
 
 const pending = new Map();
 let sequence = 0;
@@ -113,7 +113,7 @@ async function handle(request) {
     return send({
       id,
       result: {
-        tools: tools.map((name) => ({ name, ...HOST_TOOL_DEFINITIONS[name] })),
+        tools: tools.map((name) => ({ name, ...RELAY_TOOL_DEFINITIONS[name] })),
       },
     });
   if (method === "tools/call") {

@@ -11,8 +11,8 @@
 // COMMIT synchronously, so a task transaction and a research transaction can never interleave
 // on the single-threaded event loop.
 
-import { DEFAULT_RESEARCH_SOURCE_DIRECTORY } from "./research-web-tools.mjs";
 import { verifySnapshotEvidence } from "./research-source-snapshots.mjs";
+import { DEFAULT_RESEARCH_SOURCE_DIRECTORY } from "./research-web-tools.mjs";
 
 const RUN_ID_PREFIX = "RSCH";
 
@@ -102,6 +102,15 @@ export class ResearchStore {
       }
       return this.#readRun(runId);
     });
+  }
+
+  /** The run's cost band and citation checks, written once when it ends. Kept beside the neutral
+   *  result rather than inside it: agreement across a question's runs needs the recipe's numbers,
+   *  and the findings carry them only as prose. */
+  async recordOutcome(runId, outcome) {
+    this.#db
+      .prepare("UPDATE research_runs SET outcome_json = ? WHERE id = ?")
+      .run(outcome ? JSON.stringify(outcome) : null, runId);
   }
 
   /** Adapter-only. The runtime's correlation identifiers never reach a projection or a route,
@@ -442,6 +451,10 @@ function runRecord(row) {
     budgetState: row.budget_state_json ? JSON.parse(row.budget_state_json) : null,
     error: row.error_json ? JSON.parse(row.error_json) : null,
     cancellationRequestedAt: row.cancellation_requested_at ?? null,
+    // Present only on a run that belongs to a question or reported a cost band, so a run
+    // submitted on its own reads exactly as it did before questions existed.
+    ...(row.question_id ? { questionId: row.question_id, runLabel: row.run_label ?? null } : {}),
+    ...(row.outcome_json ? { outcome: JSON.parse(row.outcome_json) } : {}),
   };
 }
 

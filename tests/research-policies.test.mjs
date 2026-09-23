@@ -247,6 +247,7 @@ async function withCliRuntime(Runtime, seen, body) {
     env: {
       PATH: process.env.PATH,
       HOME: directory,
+      RESEARCH_QV_SOURCE: "local",
       RESEARCH_QV_INDEX: path.join(directory, "capture.jsonl"),
     },
     transcriptDirectory: path.join(directory, "transcripts"),

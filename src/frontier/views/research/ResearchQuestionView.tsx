@@ -21,7 +21,7 @@ import {
 } from "../../runtime/research";
 import { CollapsibleText } from "../../ui/CollapsibleText";
 import { ResearchCheckBadge, ResearchStatusBadge } from "./ResearchBadges";
-import { useResearch } from "./use-research";
+import { pendingPoll, useResearch } from "./use-research";
 
 const statusExplanation: Record<ResearchQuestion["status"], string> = {
   agreed: "All three runs banded within 1.25× on the low end and 1.35× on the high. Read the consensus.",
@@ -48,7 +48,7 @@ export function ResearchQuestionView({
     value: question,
     error,
     reload,
-  } = useResearch(research, (gateway) => gateway.question(questionId), questionId);
+  } = useResearch(research, (gateway) => gateway.question(questionId), questionId, pendingPoll);
   const [runId, setRunId] = useState<string | null>(null);
   if (!research)
     return (
@@ -87,6 +87,12 @@ export function ResearchQuestionView({
               <ResearchStatusBadge question={question} />
             </header>
             <p className="quiet">{statusExplanation[question.status]}</p>
+            {question.unitsDiffer && (
+              <p className="research-units-differ" role="note">
+                The runs priced this in different units ({question.unitsDiffer.join("; ")}), so their bands
+                cannot be compared and there is no consensus.
+              </p>
+            )}
             {finished && (
               <>
                 <div className="research-answer-bands">
@@ -554,7 +560,12 @@ function QvSources({ question }: { question: ResearchQuestion }) {
             <details>
               <summary>
                 <span>
-                  <strong>{row.desc ?? "Row text not bundled with this sample"}</strong>
+                  <strong>
+                    {row.desc ??
+                      (question.provenance === "live"
+                        ? `Row ${row.rowId}; its text stays in the local capture`
+                        : "Row text not bundled with this sample")}
+                  </strong>
                   <small>{row.section ?? row.rowId}</small>
                 </span>
                 <span className="research-qv-rate">

@@ -3,8 +3,15 @@
 // one dispatch line, and it inherits the loopback/CSRF boundary `assertHttpBoundary` applies
 // before any factory is reached.
 
-export function createResearchRoutes({ researchService, send, readJson }) {
+import { createResearchQuestionRoutes } from "./research-question-routes.mjs";
+
+export function createResearchRoutes({ researchService, researchQuestions = null, send, readJson }) {
+  const questionRoutes = researchQuestions
+    ? createResearchQuestionRoutes({ questions: researchQuestions, send, readJson })
+    : () => false;
   return async function handleResearchRoute(request, response, url) {
+    if (await questionRoutes(request, response, url)) return true;
+
     if (request.method === "GET" && url.pathname === "/api/research/runtimes") {
       send(response, 200, { runtimes: researchService.runtimeIds() });
       return true;

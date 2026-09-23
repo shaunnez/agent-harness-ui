@@ -30,6 +30,7 @@ import type {
   WorkspaceHistoryPage,
   WorkspaceHistoryRequest,
 } from "./domain/workspace-history";
+import type { ResearchQuestion } from "./frontier/runtime/research";
 
 export function getWorkspaceHead(options?: ReadRequestOptions) {
   return request<WorkspaceHead>("/api/workspace/history?view=head", options);
@@ -213,13 +214,72 @@ export async function listProjects(options: ReadRequestOptions = {}) {
   return (await request<{ projects: RuntimeProject[] }>("/api/projects", options)).projects;
 }
 
-export async function createProject(input: { name: string; repositoryPath: string }) {
+export async function createProject(input: {
+  name: string;
+  repositoryPath: string;
+  kind?: RuntimeProject["kind"];
+}) {
+  // A research project has no repository, and the companion refuses one sent with it.
+  const body =
+    input.kind === "research" ? { name: input.name, kind: "research" } : { ...input, kind: "delivery" };
   return (
     await request<{ project: RuntimeProject }>("/api/projects", {
       method: "POST",
-      body: JSON.stringify(input),
+      body: JSON.stringify(body),
     })
   ).project;
+}
+
+/** Whether this companion serves research at all; the JSON-store companion has no research routes. */
+export async function researchAvailable(options: ReadRequestOptions = {}) {
+  try {
+    await request<{ runtimes: string[] }>("/api/research/runtimes", options);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function listResearchQuestions(projectId: string, options: ReadRequestOptions = {}) {
+  return (
+    await request<{ questions: ResearchQuestion[] }>(
+      `/api/research/questions?projectId=${encodeURIComponent(projectId)}`,
+      options,
+    )
+  ).questions;
+}
+
+export async function getResearchQuestion(id: string, options: ReadRequestOptions = {}) {
+  return (
+    await request<{ question: ResearchQuestion }>(
+      `/api/research/questions/${encodeURIComponent(id)}`,
+      options,
+    )
+  ).question;
+}
+
+/** The engine is not sent: the companion snapshots Settings → Research agent onto each run. */
+export async function askResearchQuestion(input: { projectId: string; objective: string; runs: 1 | 3 }) {
+  return (
+    await request<{ question: ResearchQuestion }>(
+      "/api/research/questions",
+      { method: "POST", body: JSON.stringify(input) },
+      { retryOnCsrf: false },
+    )
+  ).question;
+}
+
+export async function reviewResearchQuestion(
+  id: string,
+  input: { decision: "approved" | "rejected"; note: string; evidenceSha: string },
+) {
+  return (
+    await request<{ question: ResearchQuestion }>(
+      `/api/research/questions/${encodeURIComponent(id)}/review`,
+      { method: "POST", body: JSON.stringify(input) },
+      { retryOnCsrf: false },
+    )
+  ).question;
 }
 
 export async function changeProject(
