@@ -4,7 +4,7 @@ The primary question is whether a frozen model policy delivers independently acc
 
 ## Current scope
 
-The checked-in delivery runner explicitly supports H02 and H05 on the inspected macOS native CLI environment. It is not a generic cross-repository or cross-platform runner. The case bank selects 13 real historical tasks; qualification status is explicit on each case. H05 is the proposed next small trial, pending source reconciliation and a new freeze. M01/P03 have confirmed historical baseline blockers; H01/P04 also retain unresolved gates. Unsupported case IDs are rejected. See [the current preparation handoff](../docs/MODEL-EVALUATION-PREPARATION.md).
+The checked-in delivery runner supports qualified H02, H05, H06 and P05 cases on the inspected macOS native CLI environment. P05 is the PlanCheck UI/backend/PostgreSQL replay; it provisions Python and frontend dependencies in each isolated trial, then grades a committed candidate with synthetic PostgreSQL and browser checks. It is not a generic cross-repository or cross-platform runner. The case bank selects 15 historical tasks; qualification status is explicit on each case. M01/P03 have confirmed historical baseline blockers; H01/P04 also retain unresolved gates. Unsupported case IDs are rejected.
 
 `prepare-case.mjs` can create clean private base/reference checkouts for a selected case, but does not qualify that case. Reference patches, later history, independent grading inputs and retained sibling candidates must remain inaccessible to evaluated agents.
 
@@ -24,6 +24,7 @@ All commands run from the isolated harness source. Preparation refuses an existi
 node scripts/evaluation/prepare-case.mjs CASE_ID SOURCE_REPOSITORY NEW_PRIVATE_CASE_DIRECTORY
 EVAL_PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node scripts/evaluation/prepare-batch.mjs NEW_PRIVATE_BATCH NEW_PUBLIC_ROOT SOURCE_REPOSITORY codex-comparison H05
 EVAL_PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node scripts/evaluation/prepare-batch.mjs NEW_PRIVATE_BATCH NEW_PUBLIC_ROOT SOURCE_REPOSITORY codex-6-comparison H05
+EVAL_PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node scripts/evaluation/prepare-batch.mjs NEW_PRIVATE_BATCH NEW_PUBLIC_ROOT PLANCHECK_REPOSITORY medium-provider-comparison P05
 node scripts/evaluation/trial-worker.mjs PRIVATE_TRIAL/config.json
 node scripts/evaluation/finalize-trial.mjs PRIVATE_TRIAL
 node scripts/evaluation/report-batch.mjs PRIVATE_BATCH

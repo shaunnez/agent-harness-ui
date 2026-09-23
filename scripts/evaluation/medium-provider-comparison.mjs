@@ -41,3 +41,5 @@ export const H02_MEDIUM_PROVIDER_COMPARISON = Object.freeze({
   trialConcurrency: 2,
   defaultModel: sol,
 });
+
+export const P05_MEDIUM_PROVIDER_COMPARISON = H06_MEDIUM_PROVIDER_COMPARISON;

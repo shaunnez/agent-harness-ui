@@ -50,6 +50,14 @@ const definitions = {
       "frontier-integrations-control",
     ],
   },
+  P05: {
+    workflowProfile: "standard",
+    grader: "evaluations/graders/p05.mjs",
+    graderAssets: ["evaluations/graders/p05/test_p317_pg.py", "evaluations/graders/p05/p317-hidden.spec.ts"],
+    graderOutput: "directory",
+    graderTimeoutMs: 900000,
+    checkIds: ["postgres-persistence-and-totals", "review-browser-selection"],
+  },
 };
 
 export async function loadEvaluationCase(caseId = "H02") {
@@ -58,7 +66,8 @@ export async function loadEvaluationCase(caseId = "H02") {
   const read = async (file) => readFile(new URL(`../../${file}`, import.meta.url), "utf8");
   const bank = JSON.parse(await read("evaluations/cases/delivery-v1.json"));
   const item = bank.cases.find((entry) => entry.id === caseId);
-  if (item?.repository !== "harness") throw new Error(`Invalid Harness case: ${caseId}`);
+  if (!item || !["harness", "plancheck"].includes(item.repository))
+    throw new Error(`Invalid evaluation case: ${caseId}`);
   const contract = await read(`evaluations/cases/${caseId.toLowerCase()}-public-contract.md`);
   const rubric = JSON.parse(await read("evaluations/rubric-v1.json"));
   if (caseId === "H05") {
@@ -70,6 +79,11 @@ export async function loadEvaluationCase(caseId = "H02") {
     rubric.version = "delivery-rubric-h06-v1";
     rubric.criteria[1] =
       "Existing behavior remains compatible except the explicitly requested Linear pause/resume control.";
+  }
+  if (caseId === "P05") {
+    rubric.version = "delivery-rubric-p05-v1";
+    rubric.criteria[1] =
+      "Existing PlanCheck behavior remains compatible except the requested candidate persistence and Review states.";
   }
   return { ...structuredClone(definition), item, contract, rubric };
 }

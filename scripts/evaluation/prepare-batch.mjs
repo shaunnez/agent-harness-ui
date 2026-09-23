@@ -12,6 +12,7 @@ import { CODEX_6_IMPLEMENT_COMPARISON, H05_CODEX_COMPARISON } from "./h05-codex-
 import {
   H02_MEDIUM_PROVIDER_COMPARISON,
   H06_MEDIUM_PROVIDER_COMPARISON,
+  P05_MEDIUM_PROVIDER_COMPARISON,
 } from "./medium-provider-comparison.mjs";
 
 const exec = promisify(execFile);
@@ -31,7 +32,7 @@ if (
   ].includes(mode)
 )
   throw new Error(
-    "Usage: prepare-batch.mjs <new-private-root> <new-public-root> <source-repository> [dry-run|feasibility|codex-comparison|codex-6-comparison|medium-provider-comparison] [H02|H05|H06]",
+    "Usage: prepare-batch.mjs <new-private-root> <new-public-root> <source-repository> [dry-run|feasibility|codex-comparison|codex-6-comparison|medium-provider-comparison] [H02|H05|H06|P05]",
   );
 const read = (relative) => readFile(path.join(root, relative), "utf8");
 const git = (cwd, args) => exec("git", args, { cwd, maxBuffer: 30_000_000 });
@@ -45,7 +46,9 @@ const comparison =
   mode === "medium-provider-comparison"
     ? caseId === "H02"
       ? H02_MEDIUM_PROVIDER_COMPARISON
-      : H06_MEDIUM_PROVIDER_COMPARISON
+      : caseId === "P05"
+        ? P05_MEDIUM_PROVIDER_COMPARISON
+        : H06_MEDIUM_PROVIDER_COMPARISON
     : mode === "codex-6-comparison"
       ? CODEX_6_IMPLEMENT_COMPARISON
       : H05_CODEX_COMPARISON;
@@ -53,8 +56,8 @@ if (mode === "codex-comparison" && caseId !== "H05")
   throw new Error("The historical Codex comparison is qualified only for H05.");
 if (mode === "codex-6-comparison" && !["H02", "H05"].includes(caseId))
   throw new Error("The GPT-6 Codex comparison is qualified only for H02 and H05.");
-if (mode === "medium-provider-comparison" && !["H02", "H06"].includes(caseId))
-  throw new Error("The medium provider comparison is qualified only for H02 and H06.");
+if (mode === "medium-provider-comparison" && !["H02", "H06", "P05"].includes(caseId))
+  throw new Error("The medium provider comparison is qualified only for H02, H06 and P05.");
 if (
   caseId !== "H02" &&
   ![
@@ -184,6 +187,25 @@ const environment = {
   stageTimeoutOverridesMs,
   repairLimits,
 };
+if (item.repository === "plancheck") {
+  const dependencyFiles = [
+    "package-lock.json",
+    "frontend/package-lock.json",
+    "e2e/package-lock.json",
+    "backend/requirements.txt",
+    "backend/requirements-dev.txt",
+    "pyproject.toml",
+  ];
+  environment.plancheckDependencyHash = sha(
+    (
+      await Promise.all(
+        dependencyFiles.map(
+          async (file) => (await git(sourceRepository, ["show", `${item.baseSha}:${file}`])).stdout,
+        ),
+      )
+    ).join("\n"),
+  );
+}
 const deny = (paths) =>
   `(version 1)\n(allow default)\n${paths.map((entry) => `(deny file-read* (subpath ${JSON.stringify(entry)}))`).join("\n")}\n`;
 const protectedPaths = [
@@ -221,8 +243,8 @@ const freeze = {
   harnessVersion,
   caseId: item.id,
   baseSha: item.baseSha,
-  caseVersion: `${caseId.toLowerCase()}-${sha(contract)}`,
-  graderVersion: `${caseId.toLowerCase()}-${sha(await read(selectedCase.grader))}`,
+  caseVersion: `${caseId.toLowerCase()}-${sha(contract + JSON.stringify(item.brief) + JSON.stringify(item.acceptanceCriteria))}`,
+  graderVersion: `${caseId.toLowerCase()}-${sha((await Promise.all([selectedCase.grader, ...(selectedCase.graderAssets ?? [])].map(read))).join("\n"))}`,
   rubricVersion: `${rubric.version}-${sha(JSON.stringify(rubric))}`,
   environmentVersion: sha(JSON.stringify(environment)),
   executionVersion: comparisonMode
@@ -272,6 +294,13 @@ for (const trial of trials) {
       maxBuffer: 10_000_000,
     });
     await writeFile(path.join(privateTrial, "npm-ci.log"), result.stdout + result.stderr);
+    if (item.repository === "plancheck") {
+      const installed = await exec("make", ["install"], {
+        cwd: repository,
+        maxBuffer: 10_000_000,
+      });
+      await writeFile(path.join(privateTrial, "plancheck-install.log"), installed.stdout + installed.stderr);
+    }
   }
   const siblings = trials
     .filter((entry) => entry.id !== trial.id)

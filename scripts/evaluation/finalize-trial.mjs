@@ -58,7 +58,12 @@ try {
           candidate.worktreePath,
           selectedCase.graderOutput === "directory" ? checksDirectory : checksFile,
         ],
-        { cwd: candidate.worktreePath, env: process.env, maxBuffer: 5_000_000, timeout: 180000 },
+        {
+          cwd: candidate.worktreePath,
+          env: process.env,
+          maxBuffer: 5_000_000,
+          timeout: selectedCase.graderTimeoutMs ?? 180000,
+        },
       );
       await writeFile(path.join(gradeRoot, "checks.log"), result.stdout + result.stderr);
     } catch (error) {

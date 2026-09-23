@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "status": "14 selected cases; H06 is the qualified medium development comparison; per-case qualification gates remain authoritative",
+  "status": "15 selected cases; H06 and P05 are qualified medium development comparisons; per-case qualification gates remain authoritative",
   "cases": [
     {
       "id": "H01",
@@ -248,6 +248,38 @@
           "Case-specific rubric calibration"
         ],
         "privateEvidence": "evaluator/P04/qualification.json"
+      }
+    },
+    {
+      "id": "P05",
+      "version": 1,
+      "repository": "plancheck",
+      "baseSha": "21b63f5c6f3d686e6142cc82276a565cd425909a",
+      "referenceSha": "17be14a74f7a0669d6a69cbf6f02f68f69763318",
+      "difficulty": "medium",
+      "risk": "medium",
+      "split": "development",
+      "title": "Persist and review construction match candidates",
+      "brief": "Construction pricing finds scenario candidates, but does not retain them after the pricing worker saves a result. Review cannot explain ambiguous or incompatible matches. Preserve the candidates for every outcome in a dbmate migration and the read model. Show ambiguous candidates by title with a one-action reviewer selection through the existing user-linked pricing path. Explain which scenario was refused for incompatible work and why. An ambiguous or incompatible automatic result must contribute no amount to any subtotal until a reviewer selects a scenario. Keep existing matched totals and stale-result safeguards intact.",
+      "acceptanceCriteria": [
+        "A dbmate migration durably stores candidate scenario IDs on pricing results",
+        "All result states retain candidates, including matched, ambiguous, incompatible and no match",
+        "The read model and Review UI distinguish ambiguous and incompatible states and identify candidates",
+        "A reviewer can select an eligible candidate and records a revisioned user-origin link",
+        "Unresolved and incompatible automatic results contribute no amount to totals"
+      ],
+      "qualification": "behavior-browser-postgres-and-baseline-qualified",
+      "referenceScope": "Reviewed source change only; reference SHA, patch and hidden checks are excluded from agent inputs",
+      "qualificationEvidence": {
+        "baseManifest": "all seven commands passed",
+        "referenceManifest": "all seven commands passed",
+        "basePostgres": "334 passed, zero skipped",
+        "referencePostgres": "335 passed, zero skipped",
+        "hiddenPostgres": "base 2 failed; reference 2 passed",
+        "hiddenBrowser": "base failed on missing candidates; reference passed",
+        "projectionMutant": "rejected by hidden PostgreSQL checker",
+        "privateEvidence": "20260923/plancheck-p317-qualification-v1",
+        "inferenceCalls": 0
       }
     },
     {
