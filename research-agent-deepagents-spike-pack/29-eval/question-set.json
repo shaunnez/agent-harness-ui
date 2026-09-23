@@ -1,0 +1,160 @@
+{
+  "frozen": "2026-09-24",
+  "rule": "Recorded status from the 22 September Opus 5 baseline (17a-top30-results.json, local capture). Within each status, scopes sorted by id; agreed and disputed take every third scope from the first (indexes 0, 3, 6, ...), not established takes the first.",
+  "pinned": [
+    {
+      "id": "acp-facade-cladding-install",
+      "file": "acp-facade-cladding-install.txt",
+      "recorded": {
+        "status": "agreed",
+        "consensus": {
+          "low": 475,
+          "high": 625
+        },
+        "range": {
+          "min": 470,
+          "max": 710
+        },
+        "unit": "m2 of net cladding face area (openings deducted)"
+      }
+    },
+    {
+      "id": "concrete-paving-slab",
+      "file": "concrete-paving-slab.txt",
+      "recorded": {
+        "status": "agreed",
+        "consensus": {
+          "low": 190,
+          "high": 240
+        },
+        "range": {
+          "min": 175,
+          "max": 240
+        },
+        "unit": "$/m2 of finished slab"
+      }
+    },
+    {
+      "id": "emergency-lighting-exit-signage",
+      "file": "emergency-lighting-exit-signage.txt",
+      "recorded": {
+        "status": "agreed",
+        "consensus": {
+          "low": 350,
+          "high": 480
+        },
+        "range": {
+          "min": 315,
+          "max": 525
+        },
+        "unit": "ea"
+      }
+    },
+    {
+      "id": "interior-finishes-to-schedule",
+      "file": "interior-finishes-to-schedule.txt",
+      "recorded": {
+        "status": "agreed",
+        "consensus": {
+          "low": 137000,
+          "high": 197000
+        },
+        "range": {
+          "min": 135000,
+          "max": 207000
+        },
+        "unit": "sum"
+      }
+    },
+    {
+      "id": "metering-control-instrumentation-wiring",
+      "file": "metering-control-instrumentation-wiring.txt",
+      "recorded": {
+        "status": "agreed",
+        "consensus": {
+          "low": 49,
+          "high": 69
+        },
+        "range": {
+          "min": 40,
+          "max": 85
+        },
+        "unit": "m"
+      }
+    },
+    {
+      "id": "p-solar",
+      "file": "p-solar.txt",
+      "recorded": {
+        "status": "agreed",
+        "consensus": {
+          "low": 11250,
+          "high": 23250
+        },
+        "range": {
+          "min": 11000,
+          "max": 23500
+        },
+        "unit": "sum"
+      }
+    },
+    {
+      "id": "door-hardware-sets",
+      "file": "door-hardware-sets.txt",
+      "recorded": {
+        "status": "disputed",
+        "consensus": {
+          "low": 1790,
+          "high": 2090
+        },
+        "range": {
+          "min": 1520,
+          "max": 2500
+        },
+        "unit": "ea (per door leaf)"
+      }
+    },
+    {
+      "id": "industrial-roller-doors",
+      "file": "industrial-roller-doors.txt",
+      "recorded": {
+        "status": "disputed",
+        "consensus": {
+          "low": 7000,
+          "high": 11500
+        },
+        "range": {
+          "min": 6800,
+          "max": 15500
+        },
+        "unit": "ea"
+      }
+    },
+    {
+      "id": "site-electrical-reticulation",
+      "file": "site-electrical-reticulation.txt",
+      "recorded": {
+        "status": "disputed",
+        "consensus": {
+          "low": 78500,
+          "high": 110500
+        },
+        "range": {
+          "min": 74400,
+          "max": 146000
+        },
+        "unit": "sum"
+      }
+    },
+    {
+      "id": "network-supply-connection-hv-metering",
+      "file": "network-supply-connection-hv-metering.txt",
+      "recorded": {
+        "status": "not_established",
+        "consensus": null,
+        "range": null,
+        "unit": null
+      }
+    }
+  ]
+}

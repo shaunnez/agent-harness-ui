@@ -1,0 +1,191 @@
+{
+  "question": "door-hardware-sets",
+  "kind": "pinned",
+  "arm": "A0",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 1840,
+    "high": 2200
+  },
+  "range": {
+    "min": 1840,
+    "max": 2219
+  },
+  "unit": "ea (per leaf)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.092,
+    "highRatio": 1.104,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 2.7636,
+  "elapsedMs": 134315,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 134313,
+      "band": {
+        "unit": "ea (per leaf)",
+        "low": 1840,
+        "high": 2200,
+        "centre": "Auckland",
+        "basis": "Sum of QV lock (t1), closer (t24), SS hinges x3 (t0:r11), SS floor stop (t22:r4) and assumed fixing labour at the QV carpenter rate. Excludes the restricted-keyway/master-key cylinder uplift, key cutting, master keys and setup/handover, which were not established. No aggregate row was combined with its components. Wellington/Christchurch rows run about $10-20 lower per item."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 20,
+        "outputTokens": 9960,
+        "cachedTokens": 542181,
+        "modelCalls": 29,
+        "toolCalls": 28,
+        "searchCalls": 2,
+        "estimatedCostUsd": 1.1134072000000002,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 20,
+            "outputTokens": 9960,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.9505642000000001,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 97078,
+            "outputTokens": 1153,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.16284300000000002,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 82570,
+      "band": {
+        "unit": "ea (per leaf)",
+        "low": 2009,
+        "high": 2219,
+        "centre": "Auckland",
+        "basis": "Sum of QV rows: lockset t2:r5 + closer t24:r2..r7 + 3x hinge t0:r11 + stop t22:r4. Excludes hinge/stop fixing labour, master keying, key cutting and setup/handover (not established). Draft $620-880 band not supported by QV."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 16,
+        "outputTokens": 7082,
+        "cachedTokens": 359146,
+        "modelCalls": 23,
+        "toolCalls": 22,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.6787251999999999,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 16,
+            "outputTokens": 7082,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.6787251999999999,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 117414,
+      "band": {
+        "unit": "ea (per leaf)",
+        "low": 1840,
+        "high": 2010,
+        "centre": "Auckland",
+        "basis": "Sum of QV lock, closer, hinge, stop rows plus carpenter-rate fitting for supply-only items. Excludes restricted keyway/master keying/key cutting and site setup/handover (not established). QV lock and closer exceed spec, so a spec-matched quote is likely lower. Not reconciled with the brief's uncited $620-880 band."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 22,
+        "outputTokens": 9190,
+        "cachedTokens": 608811,
+        "modelCalls": 31,
+        "toolCalls": 30,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.9714911999999999,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 22,
+            "outputTokens": 9190,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.9260022,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 22164,
+            "outputTokens": 665,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.045489,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -3,6 +3,12 @@
 
 export function createResearchQuestionRoutes({ questions, send, readJson }) {
   return async function handleResearchQuestionRoute(request, response, url) {
+    // A draft scope: one tools-less model call, nothing started, nothing stored.
+    if (url.pathname === "/api/research/questions/scope" && request.method === "POST") {
+      send(response, 200, await questions.draftScope(await readJson(request)));
+      return true;
+    }
+
     if (url.pathname === "/api/research/questions") {
       if (request.method === "GET") {
         send(response, 200, { questions: await questions.list(url.searchParams.get("projectId")) });

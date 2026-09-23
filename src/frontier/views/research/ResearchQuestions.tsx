@@ -30,6 +30,7 @@ const statusOrder: ResearchQuestionStatus[] = [
   "incomplete",
   "disputed",
   "not_established",
+  "single_run",
   "agreed",
 ];
 

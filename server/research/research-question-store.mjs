@@ -19,20 +19,29 @@ export class ResearchQuestionStore {
   /** Creates the question, or returns the one an earlier delivery of the same external request
    *  created, with `reused: true`. Checked and inserted in one transaction, so two deliveries
    *  racing each other still produce one question. */
-  createQuestion({ projectId, title, objective, profile, runsPlanned, source, sourceKey, now }) {
+  createQuestion({
+    projectId,
+    title,
+    objective,
+    profile,
+    runsPlanned,
+    source,
+    sourceKey,
+    scope = null,
+    now,
+  }) {
     return this.#transaction(() => {
       if (sourceKey) {
-        const existing = this.#db
-          .prepare("SELECT * FROM research_questions WHERE source_key = ?")
-          .get(sourceKey);
-        if (existing) return { question: questionRecord(existing), reused: true };
+        const existing = this.findBySourceKey(sourceKey);
+        if (existing) return { question: existing, reused: true };
       }
       const id = this.#nextQuestionId();
       this.#db
         .prepare(`
         INSERT INTO research_questions(
-          id, project_id, created_at, title, objective, profile, runs_planned, source_json, source_key)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          id, project_id, created_at, title, objective, profile, runs_planned, source_json, source_key,
+          scope_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
         .run(
           id,
@@ -44,9 +53,16 @@ export class ResearchQuestionStore {
           runsPlanned,
           JSON.stringify(source),
           sourceKey ?? null,
+          scope ? JSON.stringify(scope) : null,
         );
       return { question: this.getQuestion(id), reused: false };
     });
+  }
+
+  /** The question an external request already raised, or null. */
+  findBySourceKey(sourceKey) {
+    const row = this.#db.prepare("SELECT * FROM research_questions WHERE source_key = ?").get(sourceKey);
+    return row ? questionRecord(row) : null;
   }
 
   getQuestion(id) {
@@ -150,5 +166,7 @@ function questionRecord(row) {
     profile: row.profile,
     runsPlanned: Number(row.runs_planned),
     source: JSON.parse(row.source_json),
+    // `{scope, scopedBy, reviewed}`, or null for a question asked without a scope.
+    scope: row.scope_json ? JSON.parse(row.scope_json) : null,
   };
 }

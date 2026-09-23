@@ -8,46 +8,66 @@
 // rather than being part of one.
 
 import { questionRecord } from "./research-question-record.mjs";
+import { scopedObjective, validateScope } from "./research-scope.mjs";
 
 const RUN_COUNTS = new Set([1, 3]);
 const MAX_OBJECTIVE_LENGTH = 4_000;
 const MAX_NOTE_LENGTH = 2_000;
 const MAX_SOURCE_FIELD = 200;
 const EVENTS_PER_RUN = 500;
+/** What a run's own objective may hold (`ResearchService`), question and pinned scope together. */
+const MAX_RUN_OBJECTIVE_LENGTH = 4_000;
+const SCOPER_RUNTIMES = new Set(["codex-cli", "claude-cli"]);
 
 export class ResearchQuestionService {
   #questions;
   #research;
   #runs;
   #projects;
+  #scoper;
   #now;
 
   /** `research` starts runs; `runs` is the `ResearchStore` they are read back from; `projects`
-   *  lists registered projects, so a question can only be asked of a live research project. */
-  constructor({ questions, research, runs, projects, now = () => new Date().toISOString() }) {
+   *  lists registered projects, so a question can only be asked of a live research project.
+   *  `scoper` (`ResearchScoper`) drafts scopes; without one, questions are asked unscoped. */
+  constructor({ questions, research, runs, projects, scoper = null, now = () => new Date().toISOString() }) {
     if (!questions || !research || !runs || !projects)
       throw new Error("ResearchQuestionService requires questions, research, runs and projects.");
     this.#questions = questions;
     this.#research = research;
     this.#runs = runs;
     this.#projects = projects;
+    this.#scoper = scoper;
     this.#now = now;
+  }
+
+  /** A draft scope for the operator to read and correct. Starts nothing and stores nothing. */
+  async draftScope(input) {
+    await this.#researchProject(input?.projectId);
+    const objective = this.#objectiveOf(input);
+    if (!this.#scoper) throw unavailable("Scoping is not configured on this companion.");
+    return this.#scoper.scope({ objective });
   }
 
   async ask(input) {
     if (!input || typeof input !== "object" || Array.isArray(input))
       throw badRequest("Provide a research question object.");
     const project = await this.#researchProject(input.projectId);
-    const objective = String(input.objective ?? "").trim();
-    if (!objective) throw badRequest("Write the question you want researched.");
-    if (objective.length > MAX_OBJECTIVE_LENGTH)
-      throw badRequest(`A question must be ${MAX_OBJECTIVE_LENGTH} characters or fewer.`);
+    const objective = this.#objectiveOf(input);
     const runs = input.runs === undefined ? 3 : Number(input.runs);
     if (!RUN_COUNTS.has(runs))
       throw badRequest("Ask with three runs, or one for a Quick answer that cannot be cross-checked.");
     const profile = input.profile === undefined ? "standard" : String(input.profile);
     const source = normalizeSource(input.source);
     const title = String(input.title ?? "").trim() || titleFrom(objective);
+    const sourceKey = source.kind === "external" ? `${source.provider}:${source.requestId}` : null;
+    // A repeated request finds its question before anything is scoped, so it costs nothing.
+    const earlier = sourceKey ? this.#questions.findBySourceKey(sourceKey) : null;
+    if (earlier) return { question: await this.#record(earlier), reused: true };
+    const scope = await this.#scopeFor(input, objective, source);
+    const runObjective = scopedObjective(objective, scope?.scope ?? null);
+    if (runObjective.length > MAX_RUN_OBJECTIVE_LENGTH)
+      throw badRequest("The question and its scope are too long together. Shorten one of them.");
 
     const { question, reused } = this.#questions.createQuestion({
       projectId: project.id,
@@ -56,7 +76,8 @@ export class ResearchQuestionService {
       profile,
       runsPlanned: runs,
       source,
-      sourceKey: source.kind === "external" ? `${source.provider}:${source.requestId}` : null,
+      sourceKey,
+      scope,
       now: this.#now(),
     });
     // A repeated request reuses the question it already raised and starts nothing.
@@ -64,7 +85,7 @@ export class ResearchQuestionService {
     for (let index = 0; index < runs; index += 1) {
       const label = `r${index + 1}`;
       const run = await this.#research.createRun({
-        objective,
+        objective: runObjective,
         profile,
         metadata: { questionId: question.id, run: label },
       });
@@ -105,6 +126,34 @@ export class ResearchQuestionService {
       evidenceSha: current.evidenceSha,
     });
     return this.#record(question, { activity: true });
+  }
+
+  #objectiveOf(input) {
+    const objective = String(input?.objective ?? "").trim();
+    if (!objective) throw badRequest("Write the question you want researched.");
+    if (objective.length > MAX_OBJECTIVE_LENGTH)
+      throw badRequest(`A question must be ${MAX_OBJECTIVE_LENGTH} characters or fewer.`);
+    return objective;
+  }
+
+  /**
+   * The scope a question is pinned to: the one the operator sent (a draft they read, perhaps
+   * edited), or, for an external request with none, one drafted now, because nobody is there to
+   * scope it. A manual question sent without a scope is asked unscoped, as before.
+   */
+  async #scopeFor(input, objective, source) {
+    if (input.scope != null) {
+      let scope;
+      try {
+        scope = validateScope(input.scope);
+      } catch (error) {
+        throw badRequest(error.message);
+      }
+      return { scope, scopedBy: scopedByOf(input.scopedBy), reviewed: true };
+    }
+    if (source.kind !== "external" || !this.#scoper) return null;
+    const drafted = await this.#scoper.scope({ objective });
+    return { scope: drafted.scope, scopedBy: drafted.scopedBy, reviewed: false };
   }
 
   async #record(question, { activity = false } = {}) {
@@ -151,6 +200,17 @@ function normalizeSource(value) {
   return { kind: "external", provider, requestId, ...(url ? { url } : {}) };
 }
 
+/** Which model drafted a scope the operator then sent, as the draft said. Anything else reads as
+ *  written by the operator: the label only ever says less than was claimed. */
+function scopedByOf(value) {
+  if (!value || typeof value !== "object" || !SCOPER_RUNTIMES.has(value.runtime))
+    return { runtime: "operator" };
+  const model = String(value.model ?? "").trim();
+  if (!/^[a-z0-9][a-z0-9.-]{0,63}$/.test(model)) return { runtime: "operator" };
+  const reasoning = value.reasoning == null ? null : String(value.reasoning).slice(0, 20);
+  return { runtime: value.runtime, model, reasoning };
+}
+
 /** The first sentence, cut at a word, as a list title. The full objective stays on the record. */
 function titleFrom(objective) {
   const sentence = objective.split(/(?<=[.?!])\s/)[0] ?? objective;
@@ -164,6 +224,10 @@ function badRequest(message) {
 
 function conflict(message) {
   return withStatus(message, 409);
+}
+
+function unavailable(message) {
+  return withStatus(message, 503);
 }
 
 function notFound(message) {

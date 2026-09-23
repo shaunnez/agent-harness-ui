@@ -1,0 +1,142 @@
+{
+  "question": "site-electrical-reticulation",
+  "kind": "pinned",
+  "arm": "A3",
+  "status": "incomplete",
+  "passes": false,
+  "consensus": null,
+  "range": null,
+  "unit": "NZD lump sum, GST exclusive",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": null,
+    "highRatio": null,
+    "runsWithBand": 2,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0725,
+  "elapsedMs": 463184,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "failed",
+      "error": {
+        "code": "codex_cli_exited_abnormally",
+        "message": "The Codex CLI exited with code 1: Selected model is at capacity. Please try a different model."
+      },
+      "elapsedMs": 463182,
+      "band": null,
+      "checks": [],
+      "citations": null,
+      "usage": {
+        "partial": true
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 362081,
+      "band": {
+        "unit": "NZD lump sum, GST exclusive",
+        "low": 124900,
+        "high": 162200,
+        "centre": null,
+        "basis": "Auckland cost-plan estimate for the exact stated scope, formed by adding the four packages: trenching and reinstatement $22,000–$31,200; conduit and cable $78,550–$96,150; pits $17,550–$22,800; board and spurs $6,860–$12,160. Implied rate over the 250 m nominal route is $500–$649/m, centre $574/m. Allowances are minor; confidence is low because several dimensions and hardstand material details are unspecified and QV rows are unreviewed proxies. Working estimate only, not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 11,
+        "rowsFound": 11,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 1173592,
+        "outputTokens": 16302,
+        "cachedTokens": 1038848,
+        "toolCalls": 81,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.059952,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 1173592,
+            "outputTokens": 16302,
+            "estimatedCostUsd": 0.059952,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 227108,
+      "band": {
+        "unit": "NZD lump sum, GST exclusive",
+        "low": 125000,
+        "high": 166000,
+        "centre": "Auckland",
+        "basis": "Sum of the four separately priced scope components: trenching and reinstatement $12,000–$24,000; conduit and cable $93,000–$103,000; pits $12,000–$26,000; board and spurs $8,000–$13,000. Rounded low and high totals. Equivalent over the 250m nominal route: $500–$664/lineal metre, centre approximately $582/m. This is a low-confidence cost-plan band using unreviewed QV rows, size and configuration proxies, and stated allowances; it is not a certified price."
+      },
+      "checks": [
+        "unsourced",
+        "unsourced",
+        "unsourced",
+        "unsourced"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 250506,
+        "outputTokens": 8566,
+        "cachedTokens": 186880,
+        "toolCalls": 39,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.012514,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 250506,
+            "outputTokens": 8566,
+            "estimatedCostUsd": 0.012514,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

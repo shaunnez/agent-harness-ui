@@ -1,0 +1,209 @@
+{
+  "question": "p-solar",
+  "kind": "pinned",
+  "arm": "A0",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 11300,
+    "high": 20240
+  },
+  "range": {
+    "min": 7000,
+    "max": 23100
+  },
+  "unit": "sum",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.826,
+    "highRatio": 1.481,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 3.7058,
+  "elapsedMs": 202875,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 115960,
+      "band": {
+        "unit": "sum",
+        "low": 7000,
+        "high": 15600,
+        "centre": "Auckland",
+        "basis": "A materials $4,200-8,100 + B strengthening $1,600-3,200 (QV, rounded) + C design $1,260-4,320. EXCLUDES mounting installation labour (not established). GST-exclusive assumed; the web basis does not confirm GST status."
+      },
+      "checks": [
+        "web-verified",
+        "unsourced",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 20,
+        "outputTokens": 8015,
+        "cachedTokens": 508293,
+        "modelCalls": 28,
+        "toolCalls": 27,
+        "searchCalls": 4,
+        "estimatedCostUsd": 1.0310726,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 20,
+            "outputTokens": 8015,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.9371586,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 45844,
+            "outputTokens": 1614,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.093914,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 202872,
+      "band": {
+        "unit": "sum (excludes design fee)",
+        "low": 12780,
+        "high": 20240,
+        "centre": "Auckland",
+        "basis": "A mounting $8,430-11,880 (web hardware + QV roofer labour) + B strengthening $4,350-8,360 (QV purlins/cleats/bolts + QV erector retrofit labour). Design/PS1 not established and NOT included. Quantities and labour hours are QS assumptions."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "unsourced"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 5,
+        "webVerified": 5,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 30,
+        "outputTokens": 14997,
+        "cachedTokens": 1087925,
+        "modelCalls": 38,
+        "toolCalls": 37,
+        "searchCalls": 4,
+        "estimatedCostUsd": 1.4891309999999995,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 30,
+            "outputTokens": 14997,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.3975489999999997,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 44062,
+            "outputTokens": 1504,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.091582,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 143716,
+      "band": {
+        "unit": "sum",
+        "low": 11300,
+        "high": 23100,
+        "centre": "Auckland",
+        "basis": "A mounting $6,578–11,666 + B strengthening $3,423–7,079 + C design $1,260–4,320. GST exclusive; excludes prelims, margin, modules, electrical, access and consent fees."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 22,
+        "outputTokens": 10638,
+        "cachedTokens": 650969,
+        "modelCalls": 30,
+        "toolCalls": 29,
+        "searchCalls": 3,
+        "estimatedCostUsd": 1.1855828,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 22,
+            "outputTokens": 10638,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.1154978,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 33570,
+            "outputTokens": 1303,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.07008500000000001,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

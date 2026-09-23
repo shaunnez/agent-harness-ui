@@ -21,10 +21,13 @@ import {
 } from "../../runtime/research";
 import { CollapsibleText } from "../../ui/CollapsibleText";
 import { ResearchCheckBadge, ResearchStatusBadge } from "./ResearchBadges";
+import { ResearchScopePanel } from "./ResearchScope";
 import { pendingPoll, useResearch } from "./use-research";
 
 const statusExplanation: Record<ResearchQuestion["status"], string> = {
   agreed: "All three runs banded within 1.25× on the low end and 1.35× on the high. Read the consensus.",
+  single_run:
+    "A Quick question: one run priced it, and no second run checked the band. Ask again with three runs before relying on it.",
   disputed:
     "The runs disagree by more than 1.25× low or 1.35× high. The disagreement is the finding: compare the runs to see which part of the scope is still open.",
   not_established:
@@ -87,10 +90,19 @@ export function ResearchQuestionView({
               <ResearchStatusBadge question={question} />
             </header>
             <p className="quiet">{statusExplanation[question.status]}</p>
+            {question.status === "disputed" &&
+              question.agreement.runsWithBand === 1 &&
+              question.agreement.runsTotal > 1 && (
+                <p className="research-units-differ" role="note">
+                  Only one of the {question.agreement.runsTotal} runs found a band; the others could not price
+                  it. One band cannot agree with itself.
+                </p>
+              )}
             {question.unitsDiffer && (
               <p className="research-units-differ" role="note">
-                The runs priced this in different units ({question.unitsDiffer.join("; ")}), so their bands
-                cannot be compared and there is no consensus.
+                {question.scope
+                  ? `The scope asks for a price ${question.scope.measure}, and the runs priced it as: ${question.unitsDiffer.join("; ")}. A band in another measure answers a different question, so there is no consensus.`
+                  : `The runs priced this in different units (${question.unitsDiffer.join("; ")}), so their bands cannot be compared and there is no consensus.`}
               </p>
             )}
             {finished && (
@@ -172,6 +184,7 @@ export function ResearchQuestionView({
           </section>
         </div>
         <aside className="research-detail-aside">
+          <ResearchScopePanel question={question} />
           <CitationSummary question={question} />
           <QvSources question={question} />
           {question.webSources.length > 0 && (

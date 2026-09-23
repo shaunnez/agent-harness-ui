@@ -149,8 +149,32 @@ export const QV_TOOL_DEFINITIONS = Object.freeze({
   },
 });
 
-/** What the relay can list: the host research tools, then the QV tools. */
-export const RELAY_TOOL_DEFINITIONS = Object.freeze({ ...HOST_TOOL_DEFINITIONS, ...QV_TOOL_DEFINITIONS });
+/** The pack runtime's one tool for its reasoning stage (`../../pack/runtime.mjs`): ask the
+ *  retrieval model for more evidence. The host runs that retrieval and checks what comes back. */
+export const PACK_TOOL_DEFINITIONS = Object.freeze({
+  request_evidence: {
+    description:
+      "Ask for more evidence when the checked pack cannot price a component. A retrieval model searches QV " +
+      "and the web for it and the host checks every row and quote before returning it. At most two requests " +
+      "per run; say exactly what is missing.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["query", "why"],
+      properties: {
+        query: { type: "string", minLength: 1, maxLength: 500 },
+        why: { type: "string", minLength: 1, maxLength: 1_000 },
+      },
+    },
+  },
+});
+
+/** What the relay can list: the host research tools, then the QV tools, then the pack's. */
+export const RELAY_TOOL_DEFINITIONS = Object.freeze({
+  ...HOST_TOOL_DEFINITIONS,
+  ...QV_TOOL_DEFINITIONS,
+  ...PACK_TOOL_DEFINITIONS,
+});
 
 export const HOST_TOOL_NAMES = Object.freeze(Object.keys(HOST_TOOL_DEFINITIONS));
 

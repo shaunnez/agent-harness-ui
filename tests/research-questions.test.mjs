@@ -85,13 +85,19 @@ class BandedRuntime extends FakeResearchRuntime {
     };
   }
 
+  objectiveOf(runId) {
+    return this.#requests.get(runId)?.objective ?? null;
+  }
+
   #planned(request) {
-    const plan = this.#script[request?.objective] ?? {};
+    // Scripted by the question; a scoped run's objective carries its pinned scope after it.
+    const objective = String(request?.objective ?? "");
+    const plan = this.#script[objective] ?? this.#script[objective.split("\n\n")[0]] ?? {};
     return plan[request?.metadata?.run];
   }
 }
 
-async function withServer(script, body) {
+async function withServer(script, body, { scoper = null } = {}) {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-research-questions-"));
   const store = new SqliteTaskStore(path.join(directory, "tasks.sqlite3"));
   await store.init();
@@ -108,6 +114,7 @@ async function withServer(script, body) {
     research: researchService,
     runs,
     projects: async () => (await store.listProjects()).map((project) => ({ kind: "delivery", ...project })),
+    scoper,
   });
   const server = createApiServer({
     store,
@@ -135,7 +142,7 @@ async function withServer(script, body) {
     return (await call("GET", `/api/research/questions/${question.id}`)).body.question;
   };
   try {
-    return await body({ call, finish, directory, store });
+    return await body({ call, finish, directory, store, runtime });
   } finally {
     await new Promise((resolve) => server.close(resolve));
     store.close();
@@ -254,6 +261,8 @@ test("disputed, not established and incomplete follow the recorded rule; a faile
     "Disputed scope.": { r1: [500, 700], r2: [800, 1100], r3: [520, 690] },
     "Unpriced scope.": { r1: null, r2: null, r3: null },
     "Crashed scope.": { r1: null, r2: "fail", r3: null },
+    "Lone band.": { r1: [100, 120], r2: null, r3: null },
+    "Two bands.": { r1: [100, 120], r2: [105, 125], r3: null },
     "Quick scope.": { r1: [100, 120] },
     "Mixed units.": {
       r1: [60, 100, "m² of soffit"],
@@ -283,10 +292,19 @@ test("disputed, not established and incomplete follow the recorded rule; a faile
     assert.equal(crashed.runs[1].status, "failed");
     assert.ok(crashed.runs[1].error);
 
+    // One band among three runs agrees with itself: the runs disagree on whether it can be priced.
+    const lone = await ask("Lone band.");
+    assert.equal(lone.status, "disputed");
+    assert.equal(lone.consensus, null);
+    assert.deepEqual(lone.range, { min: 100, max: 120 });
+    assert.equal(lone.agreement.runsWithBand, 1);
+    // Two banded runs that agree still agree, as the recorded rule has it.
+    assert.equal((await ask("Two bands.")).status, "agreed");
+
     const quick = await ask("Quick scope.", { runs: 1 });
     assert.equal(quick.runsPlanned, 1);
     assert.equal(quick.runs.length, 1);
-    assert.equal(quick.status, "agreed");
+    assert.equal(quick.status, "single_run");
 
     // Runs pricing per m² and per house are not "40x apart"; they are not comparable at all.
     const mixed = await ask("Mixed units.");
@@ -421,4 +439,166 @@ test("units are compared by measure, with whole-job totals told apart from rates
     "NZD excluding GST, additional construction cost": null,
   };
   for (const [unit, measure] of Object.entries(cases)) assert.equal(unitMeasure(unit), measure, unit);
+});
+
+const PINNED = Object.freeze({
+  item: "Timber pole retaining wall, 1.8 m retained",
+  measure: "per m²",
+  unitText: "m² of wall face",
+  quantityBasis: "",
+  inclusions: ["poles", "lagging", "drainage"],
+  exclusions: [],
+  centre: "Auckland",
+  assumptions: [],
+  clarifications: ["ground conditions not stated"],
+});
+
+/** A scoper that answers with `PINNED` and counts its calls. */
+function stubScoper() {
+  const scoper = {
+    calls: 0,
+    async scope() {
+      scoper.calls += 1;
+      return {
+        scope: { ...PINNED },
+        scopedBy: { runtime: "codex-cli", model: "gpt-6-luna", reasoning: "medium" },
+      };
+    },
+  };
+  return scoper;
+}
+
+test("a draft scope starts nothing; an asked scope is pinned onto every run and into the fingerprint", async () => {
+  const objective = "What does a pole retaining wall cost?";
+  const scoper = stubScoper();
+  await withServer(
+    { [objective]: { r1: [700, 820], r2: [700, 820], r3: [700, 820] } },
+    async ({ call, finish, runtime }) => {
+      const project = await researchProject(call);
+      const draft = await call("POST", "/api/research/questions/scope", { projectId: project.id, objective });
+      assert.equal(draft.status, 200, JSON.stringify(draft.body));
+      assert.deepEqual(draft.body.scope, PINNED);
+      assert.equal(
+        (await call("GET", `/api/research/questions?projectId=${project.id}`)).body.questions.length,
+        0,
+      );
+
+      const bad = await call("POST", "/api/research/questions", {
+        projectId: project.id,
+        objective,
+        scope: { ...PINNED, measure: "per whatever" },
+      });
+      assert.equal(bad.status, 400);
+
+      const asked = await call("POST", "/api/research/questions", {
+        projectId: project.id,
+        objective,
+        scope: { ...PINNED, centre: "Wellington" },
+        scopedBy: draft.body.scopedBy,
+      });
+      assert.equal(asked.status, 201, JSON.stringify(asked.body));
+      const question = asked.body.question;
+      assert.equal(question.objective, objective, "the question keeps the operator's words");
+      assert.equal(question.scope.centre, "Wellington");
+      assert.deepEqual(question.scopedBy, { runtime: "codex-cli", model: "gpt-6-luna", reasoning: "medium" });
+      assert.equal(question.scopeReviewed, true);
+      for (const run of question.runs) {
+        const given = runtime.objectiveOf(run.runId);
+        assert.ok(given.startsWith(`${objective}\n\nPinned scope.`), given);
+        assert.match(given, /- Centre: Wellington/);
+      }
+      const done = await finish(question);
+      assert.equal(done.status, "agreed");
+
+      const unscoped = await finish(
+        (await call("POST", "/api/research/questions", { projectId: project.id, objective })).body.question,
+      );
+      assert.equal(unscoped.scope, null);
+      assert.equal(unscoped.status, "agreed");
+      assert.notEqual(unscoped.evidenceSha, done.evidenceSha, "the scope is part of the evidence");
+
+      // A scopedBy the server does not recognise reads as the operator's own scope.
+      const claimed = await call("POST", "/api/research/questions", {
+        projectId: project.id,
+        objective,
+        scope: PINNED,
+        scopedBy: { runtime: "oracle", model: "gpt-9" },
+      });
+      assert.deepEqual(claimed.body.question.scopedBy, { runtime: "operator" });
+      assert.equal(scoper.calls, 1, "only the draft called the scoper");
+    },
+    { scoper },
+  );
+});
+
+test("a band in another measure than the pinned scope is disputed, even when the numbers agree", async () => {
+  const objective = "Pole wall, scoped per m².";
+  await withServer(
+    {
+      [objective]: { r1: [700, 820], r2: [700, 820, "lump sum for the wall"], r3: [700, 820] },
+      "Quick, but priced as a total.": { r1: [70000, 90000, "lump sum for the wall"] },
+    },
+    async ({ call, finish }) => {
+      const project = await researchProject(call);
+      const asked = await call("POST", "/api/research/questions", {
+        projectId: project.id,
+        objective,
+        scope: PINNED,
+      });
+      const done = await finish(asked.body.question);
+      assert.equal(done.status, "disputed");
+      assert.equal(done.consensus, null);
+      assert.equal(done.unitsDiffer.length, 3);
+
+      const quick = await finish(
+        (
+          await call("POST", "/api/research/questions", {
+            projectId: project.id,
+            objective: "Quick, but priced as a total.",
+            scope: PINNED,
+            runs: 1,
+          })
+        ).body.question,
+      );
+      // One run off the scope's measure is not "one run, not cross-checked": it answered another question.
+      assert.equal(quick.status, "disputed");
+      assert.deepEqual(quick.unitsDiffer, ["lump sum for the wall"]);
+    },
+  );
+});
+
+test("an external request is scoped automatically, once, and says nobody reviewed the scope", async () => {
+  const objective = "Supply and fix 90 mm PVC downpipe.";
+  const scoper = stubScoper();
+  await withServer(
+    { [objective]: { r1: [40, 60], r2: [42, 58], r3: [41, 61] } },
+    async ({ call }) => {
+      const project = await researchProject(call);
+      const request = {
+        projectId: project.id,
+        objective,
+        source: { kind: "external", provider: "plancheck", requestId: "TND-9-item-4" },
+      };
+      const first = await call("POST", "/api/research/questions", request);
+      assert.equal(first.status, 201);
+      assert.deepEqual(first.body.question.scope, PINNED);
+      assert.equal(first.body.question.scopeReviewed, false);
+      const again = await call("POST", "/api/research/questions", request);
+      assert.equal(again.status, 200);
+      assert.equal(again.body.reused, true);
+      assert.equal(scoper.calls, 1, "a repeated request is found before anything is scoped");
+    },
+    { scoper },
+  );
+});
+
+test("without a scoper, a draft is refused and questions are asked unscoped", async () => {
+  await withServer({}, async ({ call }) => {
+    const project = await researchProject(call);
+    const draft = await call("POST", "/api/research/questions/scope", {
+      projectId: project.id,
+      objective: "Roof?",
+    });
+    assert.equal(draft.status, 503);
+  });
 });

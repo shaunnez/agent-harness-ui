@@ -1,0 +1,185 @@
+{
+  "question": "industrial-roller-doors",
+  "kind": "pinned",
+  "arm": "A3",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 10300,
+    "high": 14330
+  },
+  "range": {
+    "min": 8000,
+    "max": 14600
+  },
+  "unit": "$/ea",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.416,
+    "highRatio": 1.384,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.043,
+  "elapsedMs": 256694,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 256694,
+      "band": {
+        "unit": "$/ea",
+        "low": 11330,
+        "high": 14330,
+        "centre": "Auckland",
+        "basis": "GST-exclusive NZD cost-plan estimate for the fixed scope. Per door: QV curtain proxy $6,192 + QV three-phase mechanism $2,268 + sourced insulation premium $1,620–$2,520 + sourced powdercoat uplift $350–$1,000 + allowances $900–$1,850. Four-door nominal total: $45,320–$57,320 GST exclusive. Minor allowances are about 8–13% of the per-door band. Low confidence reflects the QV size/material proxy and uncertainty in exact safety-control and installation inclusions; obtain a configured quote from Ulti Group, DoorsNZ or another Auckland industrial-door supplier."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 315084,
+        "outputTokens": 9342,
+        "cachedTokens": 257024,
+        "toolCalls": 16,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.023759,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 315084,
+            "outputTokens": 9342,
+            "estimatedCostUsd": 0.023759,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 131535,
+      "band": {
+        "unit": "$/ea",
+        "low": 10300,
+        "high": 14600,
+        "centre": "NZD 12,450/ea",
+        "basis": "Auckland, NZD excluding GST; rounded estimate band for one complete door unit supplied, installed and commissioned. The four-door nominal total is NZD 41,200–58,400, centre NZD 49,800, rounded to the nearest $100. Includes shared lift hire and door/lift delivery amortised over four doors. Main door assembly is based on an unreviewed QV steel-door proxy with a stated professional adjustment for the specified insulated aluminium construction; confidence is low pending supplier confirmation."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 191448,
+        "outputTokens": 6549,
+        "cachedTokens": 156160,
+        "toolCalls": 17,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.008365,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 191448,
+            "outputTokens": 6549,
+            "estimatedCostUsd": 0.008365,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 169535,
+      "band": {
+        "unit": "$/ea",
+        "low": 8000,
+        "high": 10550,
+        "centre": "Auckland: $9,280/ea",
+        "basis": "NZD, GST exclusive. Sum of the distinct components above; no aggregate door rate is added to its component rows. Low confidence reflects the unreviewed QV proxy and adjustments for the specified aluminium insulated curtain. Nominal quantity 4: total band $32,000–$42,200, centre approximately $37,120. Lift and delivery allowances are divided across four doors."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "allowance",
+        "web-unverified",
+        "web-unverified",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 2,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 230379,
+        "outputTokens": 8462,
+        "cachedTokens": 182528,
+        "toolCalls": 19,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.010841,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 230379,
+            "outputTokens": 8462,
+            "estimatedCostUsd": 0.010841,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

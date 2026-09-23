@@ -6,9 +6,12 @@ import { errorMessage } from "../../runtime/coordinator";
 import {
   type ResearchEngineSnapshot,
   type ResearchGateway,
+  type ResearchScopeDraft,
   researchEngineLabel,
   researchEnginePlan,
+  scopedByLabel,
 } from "../../runtime/research";
+import { cleanScope, ResearchScopeEditor } from "./ResearchScope";
 
 /** Worked questions from the recorded ask feed (`18c-ask-feed.json`). */
 const examples = [
@@ -41,22 +44,45 @@ export function ResearchAsk({
 }) {
   const [objective, setObjective] = useState("");
   const [runs, setRuns] = useState<1 | 3>(3);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<"scoping" | "asking" | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  // The draft scope, once drafted. Editing the question drops it: a scope answers one question.
+  const [draft, setDraft] = useState<ResearchScopeDraft | null>(null);
+  const [scopeFailed, setScopeFailed] = useState(false);
   const engine = researchEngineFromSettings(status);
-  async function submit() {
+  async function scopeIt() {
     if (!research) return;
-    setBusy(true);
+    setBusy("scoping");
     setProblem(null);
     try {
-      const question = await research.ask(project.id, { objective, runs, engine });
+      setDraft(await research.scope(project.id, objective));
+      setScopeFailed(false);
+    } catch (reason) {
+      setProblem(errorMessage(reason));
+      setScopeFailed(true);
+    } finally {
+      setBusy(null);
+    }
+  }
+  async function submit(withScope: boolean) {
+    if (!research) return;
+    setBusy("asking");
+    setProblem(null);
+    try {
+      const question = await research.ask(project.id, {
+        objective,
+        runs,
+        engine,
+        ...(withScope && draft ? { scope: cleanScope(draft.scope), scopedBy: draft.scopedBy } : {}),
+      });
       onAsked(question.id);
     } catch (reason) {
       setProblem(errorMessage(reason));
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
+  const ready = Boolean(connected && research && objective.trim().length >= 12 && !busy);
   return (
     <>
       <div className="overlay-body research-ask">
@@ -65,7 +91,7 @@ export function ResearchAsk({
           className="form-surface"
           onSubmit={(event) => {
             event.preventDefault();
-            void submit();
+            void (draft ? submit(true) : scopeIt());
           }}
         >
           <label className="form-row research-ask-question">
@@ -74,7 +100,10 @@ export function ResearchAsk({
               required
               rows={5}
               value={objective}
-              onChange={(event) => setObjective(event.target.value)}
+              onChange={(event) => {
+                setObjective(event.target.value);
+                setDraft(null);
+              }}
               placeholder={examples[0]}
             />
           </label>
@@ -85,12 +114,23 @@ export function ResearchAsk({
                 type="button"
                 key={example}
                 className="link-button"
-                onClick={() => setObjective(example)}
+                onClick={() => {
+                  setObjective(example);
+                  setDraft(null);
+                }}
               >
                 {example}
               </button>
             ))}
           </div>
+          {draft && (
+            <>
+              <p className="quiet research-scope-origin">
+                {scopedByLabel(draft.scopedBy)}. Correct anything it got wrong before asking.
+              </p>
+              <ResearchScopeEditor scope={draft.scope} onChange={(scope) => setDraft({ ...draft, scope })} />
+            </>
+          )}
           <fieldset className="research-ask-runs">
             <legend>Runs</legend>
             <label className={runs === 3 ? "is-selected" : undefined}>
@@ -133,10 +173,15 @@ export function ResearchAsk({
             Each run researches the question on its own: QV CostBuilder first, then the web for what QV does
             not publish. Every figure is marked by how it was checked.
           </p>
+          <p>
+            First the question is scoped: one fast model call, no research, that pins what is priced and in
+            which measure. Every run is then given the same scope, so their bands can be compared.
+          </p>
           {research?.mode === "live" ? (
             <p className="sample-note">
-              Asking starts {runs === 3 ? "three runs" : "one run"} on your plan with the engine shown. Three
-              Claude runs measured about 2½ minutes and $4–5 of plan usage.
+              Scoping calls GPT-6 Luna on your ChatGPT plan and starts nothing. Asking starts{" "}
+              {runs === 3 ? "three runs" : "one run"} on your plan with the engine shown. Three Claude runs
+              measured about 2½ minutes and $4–5 of plan usage.
             </p>
           ) : (
             <p className="sample-note">
@@ -149,13 +194,21 @@ export function ResearchAsk({
         <button type="button" onClick={onClose}>
           Cancel
         </button>
-        <button
-          type="submit"
-          form="research-ask-form"
-          className="primary"
-          disabled={busy || !connected || !research || objective.trim().length < 12}
-        >
-          {busy ? "Asking…" : runs === 3 ? "Ask · three runs" : "Ask · one quick run"}
+        {scopeFailed && !draft && (
+          <button type="button" disabled={!ready} onClick={() => void submit(false)}>
+            Ask without a scope
+          </button>
+        )}
+        <button type="submit" form="research-ask-form" className="primary" disabled={!ready}>
+          {busy === "scoping"
+            ? "Scoping…"
+            : busy === "asking"
+              ? "Asking…"
+              : !draft
+                ? "Scope it"
+                : runs === 3
+                  ? "Ask · three runs"
+                  : "Ask · one quick run"}
           <ArrowRight size={19} />
         </button>
       </footer>

@@ -1,0 +1,218 @@
+{
+  "question": "interior-finishes-to-schedule",
+  "kind": "pinned",
+  "arm": "A0",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 132600,
+    "high": 160000
+  },
+  "range": {
+    "min": 131500,
+    "max": 160500
+  },
+  "unit": "sum",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.011,
+    "highRatio": 1.052,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 3.3808,
+  "elapsedMs": 156861,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 145076,
+      "band": {
+        "unit": "sum",
+        "low": 132600,
+        "high": 152600,
+        "centre": "Auckland",
+        "basis": "Sum of QV measured-work lines at stated quantities, LVT high end at web supply-only price; excludes protection, waste/skip, site measure/setout, out-of-hours loading, LVT lay labour, accent-colour premium"
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 12,
+        "rowsFound": 12,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 20,
+        "outputTokens": 11701,
+        "cachedTokens": 616319,
+        "modelCalls": 32,
+        "toolCalls": 31,
+        "searchCalls": 1,
+        "estimatedCostUsd": 1.1353347999999999,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 20,
+            "outputTokens": 11701,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.1125638,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 11126,
+            "outputTokens": 329,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.022771,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 137347,
+      "band": {
+        "unit": "sum",
+        "low": 133000,
+        "high": 160000,
+        "centre": "Auckland",
+        "basis": "QV rates x scheduled quantities for the six finishes and smoothing, plus LVT material only at the web price. Excludes LVT install labour, trims/transitions, protection, waste, site measure/setout and out-of-hours loading, none of which are established. The true package total is higher than this band by those items."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 9,
+        "rowsFound": 9,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 20,
+        "outputTokens": 10787,
+        "cachedTokens": 606022,
+        "modelCalls": 28,
+        "toolCalls": 27,
+        "searchCalls": 1,
+        "estimatedCostUsd": 1.0892624,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 20,
+            "outputTokens": 10787,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.0667604,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 10717,
+            "outputTokens": 357,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.022502,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 156859,
+      "band": {
+        "unit": "sum",
+        "low": 131500,
+        "high": 160500,
+        "centre": "Auckland",
+        "basis": "Sum of QV-supported lines at Auckland rates (quantities per scope, transition strip qty assumed). Excludes out-of-hours loading, site measure/setout drawings and skip/rubbish removal, which are not established. LVT and batten wall likely understated. Equals $164-200/m2 over 800 m2 NLA."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 11,
+        "rowsFound": 11,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 20,
+        "outputTokens": 12606,
+        "cachedTokens": 589124,
+        "modelCalls": 34,
+        "toolCalls": 33,
+        "searchCalls": 1,
+        "estimatedCostUsd": 1.1562198000000001,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 20,
+            "outputTokens": 12606,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.1339368,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 11023,
+            "outputTokens": 252,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.022283,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

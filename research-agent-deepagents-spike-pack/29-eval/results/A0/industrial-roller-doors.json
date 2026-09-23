@@ -1,0 +1,188 @@
+{
+  "question": "industrial-roller-doors",
+  "kind": "pinned",
+  "arm": "A0",
+  "status": "disputed",
+  "passes": false,
+  "consensus": null,
+  "range": {
+    "min": 7600,
+    "max": 13600
+  },
+  "unit": "ea",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": null,
+    "highRatio": null,
+    "runsWithBand": 1,
+    "runsTotal": 3
+  },
+  "costUsd": 2.6003,
+  "elapsedMs": 131349,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 108638,
+      "band": null,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 20,
+        "outputTokens": 6477,
+        "cachedTokens": 519997,
+        "modelCalls": 22,
+        "toolCalls": 21,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.8892114,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 20,
+            "outputTokens": 6477,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.7955634000000001,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 43888,
+            "outputTokens": 1952,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.093648,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 66673,
+      "band": null,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 14,
+        "outputTokens": 4069,
+        "cachedTokens": 296435,
+        "modelCalls": 16,
+        "toolCalls": 15,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.624144,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 14,
+            "outputTokens": 4069,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.577323,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 22461,
+            "outputTokens": 872,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.046821,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 131346,
+      "band": {
+        "unit": "ea",
+        "low": 7600,
+        "high": 13600,
+        "centre": "Auckland",
+        "basis": "Sum of items 1-7 per door (low 7,597 / high 13,603, rounded). 4-door nominal total: $30,400-$54,400. QV zincalume slat door plus 3-phase operator (supply & fix), uplifted by published DoorsNZ percentages to insulated aluminium, plus powdercoat, safety devices, amortised scissor hire and final connection. QV rates are assumed to include delivery, installation and commissioning. Band is likely to understate double-skin foam-filled aluminium 77mm slat at 18 m2; get supplier quotes."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 7,
+        "webVerified": 7,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 20,
+        "outputTokens": 10628,
+        "cachedTokens": 544783,
+        "modelCalls": 25,
+        "toolCalls": 24,
+        "searchCalls": 3,
+        "estimatedCostUsd": 1.0869575999999999,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 20,
+            "outputTokens": 10628,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.0187726,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 31680,
+            "outputTokens": 1301,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.068185,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

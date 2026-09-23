@@ -363,9 +363,11 @@ export class ClaudeCliResearchRuntime {
     };
     try {
       const qv = planCheck ? new PlanCheckQvSession(planCheck) : null;
-      if (this.#hostTools.length || qv)
+      const lateTools = this.#driver.lateTools ?? [];
+      if (this.#hostTools.length || qv || lateTools.length)
         session = await openHostToolSession({
           qv,
+          lateTools,
           runId: request.id,
           budget: request.budget,
           context: request.context ?? [],
@@ -399,6 +401,16 @@ export class ClaudeCliResearchRuntime {
         allowedTools: this.#allowedTools,
         budget: request.budget ?? null,
         signal: run.controller.signal,
+        // For a driver that runs more than one call (the pack runtime): the run's host session,
+        // and the same citation check the final answer gets, against the same rows and sources.
+        session,
+        checkComponents: (components) =>
+          this.#checkComponents(components, {
+            session,
+            corpusIndexPath,
+            emit: (type, data) => this.#emit(run, type, data),
+          }),
+        emit: (type, data) => this.#emit(run, type, data),
         onCeiling: (ceiling, counts) =>
           stop({
             outcome: "terminal",
@@ -438,6 +450,21 @@ export class ClaudeCliResearchRuntime {
         message: "A credential value appeared in the CLI transcript and was redacted.",
         redacted: found,
       });
+  }
+
+  /** Check a list of cited components, and return the rows they cite as the host holds them. */
+  async #checkComponents(components, { session, corpusIndexPath, emit }) {
+    const rows = session?.qv ? session.qv.citationRows() : await loadQvRows(corpusIndexPath);
+    const checked = await checkCostBandCitations(
+      { components },
+      {
+        rows,
+        webTools: session?.webTools ?? null,
+        snapshotDirectory: this.#sourceSnapshotDirectory,
+        emitSource: (data) => emit("source.retrieved", data),
+      },
+    );
+    return { ...checked, rows };
   }
 
   /** Check the answer's citations while the run's retained sources are still open. */

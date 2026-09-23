@@ -30,7 +30,12 @@ import type {
   WorkspaceHistoryPage,
   WorkspaceHistoryRequest,
 } from "./domain/workspace-history";
-import type { ResearchQuestion } from "./frontier/runtime/research";
+import type {
+  ResearchQuestion,
+  ResearchScope,
+  ResearchScopeDraft,
+  ResearchScopedBy,
+} from "./frontier/runtime/research";
 
 export function getWorkspaceHead(options?: ReadRequestOptions) {
   return request<WorkspaceHead>("/api/workspace/history?view=head", options);
@@ -259,7 +264,21 @@ export async function getResearchQuestion(id: string, options: ReadRequestOption
 }
 
 /** The engine is not sent: the companion snapshots Settings → Research agent onto each run. */
-export async function askResearchQuestion(input: { projectId: string; objective: string; runs: 1 | 3 }) {
+export async function scopeResearchQuestion(input: { projectId: string; objective: string }) {
+  return request<ResearchScopeDraft>(
+    "/api/research/questions/scope",
+    { method: "POST", body: JSON.stringify(input) },
+    { retryOnCsrf: false },
+  );
+}
+
+export async function askResearchQuestion(input: {
+  projectId: string;
+  objective: string;
+  runs: 1 | 3;
+  scope?: ResearchScope | null;
+  scopedBy?: ResearchScopedBy | null;
+}) {
   return (
     await request<{ question: ResearchQuestion }>(
       "/api/research/questions",

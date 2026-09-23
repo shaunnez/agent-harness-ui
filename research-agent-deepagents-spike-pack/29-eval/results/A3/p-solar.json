@@ -1,0 +1,168 @@
+{
+  "question": "p-solar",
+  "kind": "pinned",
+  "arm": "A3",
+  "status": "agreed",
+  "passes": false,
+  "consensus": {
+    "low": 10654,
+    "high": 17106
+  },
+  "range": {
+    "min": 10464,
+    "max": 18180
+  },
+  "unit": "NZD lump sum, GST exclusive",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.036,
+    "highRatio": 1.134,
+    "runsWithBand": 2,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1148,
+  "elapsedMs": 256454,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 205812,
+      "band": {
+        "unit": "NZD lump sum, GST exclusive",
+        "low": 10464,
+        "high": 16032,
+        "centre": "NZD 13,248",
+        "basis": "Auckland cost-plan estimate for the fixed scope: mounting hardware NZD 4,600–5,200 plus mounting installation labour NZD 2,378–3,566; strengthening NZD 996–1,196 plus bolt allowance NZD 150–450; structural design and PS1 NZD 2,340–5,620. Excludes GST, preliminaries, margin, PV modules, inverters, cabling, electrical work, roof sheet work, scaffolding, edge protection, roof access systems and consent fees. Low confidence reflects provisional mounting quantities, unconfirmed product compatibility/tax treatment, and the purlin and engineering take-offs requiring design confirmation."
+      },
+      "checks": [
+        "web-unverified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-unverified"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 2,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 474723,
+        "outputTokens": 8880,
+        "cachedTokens": 404736,
+        "toolCalls": 31,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.028752,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 474723,
+            "outputTokens": 8880,
+            "estimatedCostUsd": 0.028752,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 256452,
+      "band": null,
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 1094792,
+        "outputTokens": 9941,
+        "cachedTokens": 1002240,
+        "toolCalls": 75,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.046011,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 1094792,
+            "outputTokens": 9941,
+            "estimatedCostUsd": 0.046011,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 169256,
+      "band": {
+        "unit": "NZD lump sum, GST exclusive",
+        "low": 10844,
+        "high": 18180,
+        "centre": null,
+        "basis": "Sum of mounting hardware, mounting-only labour, supplementary purlins, bolt allowance and structural design/PS1. Rounded cost-plan band: $10,800–$18,200, centre about $14,500. Excludes GST, preliminaries, margin, PV/electrical work, roof repairs, access systems and consent fees as specified. Low confidence reflects unconfirmed mounting quantities, purlin size and engineering fee."
+      },
+      "checks": [
+        "web-unverified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 1,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 910053,
+        "outputTokens": 7066,
+        "cachedTokens": 818432,
+        "toolCalls": 56,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.039992,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 910053,
+            "outputTokens": 7066,
+            "estimatedCostUsd": 0.039992,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,97 @@
+{
+  "question": "open-a1",
+  "kind": "open",
+  "arm": "A3",
+  "status": "incomplete",
+  "passes": false,
+  "consensus": null,
+  "range": null,
+  "unit": "m² of soffit area",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": null,
+    "highRatio": null,
+    "runsWithBand": 1,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0117,
+  "elapsedMs": 193333,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "failed",
+      "error": {
+        "code": "codex_cli_exited_abnormally",
+        "message": "The Codex CLI exited with code 1: Selected model is at capacity. Please try a different model."
+      },
+      "elapsedMs": 93601,
+      "band": null,
+      "checks": [],
+      "citations": null,
+      "usage": {
+        "partial": true
+      }
+    },
+    {
+      "run": "r2",
+      "status": "failed",
+      "error": {
+        "code": "codex_cli_exited_abnormally",
+        "message": "The Codex CLI exited with code 1: Selected model is at capacity. Please try a different model."
+      },
+      "elapsedMs": 63498,
+      "band": null,
+      "checks": [],
+      "citations": null,
+      "usage": {
+        "partial": true
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 193331,
+      "band": {
+        "unit": "m² of soffit area",
+        "low": 60,
+        "high": 120,
+        "centre": "Auckland",
+        "basis": "NZD, GST exclusive. Sum of the published B-Class removal benchmark and a complexity uplift up to the same amount. Assumes intact, non-friable asbestos cement soffits and an area of at least 10 m². This is a cost-plan estimate, not a certified price; a very small area may exceed the rate band because of the contractor minimum."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 227500,
+        "outputTokens": 6614,
+        "cachedTokens": 158976,
+        "toolCalls": 17,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.011749,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 227500,
+            "outputTokens": 6614,
+            "estimatedCostUsd": 0.011749,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

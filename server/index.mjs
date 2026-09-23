@@ -12,9 +12,11 @@ import { ClaudeCliRolesResearchRuntime } from "./research/claude-cli/roles-runti
 import { ClaudeCliResearchRuntime } from "./research/claude-cli/runtime.mjs";
 import { CodexCliResearchRuntime } from "./research/codex-cli/runtime.mjs";
 import { FakeResearchRuntime } from "./research/fake-research-runtime.mjs";
+import { PackResearchRuntime } from "./research/pack/runtime.mjs";
 import { ResearchQuestionService } from "./research/research-question-service.mjs";
 import { ResearchQuestionStore } from "./research/research-question-store.mjs";
 import { createResearchRuntimeRegistry } from "./research/research-runtime-registry.mjs";
+import { ResearchScoper } from "./research/research-scope.mjs";
 import { ResearchService } from "./research/research-service.mjs";
 import { ResearchStore } from "./research/research-store.mjs";
 import { acquireRuntimeLock } from "./runtime-lock.mjs";
@@ -95,6 +97,7 @@ const researchService = jsonStore
         new ClaudeCliResearchRuntime(),
         new CodexCliResearchRuntime(),
         new ClaudeCliRolesResearchRuntime(),
+        new PackResearchRuntime(),
       ]),
     });
 // Questions group one or three runs under a research project; they add no runtime of their own.
@@ -104,6 +107,7 @@ const researchQuestions = researchService
       research: researchService,
       runs: researchStore,
       projects: async () => (await store.listProjects()).map(withProjectKind),
+      scoper: new ResearchScoper(),
     })
   : null;
 const configuredPullRequestPollIntervalMs = Number(process.env.AGENT_HARNESS_GITHUB_POLL_MS ?? 30_000);

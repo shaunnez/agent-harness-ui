@@ -1,0 +1,178 @@
+{
+  "question": "door-hardware-sets",
+  "kind": "pinned",
+  "arm": "A3",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 2118,
+    "high": 2437
+  },
+  "range": {
+    "min": 2064.25,
+    "max": 2675
+  },
+  "unit": "NZD per leaf (ea), GST exclusive",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.047,
+    "highRatio": 1.277,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0553,
+  "elapsedMs": 215095,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 161622,
+      "band": {
+        "unit": "NZD per leaf (ea), GST exclusive",
+        "low": 2064.25,
+        "high": 2094.58,
+        "centre": "Auckland",
+        "basis": "Sum of the distinct priced components and allowance: $1,040 lockset + $800 closer + $117.60 hinges + $51 door stop + $40.65–$60.98 remaining labour + $15–$25 keying/setup allowance. For 25 leaves, indicative total is $51,606–$52,364 excl. GST. QV hardware rows are unreviewed and do not fully establish finish, grade, or installation inclusions; confidence is low. This QV-based result is materially above the supplied $620–$880 draft band."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 374417,
+        "outputTokens": 7005,
+        "cachedTokens": 314112,
+        "toolCalls": 36,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.023597,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 374417,
+            "outputTokens": 7005,
+            "estimatedCostUsd": 0.023597,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 215092,
+      "band": {
+        "unit": "NZD per leaf, excl. GST",
+        "low": 2161,
+        "high": 2437,
+        "centre": null,
+        "basis": "Auckland QV rates plus stated proxy adjustments and allowances, for the fixed 25-leaf scope. Components are added once; the mortice lock row is treated as the complete keyed lock and handle function, with only the restricted-key-system premium and keying work allowed separately. Total for 25 leaves: $54,025–$60,925, centre about $57,475. Not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 279261,
+        "outputTokens": 7275,
+        "cachedTokens": 219392,
+        "toolCalls": 37,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.021818,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 279261,
+            "outputTokens": 7275,
+            "estimatedCostUsd": 0.021818,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 117575,
+      "band": {
+        "unit": "NZD per leaf, GST exclusive",
+        "low": 2118,
+        "high": 2675,
+        "centre": "Auckland",
+        "basis": "Sum of the separately priced lockset, closer, three hinges, stop, fitting and keying components for the specified 25-leaf run. The lockset and closer use the closest functional QV proxies with stated adjustments; minor unpublished fitting and keying work is allowed for. Low confidence reflects QV rows that do not fully specify the hardware or clearly state installation inclusions. Allowances are a small share of the total."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 200725,
+        "outputTokens": 5840,
+        "cachedTokens": 145152,
+        "toolCalls": 26,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.009929,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 200725,
+            "outputTokens": 5840,
+            "estimatedCostUsd": 0.009929,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

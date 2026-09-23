@@ -6,6 +6,7 @@
 
 export type ResearchQuestionStatus =
   | "agreed"
+  | "single_run"
   | "disputed"
   | "not_established"
   | "incomplete"
@@ -141,8 +142,63 @@ export interface ResearchQuestion {
   provenanceNote: string;
   /** Who asked: by hand, or an external request (a Linear issue, a PlanCheck tender line). */
   source?: ResearchQuestionSource;
-  /** Each banded run's unit, when the runs priced in different measures and so cannot be compared. */
+  /** Each banded run's unit, when the runs priced in different measures (or in a measure other
+   *  than the pinned scope's) and so cannot be compared. */
   unitsDiffer?: string[] | null;
+  /** The pinned scope every run was given, or null for a question asked without one. */
+  scope?: ResearchScope | null;
+  scopedBy?: ResearchScopedBy | null;
+  /** False when nobody read the scope before the runs started (an external request). */
+  scopeReviewed?: boolean | null;
+}
+
+/** The measures a band can be priced in, as the backend's unit check names them. */
+export const researchScopeMeasures = [
+  "per m²",
+  "per m³",
+  "per metre",
+  "each",
+  "per house",
+  "total",
+  "per time",
+] as const;
+
+export type ResearchScopeMeasure = (typeof researchScopeMeasures)[number];
+
+export interface ResearchScope {
+  item: string;
+  measure: ResearchScopeMeasure;
+  unitText: string;
+  quantityBasis: string;
+  inclusions: string[];
+  exclusions: string[];
+  centre: string;
+  assumptions: string[];
+  clarifications: string[];
+}
+
+/** Which model drafted a scope; `operator` when the operator wrote it, `sample` in fixture mode. */
+export type ResearchScopedBy =
+  | { runtime: "codex-cli" | "claude-cli"; model: string; reasoning: string | null }
+  | { runtime: "operator" }
+  | { runtime: "sample" };
+
+export interface ResearchScopeDraft {
+  scope: ResearchScope;
+  scopedBy: ResearchScopedBy;
+}
+
+export function scopedByLabel(scopedBy: ResearchScopedBy | null | undefined) {
+  if (!scopedBy) return "Not scoped";
+  if (scopedBy.runtime === "operator") return "Written by the operator";
+  if (scopedBy.runtime === "sample") return "Sample scope · no model was called";
+  const model =
+    scopedBy.model === "gpt-6-luna"
+      ? "GPT-6 Luna"
+      : scopedBy.model === "claude-haiku-4-5"
+        ? "Haiku 4.5"
+        : scopedBy.model;
+  return `Drafted by ${model}`;
 }
 
 export type ResearchQuestionSource =
@@ -160,14 +216,23 @@ export interface ResearchGateway {
     id: string,
     input: { decision: ResearchReview["decision"]; note: string; evidenceSha: string },
   ): Promise<ResearchQuestion>;
+  /** A draft scope for the operator to correct. Starts nothing. */
+  scope(projectId: string, objective: string): Promise<ResearchScopeDraft>;
   ask(
     projectId: string,
-    input: { objective: string; runs: 1 | 3; engine: ResearchEngineSnapshot },
+    input: {
+      objective: string;
+      runs: 1 | 3;
+      engine: ResearchEngineSnapshot;
+      scope?: ResearchScope | null;
+      scopedBy?: ResearchScopedBy | null;
+    },
   ): Promise<ResearchQuestion>;
 }
 
 export const researchStatusCopy: Record<ResearchQuestionStatus, { label: string; tone: string }> = {
   agreed: { label: "Agreed", tone: "completed" },
+  single_run: { label: "One run, not cross-checked", tone: "idle" },
   disputed: { label: "Disputed", tone: "answer" },
   not_established: { label: "Not established", tone: "idle" },
   incomplete: { label: "Did not finish", tone: "blocked" },

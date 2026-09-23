@@ -5,7 +5,7 @@
 retrieving and Opus 5.5 reasoning over a checked evidence pack, (3) the eval runs.** The eval runs
 are authorized as part of that instruction; the budget below still applies.
 
-**After compaction, start here.** Branch `claude/research-projects-backend` (stacked on PR #131,
+**Superseded as the starting point by `30-EVAL-HANDOFF.md`** (steps 1 and 2 built, eval paused). Earlier start note: Branch `claude/research-projects-backend` (stacked on PR #131,
 uncommitted work on disk, nothing pushed). Read this file, then `AGENTS.md` (the 23–24 September
 research entries), then `27-RESEARCH-PROJECTS-UI-PLAN.md` for slice A.
 

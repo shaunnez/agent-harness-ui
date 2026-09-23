@@ -145,6 +145,16 @@ function createResearchQuestionSchema(db) {
   // run ended. Null for a runtime with no cost-band recipe (the fake) and for any run that failed
   // before producing one.
   if (!columns.has("outcome_json")) db.exec("ALTER TABLE research_runs ADD COLUMN outcome_json TEXT");
+  const questionColumns = new Set(
+    db
+      .prepare("PRAGMA table_info(research_questions)")
+      .all()
+      .map((column) => column.name),
+  );
+  // The pinned scope every run was given (`research-scope.mjs`), with who scoped it. Null on a
+  // question asked without one.
+  if (!questionColumns.has("scope_json"))
+    db.exec("ALTER TABLE research_questions ADD COLUMN scope_json TEXT");
   db.exec("CREATE INDEX IF NOT EXISTS research_runs_question_idx ON research_runs(question_id, run_label)");
 }
 

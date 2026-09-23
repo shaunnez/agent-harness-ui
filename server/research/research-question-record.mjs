@@ -30,8 +30,10 @@ export function questionRecord({ question, runs, events = new Map(), review = nu
       );
   // The recorded rule compares numbers, because the pinned scopes fixed the unit. An open question
   // does not, and two runs pricing per m² and per house are not 40x apart; they are not comparable.
-  const unitsDiffer = recorded && recorded.status !== "incomplete" ? differingUnits(runs) : null;
-  const agreement = unitsDiffer ? incomparable(recorded) : recorded;
+  const scopeMeasure = question.scope?.scope?.measure ?? null;
+  const unitsDiffer =
+    recorded && recorded.status !== "incomplete" ? differingUnits(runs, scopeMeasure) : null;
+  const agreement = unitsDiffer ? incomparable(recorded) : loneBand(singleRun(recorded, runs), runs);
   const status = pending.length
     ? runRecords.some((run) => run.status === "running")
       ? "running"
@@ -76,6 +78,11 @@ export function questionRecord({ question, runs, events = new Map(), review = nu
     costUsd: costs.length ? round2(costs.reduce((sum, cost) => sum + cost, 0)) : null,
     elapsedMs: settledAt ? Date.parse(settledAt) - Date.parse(question.createdAt) : null,
     source: question.source,
+    // The pinned scope every run was given, and who scoped it. Part of the fingerprint: a review
+    // approves an answer to this scope.
+    scope: question.scope?.scope ?? null,
+    scopedBy: question.scope?.scopedBy ?? null,
+    scopeReviewed: question.scope ? question.scope.reviewed === true : null,
     unitsDiffer,
   };
   return {
@@ -155,11 +162,37 @@ export function unitMeasure(unit) {
   return UNIT_MEASURES.find(([pattern]) => pattern.test(text))?.[1] ?? null;
 }
 
-/** The banded runs' units, when they name at least two different measures; otherwise null. */
-function differingUnits(runs) {
+/** The banded runs' units, when they name at least two different measures, or any measure other
+ *  than the pinned scope's; otherwise null. */
+function differingUnits(runs, scopeMeasure = null) {
   const units = runs.map((run) => run.outcome?.costBand?.band).filter((band) => band && band.low != null);
   const measures = new Set(units.map((band) => unitMeasure(band.unit)).filter(Boolean));
-  return measures.size > 1 ? units.map((band) => String(band.unit ?? "unit not stated")) : null;
+  const offScope = scopeMeasure != null && [...measures].some((measure) => measure !== scopeMeasure);
+  return measures.size > 1 || offScope ? units.map((band) => String(band.unit ?? "unit not stated")) : null;
+}
+
+/** One banded run agrees with itself, so a Quick question is one run, not an agreement. */
+function singleRun(recorded, runs) {
+  if (recorded?.status !== "agreed" || runs.length !== 1) return recorded;
+  return { ...recorded, status: "single_run" };
+}
+
+/**
+ * One band among several runs agrees with itself too. The recorded rule (`agreement.mjs`) calls
+ * that agreed, and must keep doing so to reproduce the 22 September baseline; a question does
+ * not. When only one of two or more runs found a band, the runs disagree about whether the scope
+ * can be priced at all: disputed, with the one band as the range and no consensus. Two banded
+ * runs that agree still read as agreed, as the recorded rule has it.
+ */
+function loneBand(recorded, runs) {
+  if (recorded?.status !== "agreed" || runs.length < 2 || recorded.agreement.runsWithBand >= 2)
+    return recorded;
+  return {
+    ...recorded,
+    status: "disputed",
+    consensus: null,
+    agreement: { ...recorded.agreement, lowRatio: null, highRatio: null },
+  };
 }
 
 /** Disputed, with no consensus or ratio: bands in different units have neither. */

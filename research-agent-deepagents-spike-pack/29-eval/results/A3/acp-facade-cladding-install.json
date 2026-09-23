@@ -1,0 +1,173 @@
+{
+  "question": "acp-facade-cladding-install",
+  "kind": "pinned",
+  "arm": "A3",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 695,
+    "high": 989
+  },
+  "range": {
+    "min": 690,
+    "max": 1250
+  },
+  "unit": "NZD/m2 net cladding face, GST exclusive",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.145,
+    "highRatio": 1.419,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0277,
+  "elapsedMs": 140073,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 137728,
+      "band": {
+        "unit": "NZD/m2 net cladding face, GST exclusive",
+        "low": 695,
+        "high": 881,
+        "centre": "Auckland",
+        "basis": "Sum of separately priced components: ACP/cassette work $470–575/m2 + carrier/subgirts/brackets $100–135/m2 + 266lm flashings at $180–250/lm, allocated over 450m2 ($106.40–147.78/m2) + boom hire and delivery/pickup allocated over 450m2 ($20.47–22.69/m2). Rounded total band is $695–881/m2, centre $788/m2. For 450m2 net: $312,750–396,450, centre $354,600. Allowance content is minor; confidence remains low because key proprietary-system rates are proxies and the QV row inclusions are unreviewed."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 151095,
+        "outputTokens": 5302,
+        "cachedTokens": 103168,
+        "toolCalls": 24,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.008475,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 151095,
+            "outputTokens": 5302,
+            "estimatedCostUsd": 0.008475,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 140068,
+      "band": {
+        "unit": "$/m2 net cladding face",
+        "low": 690,
+        "high": 1250,
+        "centre": "Auckland, $970/m2",
+        "basis": "GST-exclusive NZD. Sum of the panel package, adjusted support proxy, 266 lm of flashings amortised across 450 m2, six-week lift hire amortised across 450 m2, and delivery/pickup allowance. For 450 m2: $310,500–$562,500, midpoint $436,500. Low confidence reflects broad QV proxies and unclear ACP row inclusions; this is a cost-plan estimate, not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 257401,
+        "outputTokens": 7044,
+        "cachedTokens": 197888,
+        "toolCalls": 32,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.011452,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 257401,
+            "outputTokens": 7044,
+            "estimatedCostUsd": 0.011452,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 120838,
+      "band": {
+        "unit": "$/m2 net cladding face area, GST exclusive",
+        "low": 790,
+        "high": 989,
+        "centre": "Auckland",
+        "basis": "Working estimate from distinct QV-priced ACP, support-system, flashing and access components plus the stated minor allowance. Components are added without a separate aggregate cladding rate. Allowances are a small share of the total. For 450 m2 net area: $355,500–445,050 total; midpoint approximately $400,275. Low confidence due to unreviewed QV rows, proxy adjustments, and missing flashing girths and supplier details."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 134936,
+        "outputTokens": 6158,
+        "cachedTokens": 98048,
+        "toolCalls": 21,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.007748,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 134936,
+            "outputTokens": 6158,
+            "estimatedCostUsd": 0.007748,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

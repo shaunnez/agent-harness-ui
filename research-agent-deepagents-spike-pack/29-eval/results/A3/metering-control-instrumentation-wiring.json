@@ -1,0 +1,177 @@
+{
+  "question": "metering-control-instrumentation-wiring",
+  "kind": "pinned",
+  "arm": "A3",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 59.5,
+    "high": 95.4
+  },
+  "range": {
+    "min": 49.43,
+    "max": 108.8
+  },
+  "unit": "NZD/m installed cable route, GST exclusive",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.206,
+    "highRatio": 1.313,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0542,
+  "elapsedMs": 192938,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 127955,
+      "band": {
+        "unit": "NZD/m installed cable route, GST exclusive",
+        "low": 59.6,
+        "high": 108.8,
+        "centre": "Auckland: 84.2",
+        "basis": "Sum of distinct conduit, cable proxy and minor allowance components. For 200 m nominal quantity: $11,920–$21,760, centre $16,840, GST exclusive. Allowances total $12.40–$23.80/m, under one-third of the band; confidence remains low because the screened instrumentation cable and specialist testing lack direct QV rates and the cable/conduit rates are proxies or have a wide QV spread."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 181563,
+        "outputTokens": 4962,
+        "cachedTokens": 137728,
+        "toolCalls": 24,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.008242,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 181563,
+            "outputTokens": 4962,
+            "estimatedCostUsd": 0.008242,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 168714,
+      "band": {
+        "unit": "NZD/m installed cable route, GST exclusive",
+        "low": 49.43,
+        "high": 82.84,
+        "centre": null,
+        "basis": "Additive build-up of the distinct components above, amortised over 200m. Indicative total for 200m: $9,886–$16,568, centre approximately $13,228, GST exclusive. Allowances are a minor share of the total. Low confidence reflects the unexplained spread between the two matching QV conduit rows and estimated labour hours; QV rows are unreviewed."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 528303,
+        "outputTokens": 7839,
+        "cachedTokens": 430848,
+        "toolCalls": 39,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.033987,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 528303,
+            "outputTokens": 7839,
+            "estimatedCostUsd": 0.033987,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 192934,
+      "band": {
+        "unit": "$/m installed cable route",
+        "low": 59.5,
+        "high": 95.4,
+        "centre": null,
+        "basis": "Auckland, NZD excluding GST. Components added: conduit $34.70–$60/m + cable $12.50–$17.50/m + electrician termination/interface/testing labour $10.04–$13.38/m + access allowance $1.50–$3/m + sundries allowance $0.75–$1.50/m. For the nominal 200 m: approximately $11,900–$19,100 total, centre about $15,500. Low confidence reflects the unreviewed QV rows, the duplicate conduit rate with no displayed distinction, and proxy adjustment for screened cable."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 261355,
+        "outputTokens": 6291,
+        "cachedTokens": 192000,
+        "toolCalls": 32,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.012001,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 261355,
+            "outputTokens": 6291,
+            "estimatedCostUsd": 0.012001,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

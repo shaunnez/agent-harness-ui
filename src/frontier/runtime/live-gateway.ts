@@ -10,8 +10,16 @@ const liveResearch: ResearchGateway = {
   questions: (projectId) => api.listResearchQuestions(projectId, readOptions()),
   question: (id) => api.getResearchQuestion(id, readOptions()),
   review: api.reviewResearchQuestion,
+  scope: (projectId, objective) => api.scopeResearchQuestion({ projectId, objective }),
+  // The engine is not sent: the backend snapshots the Settings choice onto each run itself.
   ask: (projectId, input) =>
-    api.askResearchQuestion({ projectId, objective: input.objective, runs: input.runs }),
+    api.askResearchQuestion({
+      projectId,
+      objective: input.objective,
+      runs: input.runs,
+      scope: input.scope ?? null,
+      scopedBy: input.scopedBy ?? null,
+    }),
 };
 
 export const liveGateway: FrontierGateway = {

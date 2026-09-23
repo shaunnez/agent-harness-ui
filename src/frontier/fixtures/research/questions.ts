@@ -9,6 +9,7 @@ import type {
   ResearchQvSource,
   ResearchRunCitations,
   ResearchRunRecord,
+  ResearchScope,
 } from "../../runtime/research.ts";
 
 /**
@@ -478,6 +479,39 @@ async function loadRecorded() {
   return new Map(questions.map((question) => [question.id, question]));
 }
 
+/** The scope GPT-6 Luna drafted for the roof example on 24 September (8.7 s, about $0.0015 at API
+ *  rates), shown for that example. Any other question gets a sample scope that says what it is. */
+const recordedRoofScope: ResearchScope = {
+  item: "Extra cost to change warehouse roof from long-run to membrane",
+  measure: "per m²",
+  unitText: "m² of roof area",
+  quantityBasis: "1200 m² warehouse; roof area not specified",
+  inclusions: ["Cost difference between membrane and long-run roofing"],
+  exclusions: [],
+  centre: "Auckland",
+  assumptions: ["Treat this as the additional roofing cost per unit area for the change"],
+  clarifications: [
+    "Confirm actual roof area and whether it matches the 1200 m² warehouse floor area",
+    "Confirm membrane and long-run roof specifications and what associated work is included",
+  ],
+};
+
+function sampleScope(objective: string): ResearchScope {
+  if (/membrane/i.test(objective) && /roof/i.test(objective)) return structuredClone(recordedRoofScope);
+  const item = objective.trim().split(/(?<=[.?!])\s/)[0] ?? objective;
+  return {
+    item: item.length > 120 ? `${item.slice(0, 118).trimEnd()}…` : item,
+    measure: "total",
+    unitText: "",
+    quantityBasis: "",
+    inclusions: [],
+    exclusions: [],
+    centre: "",
+    assumptions: [],
+    clarifications: ["Sample: no model read this question. Edit the scope to see how the form behaves."],
+  };
+}
+
 export function fixtureResearch(online: () => void): ResearchGateway {
   let loading: Promise<Map<string, ResearchQuestion>> | null = null;
   const store = () => {
@@ -514,6 +548,10 @@ export function fixtureResearch(online: () => void): ResearchGateway {
         evidenceSha: question.evidenceSha,
       };
       return structuredClone(question);
+    },
+    async scope(_projectId, objective) {
+      online();
+      return { scope: sampleScope(objective), scopedBy: { runtime: "sample" } };
     },
     async ask(projectId, input) {
       online();
@@ -562,6 +600,9 @@ export function fixtureResearch(online: () => void): ResearchGateway {
         costUsd: null,
         elapsedMs: null,
         review: null,
+        scope: input.scope ?? null,
+        scopedBy: input.scope ? (input.scopedBy ?? { runtime: "operator" }) : null,
+        scopeReviewed: input.scope ? true : null,
         provenance: "prototype-ask",
         provenanceNote: `Prototype: nothing was sent to a model. With the research backend this would start ${
           input.runs === 1 ? "one run" : `${input.runs} runs`
