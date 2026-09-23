@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "corpus": {
+    "provenance_lines": [
+      "[corpus] P317 synthetic tender — 1 file, manifest 000000000000, scope TENDER_ONLY, verified"
+    ],
+    "documents": 1,
+    "pages": 1,
+    "tender_close": "2026-09-30",
+    "reference_line": "P317 synthetic tender"
+  },
+  "coverage_summary": {
+    "pages_read": 1,
+    "pages_no_text_layer": 0,
+    "documents_read": 1,
+    "documents_not_read": []
+  },
+  "spend": { "api_calls": 0, "usd": 0 },
+  "claims": [
+    {
+      "id": "CR-001",
+      "technique": "synthetic_test",
+      "grade": "MODEL_DETECTED",
+      "claim": "Hardfill excavation quantity is undefined.",
+      "why_a_gap": null,
+      "trigger": "A reviewer confirms the scope.",
+      "evidence": [
+        { "document": "synthetic-tender.pdf", "page": 1, "kind": "quote", "text": "Excavation scope to be confirmed.", "source": "text_layer" }
+      ],
+      "verification": "UNVERIFIED"
+    },
+    {
+      "id": "CR-002",
+      "technique": "synthetic_test",
+      "grade": "MODEL_DETECTED",
+      "claim": "Hardfill excavation quantity is undefined.",
+      "why_a_gap": null,
+      "trigger": "A reviewer confirms the scope.",
+      "evidence": [
+        { "document": "synthetic-tender.pdf", "page": 1, "kind": "quote", "text": "Excavation scope to be confirmed.", "source": "text_layer" }
+      ],
+      "verification": "UNVERIFIED"
+    },
+    {
+      "id": "CR-003",
+      "technique": "synthetic_test",
+      "grade": "MODEL_DETECTED",
+      "claim": "Contract particulars are incomplete.",
+      "why_a_gap": null,
+      "trigger": "A reviewer confirms the terms.",
+      "evidence": [
+        { "document": "synthetic-tender.pdf", "page": 1, "kind": "quote", "text": "Contract particulars to follow.", "source": "text_layer" }
+      ],
+      "verification": "UNVERIFIED"
+    }
+  ]
+}

@@ -61,6 +61,7 @@ try {
     throw new Error("Playwright dependency installation failed in the grader archive.");
   await copyFile(path.join(checkerRoot, "p317-hidden.spec.ts"), path.join(checkout, "e2e/tests/p317-hidden.spec.ts"));
   await copyFile(path.join(checkerRoot, "test_p317_pg.py"), path.join(checkout, "tests/integration/test_p317_hidden.py"));
+  await copyFile(path.join(checkerRoot, "synthetic_register.json"), path.join(checkout, "tests/fixtures/p317-synthetic-register.json"));
   composeStarted = true;
   checks.push({
     id: "postgres-persistence-and-totals",

@@ -61,7 +61,11 @@ const definitions = {
       "test_managed_worker_start_duplicate_guard_and_graceful_stop",
     ],
     grader: "evaluations/graders/p05.mjs",
-    graderAssets: ["evaluations/graders/p05/test_p317_pg.py", "evaluations/graders/p05/p317-hidden.spec.ts"],
+    graderAssets: [
+      "evaluations/graders/p05/test_p317_pg.py",
+      "evaluations/graders/p05/p317-hidden.spec.ts",
+      "evaluations/graders/p05/synthetic_register.json",
+    ],
     graderOutput: "directory",
     graderTimeoutMs: 900000,
     checkIds: ["postgres-persistence-and-totals", "review-browser-selection"],

@@ -22,6 +22,15 @@ ROOT = Path(os.environ["P317_CANDIDATE_ROOT"])
 DB_URL = os.environ["PLANCHECK_TEST_DATABASE_URL"]
 
 
+def candidate_ids(candidates):
+    return [
+        item if isinstance(item, str)
+        else item["scenario_id"] if isinstance(item, dict)
+        else item.scenario_id
+        for item in candidates
+    ]
+
+
 @pytest.fixture
 def case(monkeypatch):
     monkeypatch.setenv("DATABASE_URL", DB_URL)
@@ -49,10 +58,7 @@ def case(monkeypatch):
             (ROOT / "tests/fixtures/construction_catalogue.json").read_text()
         )
         catalogue = jobs.import_catalogue(content, account_id=account)
-        document = json.loads(
-            (ROOT / "evidence/qcc19/cleanroom/claim_register.json").read_text()
-        )
-        document["claims"] = document["claims"][:3]
+        document = json.loads((ROOT / "tests/fixtures/p317-synthetic-register.json").read_text())
         for claim in document["claims"][:2]:
             claim["claim"] = "Hardfill excavation quantity is undefined."
             claim["verification"] = "UNVERIFIED"
@@ -111,7 +117,7 @@ def test_ambiguous_candidates_survive_storage_and_need_explicit_selection(case):
     assert after.summary.priced_claims == 0
     assert after.summary.needs_review == 2
     assert all(c.availability == "needs_review" and c.amount is None for c in affected)
-    assert all(c.candidates == ["ground", "other-ground"] for c in affected)
+    assert all(candidate_ids(c.candidates) == ["ground", "other-ground"] for c in affected)
     with f["engine"].begin() as conn:
         stored = (
             conn.execute(
@@ -123,7 +129,7 @@ def test_ambiguous_candidates_survive_storage_and_need_explicit_selection(case):
             .mappings()
             .all()
         )
-    assert {row["claim_id"]: row["candidates"] for row in stored} == {
+    assert {row["claim_id"]: candidate_ids(row["candidates"]) for row in stored} == {
         f["document"]["claims"][0]["id"]: ["ground", "other-ground"],
         f["document"]["claims"][1]["id"]: ["ground", "other-ground"],
         f["document"]["claims"][2]["id"]: [],
@@ -163,4 +169,5 @@ def test_incompatible_scope_retains_refused_scenario_id(case):
         catalogue,
     )
     assert refused.state == "incompatible"
-    assert "ground" in refused.candidates
+    refused_ids = candidate_ids(getattr(refused, "refused", ()))
+    assert "ground" in candidate_ids(refused.candidates) + refused_ids

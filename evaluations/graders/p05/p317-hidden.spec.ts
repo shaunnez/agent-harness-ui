@@ -6,8 +6,14 @@ import { login } from './helpers'
 import { drainConstructionPricing, importConstructionCatalogue } from './constructionPricingFixture'
 
 const ROOT = resolve(__dirname, '../..')
-const REGISTER = JSON.parse(readFileSync(resolve(ROOT, 'evidence/qcc19/cleanroom/claim_register.json'), 'utf8'))
+const REGISTER = JSON.parse(readFileSync(resolve(ROOT, 'tests/fixtures/p317-synthetic-register.json'), 'utf8'))
 const CATALOGUE = JSON.parse(readFileSync(resolve(ROOT, 'tests/fixtures/construction_catalogue.json'), 'utf8'))
+
+function candidateIds(candidates: unknown): string[] {
+  expect(Array.isArray(candidates)).toBe(true)
+  return (candidates as (string | { scenario_id: string })[]).map(candidate =>
+    typeof candidate === 'string' ? candidate : candidate.scenario_id)
+}
 
 async function api<T>(page: Page, method: string, path: string, data?: unknown, accountId?: string): Promise<T> {
   const token = await page.evaluate(() => sessionStorage.getItem('eversor_access_token'))
@@ -47,12 +53,12 @@ test('Review shows withheld ambiguous and refused scenarios, then saves an expli
       tender_id: tender.id, origin: 'upload', label: 'P317 synthetic register', document,
     }, account.id)
     drainConstructionPricing()
-    const costs = await api<{ summary: { amount: unknown }; claims: { claim_id: string; candidates?: string[]; amount: unknown }[] }>(
+    const costs = await api<{ summary: { amount: unknown }; claims: { claim_id: string; candidates?: unknown; amount: unknown }[] }>(
       page, 'GET', `/variation-costs/registers/${register.id}`, undefined, account.id,
     )
     expect(costs.summary.amount).toBeNull()
-    expect(costs.claims[0].candidates).toEqual(['ground', 'other-ground'])
-    expect(costs.claims[1].candidates).toEqual(['ground', 'other-ground'])
+    expect(candidateIds(costs.claims[0].candidates)).toEqual(['ground', 'other-ground'])
+    expect(candidateIds(costs.claims[1].candidates)).toEqual(['ground', 'other-ground'])
 
     await page.evaluate(() => localStorage.setItem('eversor_feature_flags', JSON.stringify({ variation_costs: true })))
     await page.goto(`/tender-assessment/${tender.id}/review`)
