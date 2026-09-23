@@ -19,6 +19,7 @@ import path from "node:path";
 import process from "node:process";
 import { runProcess } from "../../process-runtime.mjs";
 import { assertSubscriptionAuth } from "./auth.mjs";
+import { assertSupportedReasoning } from "../../model-catalog.mjs";
 import { buildClaudeEnvironment, classifyCall, runClaudeCall } from "./cli-call.mjs";
 import { findingsFromCostBand, parseCostBand, qvMcpConfig, resolveCorpusIndexPath } from "./qv-recipe.mjs";
 import { RESEARCH_ROLE_SEQUENCE, verifierEffect } from "./roles.mjs";
@@ -113,6 +114,11 @@ export class ClaudeCliRolesResearchRuntime {
       toolCallCount: 0,
       searchCallCount: 0,
       currentRole: null,
+      // The Settings choice per role, snapshotted by the service, over the constructor's.
+      roles:
+        request.researchPolicy?.runtime === this.#id
+          ? structuredClone(request.researchPolicy.roles ?? {})
+          : null,
     };
     this.#runs.set(request.id, run);
     this.#enqueue(() => this.#sequenceRun(run, { binary, corpusIndexPath, prompts }));
@@ -122,10 +128,20 @@ export class ClaudeCliRolesResearchRuntime {
       runtimeId: this.#id,
       status: run.state,
       startedAt: new Date(startedAtMs).toISOString(),
-      model: { provider: this.#id, model: this.#model, live: true },
+      model: { provider: this.#id, model: this.#roleModel(run, "researcher"), live: true },
       runtimeMetadata: {
-        cliModel: this.#model,
+        cliModel: this.#roleModel(run, "researcher"),
         roles: this.#sequence.map((entry) => entry.role).join(","),
+        ...(run.roles
+          ? {
+              roleModels: this.#sequence
+                .map(
+                  (entry) =>
+                    `${entry.role}=${this.#roleModel(run, entry.role)}/${run.roles[entry.role]?.reasoning ?? "default"}`,
+                )
+                .join(","),
+            }
+          : {}),
       },
     };
   }
@@ -181,7 +197,7 @@ export class ClaudeCliRolesResearchRuntime {
     if (!run.closed) throw new Error(`Research run ${runId} has not finished.`);
     return {
       runId,
-      model: { provider: this.#id, model: this.#model, live: true },
+      model: { provider: this.#id, model: this.#roleModel(run, "researcher"), live: true },
       ...(run.costBand?.band?.basis ? { summary: run.costBand.band.basis } : {}),
       findings: findingsFromCostBand(run.costBand, { runId }),
       artifacts: run.artifacts,
@@ -268,7 +284,12 @@ export class ClaudeCliRolesResearchRuntime {
           env,
           cwd: workingDirectory,
           objective: entry.buildObjective({ scope: request.objective, outputs: run.outputs }),
-          model: this.#modelByRole[entry.role] ?? this.#model,
+          model: this.#roleModel(run, entry.role),
+          // Only a Settings choice passes an effort; the constructor path keeps the recorded
+          // configuration, which passed none.
+          effort: run.roles?.[entry.role]?.reasoning
+            ? assertSupportedReasoning(this.#roleModel(run, entry.role), run.roles[entry.role].reasoning)
+            : null,
           systemPrompt: prompts.get(entry.role),
           mcpConfigPath,
           allowedTools: entry.allowedTools,
@@ -358,6 +379,10 @@ export class ClaudeCliRolesResearchRuntime {
       data,
     });
     for (const resolve of run.waiters.splice(0)) resolve();
+  }
+
+  #roleModel(run, role) {
+    return run.roles?.[role]?.model ?? this.#modelByRole[role] ?? this.#model;
   }
 
   #require(runId) {

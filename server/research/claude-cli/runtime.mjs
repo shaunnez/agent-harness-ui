@@ -167,8 +167,13 @@ export class ClaudeCliResearchRuntime {
     const systemPrompt = await readFile(this.#systemPromptPath, "utf8");
     const startedAtMs = this.#now();
 
+    // The Settings choice the service snapshotted onto this run, when it is for this runtime.
+    // Otherwise the runtime's own default answers, with the CLI's own reasoning default.
+    const policy = request.researchPolicy?.runtime === this.#id ? request.researchPolicy : null;
     const run = {
       request,
+      model: policy?.model ?? this.#model,
+      reasoning: policy?.reasoning ?? null,
       state: "queued",
       emitted: [],
       waiters: [],
@@ -207,9 +212,10 @@ export class ClaudeCliResearchRuntime {
       startedAt: new Date(startedAtMs).toISOString(),
       // Live, always: this runtime has no fake path. A run that cannot reach the subscription
       // fails in `start()` above rather than resolving something that looks like an answer.
-      model: { provider: this.#id, model: this.#model, live: true },
+      model: { provider: this.#id, model: run.model, live: true },
       runtimeMetadata: this.#driver.metadata({
-        model: this.#model,
+        model: run.model,
+        reasoning: run.reasoning,
         allowedTools: this.#allowedTools,
         env: this.#env,
       }),
@@ -270,7 +276,7 @@ export class ClaudeCliResearchRuntime {
     const truncatedBy = truncationOf(run);
     return {
       runId,
-      model: { provider: this.#id, model: this.#model, live: true },
+      model: { provider: this.#id, model: run.model, live: true },
       ...(run.costBand?.band?.basis ? { summary: run.costBand.band.basis } : {}),
       findings,
       artifacts: run.artifacts,
@@ -365,7 +371,8 @@ export class ClaudeCliResearchRuntime {
         env: this.#env,
         workingDirectory,
         objective: request.objective,
-        model: this.#model,
+        model: run.model,
+        reasoning: run.reasoning,
         systemPrompt,
         mcpConfig,
         allowedTools: this.#allowedTools,

@@ -24,6 +24,7 @@ export function claudeCallArgs({
   mcpConfigPath,
   allowedTools,
   maxUsd = null,
+  effort = null,
 }) {
   return [
     "-p",
@@ -42,6 +43,8 @@ export function claudeCallArgs({
     // Absent unless the budget names a dollar ceiling: a default would cap runs nobody asked
     // to cap, and the recorded baseline was produced without one.
     ...(maxUsd ? ["--max-budget-usd", String(maxUsd)] : []),
+    // Absent unless the run's Settings policy names one, for the same reason.
+    ...(effort ? ["--effort", effort] : []),
   ];
 }
 
@@ -63,6 +66,7 @@ export async function runClaudeCall({
   mcpConfigPath,
   allowedTools,
   maxUsd = null,
+  effort = null,
   timeoutMs,
   signal,
   // The budget lines this call is held to while it runs. The CLI enforces none of them: the
@@ -100,7 +104,15 @@ export async function runClaudeCall({
     sawCeiling: false,
     ceiling: null,
   };
-  const args = claudeCallArgs({ objective, model, systemPrompt, mcpConfigPath, allowedTools, maxUsd });
+  const args = claudeCallArgs({
+    objective,
+    model,
+    systemPrompt,
+    mcpConfigPath,
+    allowedTools,
+    maxUsd,
+    effort,
+  });
   const handleLine = (rawLine) => {
     onRawLine(rawLine);
     let parsed;

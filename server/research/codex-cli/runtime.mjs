@@ -33,18 +33,18 @@ export function codexCliDriver({ reasoning = null } = {}) {
     emptyOutputCode: CODEX_EMPTY_OUTPUT_ERROR_CODE,
     assertAuth: assertChatGptAuth,
     defaultModel: (env) => env.RESEARCH_CODEX_CLI_MODEL ?? DEFAULT_CODEX_CLI_MODEL,
-    metadata: ({ model, allowedTools, env }) => ({
+    metadata: ({ model, reasoning: chosen, allowedTools, env }) => ({
       cliModel: model,
-      reasoning: effort(env),
+      reasoning: chosen ?? effort(env),
       allowedTools: allowedTools.join(","),
       costBasis: "api_rate_estimate",
     }),
-    call: ({ workingDirectory, budget, env, ...rest }) =>
+    call: ({ workingDirectory, budget, env, reasoning: chosen = null, ...rest }) =>
       runCodexCall({
         ...rest,
         env,
         cwd: workingDirectory,
-        reasoning: effort(env),
+        reasoning: chosen ?? effort(env),
         timeoutMs: budget?.maxRuntimeMs ?? 30 * 60_000,
         ceilings: budget ?? null,
       }),

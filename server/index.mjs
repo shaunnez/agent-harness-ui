@@ -84,6 +84,8 @@ const researchService = jsonStore
   ? null
   : new ResearchService({
       store: new ResearchStore(store.databaseHandle()),
+      // Settings → Research agent picks the engine and model for a run that names neither.
+      settings: () => store.settings(),
       registry: createResearchRuntimeRegistry([
         new FakeResearchRuntime(),
         new ClaudeCliResearchRuntime(),

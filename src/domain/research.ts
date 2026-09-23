@@ -81,7 +81,25 @@ export interface ResearchRequest {
   /** Opaque operator-supplied labels. Passed to the runtime untouched; a runtime that does
    *  not recognise a key must ignore it. Not a place for Eversor semantics. */
   metadata?: Record<string, string>;
+  /** The Settings choice this run took when it started (`src/research-policies.ts`). Stamped
+   *  by the service, never accepted from a caller. Absent for a runtime the Research section
+   *  does not configure; that runtime used its own default. */
+  researchPolicy?: ResearchRunPolicy;
 }
+
+export type ResearchRunPolicy =
+  | {
+      source: "settings-default" | "settings-for-named-runtime";
+      runtime: "claude-cli" | "codex-cli";
+      provider: "claude" | "codex";
+      model: string;
+      reasoning: string;
+    }
+  | {
+      source: "settings-default" | "settings-for-named-runtime";
+      runtime: "claude-cli-roles";
+      roles: Record<ResearchRole, { provider: "claude"; model: string; reasoning: string }>;
+    };
 
 export interface ResearchUsage {
   inputTokens?: number;

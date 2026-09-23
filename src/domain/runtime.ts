@@ -952,6 +952,9 @@ export interface RuntimeSettings {
   stagePolicies: Record<string, RuntimeAgentPolicy>;
   profileStagePolicies?: Record<WorkflowProfileId, Record<string, RuntimeAgentPolicy>>;
   designPolicies: RuntimeDesignPolicies;
+  /** Research runs only. Absent from settings saved before the section existed, which read as
+   *  the defaults (`researchPoliciesOf`). */
+  researchPolicies?: import("../research-policies.ts").RuntimeResearchPolicies;
   pricing: {
     version: string;
     sourceUrl: string;

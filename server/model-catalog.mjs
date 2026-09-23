@@ -1,4 +1,5 @@
 import { DEFAULT_REPAIR_LIMITS } from "../src/repair-limits.ts";
+import { DEFAULT_RESEARCH_POLICIES, researchPoliciesOf } from "../src/research-policies.ts";
 import { readFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -308,7 +309,15 @@ export function defaultRuntimeSettings() {
     // against this list and a Claude task's policies must name Claude models. The
     // selected provider, not this list, decides which runtime executes.
     allowedModels: [
-      ...new Set([defaultModel, "gpt-6-sol", "gpt-6-luna", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", ...CLAUDE_MODEL_IDS]),
+      ...new Set([
+        defaultModel,
+        "gpt-6-sol",
+        "gpt-6-luna",
+        "gpt-5.6-sol",
+        "gpt-5.6-terra",
+        "gpt-5.6-luna",
+        ...CLAUDE_MODEL_IDS,
+      ]),
     ],
     defaultModel,
     defaultReasoning,
@@ -319,6 +328,7 @@ export function defaultRuntimeSettings() {
       providerForModelId(defaultModel) ?? DEFAULT_EXECUTION_PROVIDER,
     ),
     designPolicies: structuredClone(DEFAULT_DESIGN_POLICIES),
+    researchPolicies: structuredClone(DEFAULT_RESEARCH_POLICIES),
     pricing: {
       version: PRICING_VERSION,
       sourceUrl: PRICING_SOURCE_URL,
@@ -398,6 +408,12 @@ export function withConfiguredModels(catalog, settings) {
       ...(settings?.allowedModels ?? []),
       ...Object.values(settings?.stagePolicies ?? {}).map((policy) => policy?.model),
       ...Object.values(settings?.designPolicies ?? {}).map((policy) => policy?.model),
+      ...(settings
+        ? (() => {
+            const research = researchPoliciesOf(settings);
+            return [research.agent.model, ...Object.values(research.roles).map((policy) => policy.model)];
+          })()
+        : []),
     ]
       .filter(Boolean)
       .map(normalizeModelId),

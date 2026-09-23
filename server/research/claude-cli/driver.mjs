@@ -8,6 +8,7 @@
 
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
+import { assertSupportedReasoning } from "../../model-catalog.mjs";
 import { assertSubscriptionAuth } from "./auth.mjs";
 import { buildClaudeEnvironment, classifyCall, runClaudeCall } from "./cli-call.mjs";
 
@@ -24,9 +25,13 @@ export const claudeCliDriver = Object.freeze({
   emptyOutputCode: EMPTY_OUTPUT_ERROR_CODE,
   assertAuth: assertSubscriptionAuth,
   defaultModel: (env) => env.RESEARCH_CLAUDE_CLI_MODEL ?? DEFAULT_CLAUDE_CLI_MODEL,
-  metadata: ({ model, allowedTools }) => ({ cliModel: model, allowedTools: allowedTools.join(",") }),
+  metadata: ({ model, reasoning, allowedTools }) => ({
+    cliModel: model,
+    ...(reasoning ? { effort: reasoning } : {}),
+    allowedTools: allowedTools.join(","),
+  }),
 
-  async call({ run, binary, env, workingDirectory, mcpConfig, budget, ...rest }) {
+  async call({ run, binary, env, workingDirectory, mcpConfig, budget, reasoning = null, ...rest }) {
     const mcpConfigPath = path.join(workingDirectory, "mcp.json");
     await writeFile(mcpConfigPath, JSON.stringify(mcpConfig), "utf8");
     return runClaudeCall({
@@ -36,6 +41,9 @@ export const claudeCliDriver = Object.freeze({
       env: buildClaudeEnvironment(env, workingDirectory),
       cwd: workingDirectory,
       mcpConfigPath,
+      // Only when the run carries a Settings choice: the recorded baseline passed no effort,
+      // and the benchmarks, which bypass Settings, must keep passing none.
+      effort: reasoning ? assertSupportedReasoning(rest.model, reasoning) : null,
       maxUsd: budget?.maxUsd ?? null,
       timeoutMs: budget?.maxRuntimeMs ?? 30 * 60_000,
       ceilings: budget ?? null,

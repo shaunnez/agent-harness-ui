@@ -26,6 +26,9 @@ was written and what to add to it.
 
 ## 1. Research on Codex (GPT-6 Sol). About one day, plus a baseline run.
 
+**Status (23 September):** built on `claude/research-codex-runtime` and pinned to two captured
+runs; see `server/research/codex-cli/README.md`. The 30-scope baseline has not been run.
+
 A third runtime, `codex-cli`, beside `claude-cli`. It uses the same recipe and scoring, with a
 different CLI underneath.
 
@@ -57,6 +60,10 @@ different CLI underneath.
   test. Ask before spending on it.
 
 ## 2. Pick the research model in Settings. Half a day to a day.
+
+**Status (23 September):** built on the same branch: Settings → Research agent
+(`src/frontier/views/ResearchSettings.tsx`, `src/research-policies.ts`), snapshotted onto each run
+as `request.researchPolicy`.
 
 Today the model comes from code or an environment variable. Add a **Research** section under
 Frontier Settings (`src/frontier/views/ExecutionSettings.tsx` already edits per-role
