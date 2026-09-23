@@ -91,6 +91,10 @@ export interface ResearchUsage {
   toolCalls?: number;
   searchCalls?: number;
   estimatedCostUsd?: number;
+  /** Where `estimatedCostUsd` came from. `provider_reported`: the CLI priced the call itself
+   *  (Claude). `api_rate_estimate`: tokens priced with the rate card, because the plan bills
+   *  nothing per call (Codex on ChatGPT). Absent means provider-reported, as before. */
+  costBasis?: "provider_reported" | "api_rate_estimate";
   /** True when a failure or cancellation means some spend is unaccounted for. Research never
    *  records `usage: null` on a failed run the way the SDLC plane does today (audit §12). */
   partial: boolean;

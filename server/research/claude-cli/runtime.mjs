@@ -30,15 +30,14 @@
 
 import { randomUUID } from "node:crypto";
 import { createWriteStream } from "node:fs";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { runProcess } from "../../process-runtime.mjs";
 import { DEFAULT_RESEARCH_SOURCE_DIRECTORY } from "../research-web-tools.mjs";
-import { assertSubscriptionAuth } from "./auth.mjs";
 import { checkCostBandCitations } from "./citations.mjs";
-import { buildClaudeEnvironment, classifyCall, runClaudeCall } from "./cli-call.mjs";
+import { claudeCliDriver } from "./driver.mjs";
 import { hostToolOf } from "./host-tools/definitions.mjs";
 import { openHostToolSession } from "./host-tools/session.mjs";
 import {
@@ -55,8 +54,7 @@ import { redactSecretsInFile, scannedNeedles } from "./secret-scan.mjs";
 
 export const CLAUDE_CLI_RESEARCH_RUNTIME_ID = "claude-cli";
 
-/** The model a research run uses unless told otherwise. */
-export const DEFAULT_CLAUDE_CLI_MODEL = "claude-opus-5-5";
+export { DEFAULT_CLAUDE_CLI_MODEL, EMPTY_OUTPUT_ERROR_CODE } from "./driver.mjs";
 
 /** The model all 90 recorded runs used. The benchmarks pin it, because a different model is a
  *  different baseline and the comparison against `17a-top30-results.json` stops meaning anything
@@ -69,10 +67,6 @@ export const RECORDED_BASELINE_MODEL = "claude-opus-5";
 export const DEFAULT_MAX_CONCURRENT_RUNS = 3;
 
 export const DEFAULT_TRANSCRIPT_DIRECTORY = path.resolve(".data", "research-claude-cli");
-
-/** A run that exits cleanly having emitted no terminal `result` line. Named so a caller can
- *  retry it without string-matching a message. */
-export const EMPTY_OUTPUT_ERROR_CODE = "claude_cli_empty_output";
 
 export class ClaudeCliResearchRuntime {
   #id;
@@ -95,6 +89,7 @@ export class ClaudeCliResearchRuntime {
   #sourceSnapshotDirectory;
   #captureProvider;
   #webToolsOptions;
+  #driver;
 
   constructor({
     id = CLAUDE_CLI_RESEARCH_RUNTIME_ID,
@@ -111,7 +106,10 @@ export class ClaudeCliResearchRuntime {
     // Injected so the process boundary and the auth gate can be exercised without a CLI on
     // the machine. Nothing else in this class is swappable: the flags are the point.
     run = runProcess,
-    assertAuth = assertSubscriptionAuth,
+    // Which CLI answers: its login gate, flags and stream reader (`driver.mjs`). Everything
+    // else in this class is shared, so two CLIs run the same recipe the same way.
+    driver = claudeCliDriver,
+    assertAuth = driver.assertAuth,
     // The host tools the agent may call. Empty turns them off, which is what reproducing the
     // recorded baseline exactly would need: those 90 runs had no way to fetch a page.
     hostTools = QV_HOST_TOOLS,
@@ -124,7 +122,8 @@ export class ClaudeCliResearchRuntime {
   } = {}) {
     this.#id = id;
     this.#env = env;
-    this.#model = model ?? env.RESEARCH_CLAUDE_CLI_MODEL ?? DEFAULT_CLAUDE_CLI_MODEL;
+    this.#driver = driver;
+    this.#model = model ?? driver.defaultModel(env);
     this.#binary = binary;
     this.#maxConcurrent = Math.max(1, Number(maxConcurrentRuns) || DEFAULT_MAX_CONCURRENT_RUNS);
     this.#transcriptDirectory = transcriptDirectory;
@@ -144,6 +143,12 @@ export class ClaudeCliResearchRuntime {
 
   get id() {
     return this.#id;
+  }
+
+  /** The error code this runtime's CLI fails with when it exits cleanly having said nothing,
+   *  which is the one failure `trio.mjs` retries. */
+  get emptyOutputCode() {
+    return this.#driver.emptyOutputCode;
   }
 
   /**
@@ -203,7 +208,11 @@ export class ClaudeCliResearchRuntime {
       // Live, always: this runtime has no fake path. A run that cannot reach the subscription
       // fails in `start()` above rather than resolving something that looks like an answer.
       model: { provider: this.#id, model: this.#model, live: true },
-      runtimeMetadata: { cliModel: this.#model, allowedTools: this.#allowedTools.join(",") },
+      runtimeMetadata: this.#driver.metadata({
+        model: this.#model,
+        allowedTools: this.#allowedTools,
+        env: this.#env,
+      }),
     };
   }
 
@@ -217,7 +226,7 @@ export class ClaudeCliResearchRuntime {
         phase: run.state === "completed" ? "done" : run.state === "queued" ? "queued" : "investigate",
       },
       budgetState: {
-        modelCallsUsed: Number(run.resultLine?.num_turns ?? 0),
+        modelCallsUsed: Number(run.resultLine?.num_turns ?? run.usage?.modelCalls ?? 0),
         toolCallsUsed: run.toolCallCount,
         searchCallsUsed: run.searchCallCount,
         // One agent, so exactly one researcher ever starts. Reported rather than left absent
@@ -343,34 +352,25 @@ export class ClaudeCliResearchRuntime {
           emit: (type, data) => this.#emit(run, type, data),
           onTerminal: stop,
         });
-      const mcpConfigPath = path.join(workingDirectory, "mcp.json");
-      await writeFile(
-        mcpConfigPath,
-        JSON.stringify(
-          qvMcpConfig({
-            pythonBin: this.#pythonBin,
-            indexPath: corpusIndexPath,
-            hostTools: session?.mcpEntry,
-          }),
-        ),
-        "utf8",
-      );
+      const mcpConfig = qvMcpConfig({
+        pythonBin: this.#pythonBin,
+        indexPath: corpusIndexPath,
+        hostTools: session?.mcpEntry,
+      });
 
       run.state = "running";
-      const call = await runClaudeCall({
+      const call = await this.#driver.call({
         run: this.#run,
         binary,
-        env: buildClaudeEnvironment(this.#env, workingDirectory),
-        cwd: workingDirectory,
+        env: this.#env,
+        workingDirectory,
         objective: request.objective,
         model: this.#model,
         systemPrompt,
-        mcpConfigPath,
+        mcpConfig,
         allowedTools: this.#allowedTools,
-        maxUsd: request.budget?.maxUsd ?? null,
-        timeoutMs: request.budget?.maxRuntimeMs ?? 30 * 60_000,
+        budget: request.budget ?? null,
         signal: run.controller.signal,
-        ceilings: request.budget ?? null,
         onCeiling: (ceiling, counts) =>
           stop({
             outcome: "terminal",
@@ -445,8 +445,8 @@ export class ClaudeCliResearchRuntime {
     if (run.transcriptPath)
       run.artifacts.push({
         id: "cli-transcript",
-        kind: "claude-cli-transcript",
-        name: "Claude CLI stream transcript",
+        kind: this.#driver.transcript.kind,
+        name: this.#driver.transcript.name,
         contentRef: run.transcriptPath,
       });
 
@@ -466,7 +466,7 @@ export class ClaudeCliResearchRuntime {
         ...(run.truncatedBy ? { truncatedBy: run.truncatedBy } : {}),
       });
     } else {
-      const verdict = classifyCall(call ?? {}, { emptyOutputCode: EMPTY_OUTPUT_ERROR_CODE });
+      const verdict = this.#driver.classify(call ?? {});
       if (verdict.timedOut) run.sawCeiling = true;
       if (verdict.ok) {
         run.state = "completed";

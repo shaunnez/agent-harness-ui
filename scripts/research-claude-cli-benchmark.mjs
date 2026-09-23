@@ -15,11 +15,21 @@
 // By default the agent has the host tools (`fetch_source`, `read_source`) and every citation
 // is checked; the recorded runs had neither. `--no-host-tools` runs the recorded configuration
 // exactly, which is the run to use when the question is whether the port itself is faithful.
+//
+// `--runtime codex-cli` runs the same scopes through Codex on the ChatGPT plan (GPT-6 Sol by
+// default), behind its own opt-in, `RUN_CODEX_CLI_BENCHMARK=1`. The baseline is Opus's, so a
+// Codex run is a measurement against it rather than a pass/fail port check: it reports the
+// same comparison and never fails the exit code on it. Its dollar figure is an API-rate
+// estimate; the plan itself bills nothing per call.
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { ClaudeCliResearchRuntime, RECORDED_BASELINE_MODEL } from "../server/research/claude-cli/runtime.mjs";
+import {
+  CodexCliResearchRuntime,
+  DEFAULT_CODEX_CLI_MODEL,
+} from "../server/research/codex-cli/runtime.mjs";
 import { resolveResearchBudget } from "../src/research-budget-policy.ts";
 import {
   compareWithBaseline,
@@ -29,13 +39,22 @@ import {
   runBenchmark,
 } from "./research-claude-cli/benchmark.mjs";
 
-if (process.env.RUN_CLAUDE_CLI_BENCHMARK !== "1")
+const options = readOptions(process.argv.slice(2));
+const codex = options.runtime === "codex-cli";
+if (codex && process.env.RUN_CODEX_CLI_BENCHMARK !== "1")
+  throw new Error(
+    "Set RUN_CODEX_CLI_BENCHMARK=1 to confirm live runs on the ChatGPT plan. " +
+      `The full set is ${RECORDED_BASELINE.scenarios} scenarios x 3 runs.`,
+  );
+if (!codex && process.env.RUN_CLAUDE_CLI_BENCHMARK !== "1")
   throw new Error(
     "Set RUN_CLAUDE_CLI_BENCHMARK=1 to confirm live runs on the Claude subscription. " +
       `The full set is ${RECORDED_BASELINE.scenarios} scenarios x 3 runs, around $${RECORDED_BASELINE.planUsdPerScenario} of plan usage each.`,
   );
-
-const options = readOptions(process.argv.slice(2));
+const model = options.model ?? (codex ? DEFAULT_CODEX_CLI_MODEL : RECORDED_BASELINE_MODEL);
+options.out ??= codex
+  ? path.resolve(".data", "research-codex-cli", "benchmark.json")
+  : path.resolve(".data", "research-claude-cli", "phase-1-benchmark.json");
 const scopes = (await loadPinnedScopes({ only: options.scopes })).slice(0, options.limit ?? undefined);
 if (!scopes.length) throw new Error("No pinned scopes matched the selection.");
 
@@ -54,9 +73,10 @@ const budget = resolveResearchBudget("standard", {
   ...(options.maxUsd ? { maxUsd: options.maxUsd } : {}),
 });
 
-const runtime = new ClaudeCliResearchRuntime({
+const Runtime = codex ? CodexCliResearchRuntime : ClaudeCliResearchRuntime;
+const runtime = new Runtime({
   maxConcurrentRuns: options.concurrency,
-  model: options.model ?? RECORDED_BASELINE_MODEL,
+  model,
   // `--no-host-tools` is the recorded configuration exactly: no way to fetch a page. Without it
   // the agent can retain and quote web pages, which is a different recipe from the one the
   // 90 recorded runs used — so the exit test below becomes a regression check, not a port check.
@@ -90,7 +110,9 @@ const exitTest = evaluateExitTest(comparison, { scenariosRun: records.length });
 const report = {
   generatedAt: new Date().toISOString(),
   runtime: runtime.id,
-  model: options.model ?? RECORDED_BASELINE_MODEL,
+  model,
+  // A Codex run is a measurement against Opus's baseline; see the header.
+  measurementOnly: codex,
   concurrency: options.concurrency,
   elapsedMs: Date.now() - startedAt,
   aborted,
@@ -108,7 +130,7 @@ await writeFile(options.out, `${JSON.stringify(report, null, 1)}\n`, "utf8");
 process.stdout.write(`${renderSummary(report)}\n`);
 process.stderr.write(`Report written to ${options.out}\n`);
 // A partial run has no verdict to fail on, so it exits 0 with the comparison and says so.
-if (exitTest.applicable && !exitTest.passed) process.exitCode = 1;
+if (exitTest.applicable && !exitTest.passed && !codex) process.exitCode = 1;
 // 2, not 1: "the run did not finish" and "the port is wrong" are different answers, and a
 // caller that cannot tell them apart will read a quota wall as a failed port.
 if (aborted) process.exitCode = 2;
@@ -150,7 +172,9 @@ function renderSummary(report) {
     `no band              ${counts.notEstablished}`,
     `incomplete           ${counts.incomplete}  (runs that failed — not a finding either way)`,
     `status bucket match  ${report.comparison.statusMatches} of ${counts.scenarios}`,
-    `plan usage           $${report.comparison.planUsd} ($${report.comparison.planUsdPerScenario}/scenario, recorded $${RECORDED_BASELINE.planUsdPerScenario})`,
+    report.measurementOnly
+      ? `API-rate estimate    $${report.comparison.planUsd} ($${report.comparison.planUsdPerScenario}/scenario; the ChatGPT plan bills nothing per call)`
+      : `plan usage           $${report.comparison.planUsd} ($${report.comparison.planUsdPerScenario}/scenario, recorded $${RECORDED_BASELINE.planUsdPerScenario})`,
   ];
   const c = report.citations;
   if (c)
@@ -168,12 +192,17 @@ function renderSummary(report) {
     lines.push("", `EXIT TEST NOT RUN: ${report.exitTest.reason}`);
     return lines.join("\n");
   }
+  if (report.measurementOnly)
+    lines.push(
+      "",
+      `${report.runtime} / ${report.model}: measured against the Opus baseline, not a pass/fail check.`,
+    );
   lines.push("", report.exitTest.passed ? "EXIT TEST PASSED" : "EXIT TEST FAILED");
   for (const check of report.exitTest.checks)
     lines.push(
       `  ${check.passed ? "ok  " : "FAIL"} ${check.name}: ${check.actual} (expected ${check.expected})`,
     );
-  if (!report.exitTest.passed)
+  if (!report.exitTest.passed && !report.measurementOnly)
     lines.push(
       "",
       report.hostTools
@@ -194,7 +223,8 @@ function readOptions(argv) {
     maxUsd: null,
     merge: null,
     hostTools: true,
-    out: path.resolve(".data", "research-claude-cli", "phase-1-benchmark.json"),
+    runtime: "claude-cli",
+    out: null,
   };
   for (let index = 0; index < argv.length; index += 1) {
     if (argv[index] === "--no-host-tools") {
@@ -211,6 +241,11 @@ function readOptions(argv) {
     else if (flag === "--limit") options.limit = Number(value);
     else if (flag === "--concurrency") options.concurrency = Math.max(1, Number(value));
     else if (flag === "--model") options.model = value;
+    else if (flag === "--runtime") {
+      if (!["claude-cli", "codex-cli"].includes(value))
+        throw new Error(`--runtime must be claude-cli or codex-cli, not ${value}.`);
+      options.runtime = value;
+    }
     else if (flag === "--max-usd") options.maxUsd = Number(value);
     else if (flag === "--merge") options.merge = path.resolve(value);
     else if (flag === "--out") options.out = path.resolve(value);
