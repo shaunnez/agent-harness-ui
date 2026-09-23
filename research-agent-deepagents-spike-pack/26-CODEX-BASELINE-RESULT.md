@@ -49,3 +49,33 @@ research on `claude-cli` (the Settings default) and treat Codex as a component f
 The benchmark's "agreed" count treats one banded run with two unbanded ones as agreement. That
 does no harm on the Opus baseline, where scenarios band on all three runs, but it overstates
 Codex, and should be tightened before the next measurement.
+
+## After: Codex's own prompt (`server/research/codex-cli/codex-system-prompt.txt`)
+
+Same harness, same 7 scopes (six Opus banded consistently, and one it correctly left unbanded), 3 runs
+each. The prompt says distinct components are added, a close row may stand in with a stated
+adjustment, minor unpublished items are labelled allowances, a main cost driver or professional fee
+with no source means not established, and a part a rate already includes is not added again.
+
+| Scope | Codex, own prompt (3 runs) | Allowances per run | Opus (recorded) |
+|---|---|---|---|
+| Channel drain | $620–850, $612–823, $615–880 /m | 0 | $570–620, $620–700, $580–800 |
+| Stud partition walls | $179–229, $179–229, $187–236 /m² | 1–2 | $190–233, $190–240, $185–249 |
+| ACP cladding | $569–784, $627–873, $657–843 /m² | 1–2 | $470–620, $511–710, $475–625 |
+| Benchtop | $655–871, $635–915, $777–1,043 /m | 0–1 | $545–700, $650–865, $640–800 |
+| Retaining wall | $845–1,186, $755–879, $818–1,062 /m² | 0–1 | $581–727, $727–865, $727–838 |
+| Door hardware | $1,548–1,935, **$1,040–1,320**, $1,480–1,826 /leaf (disputed) | 1–3 | $1,520–2,090, $1,790–2,050, $1,950–2,500 |
+| Switchboard (should be no band) | no band, **$16.3k–28.6k**, run failed | 0 | no band x3 |
+
+- 6 of 7 scopes banded, 5 in three-run agreement, 1 disputed. Under the Opus prompt, 0 of these 18
+  runs banded.
+- Citations: 108 of 108 QV rows found in the capture; 32 of 32 web quotes verified on the fetched
+  page. Allowances fell from 25 in the single-run check to 19 across 21 runs.
+- Switchboard is not solved: one run still banded, this time from five fetched web pages rather
+  than allowances, one declined, and one was stopped for refetching a page over the 1 MB limit.
+- Codex's bands run 10–30% above Opus on cladding and the retaining wall. Whether that is
+  double-counting or a fuller scope is a reviewer's call.
+- Cost: $22.39 API-rate estimate on the ChatGPT plan, about 35 minutes.
+
+Next, if pursued: the full 30 x 3 under this prompt, which is the only measurement comparable to
+the Opus baseline.
