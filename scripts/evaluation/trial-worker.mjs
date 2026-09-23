@@ -48,6 +48,7 @@ const verificationEnvironment = Object.fromEntries(
     ].includes(key),
   ),
 );
+Object.assign(verificationEnvironment, config.verificationEnvironment ?? {});
 const runVerification = async ({ signal, onQueueWait: _onQueueWait, ...input }) => {
   const result = await runProcess(
     "/usr/bin/sandbox-exec",

@@ -52,6 +52,14 @@ const definitions = {
   },
   P05: {
     workflowProfile: "standard",
+    // Record-claim tests resolve this ancestor by SHA; a shallow base checkout omits it.
+    historicalGitPins: ["5f71139dc92e41ac867fd7f309f2b8b297d266fd"],
+    // macOS Seatbelt refuses ps even with allow default. These unrelated host-process
+    // lifecycle checks pass in the unsandboxed frozen-base/reference qualification.
+    sandboxUnsupportedTestIds: [
+      "test_pid_reuse_is_never_signalled",
+      "test_managed_worker_start_duplicate_guard_and_graceful_stop",
+    ],
     grader: "evaluations/graders/p05.mjs",
     graderAssets: ["evaluations/graders/p05/test_p317_pg.py", "evaluations/graders/p05/p317-hidden.spec.ts"],
     graderOutput: "directory",

@@ -130,7 +130,8 @@ signal.signal(signal.SIGTERM, stop)
 signal.signal(signal.SIGINT, stop)
 return_code = 1
 try:
-    child = subprocess.Popen(command, cwd=child_cwd, stdin=sys.stdin, stdout=subprocess.PIPE, stderr=sys.stderr, start_new_session=True)
+    child = subprocess.Popen(command, cwd=child_cwd, stdin=sys.stdin, stdout=subprocess.PIPE, stderr=sys.stderr, start_new_session=True,
+                             env={**os.environ, **config.get("providerEnvironment", {})})
     deadline_timer = threading.Timer(remaining, stop)
     deadline_timer.daemon = True
     deadline_timer.start()

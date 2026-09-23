@@ -60,10 +60,11 @@ try {
   if (!(await run("e2e-install", "npm", ["ci", "--no-audit", "--no-fund"], { cwd: path.join(checkout, "e2e") })))
     throw new Error("Playwright dependency installation failed in the grader archive.");
   await copyFile(path.join(checkerRoot, "p317-hidden.spec.ts"), path.join(checkout, "e2e/tests/p317-hidden.spec.ts"));
+  await copyFile(path.join(checkerRoot, "test_p317_pg.py"), path.join(checkout, "tests/integration/test_p317_hidden.py"));
   composeStarted = true;
   checks.push({
     id: "postgres-persistence-and-totals",
-    passed: await run("postgres", "scripts/run-integration-isolated.sh", [path.join(checkerRoot, "test_p317_pg.py")], { timeout: 360000 }),
+    passed: await run("postgres", "scripts/run-integration-isolated.sh", ["tests/integration/test_p317_hidden.py"], { timeout: 360000 }),
   });
   checks.push({
     id: "review-browser-selection",

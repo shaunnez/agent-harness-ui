@@ -109,6 +109,10 @@ const baseManifest = (
   await git(sourceRepository, ["show", `${item.baseSha}:.agent-harness/verification.json`])
 ).stdout;
 const manifest = parseVerificationManifest(baseManifest);
+const sandboxUnsupportedTestIds = selectedCase.sandboxUnsupportedTestIds ?? [];
+const verificationEnvironment = sandboxUnsupportedTestIds.length
+  ? { PYTEST_ADDOPTS: `-k "${sandboxUnsupportedTestIds.map((id) => `not ${id}`).join(" and ")}"` }
+  : {};
 const changed = (await git(root, ["status", "--porcelain"])).stdout;
 if (mode !== "dry-run" && changed.trim())
   throw new Error("Commit the qualified harness before preparing an inference campaign.");
@@ -186,6 +190,8 @@ const environment = {
   grill: "manual with frozen benchmark-user answers",
   stageTimeoutOverridesMs,
   repairLimits,
+  sandboxUnsupportedTestIds,
+  historicalGitPins: selectedCase.historicalGitPins ?? [],
 };
 if (item.repository === "plancheck") {
   const dependencyFiles = [
@@ -284,6 +290,18 @@ for (const trial of trials) {
   ]);
   await git(repository, ["checkout", "--quiet", "-b", "evaluation-base", "FETCH_HEAD"]);
   await rm(path.join(repository, ".git/FETCH_HEAD"));
+  for (const revision of selectedCase.historicalGitPins ?? []) {
+    await git(sourceRepository, ["merge-base", "--is-ancestor", revision, item.baseSha]);
+    await git(repository, [
+      "fetch",
+      "--quiet",
+      "--depth=1",
+      "--no-tags",
+      pathToFileURL(await realpath(sourceRepository)).href,
+      revision,
+    ]);
+    await rm(path.join(repository, ".git/FETCH_HEAD"));
+  }
   await git(repository, ["config", "user.name", "Evaluation candidate"]);
   await git(repository, ["config", "user.email", "evaluation@example.invalid"]);
   await git(repository, ["config", "commit.gpgsign", "false"]);
@@ -339,6 +357,7 @@ for (const trial of trials) {
           path.dirname(campaignRoot),
           "/Users/shaun/.codex/worktrees",
         ],
+        providerEnvironment: verificationEnvironment,
         ...budget,
         ...limits,
       },
@@ -372,6 +391,7 @@ for (const trial of trials) {
     repository,
     ledger,
     workerProfile,
+    verificationEnvironment,
     codexWrapper: wrappers.codex,
     claudeWrapper: wrappers.claude,
     allowedModels: comparisonMode ? [...comparison.allowedModels] : incumbent.allowedModels,
