@@ -26,6 +26,7 @@ import type {
   RuntimeWorktreeInventoryRow,
   StageId,
 } from "../../domain.ts";
+import type { ResearchGateway } from "./research.ts";
 import type { SettingsInput } from "./settings.ts";
 
 export type AttentionKind =
@@ -70,7 +71,11 @@ export interface FrontierGateway {
   worktrees(taskId: string): Promise<RuntimeWorktreeInventoryRow[]>;
   removeWorktree(taskId: string, rowId: string): Promise<RuntimeWorktreeInventoryRow[]>;
   projects(): Promise<RuntimeProject[]>;
-  createProject(input: { name: string; repositoryPath: string }): Promise<RuntimeProject>;
+  createProject(input: {
+    name: string;
+    repositoryPath: string;
+    kind?: RuntimeProject["kind"];
+  }): Promise<RuntimeProject>;
   changeProject(
     id: string,
     change: { kind: "rename" | "archive" | "restore"; name?: string },
@@ -108,6 +113,8 @@ export interface FrontierGateway {
   answer(id: string, questionId: string, answer: string): Promise<unknown>;
   finishGrill(id: string, acceptRemaining?: boolean): Promise<unknown>;
   approveSpecification(id: string): Promise<unknown>;
+  /** Research projects. Only the sample world provides this until the research backend exists. */
+  readonly research?: ResearchGateway;
 }
 export interface CandidateScope {
   candidateId: string;

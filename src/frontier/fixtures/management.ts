@@ -1,10 +1,10 @@
-import { normalizeRepairLimits } from "../../repair-limits.ts";
 import {
   defaultProfileStagePolicies,
   defaultRepairEscalationPolicies,
 } from "../../../server/policy-defaults.mjs";
 import { resolveRolePolicyLifecycleEligibility } from "../../../server/role-policy-eligibility.mjs";
 import type { RuntimeProject, RuntimeTask } from "../../domain.ts";
+import { normalizeRepairLimits } from "../../repair-limits.ts";
 import type { FrontierGateway } from "../runtime/contracts.ts";
 import { draftPolicies, draftProfile, policyRoles } from "../runtime/policies.ts";
 import { isExecuting } from "../runtime/presentation.ts";
@@ -82,9 +82,14 @@ export function fixtureManagement(
     async createProject(input) {
       online();
       const name = input.name.trim(),
-        repositoryPath = input.repositoryPath.trim().replace(/\/$/, "");
-      if (!name || !repositoryPath.startsWith("/"))
-        throw new Error("Enter a project name and absolute repository path.");
+        research = input.kind === "research",
+        repositoryPath = research
+          ? `research://${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`
+          : input.repositoryPath.trim().replace(/\/$/, "");
+      if (!name || (!research && !repositoryPath.startsWith("/")))
+        throw new Error(
+          research ? "Enter a project name." : "Enter a project name and absolute repository path.",
+        );
       if (
         projects.some(
           (project) =>
@@ -92,7 +97,13 @@ export function fixtureManagement(
         )
       )
         throw new Error("That project is already registered.");
-      const project = { id: crypto.randomUUID(), name, repositoryPath, createdAt: new Date().toISOString() };
+      const project = {
+        id: crypto.randomUUID(),
+        name,
+        repositoryPath,
+        createdAt: new Date().toISOString(),
+        ...(research ? { kind: "research" as const } : {}),
+      };
       projects.push(project);
       changed();
       return structuredClone(project);

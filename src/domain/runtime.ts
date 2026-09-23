@@ -1,5 +1,5 @@
-import type { RepairLimits } from "../repair-limits";
 import type { StageId } from "../domain";
+import type { RepairLimits } from "../repair-limits";
 import type {
   AutoRunStage,
   RuntimeEvent,
@@ -853,6 +853,8 @@ export interface RuntimeProject {
   repositoryPath: string;
   createdAt: string | null;
   archivedAt?: string | null;
+  /** Absent means delivery. Research projects are a sample-world prototype until the backend exists. */
+  kind?: "delivery" | "research";
 }
 
 export interface RuntimeAgentPolicy {

@@ -3,6 +3,7 @@ import type { NewTaskDraft, RuntimeRun } from "../../domain";
 import type { FrontierSnapshot, TaskSummary } from "../runtime/contracts";
 import type { RefreshCoordinator } from "../runtime/coordinator";
 import { attentionFor } from "../runtime/presentation";
+import { researchEngineLabel } from "../runtime/research";
 import { Modal } from "../ui/Modal";
 import { ArtifactViewer } from "../views/ArtifactViewer";
 import { CandidateDiff } from "../views/CandidateDiff";
@@ -12,6 +13,9 @@ import { ProjectSetup } from "../views/ProjectSetup";
 import { Projects } from "../views/Projects";
 import { ReturnBriefing } from "../views/ReturnBriefing";
 import { RunLibrary } from "../views/RunLibrary";
+import { ResearchAsk, researchEngineFromSettings } from "../views/research/ResearchAsk";
+import { ResearchQuestions } from "../views/research/ResearchQuestions";
+import { ResearchQuestionView } from "../views/research/ResearchQuestionView";
 import { Skills } from "../views/Skills";
 import { TaskJournal } from "../views/TaskJournal";
 import { TaskLifecycle } from "../views/TaskLifecycle";
@@ -44,6 +48,8 @@ const titles = {
   "task-policies": "Task role policies",
   lifecycle: "Manage task",
   diff: "Exact candidate diff",
+  research: "Research",
+  "research-ask": "Ask a research question",
 };
 interface Props {
   decisionNavigation?: ReactNode;
@@ -129,10 +135,45 @@ export function OverlayHost(props: Props) {
           onClose={back}
         />
       );
-  else if (overlay.kind === "new-task")
+  else if (overlay.kind === "research" || overlay.kind === "research-ask") {
+    const researchProject = snapshot.projects.find((entry) => entry.id === overlay.projectId);
+    content = !researchProject ? (
+      <div className="overlay-body">
+        <p>This research project is not registered in the current runtime.</p>
+      </div>
+    ) : overlay.kind === "research-ask" ? (
+      <ResearchAsk
+        project={researchProject}
+        research={runtime.gateway.research}
+        status={snapshot.status}
+        connected={connected}
+        onAsked={(questionId) => {
+          back();
+          open({ kind: "research", projectId: researchProject.id, questionId });
+        }}
+        onSettings={() => open({ kind: "settings" })}
+        onClose={back}
+      />
+    ) : overlay.questionId ? (
+      <ResearchQuestionView
+        key={overlay.questionId}
+        research={runtime.gateway.research}
+        questionId={overlay.questionId}
+        connected={connected}
+      />
+    ) : (
+      <ResearchQuestions
+        project={researchProject}
+        research={runtime.gateway.research}
+        engineLabel={researchEngineLabel(researchEngineFromSettings(snapshot.status))}
+        onOpen={(questionId) => open({ kind: "research", projectId: researchProject.id, questionId })}
+        onAsk={() => open({ kind: "research-ask", projectId: researchProject.id })}
+      />
+    );
+  } else if (overlay.kind === "new-task")
     content = (
       <NewTask
-        projects={snapshot.projects}
+        projects={snapshot.projects.filter((entry) => entry.kind !== "research")}
         draft={props.draft}
         setDraft={props.setDraft}
         status={snapshot.status}
@@ -324,9 +365,9 @@ export function OverlayHost(props: Props) {
       family={
         ["task", "findings", "approve", "grill"].includes(overlay.kind)
           ? "task"
-          : ["artifact", "diff"].includes(overlay.kind)
+          : ["artifact", "diff", "research"].includes(overlay.kind)
             ? "evidence"
-            : ["new-task", "project-setup"].includes(overlay.kind)
+            : ["new-task", "project-setup", "research-ask"].includes(overlay.kind)
               ? "form"
               : "management"
       }
@@ -336,11 +377,15 @@ export function OverlayHost(props: Props) {
           ? `${task.id} · Task workspace`
           : undefined
       }
-      focusKey={`${overlay.kind}:${"taskId" in overlay ? overlay.taskId : ""}:${"artifactId" in overlay ? overlay.artifactId : ""}`}
+      focusKey={`${overlay.kind}:${"taskId" in overlay ? overlay.taskId : ""}:${"artifactId" in overlay ? overlay.artifactId : ""}:${"questionId" in overlay ? (overlay.questionId ?? "") : ""}`}
       title={
         overlay.kind === "findings" && task && attentionFor(task).kind !== "repair"
           ? "Execution needs attention"
-          : titles[overlay.kind]
+          : overlay.kind === "research"
+            ? `${snapshot.projects.find((entry) => entry.id === overlay.projectId)?.name ?? "Research"} · ${
+                overlay.questionId ? "Question" : "Research questions"
+              }`
+            : titles[overlay.kind]
       }
       onClose={close}
       onBack={stack.length > 1 ? back : undefined}

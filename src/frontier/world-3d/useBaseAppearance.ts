@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { RuntimeProject } from "../../domain";
 import {
-  appearanceComplete,
+  appearanceSettled,
   appearanceStorageKey,
   assignMissingAppearances,
   type BaseAppearance,
@@ -43,8 +43,11 @@ export function useBaseAppearance(projects: RuntimeProject[]) {
   const [storageProblem, setStorageProblem] = useState(false);
   const appearances = assignMissingAppearances(projects, saved);
   useEffect(() => {
-    // Records saved before colony slots existed are completed in place; their choices stay.
-    const missing = projects.filter((project) => !appearanceComplete(saved[projectAppearanceKey(project)]));
+    // Records saved before colony slots existed are completed in place; their choices stay. A record
+    // that breaks the project-kind rule (a delivery base saved as Relay) is corrected and saved.
+    const missing = projects.filter(
+      (project) => !appearanceSettled(project, saved[projectAppearanceKey(project)]),
+    );
     if (!missing.length) return;
     const next = assignMissingAppearances(projects, saved);
     try {

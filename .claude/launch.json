@@ -6,6 +6,20 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev:frontier"],
       "port": 5199
+    },
+    {
+      "name": "research-api",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server/index.mjs"],
+      "env": { "AGENT_HARNESS_PORT": "4331", "AGENT_HARNESS_LINEAR_PORT": "4332" },
+      "port": 4331
+    },
+    {
+      "name": "research-frontier",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "vite.frontier.config.mjs", "--port", "5174"],
+      "env": { "AGENT_HARNESS_API": "http://127.0.0.1:4331" },
+      "port": 5174
     }
   ]
 }
