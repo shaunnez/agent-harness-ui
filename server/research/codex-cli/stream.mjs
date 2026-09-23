@@ -1,21 +1,22 @@
 // `codex exec --json` → neutral `ResearchEvent`s, the Codex twin of `../claude-cli/stream.mjs`.
 //
-// PROVISIONAL until pinned to a captured run. The Claude reader was written from a recorded
-// stream, not from documentation, and this one must be too before a Codex result is scored.
-// Until then the mapping follows the `codex exec --json` event schema (codex-cli 0.155.1):
+// Pinned to two captured runs (`tests/fixtures/codex-cli/`, codex-cli 0.155.1, GPT-6 Sol), as
+// the Claude reader is pinned to its recorded stream rather than to documentation:
 //
 //   | exec JSON line                              | ResearchEventType     |
 //   |---------------------------------------------|-----------------------|
 //   | `thread.started`                            | run.started           |
-//   | `item.started` `mcp_tool_call`/`web_search` | tool.called           |
+//   | `item.started` `mcp_tool_call`              | tool.called           |
+//   | `item.completed` `web_search`               | tool.called           |
 //   | `item.completed` `mcp_tool_call`            | source.retrieved      |
 //   | `item.completed` `agent_message`            | log / finding.created |
 //   | `item.*` `command_execution`                | tool.called + log     |
 //   | `turn.completed` (usage)                    | (usage, not an event) |
 //   | `turn.failed` / `error`                     | (the caller's to classify) |
 //
-// A Codex web search returns nothing to the stream but its query: the results stay inside the
-// model's context. So a search is a `tool.called` and never a `source.retrieved`, and the only
+// A Codex web search starts with an empty query (`"query": ""`, `action.type: "other"`) and
+// names it only on completion, so it is announced on completion. It returns nothing to the
+// stream but that query: the results stay inside the model's context. So a search is a `tool.called` and never a `source.retrieved`, and the only
 // way a web page becomes a checkable source is `fetch_source`, exactly as on the Claude side.
 //
 // Tool names are rewritten into the Claude form, `mcp__<server>__<tool>`, so the host-tool
@@ -101,8 +102,9 @@ export function translateCodexLine(line, { toolCalls = new Map(), runId = null }
 
   if (["mcp_tool_call", "web_search", "command_execution"].includes(item.type)) {
     const events = [];
-    // A web search's query can arrive only on completion, so the call is announced on
-    // whichever line comes first and refreshed on none: one search is one `tool.called`.
+    // A search is announced when it completes, the first line that carries its query. Any
+    // other call is announced on whichever line comes first. Either way, once.
+    if (item.type === "web_search" && line.type !== "item.completed") return [];
     if (!known?.announced) events.push(called(item, toolCalls));
     if (item.type === "command_execution" && !known)
       events.push({
@@ -156,7 +158,10 @@ export function translateCodexLine(line, { toolCalls = new Map(), runId = null }
  * the dollar figure is the rate card's, an API-rate estimate, and says so in `costBasis`.
  * `input_tokens` already includes the cached ones, which is how `priceUsage` reads it.
  */
-export function usageFromCodexTurns(turns, { model, toolCalls = 0, searchCalls = 0, price = () => null } = {}) {
+export function usageFromCodexTurns(
+  turns,
+  { model, toolCalls = 0, searchCalls = 0, price = () => null } = {},
+) {
   const totals = { inputTokens: 0, cachedInputTokens: 0, outputTokens: 0 };
   for (const usage of turns) {
     totals.inputTokens += Number(usage?.input_tokens ?? 0);

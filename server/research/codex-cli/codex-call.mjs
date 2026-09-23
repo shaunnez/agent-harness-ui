@@ -9,7 +9,8 @@
 //   not loaded. (The Claude runtime still loads the operator's servers; they are uncallable
 //   there, but they fill the tool list. Here they are simply absent.)
 // - `mcp_servers.<name>.enabled_tools`, the per-server allowlist, built from the recipe's own
-//   `mcp__<server>__<tool>` list. A server the list names no tool from is not passed at all.
+//   `mcp__<server>__<tool>` list, and `tools.<tool>.approval_mode="approve"` for exactly those
+//   tools. A server the list names no tool from is not passed at all.
 // - `web_search="live"` only when the list names `WebSearch`; otherwise `"disabled"`.
 // - `--disable shell_tool --disable unified_exec`, so the agent has no shell to `curl` with,
 //   and `--sandbox read-only` with `approval_policy="never"` under that, which also denies the
@@ -85,6 +86,10 @@ export function codexCallArgs({ model, reasoning, systemPrompt, mcpConfig, allow
       `${key}.startup_timeout_sec=${MCP_STARTUP_TIMEOUT_SEC}`,
       "-c",
       `${key}.tool_timeout_sec=${MCP_TOOL_TIMEOUT_SEC}`,
+      // Approved one tool at a time, never server-wide: under `approval_policy="never"` an
+      // unapproved MCP call is refused outright ("requires approval, but approval policy is
+      // never"), which the capture run recorded for every corpus and fetch call.
+      ...tools.flatMap((tool) => ["-c", `${key}.tools.${tool}.approval_mode="approve"`]),
     );
   }
   return [
@@ -281,8 +286,7 @@ export function classifyCodexCall(call) {
           `${call.failure ? `: ${call.failure}` : "."}`,
       },
     };
-  if (call.failure)
-    return { ok: false, error: { code: "codex_cli_reported_error", message: call.failure } };
+  if (call.failure) return { ok: false, error: { code: "codex_cli_reported_error", message: call.failure } };
   if (!call.sawTurnCompleted)
     return {
       ok: false,

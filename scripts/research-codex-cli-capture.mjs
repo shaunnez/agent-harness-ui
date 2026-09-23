@@ -9,8 +9,8 @@
 // one corpus search, one web search and one `fetch_source`, and asks whether a shell exists, so
 // the capture shows every item type the reader maps and whether the shell is really gone.
 //
-// The redacted transcript is copied to `tests/fixtures/codex-cli/capture.jsonl`; read it before
-// committing it.
+// The transcript is copied to `tests/fixtures/codex-cli/capture.jsonl`. It holds licensed QV row
+// text from the corpus calls: blank that before committing it, because the repository is public.
 
 import { copyFile, mkdir } from "node:fs/promises";
 import path from "node:path";

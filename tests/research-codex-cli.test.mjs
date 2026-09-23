@@ -3,17 +3,19 @@
 // As in `research-claude-cli-host-tools.test.mjs`, the CLI is an injected runner that spawns
 // the real MCP relay from the argv it was given and calls `fetch_source` through it, so the
 // real bridge, `ResearchWebTools` and citation checks run. Only the model and the network are
-// fake. The stream lines follow the `codex exec --json` schema; they are not yet a capture.
+// fake. The reader itself is pinned to two captured runs (`tests/fixtures/codex-cli/`, codex-cli
+// 0.155.1, GPT-6 Sol): one where every MCP call was refused for want of approval, and one after
+// the fix. Licensed QV row text is blanked in both; ids, counts and shapes are as recorded.
 
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import readline from "node:readline";
 import test from "node:test";
 import { priceUsage } from "../server/model-catalog.mjs";
-import { QV_ALLOWED_TOOLS } from "../server/research/claude-cli/qv-recipe.mjs";
+import { parseCostBand, QV_ALLOWED_TOOLS } from "../server/research/claude-cli/qv-recipe.mjs";
 import {
   assertChatGptAuth,
   isChatGptAuth,
@@ -24,9 +26,11 @@ import {
   CODEX_DISABLED_FEATURES,
   CODEX_EMPTY_OUTPUT_ERROR_CODE,
   CODEX_PLAN_LIMIT_ERROR_CODE,
+  classifyCodexCall,
   codexCallArgs,
   codexSystemPrompt,
   codexToolPolicy,
+  runCodexCall,
 } from "../server/research/codex-cli/codex-call.mjs";
 import {
   CODEX_CLI_RESEARCH_RUNTIME_ID,
@@ -67,7 +71,9 @@ test("only a ChatGPT login passes the gate, and an API-key login is refused with
   assert.equal(isChatGptAuth(readCodexAuth("Not logged in")), false);
   assert.equal(isChatGptAuth(readCodexAuth("")), false);
 
-  const probe = (stdout, code = 0) => async () => ({ code, stdout, stderr: "" });
+  const probe =
+    (stdout, code = 0) =>
+    async () => ({ code, stdout, stderr: "" });
   const passed = await assertChatGptAuth({ binary: "/bin/codex", run: probe("Logged in using ChatGPT") });
   assert.equal(passed.binary, "/bin/codex");
   await assert.rejects(
@@ -92,7 +98,10 @@ test("the recipe's allowlist becomes per-server enabled tools, web search and no
   const mcpConfig = {
     mcpServers: {
       qv: { command: "python3", args: ["/srv/qv.py", "/data/index.jsonl"] },
-      research: { command: "/usr/bin/node", args: ["/srv/relay.mjs", "/tmp/s.sock", "fetch_source,read_source"] },
+      research: {
+        command: "/usr/bin/node",
+        args: ["/srv/relay.mjs", "/tmp/s.sock", "fetch_source,read_source"],
+      },
       unused: { command: "never", args: [] },
     },
   };
@@ -106,7 +115,13 @@ test("the recipe's allowlist becomes per-server enabled tools, web search and no
   });
   const config = configOverrides(args);
 
-  assert.deepEqual(args.slice(0, 5), ["exec", "--json", "--ephemeral", "--ignore-user-config", "--ignore-rules"]);
+  assert.deepEqual(args.slice(0, 5), [
+    "exec",
+    "--json",
+    "--ephemeral",
+    "--ignore-user-config",
+    "--ignore-rules",
+  ]);
   for (const feature of ["shell_tool", "unified_exec"]) assert.ok(CODEX_DISABLED_FEATURES.includes(feature));
   for (const feature of CODEX_DISABLED_FEATURES) assert.ok(hasPair(args, "--disable", feature), feature);
   assert.ok(hasPair(args, "--sandbox", "read-only"));
@@ -117,6 +132,10 @@ test("the recipe's allowlist becomes per-server enabled tools, web search and no
   assert.deepEqual(config["mcp_servers.qv.enabled_tools"], ["search_qv", "get_qv_table", "list_qv_sections"]);
   assert.deepEqual(config["mcp_servers.research.enabled_tools"], ["fetch_source", "read_source"]);
   assert.deepEqual(config["mcp_servers.research.args"], mcpConfig.mcpServers.research.args);
+  // Each allowed tool is approved by name; nothing is approved server-wide.
+  assert.equal(config["mcp_servers.research.tools.fetch_source.approval_mode"], "approve");
+  assert.equal(config["mcp_servers.qv.tools.get_qv_table.approval_mode"], "approve");
+  assert.ok(!Object.keys(config).some((key) => key.endsWith("default_tools_approval_mode")));
   // A server the allowlist names no tool from is not reachable at all.
   assert.ok(!Object.keys(config).some((key) => key.startsWith("mcp_servers.unused")));
   assert.equal(config.developer_instructions, 'Use "WebSearch".\nThen stop.');
@@ -125,7 +144,13 @@ test("the recipe's allowlist becomes per-server enabled tools, web search and no
   assert.ok(!args.some((arg) => /api[_-]?key|OPENAI/i.test(arg)));
 
   const noSearch = configOverrides(
-    codexCallArgs({ model: "m", systemPrompt: "", mcpConfig, allowedTools: ["mcp__qv__search_qv"], cwd: "/w" }),
+    codexCallArgs({
+      model: "m",
+      systemPrompt: "",
+      mcpConfig,
+      allowedTools: ["mcp__qv__search_qv"],
+      cwd: "/w",
+    }),
   );
   assert.equal(noSearch.web_search, "disabled");
   assert.throws(() => codexToolPolicy(["WebFetch"], mcpConfig.mcpServers), /no equivalent/);
@@ -150,7 +175,52 @@ test("the child's environment carries no OpenAI or Codex API key", async () => {
     },
   );
   assert.ok(seen.PATH);
-  for (const name of ["OPENAI_API_KEY", "CODEX_API_KEY", "OPENAI_BASE_URL"]) assert.equal(seen[name], undefined);
+  for (const name of ["OPENAI_API_KEY", "CODEX_API_KEY", "OPENAI_BASE_URL"])
+    assert.equal(seen[name], undefined);
+});
+
+// --- pinned to captured runs -------------------------------------------------------------------
+
+test("the captured run reads back as the calls it made, the rows it read and the band it gave", async () => {
+  const replay = await replayCapture("capture.jsonl");
+  assert.deepEqual(replay.called, [
+    "mcp__qv__search_qv",
+    "mcp__qv__search_qv",
+    "mcp__qv__list_qv_sections",
+    "mcp__qv__get_qv_table",
+    "web_search",
+  ]);
+  // The search's query arrives only on completion; it is still one call, with its query.
+  const search = replay.events.find(
+    (event) => event.type === "tool.called" && event.data.tool === "web_search",
+  );
+  assert.match(search.data.input.query, /kerb and channel/i);
+  // Every corpus result is an internal record, and none failed.
+  assert.equal(replay.sources.length, 4);
+  assert.ok(replay.sources.every((data) => data.source.sourceType === "internal_record" && !data.failed));
+  assert.match(replay.sources[0].excerpt, /^20 rows:/);
+
+  const band = parseCostBand(replay.finding);
+  assert.ok(band.components.some((component) => /^[0-9a-f]{64}:t7:r\d+$/.test(component.rowId ?? "")));
+  assert.equal(replay.call.searchCallCount, 1);
+  assert.equal(replay.call.toolCallCount, 5);
+  assert.equal(replay.call.usage.inputTokens, 122_461);
+  assert.equal(replay.call.usage.cachedTokens, 73_984);
+  assert.equal(replay.call.usage.outputTokens, 2_290);
+  assert.deepEqual(classifyCodexCall(replay.call), { ok: true, error: null });
+});
+
+test("a refused MCP call reads back as a failed tool result the model saw, not a failed run", async () => {
+  const replay = await replayCapture("capture-approval-refused.jsonl");
+  assert.equal(replay.sources.length, 4);
+  for (const data of replay.sources) {
+    assert.equal(data.failed, true);
+    assert.equal(data.source.metadata.failed, true);
+    assert.match(data.excerpt, /requires approval, but approval policy is never/);
+  }
+  assert.ok(replay.sources.some((data) => data.source.metadata.tool === "mcp__research__fetch_source"));
+  // The model carried on and answered, so the run itself completed.
+  assert.deepEqual(classifyCodexCall(replay.call), { ok: true, error: null });
 });
 
 // --- a run end to end --------------------------------------------------------------------------
@@ -173,7 +243,9 @@ test("a Codex run fetches through the host, and its citations check out as on th
     // The host's retained page (announced when the relay fetched it, before the fake CLI
     // printed anything), the corpus call as an internal record, and the checked row. The
     // stream's own copy of the fetch result is dropped.
-    const sources = events.filter((event) => event.type === "source.retrieved").map((event) => event.data.source);
+    const sources = events
+      .filter((event) => event.type === "source.retrieved")
+      .map((event) => event.data.source);
     assert.deepEqual(
       sources.map((source) => [source.id, source.sourceType]),
       [
@@ -303,10 +375,44 @@ test("a shell command, which research runs switch off, is reported rather than p
 test("the runtime satisfies the research contract", () => {
   assertResearchRuntime(new CodexCliResearchRuntime());
   assert.equal(new CodexCliResearchRuntime().id, CODEX_CLI_RESEARCH_RUNTIME_ID);
-  assert.equal(new CodexCliResearchRuntime({ env: { RESEARCH_CODEX_CLI_MODEL: "gpt-6-luna" } }).id, "codex-cli");
+  assert.equal(
+    new CodexCliResearchRuntime({ env: { RESEARCH_CODEX_CLI_MODEL: "gpt-6-luna" } }).id,
+    "codex-cli",
+  );
 });
 
 // --- helpers -----------------------------------------------------------------------------------
+
+/** Feed a captured stream through `runCodexCall`, as the CLI would have printed it. */
+async function replayCapture(name) {
+  const lines = (await readFile(path.join("tests", "fixtures", "codex-cli", name), "utf8"))
+    .split("\n")
+    .filter(Boolean);
+  const events = [];
+  const call = await runCodexCall({
+    run: async (_binary, _args, options) => {
+      for (const line of lines) options.onStdoutLine(line);
+      return { code: 0, signal: null, stdout: "", stderr: "" };
+    },
+    binary: "/usr/local/bin/codex",
+    env: { PATH: process.env.PATH },
+    cwd: os.tmpdir(),
+    objective: "replay",
+    model: DEFAULT_CODEX_CLI_MODEL,
+    systemPrompt: "",
+    mcpConfig: { mcpServers: { qv: { command: "python3" }, research: { command: "node" } } },
+    allowedTools: QV_ALLOWED_TOOLS,
+    timeoutMs: 1_000,
+    onEvent: (type, data) => events.push({ type, data }),
+  });
+  return {
+    call,
+    events,
+    called: events.filter((event) => event.type === "tool.called").map((event) => event.data.tool),
+    sources: events.filter((event) => event.type === "source.retrieved").map((event) => event.data),
+    finding: events.findLast((event) => event.type === "finding.created")?.data.message ?? "",
+  };
+}
 
 /** The `-c key=value` overrides, values parsed as the JSON this module writes them as. */
 function configOverrides(args) {
@@ -343,7 +449,14 @@ function codexLines({ answer, fetchResult = "{…}" }) {
     { type: "turn.started" },
     {
       type: "item.started",
-      item: { id: "item_0", type: "mcp_tool_call", server: "qv", tool: "search_qv", arguments: { query: "channel" }, status: "in_progress" },
+      item: {
+        id: "item_0",
+        type: "mcp_tool_call",
+        server: "qv",
+        tool: "search_qv",
+        arguments: { query: "channel" },
+        status: "in_progress",
+      },
     },
     {
       type: "item.completed",
@@ -389,7 +502,10 @@ function linesRunner(lines, code = 0) {
 function fetchingRunner() {
   return async (_binary, args, options) => {
     const config = configOverrides(args);
-    const client = await startMcpClient(config["mcp_servers.research.command"], config["mcp_servers.research.args"]);
+    const client = await startMcpClient(
+      config["mcp_servers.research.command"],
+      config["mcp_servers.research.args"],
+    );
     let fetched;
     try {
       fetched = await client.call("fetch_source", { url: PAGE_URL });
@@ -406,7 +522,11 @@ function fetchingRunner() {
         excerpt: "$310 per metre installed",
         amount: { low: 280, high: 340 },
       },
-      { role: "Traffic management", source: "https://unfetched.example.test/tm", amount: { low: 20, high: 40 } },
+      {
+        role: "Traffic management",
+        source: "https://unfetched.example.test/tm",
+        amount: { low: 20, high: 40 },
+      },
     ]);
     for (const line of codexLines({ answer, fetchResult: fetched.content[0].text }))
       options.onStdoutLine(JSON.stringify(line));
@@ -426,7 +546,9 @@ async function startMcpClient(command, args) {
   const request = (method, params = {}) =>
     new Promise((resolve, reject) => {
       const id = ++sequence;
-      pending.set(id, (message) => (message.error ? reject(new Error(message.error.message)) : resolve(message.result)));
+      pending.set(id, (message) =>
+        message.error ? reject(new Error(message.error.message)) : resolve(message.result),
+      );
       child.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id, method, params })}\n`);
     });
   await request("initialize", { protocolVersion: "2025-06-18", capabilities: {} });
