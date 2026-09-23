@@ -298,6 +298,8 @@ export function assertSupportedReasoning(modelId, reasoning, models = CLAUDE_MOD
 export function defaultRuntimeSettings() {
   const defaultModel = normalizeModelId(process.env.AGENT_HARNESS_MODEL ?? DEFAULT_RUNTIME_MODEL);
   const defaultReasoning = process.env.AGENT_HARNESS_REASONING ?? DEFAULT_RUNTIME_REASONING;
+  const defaultProvider = providerForModelId(defaultModel) ?? DEFAULT_EXECUTION_PROVIDER;
+  const profileStagePolicies = defaultProfileStagePolicies(defaultProvider);
   return {
     projects: [],
     // A Grill question is a human decision gate unless the operator explicitly
@@ -313,11 +315,9 @@ export function defaultRuntimeSettings() {
     defaultModel,
     defaultReasoning,
     // Nothing moves to another provider until an operator changes this.
-    defaultProvider: providerForModelId(defaultModel) ?? DEFAULT_EXECUTION_PROVIDER,
-    stagePolicies: defaultStagePolicies(providerForModelId(defaultModel) ?? DEFAULT_EXECUTION_PROVIDER),
-    profileStagePolicies: defaultProfileStagePolicies(
-      providerForModelId(defaultModel) ?? DEFAULT_EXECUTION_PROVIDER,
-    ),
+    defaultProvider,
+    stagePolicies: structuredClone(profileStagePolicies.standard),
+    profileStagePolicies,
     designPolicies: structuredClone(DEFAULT_DESIGN_POLICIES),
     pricing: {
       version: PRICING_VERSION,

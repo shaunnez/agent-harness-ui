@@ -20,7 +20,11 @@ import type {
 } from "../../domain";
 import { usePanelState } from "../app/panel-state";
 import type { FrontierGateway } from "../runtime/contracts";
-import { policyRoles, providerProfilePolicyMatrices } from "../runtime/policies";
+import {
+  codexSonnetProfilePolicyMatrices,
+  policyRoles,
+  providerProfilePolicyMatrices,
+} from "../runtime/policies";
 import { stageLabels } from "../runtime/presentation";
 import { type SettingsInput, settingsInput, settingsIssue } from "../runtime/settings";
 import { PolicyChoice, ProviderPresets } from "./PolicyMatrix";
@@ -115,6 +119,18 @@ function SettingsEditor({
     const matrices = providerProfilePolicyMatrices(provider, editingStatus);
     if (!matrices) return;
     const fallback = providerRuntimeDefaults(provider);
+    update({
+      ...draft,
+      defaultModel: fallback.model,
+      defaultReasoning: fallback.reasoning,
+      stagePolicies: matrices.standard,
+      profileStagePolicies: matrices,
+    });
+  }
+  function useCodexSonnet() {
+    const matrices = codexSonnetProfilePolicyMatrices(editingStatus);
+    if (!matrices) return;
+    const fallback = providerRuntimeDefaults("codex");
     update({
       ...draft,
       defaultModel: fallback.model,
@@ -241,6 +257,8 @@ function SettingsEditor({
                     providerAvailable={(provider) =>
                       providerProfilePolicyMatrices(provider, editingStatus) !== null
                     }
+                    onUseCodexSonnet={useCodexSonnet}
+                    codexSonnetAvailable={codexSonnetProfilePolicyMatrices(editingStatus) !== null}
                   />
                   <select
                     aria-label="Policy profile"

@@ -1,4 +1,7 @@
-import { defaultProfileStagePolicies } from "../../../server/policy-defaults.mjs";
+import {
+  codexSonnetProfileStagePolicies,
+  defaultProfileStagePolicies,
+} from "../../../server/policy-defaults.mjs";
 import { selectWorkflowProfile } from "../../../server/workflow-profiles.mjs";
 import {
   type NewTaskDraft,
@@ -81,4 +84,18 @@ export function providerProfilePolicyMatrices(provider: "codex" | "claude", stat
   );
   if (profiles.some(([, matrix]) => matrix === null)) return null;
   return Object.fromEntries(profiles) as Record<WorkflowProfileId, Record<RolePolicyId, RuntimeAgentPolicy>>;
+}
+
+export function codexSonnetProfilePolicyMatrices(status: RuntimeStatus | null) {
+  const models = selectableModels(status);
+  const defaults = codexSonnetProfileStagePolicies();
+  for (const matrix of Object.values(defaults)) {
+    for (const policy of Object.values(matrix)) {
+      if (
+        !models.some((model) => model.id === policy.model && model.reasoningLevels.includes(policy.reasoning))
+      )
+        return null;
+    }
+  }
+  return defaults;
 }
