@@ -29,6 +29,9 @@ test("advances an approved implementation task through a revision-bound candidat
       repositoryPath: directory,
       workflow: "implement",
       priority: "medium",
+      repairEscalationPolicies: {
+        standard: { model: "gpt-6-sol", reasoning: "xhigh" },
+      },
     });
     let merged = false;
     let commitCount = 0;
@@ -298,6 +301,30 @@ test("advances an approved implementation task through a revision-bound candidat
     const repairRun = approvalTask.runs.find(
       (run) =>
         run.kind === "repair" && run.workflowReservationId === repairRevision.sourceWorkflowReservationId,
+    );
+    const repairRuns = approvalTask.runs.filter((run) => run.kind === "repair");
+    const repairCalls = runtimeCalls.filter((call) => /You are the candidate Repair agent/.test(call.prompt));
+    assert.equal(repairRuns.length, 2, "the existing allowance bounds both repair attempts");
+    assert.equal(repairCalls.length, 2);
+    for (const [index, run] of repairRuns.entries()) {
+      assert.equal(run.selectedModel, "gpt-6-sol");
+      assert.equal(run.selectedReasoning, "high");
+      assert.equal(run.effectiveModel, "gpt-6-sol");
+      assert.equal(run.effectiveReasoning, "xhigh");
+      assert.equal(run.policyEscalationGate.runId, reviewRuns[0].id);
+      assert.equal(run.policyEscalationGate.artifactId, reviewRuns[0].artifactId);
+      assert.match(run.policyEscalationReason, /Verified P1 candidate defect/);
+      assert.equal(repairCalls[index].model, "gpt-6-sol");
+      assert.equal(repairCalls[index].reasoning, "xhigh");
+    }
+    assert.deepEqual(
+      approvalTask.stageRunReservations.implement.effectivePolicy.escalationGate,
+      repairRuns.at(-1).policyEscalationGate,
+    );
+    assert.match(
+      approvalTask.events.find((event) => event.runId === repairRun.id && /agent started/.test(event.title))
+        ?.detail ?? "",
+      /Verified P1 candidate defect.*gate run/,
     );
     const repairArtifact = approvalTask.artifacts.find((artifact) => artifact.runId === repairRun.id);
     const repairAuthorizerArtifact = approvalTask.artifacts.find(

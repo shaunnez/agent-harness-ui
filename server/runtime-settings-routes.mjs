@@ -2,6 +2,7 @@ import { normalizeRepairLimits, repairLimitsIssue } from "../src/repair-limits.t
 import { validateDesignPolicies } from "./design-policies.mjs";
 import { validateGatePolicies } from "./gate-policies.mjs";
 import { normalizeModelId, readExecutionProviderCatalog } from "./model-catalog.mjs";
+import { validateRepairEscalationPolicies } from "./repair-escalation-policy.mjs";
 import { inspectRepositoryContract } from "./repository-contract.mjs";
 import { projectTaskSummary } from "./task-projections.mjs";
 import { WORKFLOW_PROFILE_IDS } from "./workflow-profiles.mjs";
@@ -79,6 +80,13 @@ export function createRuntimeSettingsRoutes({
           ),
         ]),
       );
+      const repairEscalationPolicies = validateRepairEscalationPolicies(
+        input.repairEscalationPolicies,
+        currentSettings.repairEscalationPolicies,
+        profileStagePolicies,
+        known,
+        allowedModels,
+      );
       const designPolicies = validateDesignPolicies(
         input.designPolicies,
         known,
@@ -92,6 +100,7 @@ export function createRuntimeSettingsRoutes({
         draft.grillPolicy = grillPolicy;
         draft.gatePolicies = gatePolicies;
         draft.repairLimits = repairLimits;
+        draft.repairEscalationPolicies = repairEscalationPolicies;
         draft.stagePolicies = stagePolicies;
         draft.profileStagePolicies = profileStagePolicies;
         draft.designPolicies = designPolicies;

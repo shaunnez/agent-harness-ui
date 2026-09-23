@@ -1,7 +1,12 @@
 import { ArrowRight, CheckCircle, Info, Plus } from "@phosphor-icons/react";
 import { useLayoutEffect, useRef, useState } from "react";
 import type { NewTaskDraft, RuntimeProject, RuntimeStatus } from "../../domain";
-import { draftPolicies, draftProfile, providerPolicyMatrix } from "../runtime/policies";
+import {
+  draftPolicies,
+  draftProfile,
+  draftRepairEscalation,
+  providerPolicyMatrix,
+} from "../runtime/policies";
 import { PolicyChoice, PolicyMatrix } from "./PolicyMatrix";
 import { TaskAttachments } from "./TaskAttachments";
 
@@ -37,6 +42,7 @@ export function NewTask({
   const ready = Boolean(draft.title.trim() && draft.description.trim() && project);
   const profile = draftProfile(draft);
   const policies = status?.settings ? draftPolicies(draft, status.settings) : null;
+  const repairEscalation = status?.settings ? draftRepairEscalation(draft, status.settings) : null;
   const designs = draft.designPolicies ?? status?.settings?.designPolicies;
   const savePolicy: Parameters<typeof PolicyMatrix>[0]["onChange"] = (role, policy) =>
     setDraft({ ...draft, rolePolicyOverrides: { ...draft.rolePolicyOverrides, [role]: policy } });
@@ -256,6 +262,13 @@ export function NewTask({
                 Scouts share one model policy. The runtime selects only the scout evidence the task needs.
                 Repair remains a separate role.
               </p>
+              {policies && (
+                <p className="quiet">
+                  Candidate Repair: {policies.repair.model} / {policies.repair.reasoning}. P0/P1 escalation:{" "}
+                  {repairEscalation ? `${repairEscalation.model} / ${repairEscalation.reasoning}` : "Off"}
+                  {draft.rolePolicyOverrides?.repair ? " (Repair is pinned for this task)" : ""}.
+                </p>
+              )}
               {draft.designRequested && (
                 <section className="design-policy-choices">
                   <h3>Design providers</h3>
@@ -317,6 +330,12 @@ export function NewTask({
                   onReset={resetPolicy}
                   providerConstraint={draft.providerConstraint}
                 />
+              )}
+              {policies && (
+                <p>
+                  Candidate Repair: {policies.repair.model} / {policies.repair.reasoning} · P0/P1 escalation:{" "}
+                  {repairEscalation ? `${repairEscalation.model} / ${repairEscalation.reasoning}` : "Off"}.
+                </p>
               )}
               {draft.designRequested && (
                 <p>

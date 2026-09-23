@@ -1,5 +1,6 @@
 import {
   codexSonnetProfileStagePolicies,
+  defaultRepairEscalationPolicies,
   defaultProfileStagePolicies,
 } from "../../../server/policy-defaults.mjs";
 import { selectWorkflowProfile } from "../../../server/workflow-profiles.mjs";
@@ -43,6 +44,13 @@ export function draftPolicies(draft: NewTaskDraft, settings: RuntimeSettings) {
   return Object.fromEntries(
     policyRoles.map(({ id }) => [id, draft.rolePolicyOverrides?.[id] ?? inherited[id]]),
   ) as Record<RolePolicyId, RuntimeAgentPolicy>;
+}
+export function draftRepairEscalation(draft: NewTaskDraft, settings: RuntimeSettings) {
+  const profile = draftProfile(draft).selected;
+  if (draft.rolePolicyOverrides?.repair) return null;
+  return draft.providerConstraint
+    ? defaultRepairEscalationPolicies(draft.providerConstraint)[profile]
+    : (settings.repairEscalationPolicies?.[profile] ?? null);
 }
 export function selectableModels(status: RuntimeStatus | null, provider?: "codex" | "claude") {
   return (

@@ -1,18 +1,17 @@
 import { normalizeModelId, providerForModelId } from "./model-catalog.mjs";
+import { isStrongerRepairPolicy } from "./repair-escalation-policy.mjs";
 
 export const EFFECTIVE_POLICY_VERSION = 1;
 
 const PROVIDERS = new Set(["codex", "claude"]);
 const MATERIAL_SEVERITIES = new Set(["P0", "P1"]);
-const ARCHITECTURAL_RISK =
-  /\b(security|authentication|authorization|permission|credential|secret|encryption|privacy|schema|migration|database|backfill|data[- ]integrity|concurrency|race condition|locking|deadlock|atomicity|architecture|architectural|cross[- ]cutting|rewrite|multi[- ]package)\b/i;
 
 /**
  * Resolve the policy that owns an attempt before any provider process is started.
  * The returned record is persisted on the workflow reservation and is the only
  * policy authority execution may consume for that attempt.
  */
-export function resolveEffectiveRunPolicy(task, role) {
+export function resolveEffectiveRunPolicy(task, role, repairAuthorizer = null) {
   const selected = task?.agentConfig?.stagePolicies?.[role];
   if (!selected?.model || !selected?.reasoning) {
     throw new Error(
@@ -40,11 +39,12 @@ export function resolveEffectiveRunPolicy(task, role) {
   let effective = { model: selectedModel, reasoning: String(selected.reasoning) };
   let effectiveProvider = selectedProvider;
   let escalationReason = null;
+  let escalationGate = null;
   if (role === "repair" && !isPinnedSource(source)) {
-    const reason = eligibleRepairEscalationReason(task);
+    const decision = eligibleRepairEscalation(task, repairAuthorizer);
     const stronger =
       task.agentConfig?.repairEscalationPolicies?.[task.workflowProfile?.selected ?? "standard"];
-    if (reason && stronger?.model && stronger?.reasoning) {
+    if (decision && stronger?.model && stronger?.reasoning) {
       const strongerModel = normalizeModelId(stronger.model);
       const strongerProvider = providerForModelId(strongerModel);
       if (!strongerProvider || strongerProvider !== selectedProvider) {
@@ -57,9 +57,13 @@ export function resolveEffectiveRunPolicy(task, role) {
           `Repair escalation would cross this task's ${providerConstraint}-only constraint. Change the unpinned Repair policy before retrying.`,
         );
       }
+      if (!isStrongerRepairPolicy(selected, stronger)) {
+        throw new Error("The snapshotted Repair escalation is not stronger than the selected Repair policy.");
+      }
       effective = { model: strongerModel, reasoning: String(stronger.reasoning) };
       effectiveProvider = strongerProvider;
-      escalationReason = reason;
+      escalationReason = decision.reason;
+      escalationGate = decision.gate;
     }
   }
 
@@ -76,6 +80,7 @@ export function resolveEffectiveRunPolicy(task, role) {
     model: effective.model,
     reasoning: effective.reasoning,
     escalationReason,
+    escalationGate,
   };
 }
 
@@ -113,27 +118,43 @@ function isPinnedSource(source) {
   return ["task-override", "legacy-task-override", "future-role-override"].includes(source);
 }
 
-function eligibleRepairEscalationReason(task) {
+function eligibleRepairEscalation(task, authorizer) {
   const candidate = task.candidates?.at(-1);
-  if (!candidate) return null;
-  const gate = [...(task.runs ?? [])]
-    .reverse()
-    .find(
-      (run) =>
-        ["dev-review", "test", "final-review"].includes(run.stage) &&
-        run.candidateId === candidate.id &&
-        run.candidateRevision === candidate.revisionNumber &&
-        run.gateResult?.verdict === "REPAIR",
-    );
+  if (!candidate || authorizer?.authorizingGateFreshnessReasonCode !== "repair_required") return null;
+  const gate = (task.runs ?? []).find((run) => run.id === authorizer.authorizingGateRunId);
+  if (
+    !gate ||
+    gate.stage !== authorizer.authorizingGateStage ||
+    gate.workflowReservationId !== authorizer.authorizingGateReservationId ||
+    gate.artifactId !== authorizer.authorizingGateArtifactId ||
+    gate.status !== "completed" ||
+    gate.candidateId !== candidate.id ||
+    gate.candidateRevision !== candidate.revisionNumber ||
+    gate.candidateHeadRevision !== candidate.headRevision ||
+    gate.gateResult?.verdict !== "REPAIR"
+  )
+    return null;
   const finding = gate?.gateResult?.findings?.find(
     (item) =>
       item?.kind === "candidate-defect" &&
       item?.blocking === true &&
-      (MATERIAL_SEVERITIES.has(item.severity) ||
-        ARCHITECTURAL_RISK.test(`${item.title ?? ""} ${item.detail ?? ""} ${item.file ?? ""}`)),
+      MATERIAL_SEVERITIES.has(item.severity) &&
+      item.bindingExplicit === true &&
+      item.candidateId === candidate.id &&
+      item.candidateRevision === candidate.revisionNumber,
   );
   if (!finding) return null;
-  return `Verified ${finding.severity ?? "material"} candidate defect from ${gate.stage}: ${String(
-    finding.title ?? "repair required",
-  ).slice(0, 500)}`;
+  return {
+    reason: `Verified ${finding.severity} candidate defect from ${gate.stage}: ${String(
+      finding.title ?? "repair required",
+    ).slice(0, 500)}`,
+    gate: {
+      stage: gate.stage,
+      runId: gate.id,
+      artifactId: gate.artifactId,
+      candidateId: candidate.id,
+      candidateRevision: candidate.revisionNumber,
+      severity: finding.severity,
+    },
+  };
 }

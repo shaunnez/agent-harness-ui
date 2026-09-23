@@ -21,6 +21,20 @@ export function defaultStagePolicies(provider = DEFAULT_EXECUTION_PROVIDER) {
   return defaultProfileStagePolicies(provider).standard;
 }
 
+// A preset is an explicit operator choice. Ordinary and migrated settings start Off;
+// a provider preset can opt new tasks into its one documented Repair rung.
+export function defaultRepairEscalationPolicies(provider = DEFAULT_EXECUTION_PROVIDER) {
+  if (provider === "claude") {
+    const opusHigh = { model: "claude-opus-5-5", reasoning: "high" };
+    return { fast: { ...opusHigh }, standard: { ...opusHigh }, "high-risk": { ...opusHigh } };
+  }
+  return {
+    fast: { model: "gpt-6-sol", reasoning: "high" },
+    standard: null,
+    "high-risk": null,
+  };
+}
+
 export function defaultProfileStagePolicies(provider = DEFAULT_EXECUTION_PROVIDER) {
   if (provider === "claude") {
     const opusHigh = { model: "claude-opus-5-5", reasoning: "high" };

@@ -295,6 +295,7 @@ export function beginAgentRun(task, input) {
     effectiveModel: input.effectiveModel ?? input.model ?? null,
     effectiveReasoning: input.effectiveReasoning ?? input.reasoning ?? null,
     policyEscalationReason: input.policyEscalationReason ?? null,
+    policyEscalationGate: input.policyEscalationGate ?? null,
     attempt: relatedRuns.length + 1,
     retryOfRunId,
     ...(input.packageRepairOfRunId ? { packageRepairOfRunId: input.packageRepairOfRunId } : {}),
