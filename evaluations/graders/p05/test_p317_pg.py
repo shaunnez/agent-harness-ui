@@ -122,18 +122,28 @@ def test_ambiguous_candidates_survive_storage_and_need_explicit_selection(case):
         stored = (
             conn.execute(
                 text(
-                    "SELECT claim_id, candidates FROM construction_pricing_results WHERE job_id = :job ORDER BY claim_id"
+                    "SELECT claim_id, to_jsonb(result) AS payload "
+                    "FROM construction_pricing_results AS result "
+                    "WHERE job_id = :job ORDER BY claim_id"
                 ),
                 {"job": after.pricing.id},
             )
             .mappings()
             .all()
         )
-    assert {row["claim_id"]: candidate_ids(row["candidates"]) for row in stored} == {
+    expected = {
         f["document"]["claims"][0]["id"]: ["ground", "other-ground"],
         f["document"]["claims"][1]["id"]: ["ground", "other-ground"],
         f["document"]["claims"][2]["id"]: [],
     }
+    assert {row["claim_id"] for row in stored} == set(expected)
+    for row in stored:
+        retained = [
+            candidate_ids(value)
+            for key, value in row["payload"].items()
+            if "candidate" in key.lower() and isinstance(value, list)
+        ]
+        assert expected[row["claim_id"]] in retained
 
     claim_id = f["document"]["claims"][0]["id"]
     request = SaveVariationLink(

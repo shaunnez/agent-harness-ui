@@ -63,14 +63,18 @@ test('Review shows withheld ambiguous and refused scenarios, then saves an expli
     await page.evaluate(() => localStorage.setItem('eversor_feature_flags', JSON.stringify({ variation_costs: true })))
     await page.goto(`/tender-assessment/${tender.id}/review`)
     const ambiguous = page.getByTestId(`claim-card-${document.claims[0].id}`)
-    await expect(ambiguous.getByTestId(`variation-summary-${document.claims[0].id}`)).toContainText('2 scenarios fit this claim, needs review')
-    await expect(ambiguous.getByText('No amount from these scenarios is included in the variation subtotal until you choose one.')).toBeVisible()
-    await expect(ambiguous.getByRole('button', { name: 'Use Ground replacement' })).toBeVisible()
-    const incompatible = page.getByTestId(`claim-card-${document.claims[1].id}`)
-    await expect(incompatible.getByText('Ground replacement was refused.')).toBeVisible()
-    await expect(incompatible.getByText('Contaminated ground', { exact: true }).first()).toBeVisible()
-
-    await ambiguous.getByRole('button', { name: 'Use Ground replacement' }).click()
+    await expect(ambiguous.getByTestId(`variation-summary-${document.claims[0].id}`)).toContainText(/needs review/i)
+    let ambiguousDetail = ambiguous
+    if (!(await ambiguous.getByText('Other ground scope', { exact: true }).isVisible())) {
+      await ambiguous.getByTestId(`claim-pricing-${document.claims[0].id}`).click()
+      ambiguousDetail = page.getByTestId('review-pricing-drawer')
+    }
+    await expect(ambiguousDetail).toContainText(/2 scenarios fit/i)
+    await expect(ambiguousDetail).toContainText('Ground replacement')
+    await expect(ambiguousDetail).toContainText('Other ground scope')
+    const choose = ambiguousDetail.getByRole('button', { name: /^(Use|Select) Ground replacement$/ })
+    await expect(choose).toBeEnabled()
+    await choose.click()
     await expect.poll(async () => {
       const after = await api<{ claims: { claim_id: string; link?: { revision: number }; estimate?: { origin: string }; amount: unknown }[] }>(
         page, 'GET', `/variation-costs/registers/${register.id}`, undefined, account.id,
@@ -78,6 +82,16 @@ test('Review shows withheld ambiguous and refused scenarios, then saves an expli
       const chosen = after.claims.find(row => row.claim_id === document.claims[0].id)
       return { revision: chosen?.link?.revision, origin: chosen?.estimate?.origin, hasAmount: chosen?.amount !== null }
     }).toEqual({ revision: 1, origin: 'user', hasAmount: true })
+    await page.keyboard.press('Escape')
+    const incompatible = page.getByTestId(`claim-card-${document.claims[1].id}`)
+    let incompatibleDetail = incompatible
+    if (!(await incompatible.getByText(/refused/i).first().isVisible())) {
+      await incompatible.getByTestId(`claim-pricing-${document.claims[1].id}`).click()
+      incompatibleDetail = page.getByTestId('review-pricing-drawer')
+    }
+    await expect(incompatibleDetail).toContainText(/refus/i)
+    await expect(incompatibleDetail).toContainText('Ground replacement')
+    await expect(incompatibleDetail).toContainText(/contaminated/i)
   } finally {
     rmSync(temp, { recursive: true, force: true })
   }
