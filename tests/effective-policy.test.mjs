@@ -117,11 +117,11 @@ test("infrastructure failures and pinned roles never trigger reasoning escalatio
     candidates: [evidence.candidate],
     runs: [{ ...evidence.run, gateResult: null, status: "failed" }],
   });
-  assert.equal(resolveEffectiveRunPolicy(infrastructure, "repair").model, "gpt-6-luna");
+  assert.equal(resolveEffectiveRunPolicy(infrastructure, "repair").model, "gpt-6-sol");
 
   const pinned = task({ candidates: [evidence.candidate], runs: [evidence.run] });
   pinned.agentConfig.rolePolicySources.repair = "future-role-override";
-  assert.equal(resolveEffectiveRunPolicy(pinned, "repair").model, "gpt-6-luna");
+  assert.equal(resolveEffectiveRunPolicy(pinned, "repair").model, "gpt-6-sol");
 });
 
 test("provider presets remain profile-aware while individual roles stay pinned", () => {

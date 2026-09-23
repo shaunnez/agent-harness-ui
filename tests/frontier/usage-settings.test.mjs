@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { codexSonnetProfileStagePolicies } from "../../server/policy-defaults.mjs";
 import { createFixtureGateway } from "../../src/frontier/fixtures/gateway.ts";
 import { fixtureRun, fixtureTask } from "../../src/frontier/fixtures/scenarios.ts";
 import { parseDiff } from "../../src/frontier/runtime/diff.ts";
+import { codexSonnetProfilePolicyMatrices } from "../../src/frontier/runtime/policies.ts";
 import { settingsInput } from "../../src/frontier/runtime/settings.ts";
 import { runTime, sumRecorded, taskWallTime, usageTotals } from "../../src/frontier/runtime/usage.ts";
 
@@ -79,6 +81,33 @@ test("saved defaults affect new tasks only and failed settings validation preser
   assert.equal((await gateway.status()).settings.gatePolicies?.test ?? "manual", "manual");
   await assert.rejects(gateway.saveSettings({ ...settings, allowedModels: [] }), /allowed/);
   assert.deepEqual((await gateway.status()).settings.allowedModels, settings.allowedModels);
+});
+test("the optional Codex and Sonnet preset requires both providers", async () => {
+  const gateway = createFixtureGateway(undefined, true);
+  const status = await gateway.status();
+  const withSonnet = {
+    ...status,
+    catalog: {
+      ...status.catalog,
+      models: [
+        ...status.catalog.models,
+        { id: "claude-sonnet-5", provider: "claude", editable: true, reasoningLevels: ["high"] },
+      ],
+    },
+    settings: {
+      ...status.settings,
+      allowedModels: [...status.settings.allowedModels, "claude-sonnet-5"],
+    },
+  };
+  assert.deepEqual(codexSonnetProfilePolicyMatrices(withSonnet), codexSonnetProfileStagePolicies());
+  const codexOnly = {
+    ...withSonnet,
+    settings: {
+      ...withSonnet.settings,
+      allowedModels: status.settings.allowedModels,
+    },
+  };
+  assert.equal(codexSonnetProfilePolicyMatrices(codexOnly), null);
 });
 test("unified diff line numbers follow source hunks across additions, removals and files", () => {
   const files = parseDiff(
