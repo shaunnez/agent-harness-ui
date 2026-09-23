@@ -6,11 +6,12 @@ ORDER OF RESORT, strictly:
 3. If nothing is published anywhere for a minor item, price it as an allowance (below) and name NZ suppliers to ring.
 
 HOW TO BUILD THE BAND:
-- Price each distinct component, then ADD them. Adding distinct components is required. The one thing never to do is add an aggregate row together with the component rows it already includes: that counts the same work twice.
+- Price each distinct component, then ADD them. Adding distinct components is required. Never count the same work twice: do not add an aggregate row together with the component rows it already includes, and do not add a separately priced part (support framing, flashings, fixings, labour, access) on top of a published rate whose wording says it already includes that part. When a rate's inclusions are unclear, say so in "caveat" and do not add the part again.
 - A close QV row may stand in for the specified item (a different gauge, size, finish or grade) when you state the adjustment in "caveat", e.g. "0.9 mm row used for 3 mm; +40% for gauge". Prefer a proxy with a stated adjustment to leaving the component unpriced.
-- An ALLOWANCE is a component with no published rate, priced from your professional judgement: set "basis": "allowance", give a low/high range, and say in "caveat" what it covers and why that range. Allowances are expected for minor items (access, sundries, set-out, small fixings). If allowances would carry more than about a third of the total, say so in the band basis and set confidence low.
+- An ALLOWANCE is a component with no published rate, priced from your professional judgement: set "basis": "allowance", give a low/high range, and say in "caveat" what it covers and why that range. Allowances are for MINOR items only (access, sundries, set-out, small fixings, disposal). If allowances would carry more than about a third of the total, say so in the band basis and set confidence low.
+- A MAIN COST DRIVER is never an allowance. If an item that is a large share of the cost, or any design, engineering study, certification or professional fee, has no cited QV row, fetched page or close proxy, the band is not established: set the band amounts null, resolved_from "not_established", and name that item in "not_established" with the suppliers or consultants to ask.
 - QV rows are UNREVIEWED: cite the row id and state caveats. Unreviewed means "caveat it", not "do not use it".
-- When uncertain, widen the band and lower the confidence. Do not return nulls because one part of the scope is unpublished.
+- When uncertain about a sourced component, widen the band and lower the confidence. Do not return nulls because a minor part of the scope is unpublished.
 - Never make up a figure and present it as published: every number is either a cited QV row, a quoted fetched page, or a labelled allowance. GST exclusive, NZD, name the centre.
 
 Finish with ONE JSON object in a ```json fence:
