@@ -26,10 +26,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { ClaudeCliResearchRuntime, RECORDED_BASELINE_MODEL } from "../server/research/claude-cli/runtime.mjs";
-import {
-  CodexCliResearchRuntime,
-  DEFAULT_CODEX_CLI_MODEL,
-} from "../server/research/codex-cli/runtime.mjs";
+import { CodexCliResearchRuntime, DEFAULT_CODEX_CLI_MODEL } from "../server/research/codex-cli/runtime.mjs";
 import { resolveResearchBudget } from "../src/research-budget-policy.ts";
 import {
   compareWithBaseline,
@@ -92,6 +89,7 @@ const { records: fresh, aborted } = await runBenchmark({
   runtime,
   scopes,
   budget,
+  runs: options.runs ?? undefined,
   onProgress: ({ index, total, record }) => {
     process.stderr.write(
       `[${index}/${total}] ${record.scenarioId}: ${record.status} ` +
@@ -113,6 +111,7 @@ const report = {
   model,
   // A Codex run is a measurement against Opus's baseline; see the header.
   measurementOnly: codex,
+  runsPerScenario: options.runs ?? 3,
   concurrency: options.concurrency,
   elapsedMs: Date.now() - startedAt,
   aborted,
@@ -181,6 +180,12 @@ function renderSummary(report) {
     lines.push(
       `QV rows cited        ${c.rowsCited} (${c.rowsFound} found, ${c.rowsMissing} not in the capture, ${c.rowsUnpriced} unpriced)`,
       `web figures cited    ${c.webCited} (${c.webVerified} quote verified, ${c.webNotFetched} never fetched, ${c.webExcerptRejected} quote not on the page)`,
+      `allowances           ${c.allowances ?? 0} (components priced from judgement, labelled as such)`,
+    );
+  if (report.runsPerScenario !== 3)
+    lines.push(
+      "",
+      `${report.runsPerScenario} run(s) per scenario: a check of whether bands appear, not of agreement.`,
     );
   if (report.aborted)
     lines.push(
@@ -239,14 +244,16 @@ function readOptions(argv) {
         .map((entry) => entry.trim())
         .filter(Boolean);
     else if (flag === "--limit") options.limit = Number(value);
-    else if (flag === "--concurrency") options.concurrency = Math.max(1, Number(value));
+    else if (flag === "--runs") {
+      options.runs = Number(value);
+      if (![1, 2, 3].includes(options.runs)) throw new Error("--runs must be 1, 2 or 3.");
+    } else if (flag === "--concurrency") options.concurrency = Math.max(1, Number(value));
     else if (flag === "--model") options.model = value;
     else if (flag === "--runtime") {
       if (!["claude-cli", "codex-cli"].includes(value))
         throw new Error(`--runtime must be claude-cli or codex-cli, not ${value}.`);
       options.runtime = value;
-    }
-    else if (flag === "--max-usd") options.maxUsd = Number(value);
+    } else if (flag === "--max-usd") options.maxUsd = Number(value);
     else if (flag === "--merge") options.merge = path.resolve(value);
     else if (flag === "--out") options.out = path.resolve(value);
     else throw new Error(`Unknown option ${flag}.`);

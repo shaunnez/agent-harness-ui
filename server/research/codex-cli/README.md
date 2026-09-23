@@ -40,7 +40,12 @@ tool listed, and no `command_execution` item appeared.
   `maxSearchCalls`, and its tokens and API-rate estimate are reported when it ends.
 - `usage.estimatedCostUsd` is priced from `server/model-catalog.mjs`, with
   `usage.costBasis: "api_rate_estimate"`. The ChatGPT plan bills nothing per call.
-- The recipe's prompt says `WebSearch`; Codex's copy says `web_search`.
+- Codex has its own prompt, `codex-system-prompt.txt`. Under the Opus prompt GPT-6 Sol banded
+  2 of 30 scopes (`26-CODEX-BASELINE-RESULT.md`): it read "never invent a number" as a ban on
+  any total resting on an assumption. Its copy keeps the order of resort, citation rules and
+  schema, and says that distinct components are added, a close row may stand in with a stated
+  adjustment, and a minor unpublished item is a labelled allowance (`"basis": "allowance"`,
+  counted as `citations.allowances`). The Opus prompt is unchanged.
 - A web search contributes a `tool.called` and nothing else: Codex keeps search results inside
   the model's context. Pages become checkable sources only through `fetch_source`, as on the
   Claude side.

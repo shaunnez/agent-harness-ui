@@ -13,6 +13,10 @@
 
 import { agreementCounts } from "../../server/research/claude-cli/agreement.mjs";
 import { PLAN_LIMIT_ERROR_CODE } from "../../server/research/claude-cli/cli-call.mjs";
+import { CODEX_PLAN_LIMIT_ERROR_CODE } from "../../server/research/codex-cli/codex-call.mjs";
+
+/** Either plan saying stop. A benchmark that kept going past one records failures as results. */
+const PLAN_LIMIT_CODES = new Set([PLAN_LIMIT_ERROR_CODE, CODEX_PLAN_LIMIT_ERROR_CODE]);
 import { runTrio } from "../../server/research/claude-cli/trio.mjs";
 import { loadPinnedScopes, loadRecordedBaseline } from "./scopes.mjs";
 
@@ -45,7 +49,16 @@ export const RECORDED_BASELINE = Object.freeze({
  * Returns `{ records, aborted }`, never a bare array: a caller that cannot see the run was cut
  * short will compare 25 scenarios against a 30-scenario baseline and call it a verdict.
  */
-export async function runBenchmark({ runtime, scopes, budget, profile = "standard", onProgress = () => {} }) {
+export async function runBenchmark({
+  runtime,
+  scopes,
+  budget,
+  profile = "standard",
+  // Three is the recorded method. Fewer is a quick check of whether a model bands at all, and
+  // says nothing about agreement.
+  runs = undefined,
+  onProgress = () => {},
+}) {
   const records = [];
   for (const [index, scope] of scopes.entries()) {
     const startedAt = Date.now();
@@ -55,6 +68,7 @@ export async function runBenchmark({ runtime, scopes, budget, profile = "standar
       objective: scope.objective,
       budget,
       profile,
+      ...(runs ? { runs } : {}),
     });
     records.push({
       ...record,
@@ -63,12 +77,12 @@ export async function runBenchmark({ runtime, scopes, budget, profile = "standar
       costUsd: sum(record.runs.map((run) => run.costUsd ?? 0)),
     });
     onProgress({ index: index + 1, total: scopes.length, record: records.at(-1) });
-    const planLimited = record.runs.find((run) => run.error?.code === PLAN_LIMIT_ERROR_CODE);
+    const planLimited = record.runs.find((run) => PLAN_LIMIT_CODES.has(run.error?.code));
     if (planLimited)
       return {
         records,
         aborted: {
-          reason: PLAN_LIMIT_ERROR_CODE,
+          reason: planLimited.error.code,
           scenario: scope.id,
           message: planLimited.error.message,
           scenariosRun: records.length,

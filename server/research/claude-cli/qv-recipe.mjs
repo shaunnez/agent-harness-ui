@@ -76,6 +76,7 @@ export function qvMcpConfig({
 
 // --- reading the answer back ----------------------------------------------------------------
 
+const COMPONENT_BASES = new Set(["qv", "web", "allowance"]);
 const BAND_STATUSES = new Set(["qv", "qv+web", "web", "supplier_quote", "not_established"]);
 
 /** The cost-band object the system prompt asks for, or null when the model produced none.
@@ -118,6 +119,9 @@ function readComponent(raw) {
     // What makes a web figure checkable: the id `fetch_source` retained its page under, and the
     // sentence on that page that states it. Absent from every recorded run, which predates them.
     sourceId: stringOrNull(raw?.source_id),
+    // `qv`, `web` or `allowance`. Only the Codex prompt asks for it; absent means the component
+    // is read by what it cites, as before.
+    basis: COMPONENT_BASES.has(raw?.basis) ? raw.basis : null,
     excerpt: stringOrNull(raw?.excerpt),
     page: Number.isInteger(raw?.page) && raw.page > 0 ? raw.page : null,
     unit: stringOrNull(raw?.unit),

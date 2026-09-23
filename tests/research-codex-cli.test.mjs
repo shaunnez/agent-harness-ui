@@ -15,7 +15,13 @@ import path from "node:path";
 import readline from "node:readline";
 import test from "node:test";
 import { priceUsage } from "../server/model-catalog.mjs";
-import { parseCostBand, QV_ALLOWED_TOOLS } from "../server/research/claude-cli/qv-recipe.mjs";
+import { checkCostBandCitations } from "../server/research/claude-cli/citations.mjs";
+import {
+  findingsFromCostBand,
+  parseCostBand,
+  QV_ALLOWED_TOOLS,
+  QV_SYSTEM_PROMPT_PATH,
+} from "../server/research/claude-cli/qv-recipe.mjs";
 import {
   assertChatGptAuth,
   isChatGptAuth,
@@ -34,6 +40,7 @@ import {
 } from "../server/research/codex-cli/codex-call.mjs";
 import {
   CODEX_CLI_RESEARCH_RUNTIME_ID,
+  CODEX_SYSTEM_PROMPT_PATH,
   CodexCliResearchRuntime,
   DEFAULT_CODEX_CLI_MODEL,
 } from "../server/research/codex-cli/runtime.mjs";
@@ -269,6 +276,7 @@ test("a Codex run fetches through the host, and its citations check out as on th
       webVerified: 1,
       webNotFetched: 1,
       webExcerptRejected: 0,
+      allowances: 0,
     });
 
     // Tokens are real; the dollar figure is the rate card's, and says so.
@@ -282,6 +290,60 @@ test("a Codex run fetches through the host, and its citations check out as on th
     assert.equal(result.usage.toolCalls, 3);
     assert.equal(result.artifacts[0].kind, "codex-cli-transcript");
   });
+});
+
+// --- Codex's own prompt ---------------------------------------------------------------------------
+
+test("Codex runs its own copy of the recipe prompt, and the Opus prompt is unchanged", async () => {
+  let instructions = null;
+  await withRuntime(
+    async ({ runtime }) => {
+      await runtime.start(runRequest("RSCH-CODEX-PROMPT"));
+      await drain(runtime, "RSCH-CODEX-PROMPT");
+    },
+    {
+      run: async (_binary, args, options) => {
+        instructions = configOverrides(args).developer_instructions;
+        for (const line of codexLines({ answer: answerJson([]) })) options.onStdoutLine(JSON.stringify(line));
+        return { code: 0, signal: null, stdout: "", stderr: "" };
+      },
+    },
+  );
+  assert.equal(instructions, await readFile(CODEX_SYSTEM_PROMPT_PATH, "utf8"));
+  assert.match(instructions, /ADD them/);
+  assert.match(instructions, /"basis": "allowance"/);
+  assert.match(instructions, /do not fetch that URL again/);
+  assert.doesNotMatch(instructions, /WebSearch/);
+  // The recorded Opus recipe keeps its wording; Codex's copy is a separate file.
+  assert.match(await readFile(QV_SYSTEM_PROMPT_PATH, "utf8"), /Never invent a number\./);
+});
+
+test("an allowance is counted and labelled as assumed, never as a cited price", async () => {
+  const band = parseCostBand(
+    `\`\`\`json\n${JSON.stringify({
+      ...answerJson([
+        {
+          role: "Set-out and sundries",
+          basis: "allowance",
+          amount: { low: 20, high: 40 },
+          caveat: "Minor item.",
+        },
+        { role: "Channel", basis: "qv", row_id: ROW_ID, amount: { low: 300, high: 360 } },
+      ]),
+    })}\n\`\`\``,
+  );
+  assert.equal(band.components[0].basis, "allowance");
+  assert.equal(band.components[1].basis, "qv");
+  const citations = await checkCostBandCitations(band, {
+    rows: new Map(),
+    webTools: null,
+    snapshotDirectory: os.tmpdir(),
+  });
+  assert.equal(citations.summary.allowances, 1);
+  assert.deepEqual(citations.components[0].evidence, []);
+  const [allowance] = findingsFromCostBand(band, { runId: "r", citations });
+  assert.match(allowance.verification.notes, /Allowance: an amount the model assumed, not a cited price\./);
+  assert.equal(allowance.verification.status, "unverified");
 });
 
 // --- failures ----------------------------------------------------------------------------------
