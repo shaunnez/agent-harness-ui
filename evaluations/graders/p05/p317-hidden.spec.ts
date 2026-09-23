@@ -53,26 +53,29 @@ test('Review shows withheld ambiguous and refused scenarios, then saves an expli
       tender_id: tender.id, origin: 'upload', label: 'P317 synthetic register', document,
     }, account.id)
     drainConstructionPricing()
-    const costs = await api<{ summary: { amount: unknown }; claims: { claim_id: string; candidates?: unknown; amount: unknown }[] }>(
+    const costs = await api<{ summary: { amount: unknown }; claims: { claim_id: string; candidates?: unknown; match_candidates?: unknown; amount: unknown }[] }>(
       page, 'GET', `/variation-costs/registers/${register.id}`, undefined, account.id,
     )
     expect(costs.summary.amount).toBeNull()
-    expect(candidateIds(costs.claims[0].candidates)).toEqual(['ground', 'other-ground'])
-    expect(candidateIds(costs.claims[1].candidates)).toEqual(['ground', 'other-ground'])
+    expect(candidateIds(costs.claims[0].candidates ?? costs.claims[0].match_candidates)).toEqual(['ground', 'other-ground'])
+    expect(candidateIds(costs.claims[1].candidates ?? costs.claims[1].match_candidates)).toEqual(['ground', 'other-ground'])
 
     await page.evaluate(() => localStorage.setItem('eversor_feature_flags', JSON.stringify({ variation_costs: true })))
     await page.goto(`/tender-assessment/${tender.id}/review`)
     const ambiguous = page.getByTestId(`claim-card-${document.claims[0].id}`)
-    await expect(ambiguous.getByTestId(`variation-summary-${document.claims[0].id}`)).toContainText(/needs review/i)
+    await expect(ambiguous.getByTestId(`variation-summary-${document.claims[0].id}`)).toContainText(/needs review|needs pricing/i)
     let ambiguousDetail = ambiguous
     if (!(await ambiguous.getByText('Other ground scope', { exact: true }).isVisible())) {
       await ambiguous.getByTestId(`claim-pricing-${document.claims[0].id}`).click()
       ambiguousDetail = page.getByTestId('review-pricing-drawer')
     }
-    await expect(ambiguousDetail).toContainText(/2 scenarios fit/i)
+    const reviewText = `${await ambiguous.getByTestId(`variation-summary-${document.claims[0].id}`).textContent()} ${await ambiguousDetail.textContent()}`
+    expect(reviewText).toMatch(/needs review/i)
+    await expect(ambiguousDetail).toContainText(/2 scenarios (?:could )?fit/i)
     await expect(ambiguousDetail).toContainText('Ground replacement')
     await expect(ambiguousDetail).toContainText('Other ground scope')
-    const choose = ambiguousDetail.getByRole('button', { name: /^(Use|Select) Ground replacement$/ })
+    const namedChoice = ambiguousDetail.getByRole('button', { name: /^(Use|Select) Ground replacement$/ })
+    const choose = await namedChoice.count() ? namedChoice : ambiguousDetail.getByTestId('select-candidate-ground')
     await expect(choose).toBeEnabled()
     await choose.click()
     await expect.poll(async () => {

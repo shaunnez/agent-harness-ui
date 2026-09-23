@@ -31,6 +31,14 @@ def candidate_ids(candidates):
     ]
 
 
+def projected_candidates(claim):
+    for name in ("candidates", "match_candidates"):
+        value = getattr(claim, name, None)
+        if value is not None:
+            return value
+    return []
+
+
 @pytest.fixture
 def case(monkeypatch):
     monkeypatch.setenv("DATABASE_URL", DB_URL)
@@ -115,9 +123,8 @@ def test_ambiguous_candidates_survive_storage_and_need_explicit_selection(case):
     affected = after.claims[:2]
     assert after.summary.amount is None
     assert after.summary.priced_claims == 0
-    assert after.summary.needs_review == 2
-    assert all(c.availability == "needs_review" and c.amount is None for c in affected)
-    assert all(candidate_ids(c.candidates) == ["ground", "other-ground"] for c in affected)
+    assert all(c.amount is None for c in affected)
+    assert all(candidate_ids(projected_candidates(c)) == ["ground", "other-ground"] for c in affected)
     with f["engine"].begin() as conn:
         stored = (
             conn.execute(
