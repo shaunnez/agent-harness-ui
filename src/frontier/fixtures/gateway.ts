@@ -5,6 +5,7 @@ import { colonyStressFixtures } from "./colony.ts";
 import { fixtureHistory } from "./history.ts";
 import { loadFixture } from "./load.ts";
 import { fixtureManagement } from "./management.ts";
+import { fixtureResearch, researchFixtureProjects } from "./research/questions.ts";
 import { fixtureArtifact, fixtureProjects, fixtureTask, makeFixtureTasks } from "./scenarios.ts";
 import { stationFixtures } from "./stations.ts";
 import { fixtureWorkflow, sampleEligibility } from "./workflow.ts";
@@ -35,7 +36,7 @@ export function createFixtureGateway(
         ? stationFixtures()
         : scale
           ? loadFixture(scale)
-          : { projects: fixtureProjects, tasks: makeFixtureTasks() },
+          : { projects: [...fixtureProjects, ...researchFixtureProjects], tasks: makeFixtureTasks() },
   );
   if (workflowScenarios && !scale && !stationReview && !colonyStress) enrichWorkflowScenarios(initial.tasks);
   if (workspaceReview && !scale && !stationReview && !colonyStress)
@@ -91,6 +92,7 @@ export function createFixtureGateway(
   const workflow = fixtureWorkflow(tasks, get, changed);
   return {
     mode: "fixture",
+    research: fixtureResearch(online),
     workspaceHead: history.workspaceHead,
     workspaceHistory: history.workspaceHistory,
     watchedRun: history.watchedRun,

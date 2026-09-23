@@ -13,6 +13,14 @@ the evidence it saw.
 **Estimate:** 2½ to 3 days of build across four slices, each ending in a browser check. No paid
 runs until the very last step, which needs a separate go-ahead.
 
+**Status, 23 September:** decisions answered (three runs plus Quick; engine from Settings; fixture
+mode first; screens reviewed first), except that research projects use the existing **Relay** base
+for now instead of a new observatory. A clickable prototype of slices B–D is built in the real
+Frontier app, sample world only (`npm run dev:frontier`, `?mode=fixture`): two research projects
+from the recorded results (30 Opus scopes, 7 Codex scopes), the dock, question list, question
+detail, review pinned to the evidence fingerprint, the ask form, and a Research choice in Project
+setup. No backend, no live project, no model call. Slice A waits on review of the prototype.
+
 ---
 
 ## Decisions to confirm before building

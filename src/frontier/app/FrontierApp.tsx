@@ -20,6 +20,7 @@ import { tasksInProject } from "../scene/tasks";
 import { AgentPanel } from "../views/AgentPanel";
 import { BaseSelection } from "../views/BaseSelection";
 import { DecisionNavigation } from "../views/DecisionNavigation";
+import { ResearchBaseSelection } from "../views/research/ResearchBaseSelection";
 import { PinnedWork } from "../views/WatchPins";
 import { shouldShowWelcome, Welcome } from "../views/Welcome";
 import { AttentionQueue, ConnectionBadge, SelectionHud, WorldActions, WorldClock } from "../views/WorldHud";
@@ -293,6 +294,13 @@ export function FrontierApp() {
     runtime.select(id);
     navigate({ ...worldLocation, view: "agent", taskId: id, runId });
   }
+  /** A research project has no headquarters workflow to enter; its window opens instead. */
+  function enterProject(id: string) {
+    if (snapshot.projects.find((entry) => entry.id === id)?.kind === "research") {
+      setPickedProject(id);
+      setStack([{ kind: "research", projectId: id }]);
+    } else navigate({ ...worldLocation, view: "project", projectId: id });
+  }
   function locate(id: string) {
     const item = snapshot.tasks.find((entry) => entry.id === id);
     const owner = snapshot.projects.find((entry) => entry.repositoryPath === item?.repositoryPath);
@@ -308,7 +316,7 @@ export function FrontierApp() {
       runtime.select(id);
       setPickedProject(null);
       if (preferences.followSelection) activeRenderer()?.follow(id);
-    } else if (pickedProject === id) navigate({ ...worldLocation, view: "project", projectId: id });
+    } else if (pickedProject === id) enterProject(id);
     else {
       setPickedProject(id);
       runtime.select(null);
@@ -320,8 +328,8 @@ export function FrontierApp() {
       ...current,
       repositoryPath:
         current.repositoryPath ||
-        (project?.archivedAt ? "" : project?.repositoryPath) ||
-        snapshot.projects.find((item) => !item.archivedAt)?.repositoryPath ||
+        (project?.archivedAt || project?.kind === "research" ? "" : project?.repositoryPath) ||
+        snapshot.projects.find((item) => !item.archivedAt && item.kind !== "research")?.repositoryPath ||
         "",
     }));
     open({ kind: "new-task" });
@@ -420,7 +428,7 @@ export function FrontierApp() {
           }}
           onEnter={(id) => {
             setWelcome(false);
-            navigate({ ...worldLocation, view: "project", projectId: id });
+            enterProject(id);
           }}
         />
       ) : (
@@ -440,7 +448,7 @@ export function FrontierApp() {
                 controlsRef={proofRenderer}
                 onSelect={choose}
                 onExterior={() => navigate(worldLocation)}
-                onEnterProject={(id) => navigate({ ...worldLocation, view: "project", projectId: id })}
+                onEnterProject={enterProject}
                 onWorldSettings={() => open({ kind: "world-settings" })}
               />
             </Suspense>
@@ -459,11 +467,8 @@ export function FrontierApp() {
               <select
                 value={location.projectId ?? "all"}
                 onChange={(event) => {
-                  navigate(
-                    event.target.value === "all"
-                      ? worldLocation
-                      : { ...worldLocation, view: "project", projectId: event.target.value },
-                  );
+                  if (event.target.value === "all") navigate(worldLocation);
+                  else enterProject(event.target.value);
                 }}
               >
                 <option value="all">All projects</option>
@@ -526,14 +531,27 @@ export function FrontierApp() {
               onPolicies={() => open({ kind: "task-policies", taskId: selectedForHud.id })}
             />
           )}
-          {location.view === "world" && pickedProject && project && !selected && (
-            <BaseSelection
+          {location.view === "world" && pickedProject && project?.kind === "research" && !selected && (
+            <ResearchBaseSelection
               project={project}
-              tasks={tasksInProject(snapshot.tasks, project)}
+              research={runtime.gateway.research}
               rendererRef={proofRenderer}
-              onEnter={() => navigate({ ...worldLocation, view: "project", projectId: project.id })}
+              onOpen={() => open({ kind: "research", projectId: project.id })}
+              onAsk={() => open({ kind: "research-ask", projectId: project.id })}
             />
           )}
+          {location.view === "world" &&
+            pickedProject &&
+            project &&
+            project.kind !== "research" &&
+            !selected && (
+              <BaseSelection
+                project={project}
+                tasks={tasksInProject(snapshot.tasks, project)}
+                rendererRef={proofRenderer}
+                onEnter={() => navigate({ ...worldLocation, view: "project", projectId: project.id })}
+              />
+            )}
           {location.view !== "agent" && (
             <WorldActions
               onNew={newTask}
@@ -651,7 +669,7 @@ export function FrontierApp() {
           rendererRef={proofRenderer}
           enterProject={(id) => {
             close();
-            navigate({ ...worldLocation, view: "project", projectId: id });
+            enterProject(id);
           }}
           command={command}
         />

@@ -173,12 +173,18 @@ export function Projects({
                 />
                 <span className="project-row-identity">
                   <strong>{project.name}</strong>
-                  <small>{project.repositoryPath}</small>
-                  <span className="project-counts">
-                    <span>{items.filter(isOpen).length} active</span>
-                    <span className="waiting-icon">{items.filter(needsYou).length} need you</span>
-                    <span>{items.filter((task) => task.status === "completed").length} completed</span>
-                  </span>
+                  <small>{project.kind === "research" ? "Research project" : project.repositoryPath}</small>
+                  {project.kind === "research" ? (
+                    <span className="project-counts">
+                      <span>Costing questions, three runs each</span>
+                    </span>
+                  ) : (
+                    <span className="project-counts">
+                      <span>{items.filter(isOpen).length} active</span>
+                      <span className="waiting-icon">{items.filter(needsYou).length} need you</span>
+                      <span>{items.filter((task) => task.status === "completed").length} completed</span>
+                    </span>
+                  )}
                 </span>
                 <span className="project-updated">
                   <Clock size={16} />
@@ -227,31 +233,37 @@ export function Projects({
               image={previews[selected.id]}
             />
           )}
-          <p className="repository-path">{selected.repositoryPath}</p>
-          <div className="metric-grid">
-            <div>
-              <strong>{selectedTasks.filter(isOpen).length}</strong>
-              <small>Active tasks</small>
+          <p className="repository-path">
+            {selected.kind === "research" ? "Research project · no repository" : selected.repositoryPath}
+          </p>
+          {selected.kind !== "research" && (
+            <div className="metric-grid">
+              <div>
+                <strong>{selectedTasks.filter(isOpen).length}</strong>
+                <small>Active tasks</small>
+              </div>
+              <div>
+                <strong>{selectedTasks.filter(isExecuting).length}</strong>
+                <small>Executing</small>
+              </div>
+              <div>
+                <strong>{selectedTasks.filter(needsYou).length}</strong>
+                <small>Need you</small>
+              </div>
+              <div>
+                <strong>
+                  {formatCount(selectedTasks.reduce((sum, task) => sum + task.usage.totalTokens, 0))}
+                </strong>
+                <small>Recorded tokens</small>
+              </div>
             </div>
-            <div>
-              <strong>{selectedTasks.filter(isExecuting).length}</strong>
-              <small>Executing</small>
-            </div>
-            <div>
-              <strong>{selectedTasks.filter(needsYou).length}</strong>
-              <small>Need you</small>
-            </div>
-            <div>
-              <strong>
-                {formatCount(selectedTasks.reduce((sum, task) => sum + task.usage.totalTokens, 0))}
-              </strong>
-              <small>Recorded tokens</small>
-            </div>
-          </div>
+          )}
           <p className="quiet">
             {selected.archivedAt
               ? `Archived ${new Date(selected.archivedAt).toLocaleDateString()}`
-              : "Task stages and agent activity come from retained runtime state."}
+              : selected.kind === "research"
+                ? "Questions, runs and reviews open in the research window."
+                : "Task stages and agent activity come from retained runtime state."}
           </p>
           <div className="project-detail-actions">
             <button
@@ -260,12 +272,14 @@ export function Projects({
               disabled={Boolean(selected.archivedAt)}
               onClick={() => onEnter(selected.id)}
             >
-              Enter base
+              {selected.kind === "research" ? "Open research" : "Enter base"}
               <ArrowRight size={19} />
             </button>
-            <button type="button" onClick={() => onTasks(selected.id)}>
-              View tasks
-            </button>
+            {selected.kind !== "research" && (
+              <button type="button" onClick={() => onTasks(selected.id)}>
+                View tasks
+              </button>
+            )}
             <button type="button" onClick={() => onManage(selected.id)}>
               {selected.archivedAt ? "Manage / restore" : "Manage project"}
             </button>

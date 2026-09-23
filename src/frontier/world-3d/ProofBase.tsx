@@ -113,6 +113,8 @@ export function ProofBase({
     () => new Color(basePalettes[base.appearance.palette].light),
     [base.appearance.palette],
   );
+  /** Research colours run their identity glow brighter than the delivery set. */
+  const glow = basePalettes[base.appearance.palette].glow;
   useLayoutEffect(() => {
     for (const material of models.materials.values()) {
       if (material.name.startsWith("identity_")) {
@@ -148,7 +150,7 @@ export function ProofBase({
       const mix = material.userData.interior ? 0 : (palettePractical[material.name] ?? 0);
       if (material.name.startsWith("room_inlay_")) driveRoomInlay(material, dark);
       else if (material.name.startsWith("identity_"))
-        material.emissiveIntensity = (0.48 + dark * 0.65) * pulse;
+        material.emissiveIntensity = (0.48 + dark * 0.65) * pulse * glow;
       else if (mix > 0) {
         // After dark the exterior practicals take the project palette, so a base is identifiable by
         // its own light at night. `dark` is 0 in daylight, so this is a no-op by day.
