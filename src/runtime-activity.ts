@@ -125,6 +125,14 @@ export interface RuntimeRun {
   effectiveModel?: string | null;
   effectiveReasoning?: string | null;
   policyEscalationReason?: string | null;
+  policyEscalationGate?: {
+    stage: StageId;
+    runId: string;
+    artifactId: string;
+    candidateId: string;
+    candidateRevision: number;
+    severity: "P0" | "P1";
+  } | null;
   startedAt: string | null;
   completedAt: string | null;
   durationMs: number | null;

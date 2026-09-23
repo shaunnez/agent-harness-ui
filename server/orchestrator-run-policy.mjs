@@ -104,9 +104,8 @@ export function currentCandidate(task) {
   return candidate;
 }
 
-export function resolveRunAgentPolicy(task, policyId, settings) {
-  void settings;
-  return resolveEffectiveRunPolicy(task, policyId);
+export function resolveRunAgentPolicy(task, policyId, repairAuthorizer = null) {
+  return resolveEffectiveRunPolicy(task, policyId, repairAuthorizer);
 }
 
 /**
@@ -242,7 +241,7 @@ export function createStageRunReservation(task, kind, stage, provider = null) {
           .filter((workPackage) => !["ready_for_integration", "integrated"].includes(workPackage.status))
           .map((workPackage) => workPackage.id)
       : [];
-  const effectivePolicy = resolveRunAgentPolicy(task, policyIdForRun(kind, stage));
+  const effectivePolicy = resolveRunAgentPolicy(task, policyIdForRun(kind, stage), repairAuthorizer);
   if (provider != null && provider !== effectivePolicy.provider) {
     throw new Error(
       `Stage ${stage} requested provider ${provider}, but its effective policy requires ${effectivePolicy.provider}.`,

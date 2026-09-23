@@ -7,7 +7,11 @@ import {
   ShieldCheck,
 } from "@phosphor-icons/react";
 import { useState } from "react";
-import { providerRuntimeDefaults } from "../../../server/policy-defaults.mjs";
+import {
+  defaultRepairEscalationPolicies,
+  providerRuntimeDefaults,
+} from "../../../server/policy-defaults.mjs";
+import { isStrongerRepairPolicy } from "../../../server/repair-escalation-strength.mjs";
 import { MAX_REPAIR_ATTEMPTS } from "../../repair-limits";
 import { approvalGateStages, autoRunStages, repairGateStages } from "../../components/runtime/workflow";
 import type { AutoRunStage } from "../../runtime-activity";
@@ -21,7 +25,11 @@ import type {
 } from "../../domain";
 import { usePanelState } from "../app/panel-state";
 import type { FrontierGateway } from "../runtime/contracts";
-import { policyRoles, providerProfilePolicyMatrices } from "../runtime/policies";
+import {
+  codexSonnetProfilePolicyMatrices,
+  policyRoles,
+  providerProfilePolicyMatrices,
+} from "../runtime/policies";
 import { stageLabels } from "../runtime/presentation";
 import { type SettingsInput, settingsInput, settingsIssue } from "../runtime/settings";
 import { PolicyChoice, ProviderPresets } from "./PolicyMatrix";
@@ -52,6 +60,31 @@ const GATE_POLICY_CHOICES: ReadonlyArray<{
     description: "Automatically accept recommendations",
   },
 ];
+
+function suggestedRepairEscalation(
+  selected: RuntimeAgentPolicy,
+  profile: WorkflowProfileId,
+  status: RuntimeStatus,
+): RuntimeAgentPolicy | null {
+  const current = status.catalog?.models.find((model) => model.id === selected.model);
+  const provider = current?.provider;
+  if (provider !== "codex" && provider !== "claude") return null;
+  const preset = defaultRepairEscalationPolicies(provider)[profile];
+  const selectable = (policy: RuntimeAgentPolicy) =>
+    status.catalog?.models.some(
+      (model) =>
+        model.id === policy.model &&
+        model.editable &&
+        status.settings?.allowedModels.includes(model.id) &&
+        model.reasoningLevels.includes(policy.reasoning),
+    );
+  if (preset && selectable(preset) && isStrongerRepairPolicy(selected, preset)) return preset;
+  const levels = current?.reasoningLevels ?? [];
+  const next = levels[levels.indexOf(selected.reasoning) + 1];
+  return next && isStrongerRepairPolicy(selected, { ...selected, reasoning: next })
+    ? { ...selected, reasoning: next }
+    : null;
+}
 
 export function ExecutionSettings(props: {
   status: RuntimeStatus | null;
@@ -111,7 +144,16 @@ function SettingsEditor({
       ...draft.profileStagePolicies,
       [profile]: { ...draft.profileStagePolicies[profile], [role]: policy },
     };
-    update({ ...draft, stagePolicies: matrices.standard, profileStagePolicies: matrices });
+    const escalation = draft.repairEscalationPolicies[profile];
+    update({
+      ...draft,
+      stagePolicies: matrices.standard,
+      profileStagePolicies: matrices,
+      repairEscalationPolicies:
+        role === "repair" && escalation && !isStrongerRepairPolicy(policy, escalation)
+          ? { ...draft.repairEscalationPolicies, [profile]: null }
+          : draft.repairEscalationPolicies,
+    });
   }
   function useProvider(provider: "codex" | "claude") {
     const matrices = providerProfilePolicyMatrices(provider, editingStatus);
@@ -123,6 +165,20 @@ function SettingsEditor({
       defaultReasoning: fallback.reasoning,
       stagePolicies: matrices.standard,
       profileStagePolicies: matrices,
+      repairEscalationPolicies: defaultRepairEscalationPolicies(provider),
+    });
+  }
+  function useCodexSonnet() {
+    const matrices = codexSonnetProfilePolicyMatrices(editingStatus);
+    if (!matrices) return;
+    const fallback = providerRuntimeDefaults("codex");
+    update({
+      ...draft,
+      defaultModel: fallback.model,
+      defaultReasoning: fallback.reasoning,
+      stagePolicies: matrices.standard,
+      profileStagePolicies: matrices,
+      repairEscalationPolicies: defaultRepairEscalationPolicies("codex"),
     });
   }
   async function save() {
@@ -260,6 +316,8 @@ function SettingsEditor({
                     providerAvailable={(provider) =>
                       providerProfilePolicyMatrices(provider, editingStatus) !== null
                     }
+                    onUseCodexSonnet={useCodexSonnet}
+                    codexSonnetAvailable={codexSonnetProfilePolicyMatrices(editingStatus) !== null}
                   />
                   <select
                     aria-label="Policy profile"
@@ -466,6 +524,70 @@ function SettingsEditor({
                     />
                   </label>
                 ))}
+                <h4>Candidate Repair escalation</h4>
+                <p className="quiet">
+                  A completed, exact-candidate P0/P1 defect can use one stronger same-provider model or
+                  reasoning level. Off keeps the selected Repair policy. This does not add an attempt; package
+                  fixes and verification gaps do not trigger it. New tasks snapshot these choices.
+                </p>
+                {(["fast", "standard", "high-risk"] as const).map((id) => {
+                  const selectedRepair = draft.profileStagePolicies[id].repair ?? {
+                    model: draft.defaultModel,
+                    reasoning: draft.defaultReasoning,
+                  };
+                  const stronger = draft.repairEscalationPolicies[id];
+                  const suggestion = suggestedRepairEscalation(selectedRepair, id, editingStatus);
+                  return (
+                    <div className="setting-row" key={`${id}-escalation`}>
+                      <span>
+                        <strong>
+                          {id === "high-risk" ? "High-risk" : id === "fast" ? "Fast" : "Standard"} Repair
+                        </strong>
+                        <small>
+                          {selectedRepair.model} / {selectedRepair.reasoning} →{" "}
+                          {stronger ? `${stronger.model} / ${stronger.reasoning}` : "Off"}
+                        </small>
+                      </span>
+                      <div className="policy-selects">
+                        <select
+                          aria-label={`${id} Repair escalation`}
+                          value={stronger ? "on" : "off"}
+                          disabled={busy || (!stronger && !suggestion)}
+                          onChange={(event) =>
+                            update({
+                              ...draft,
+                              repairEscalationPolicies: {
+                                ...draft.repairEscalationPolicies,
+                                [id]: event.target.value === "on" ? suggestion : null,
+                              },
+                            })
+                          }
+                        >
+                          <option value="off">Off</option>
+                          <option value="on">Stronger policy</option>
+                        </select>
+                        {stronger && (
+                          <PolicyChoice
+                            label={`${id} Repair escalation`}
+                            value={stronger}
+                            status={editingStatus}
+                            disabled={busy}
+                            provider={
+                              status.catalog?.models.find((item) => item.id === selectedRepair.model)
+                                ?.provider ?? undefined
+                            }
+                            onChange={(policy) =>
+                              update({
+                                ...draft,
+                                repairEscalationPolicies: { ...draft.repairEscalationPolicies, [id]: policy },
+                              })
+                            }
+                          />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </section>
             </>
           )}

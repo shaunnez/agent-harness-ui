@@ -5,11 +5,11 @@ import { DEFAULT_EXECUTION_PROVIDER } from "./run-activity.mjs";
  * runtime both resolve their defaults from here so runtime status, allowed models,
  * and spawned agents cannot advertise different models.
  */
-export const DEFAULT_RUNTIME_MODEL = "gpt-6-luna";
-export const DEFAULT_RUNTIME_REASONING = "xhigh";
+export const DEFAULT_RUNTIME_MODEL = "gpt-6-sol";
+export const DEFAULT_RUNTIME_REASONING = "high";
 
 /** Codex's own default, which is not the global one and must not follow it. */
-export const DEFAULT_CODEX_MODEL = "gpt-6-luna";
+export const DEFAULT_CODEX_MODEL = "gpt-6-sol";
 
 /**
  * Provider-specific default stage policies, in a module with no Node built-in
@@ -21,6 +21,20 @@ export function defaultStagePolicies(provider = DEFAULT_EXECUTION_PROVIDER) {
   return defaultProfileStagePolicies(provider).standard;
 }
 
+// A preset is an explicit operator choice. Ordinary and migrated settings start Off;
+// a provider preset can opt new tasks into its one documented Repair rung.
+export function defaultRepairEscalationPolicies(provider = DEFAULT_EXECUTION_PROVIDER) {
+  if (provider === "claude") {
+    const opusHigh = { model: "claude-opus-5-5", reasoning: "high" };
+    return { fast: { ...opusHigh }, standard: { ...opusHigh }, "high-risk": { ...opusHigh } };
+  }
+  return {
+    fast: { model: "gpt-6-sol", reasoning: "high" },
+    standard: null,
+    "high-risk": null,
+  };
+}
+
 export function defaultProfileStagePolicies(provider = DEFAULT_EXECUTION_PROVIDER) {
   if (provider === "claude") {
     const opusHigh = { model: "claude-opus-5-5", reasoning: "high" };
@@ -29,19 +43,33 @@ export function defaultProfileStagePolicies(provider = DEFAULT_EXECUTION_PROVIDE
     const sonnetXHigh = { model: "claude-sonnet-5", reasoning: "xhigh" };
     return {
       fast: profilePolicy(sonnetMedium, opusHigh, sonnetHigh, sonnetHigh, sonnetMedium),
-      standard: profilePolicy(sonnetXHigh, opusHigh, sonnetXHigh, sonnetXHigh, sonnetMedium),
-      "high-risk": profilePolicy(sonnetXHigh, opusHigh, sonnetXHigh, sonnetXHigh, sonnetMedium),
+      standard: profilePolicy(sonnetXHigh, opusHigh, sonnetHigh, sonnetHigh, sonnetMedium),
+      "high-risk": profilePolicy(sonnetXHigh, opusHigh, sonnetHigh, sonnetHigh, sonnetMedium),
     };
   }
   const lunaMedium = { model: "gpt-6-luna", reasoning: "medium" };
   const lunaHigh = { model: "gpt-6-luna", reasoning: "high" };
-  const lunaXHigh = { model: "gpt-6-luna", reasoning: "xhigh" };
   const solHigh = { model: "gpt-6-sol", reasoning: "high" };
+  const codexProfile = (implementation) => ({
+    ...profilePolicy(lunaHigh, solHigh, implementation, implementation, solHigh),
+    grill: { ...solHigh },
+    specification: { ...solHigh },
+    test: { ...lunaMedium },
+  });
   return {
-    fast: profilePolicy(lunaMedium, solHigh, lunaHigh, lunaHigh, lunaMedium),
-    standard: profilePolicy(lunaXHigh, solHigh, lunaXHigh, lunaXHigh, lunaMedium),
-    "high-risk": profilePolicy(lunaXHigh, solHigh, lunaXHigh, lunaXHigh, lunaMedium),
+    fast: codexProfile(lunaHigh),
+    standard: codexProfile(solHigh),
+    "high-risk": codexProfile(solHigh),
   };
+}
+
+/** Optional Settings preset; new tasks do not consume Claude unless an operator selects it. */
+export function codexSonnetProfileStagePolicies() {
+  const profiles = defaultProfileStagePolicies("codex");
+  const sonnetHigh = { model: "claude-sonnet-5", reasoning: "high" };
+  profiles["high-risk"].implement = { ...sonnetHigh };
+  profiles["high-risk"].repair = { ...sonnetHigh };
+  return profiles;
 }
 
 function profilePolicy(gathering, planning, implementation, repair, finalReview) {

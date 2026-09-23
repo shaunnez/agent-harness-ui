@@ -108,6 +108,7 @@ function policyDivergences(task) {
       selected: `${run.selectedModel ?? "unknown"}:${run.selectedReasoning ?? "unknown"}`,
       effective: `${run.effectiveModel ?? run.model ?? "unknown"}:${run.effectiveReasoning ?? run.reasoning ?? "unknown"}`,
       reason: run.policyEscalationReason ?? "selected and effective policy differ with no recorded reason",
+      gate: run.policyEscalationGate ?? null,
     });
   }
   return divergences;

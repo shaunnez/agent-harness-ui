@@ -1,4 +1,8 @@
-import { defaultProfileStagePolicies } from "../../../server/policy-defaults.mjs";
+import {
+  codexSonnetProfileStagePolicies,
+  defaultRepairEscalationPolicies,
+  defaultProfileStagePolicies,
+} from "../../../server/policy-defaults.mjs";
 import { selectWorkflowProfile } from "../../../server/workflow-profiles.mjs";
 import {
   type NewTaskDraft,
@@ -41,6 +45,13 @@ export function draftPolicies(draft: NewTaskDraft, settings: RuntimeSettings) {
     policyRoles.map(({ id }) => [id, draft.rolePolicyOverrides?.[id] ?? inherited[id]]),
   ) as Record<RolePolicyId, RuntimeAgentPolicy>;
 }
+export function draftRepairEscalation(draft: NewTaskDraft, settings: RuntimeSettings) {
+  const profile = draftProfile(draft).selected;
+  if (draft.rolePolicyOverrides?.repair) return null;
+  return draft.providerConstraint
+    ? defaultRepairEscalationPolicies(draft.providerConstraint)[profile]
+    : (settings.repairEscalationPolicies?.[profile] ?? null);
+}
 export function selectableModels(status: RuntimeStatus | null, provider?: "codex" | "claude") {
   return (
     status?.catalog?.models.filter(
@@ -81,4 +92,18 @@ export function providerProfilePolicyMatrices(provider: "codex" | "claude", stat
   );
   if (profiles.some(([, matrix]) => matrix === null)) return null;
   return Object.fromEntries(profiles) as Record<WorkflowProfileId, Record<RolePolicyId, RuntimeAgentPolicy>>;
+}
+
+export function codexSonnetProfilePolicyMatrices(status: RuntimeStatus | null) {
+  const models = selectableModels(status);
+  const defaults = codexSonnetProfileStagePolicies();
+  for (const matrix of Object.values(defaults)) {
+    for (const policy of Object.values(matrix)) {
+      if (
+        !models.some((model) => model.id === policy.model && model.reasoningLevels.includes(policy.reasoning))
+      )
+        return null;
+    }
+  }
+  return defaults;
 }

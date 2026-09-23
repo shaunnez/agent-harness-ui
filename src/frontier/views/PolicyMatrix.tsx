@@ -95,15 +95,34 @@ export function ProviderPresets({
   disabled,
   onUseProvider,
   providerAvailable,
+  onUseCodexSonnet,
+  codexSonnetAvailable,
 }: {
   status: RuntimeStatus | null;
   disabled?: boolean;
   onUseProvider(provider: "codex" | "claude"): void;
   providerAvailable?(provider: "codex" | "claude"): boolean;
+  onUseCodexSonnet?(): void;
+  codexSonnetAvailable?: boolean;
 }) {
   return (
     <div className="policy-presets">
-      <span>Apply a provider preset</span>
+      <span>Apply a preset</span>
+      {onUseCodexSonnet && (
+        <button
+          type="button"
+          className="text-button"
+          disabled={disabled || !codexSonnetAvailable}
+          title={
+            codexSonnetAvailable
+              ? "High-risk implementation and repair use Claude Sonnet 5 High."
+              : "This mix requires both Codex and Claude models in the allowlist."
+          }
+          onClick={onUseCodexSonnet}
+        >
+          Use Codex + Sonnet for high risk
+        </button>
+      )}
       {(["codex", "claude"] as const).map((provider) => {
         const available =
           selectableModels(status, provider).length > 0 && (providerAvailable?.(provider) ?? true);

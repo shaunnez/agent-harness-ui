@@ -188,6 +188,15 @@ export function RunLibrary({
                     <dd>
                       {modelLabel(selected.run.model)} · {reasoningLabel(selected.run.reasoning)}
                     </dd>
+                    {selected.run.policyEscalationReason && (
+                      <>
+                        <dt>Selected Repair policy</dt>
+                        <dd>
+                          {modelLabel(selected.run.selectedModel)} ·{" "}
+                          {reasoningLabel(selected.run.selectedReasoning)}
+                        </dd>
+                      </>
+                    )}
                     {selected.run.policySource && (
                       <>
                         <dt>Policy source</dt>
@@ -198,6 +207,17 @@ export function RunLibrary({
                       <>
                         <dt>Escalation</dt>
                         <dd>{selected.run.policyEscalationReason}</dd>
+                        {selected.run.policyEscalationGate && (
+                          <>
+                            <dt>Authorizing gate</dt>
+                            <dd>
+                              {selected.run.policyEscalationGate.stage} ·{" "}
+                              {selected.run.policyEscalationGate.candidateId} revision{" "}
+                              {selected.run.policyEscalationGate.candidateRevision} · run{" "}
+                              {selected.run.policyEscalationGate.runId}
+                            </dd>
+                          </>
+                        )}
                       </>
                     )}
                     <dt>Agent time</dt>

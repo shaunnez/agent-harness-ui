@@ -384,7 +384,11 @@ test("revalidates the plan after a fixed repository baseline and requalifies the
     assert.equal((await store.get(task.id)).status, "ready-for-implementation");
     await orchestrator.start(task.id, "implementation");
     const ready = await waitForStatus(store, task.id, "ready-for-review");
-    assert.equal(modelCalls, 1, "the retained package must requalify without another model implementation run");
+    assert.equal(
+      modelCalls,
+      1,
+      "the retained package must requalify without another model implementation run",
+    );
     assert.equal(ready.blocker, null);
     assert.equal(ready.workPackages[0].status, "integrated");
     assert.equal(ready.repositoryAuthority.selectedRevision, fixedRevision);

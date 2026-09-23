@@ -299,12 +299,15 @@ export function assertSupportedReasoning(modelId, reasoning, models = CLAUDE_MOD
 export function defaultRuntimeSettings() {
   const defaultModel = normalizeModelId(process.env.AGENT_HARNESS_MODEL ?? DEFAULT_RUNTIME_MODEL);
   const defaultReasoning = process.env.AGENT_HARNESS_REASONING ?? DEFAULT_RUNTIME_REASONING;
+  const defaultProvider = providerForModelId(defaultModel) ?? DEFAULT_EXECUTION_PROVIDER;
+  const profileStagePolicies = defaultProfileStagePolicies(defaultProvider);
   return {
     projects: [],
     // A Grill question is a human decision gate unless the operator explicitly
     // changes this setting. Each new task snapshots the value.
     grillPolicy: "manual",
     repairLimits: structuredClone(DEFAULT_REPAIR_LIMITS),
+    repairEscalationPolicies: { fast: null, standard: null, "high-risk": null },
     // Both providers' models are selectable, because a stage policy is validated
     // against this list and a Claude task's policies must name Claude models. The
     // selected provider, not this list, decides which runtime executes.
@@ -322,11 +325,9 @@ export function defaultRuntimeSettings() {
     defaultModel,
     defaultReasoning,
     // Nothing moves to another provider until an operator changes this.
-    defaultProvider: providerForModelId(defaultModel) ?? DEFAULT_EXECUTION_PROVIDER,
-    stagePolicies: defaultStagePolicies(providerForModelId(defaultModel) ?? DEFAULT_EXECUTION_PROVIDER),
-    profileStagePolicies: defaultProfileStagePolicies(
-      providerForModelId(defaultModel) ?? DEFAULT_EXECUTION_PROVIDER,
-    ),
+    defaultProvider,
+    stagePolicies: structuredClone(profileStagePolicies.standard),
+    profileStagePolicies,
     designPolicies: structuredClone(DEFAULT_DESIGN_POLICIES),
     researchPolicies: structuredClone(DEFAULT_RESEARCH_POLICIES),
     pricing: {

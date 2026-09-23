@@ -567,7 +567,7 @@ export interface RuntimeTask {
     profileStagePolicies?: Record<WorkflowProfileId, Record<string, RuntimeAgentPolicy>>;
     policySnapshotVersion?: number;
     providerConstraint?: "codex" | "claude" | null;
-    repairEscalationPolicies?: Partial<Record<WorkflowProfileId, RuntimeAgentPolicy>>;
+    repairEscalationPolicies?: Partial<Record<WorkflowProfileId, RuntimeAgentPolicy | null>>;
     rolePolicyOverrides?: Record<string, RuntimeAgentPolicy>;
     rolePolicySources?: Record<
       string,
@@ -943,6 +943,7 @@ export interface RuntimeModelCatalog {
 
 export interface RuntimeSettings {
   repairLimits?: RepairLimits;
+  repairEscalationPolicies?: Record<WorkflowProfileId, RuntimeAgentPolicy | null>;
   projects?: RuntimeProject[];
   grillPolicy: RuntimeGrillPolicy;
   gatePolicies?: RuntimeGatePolicies;
