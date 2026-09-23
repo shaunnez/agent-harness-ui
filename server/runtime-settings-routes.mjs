@@ -1,7 +1,13 @@
 import { normalizeRepairLimits, repairLimitsIssue } from "../src/repair-limits.ts";
+import {
+  normalizeResearchPolicies,
+  researchPoliciesIssue,
+  researchPoliciesOf,
+} from "../src/research-policies.ts";
 import { validateDesignPolicies } from "./design-policies.mjs";
 import { validateGatePolicies } from "./gate-policies.mjs";
 import { normalizeModelId, readExecutionProviderCatalog } from "./model-catalog.mjs";
+import { validateRepairEscalationPolicies } from "./repair-escalation-policy.mjs";
 import { inspectRepositoryContract } from "./repository-contract.mjs";
 import { projectTaskSummary } from "./task-projections.mjs";
 import { WORKFLOW_PROFILE_IDS } from "./workflow-profiles.mjs";
@@ -32,7 +38,11 @@ export function createRuntimeSettingsRoutes({
       return true;
     }
     if (request.method === "GET" && url.pathname === "/api/settings") {
-      send(response, 200, { settings: await store.settings(), runtimeSchemaVersion });
+      const settings = await store.settings();
+      send(response, 200, {
+        settings: { ...settings, researchPolicies: researchPoliciesOf(settings) },
+        runtimeSchemaVersion,
+      });
       return true;
     }
     if (request.method === "PUT" && url.pathname === "/api/settings") {
@@ -79,12 +89,26 @@ export function createRuntimeSettingsRoutes({
           ),
         ]),
       );
+      const repairEscalationPolicies = validateRepairEscalationPolicies(
+        input.repairEscalationPolicies,
+        currentSettings.repairEscalationPolicies,
+        profileStagePolicies,
+        known,
+        allowedModels,
+      );
       const designPolicies = validateDesignPolicies(
         input.designPolicies,
         known,
         allowedModels,
         currentSettings.designPolicies,
       );
+      // Research runs have their own engine and model, never a delivery role's. Absent from the
+      // request means unchanged, so a client that predates the section cannot reset it.
+      const researchPolicies = researchPoliciesOf(
+        input.researchPolicies === undefined ? currentSettings : input,
+      );
+      const researchIssue = researchPoliciesIssue(researchPolicies, [...known.values()], allowedModels);
+      if (researchIssue) throw new Error(researchIssue);
       const settings = await store.updateSettings((draft) => {
         draft.allowedModels = allowedModels;
         draft.defaultModel = defaultModel;
@@ -92,9 +116,11 @@ export function createRuntimeSettingsRoutes({
         draft.grillPolicy = grillPolicy;
         draft.gatePolicies = gatePolicies;
         draft.repairLimits = repairLimits;
+        draft.repairEscalationPolicies = repairEscalationPolicies;
         draft.stagePolicies = stagePolicies;
         draft.profileStagePolicies = profileStagePolicies;
         draft.designPolicies = designPolicies;
+        draft.researchPolicies = normalizeResearchPolicies(researchPolicies);
       });
       send(response, 200, { settings });
       return true;

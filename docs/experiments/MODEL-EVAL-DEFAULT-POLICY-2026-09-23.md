@@ -1,0 +1,22 @@
+# Provisional execution model defaults — 23 September 2026
+
+These are operating defaults, not a statistical model ranking. The evaluation changed only Implement and Repair while holding the other roles, task base, allowances and acceptance contract fixed. All dollar amounts below are bundled API-rate estimates, not subscription charges.
+
+| Case | Implement / Repair | Independent outcome | Delivery | Repair |
+| --- | --- | --- | ---: | --- |
+| H05 small migration | GPT-6 Luna High | 7/7 behavior, blind pass | 10.6 min, $0.82 | No code repair |
+| H05 small migration | GPT-6 Sol High | 7/7 behavior, blind pass | 10.9 min, $1.32 | No code repair |
+| H02 UI/API/SQLite, earlier pair | GPT-6 Luna High | 9/11 behavior, rejected | 30.3 min, $2.09 | Dev Review and Test repairs |
+| H02 UI/API/SQLite, earlier pair | GPT-6 Sol High | 11/11 behavior, blind pass | 27.1 min, $6.07 | One Dev Review repair |
+| H02 UI/API/SQLite, fresh matched pair | GPT-6 Sol High | 9/11 behavior, rejected | 21.5 min, $4.56 | None; internal gates missed stale provenance |
+| H02 UI/API/SQLite, fresh matched pair | Claude Sonnet 5 High | 11/11 behavior, blind pass with two P2 findings | 43.3 min, $9.43 | One Dev Review repair |
+
+On the distinct H06 Linear switch task, two Sol High and two Sonnet 5 High trials all passed the qualified 7/7 behavior checker. Sol's trials took 30–33 minutes and $4.80–$5.75 estimated; Sonnet's took 31–40 minutes and $7.81–$9.81. One Sol blind-review finding was later adjudicated non-blocking against the frozen contract; it remains a raw review failure. The H06 checker required documented post-run qualification amendments, so its behavior grades are not untouched first-grade receipts. The fresh H02 grader was qualified before dispatch against multiple valid implementations and a failing mutant; neither trial required a grader amendment.
+
+The resulting new-store and one-click Codex preset follow the frozen supporting-role matrix: Luna High for Triage/Scouts, Sol High for Grill/Specification/Plan/Dev Review/Final Review, and Luna Medium for Test. Fast Implement/Repair use Luna High; standard and high-risk Codex Implement/Repair use Sol High. The all-Claude preset uses Opus 5.5 High for Plan and Dev Review and Sonnet 5 High for Implement/Repair; its other supporting roles retain their existing policy. Opus is also the separate Claude Design default. Planning, Dev Review and Design models were not independently compared, so these placements are not evaluation-backed rankings. A separate **Use Codex + Sonnet for high risk** Settings preset keeps the Codex supporting roles but explicitly selects Sonnet 5 High for high-risk Implement/Repair. It is opt-in so new autonomous tasks do not unexpectedly consume Claude allowance. Saved settings and already snapshotted tasks are not migrated.
+
+The fresh H02 Sonnet review's two P2 findings concern zero-question manual Grill attribution and saving unrelated model drafts with the Grill policy. They are not fixed by this model-policy change. Sol's missed stale-provenance behavior shows that an internal green Dev Review/Test/Final Review sequence is insufficient acceptance evidence. The optional browser Settings save-isolation diagnostic passed both fresh candidates, but was excluded from primary scoring because the historical reviewed reference fails that probe.
+
+Evidence: private fresh campaign `/Users/shaun/.codex/model-evaluation/20260923/h02-provider-comparison-v1` (`freeze.json`, per-trial `independent-grade`, `report.json`); earlier H02 and H05 result notes on the `codex/model-evaluation-medium-sonnet-sol` branch; H06 result `/Users/shaun/.codex/model-evaluation/20260923/h06-sonnet-pair-v1/H06-COMPARISON-RESULT.md`.
+
+Escalation was not directly compared: the controlled trials pinned their role policies. Current automatic upshift applies only to an unpinned Repair role after a qualifying candidate-bound defect. Under this Codex baseline, Fast Repair can move from Luna High to Sol High; standard/high-risk Repair is already Sol High and has no stronger configured rung. Test the routing with deterministic cases and assess any quality gain through short, frozen repair-stage replays before expanding the policy. H03 has not been run: it remains a held-out hard case without runner integration or a qualified acceptance checker. Once qualified, it should validate a frozen policy, not be used to tune one after seeing the answer.

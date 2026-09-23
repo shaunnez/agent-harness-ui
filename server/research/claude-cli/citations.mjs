@@ -41,6 +41,10 @@ export async function checkCostBandCitations(
     webVerified: 0,
     webNotFetched: 0,
     webExcerptRejected: 0,
+    // Components the model priced from judgement and labelled as such (`basis: "allowance"`).
+    // Counted apart from citations: an allowance cites nothing by design, and a reader has to
+    // see how much of a band rests on one.
+    allowances: 0,
   };
   if (!costBand) return { components: [], summary };
   const retainedRows = new Map();
@@ -48,6 +52,10 @@ export async function checkCostBandCitations(
   for (const component of costBand.components) {
     const evidence = [];
     const problems = [];
+    if (component.basis === "allowance") {
+      summary.allowances += 1;
+      problems.push("Allowance: an amount the model assumed, not a cited price.");
+    }
 
     // A row id in a shape the capture never uses is still a citation, and an unfindable one:
     // dropping it would make the component look as if it cited nothing.

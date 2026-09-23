@@ -473,6 +473,14 @@ test("a run that executed a policy other than the selected one contaminates the 
         effectiveModel: "gpt-5.6-sol",
         effectiveReasoning: "high",
         policyEscalationReason: "Verified P1 candidate defect from dev-review",
+        policyEscalationGate: {
+          stage: "dev-review",
+          runId: "review-1",
+          artifactId: "artifact-1",
+          candidateId: "C1",
+          candidateRevision: 1,
+          severity: "P1",
+        },
       },
     ],
   });
@@ -480,6 +488,7 @@ test("a run that executed a policy other than the selected one contaminates the 
   assert.equal(variant.policyDivergences.length, 1);
   assert.equal(variant.policyDivergences[0].role, "repair");
   assert.equal(variant.policyDivergences[0].effective, "gpt-5.6-sol:high");
+  assert.equal(variant.policyDivergences[0].gate.runId, "review-1");
   assert.equal(variant.comparability.status, "mixed-identity");
 });
 

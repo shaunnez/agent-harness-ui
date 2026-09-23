@@ -259,6 +259,7 @@ export function policyDivergences(task) {
       selected: `${selectedModel ?? "unknown"}:${selectedReasoning ?? "unknown"}`,
       effective: `${effectiveModel ?? "unknown"}:${effectiveReasoning ?? "unknown"}`,
       reason: run.policyEscalationReason ?? "effective policy differs from frozen selection",
+      gate: run.policyEscalationGate ?? null,
     });
   }
   return divergences;

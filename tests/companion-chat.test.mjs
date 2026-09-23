@@ -122,7 +122,7 @@ test("companion policy never sends a Claude model through the Codex answer path"
         },
       }),
     ),
-    { model: "gpt-6-luna", reasoning: "xhigh" },
+    { model: "gpt-6-sol", reasoning: "high" },
   );
 });
 

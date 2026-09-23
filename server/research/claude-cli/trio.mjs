@@ -63,7 +63,9 @@ async function runOnce({
   for await (const event of runtime.events(id)) onEvent?.(id, event);
   const status = await runtime.status(id);
   const costBand = runtime.costBand(id);
-  if (status.error?.code === EMPTY_OUTPUT_ERROR_CODE && retriesLeft > 0) {
+  // Each CLI names its own empty output; the roles runtime has no driver and uses Claude's.
+  const emptyOutputCode = runtime.emptyOutputCode ?? EMPTY_OUTPUT_ERROR_CODE;
+  if (status.error?.code === emptyOutputCode && retriesLeft > 0) {
     return runOnce({
       runtime,
       runId,

@@ -315,12 +315,13 @@ export class RepairExecutionOrchestrator {
         effectiveModel: policy.model,
         effectiveReasoning: policy.reasoning,
         policyEscalationReason: policy.escalationReason,
+        policyEscalationGate: policy.escalationGate,
       });
       draft.events.push(
         activity(
           stageId,
           `${eventLabel ?? metadata.label} agent started`,
-          `${detail} · ${policy.model} · ${policy.reasoning}`,
+          `${detail} · ${policy.model} · ${policy.reasoning}${policy.escalationReason ? ` · ${policy.escalationReason} (gate run ${policy.escalationGate.runId})` : ""}`,
           "info",
           "agent",
           runEventMetadata(run),

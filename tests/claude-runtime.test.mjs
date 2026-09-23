@@ -866,8 +866,8 @@ test("attributes model ids to providers and leaves unknown ids unattributed", ()
     "the empty id normalizes to the verified default model's provider",
   );
   assert.deepEqual(providerRuntimeDefaults("claude"), { model: "claude-sonnet-5", reasoning: "xhigh" });
-  assert.deepEqual(providerRuntimeDefaults("codex"), { model: "gpt-6-luna", reasoning: "xhigh" });
-  assert.deepEqual(providerRuntimeDefaults(), { model: "gpt-6-luna", reasoning: "xhigh" });
+  assert.deepEqual(providerRuntimeDefaults("codex"), { model: "gpt-6-sol", reasoning: "high" });
+  assert.deepEqual(providerRuntimeDefaults(), { model: "gpt-6-sol", reasoning: "high" });
   assert.throws(() => providerRuntimeDefaults("gemini"), /No runtime defaults/);
 });
 
@@ -878,7 +878,11 @@ test("splits Claude stage policies without disturbing the Codex defaults", () =>
     assert.deepEqual(claude[policyId], { model: "claude-opus-5-5", reasoning: "high" }, policyId);
   }
   for (const policyId of ["triage", "scouts", "grill", "specification", "implement", "repair", "test"]) {
-    assert.deepEqual(claude[policyId], { model: "claude-sonnet-5", reasoning: "xhigh" }, policyId);
+    assert.deepEqual(
+      claude[policyId],
+      { model: "claude-sonnet-5", reasoning: ["implement", "repair"].includes(policyId) ? "high" : "xhigh" },
+      policyId,
+    );
   }
   assert.deepEqual(claude["final-review"], { model: "claude-sonnet-5", reasoning: "medium" });
   assert.deepEqual(defaultStagePolicies(), defaultStagePolicies("codex"));
@@ -2072,7 +2076,7 @@ test("lets every stage pick its own provider, model and reasoning", async () => 
     assert.equal(resolveAgentPolicy({ agentConfig: {} }, "plan").provider, "codex");
     assert.equal(defaultRuntimeSettings().defaultProvider, "codex");
     assert.equal(defaultRuntimeSettings().stagePolicies.plan.model, "gpt-6-sol");
-    assert.equal(defaultRuntimeSettings().stagePolicies.implement.model, "gpt-6-luna");
+    assert.equal(defaultRuntimeSettings().stagePolicies.implement.model, "gpt-6-sol");
   } finally {
     await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }

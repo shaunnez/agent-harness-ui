@@ -1,5 +1,8 @@
 import { normalizeRepairLimits } from "../../repair-limits.ts";
-import { defaultProfileStagePolicies } from "../../../server/policy-defaults.mjs";
+import {
+  defaultProfileStagePolicies,
+  defaultRepairEscalationPolicies,
+} from "../../../server/policy-defaults.mjs";
 import { resolveRolePolicyLifecycleEligibility } from "../../../server/role-policy-eligibility.mjs";
 import type { RuntimeProject, RuntimeTask } from "../../domain.ts";
 import type { FrontierGateway } from "../runtime/contracts.ts";
@@ -248,6 +251,15 @@ export function fixtureManagement(
             : configuration.settings.defaultReasoning,
           stagePolicies,
           profileStagePolicies: profiles,
+          repairEscalationPolicies: structuredClone(
+            draft.providerConstraint
+              ? defaultRepairEscalationPolicies(draft.providerConstraint)
+              : (configuration.settings.repairEscalationPolicies ?? {
+                  fast: null,
+                  standard: null,
+                  "high-risk": null,
+                }),
+          ),
           policySnapshotVersion: 3,
           providerConstraint: draft.providerConstraint ?? null,
           rolePolicyOverrides: structuredClone(draft.rolePolicyOverrides ?? {}),

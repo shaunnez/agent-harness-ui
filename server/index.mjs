@@ -9,6 +9,7 @@ import { TaskOrchestrator } from "./orchestrator.mjs";
 import { startPullRequestPolling } from "./pull-request-poller.mjs";
 import { ClaudeCliRolesResearchRuntime } from "./research/claude-cli/roles-runtime.mjs";
 import { ClaudeCliResearchRuntime } from "./research/claude-cli/runtime.mjs";
+import { CodexCliResearchRuntime } from "./research/codex-cli/runtime.mjs";
 import { FakeResearchRuntime } from "./research/fake-research-runtime.mjs";
 import { createResearchRuntimeRegistry } from "./research/research-runtime-registry.mjs";
 import { ResearchService } from "./research/research-service.mjs";
@@ -77,13 +78,18 @@ try {
 // or four roles wins, and until it has served real reviewed work (consolidation plan, phase 4).
 // It is also the only live research engine: the Deep Agents runtime was retired on 23 September
 // 2026 and what it did well moved into `claude-cli` (host-owned tools, checked citations).
+// `codex-cli` is the same recipe and harness on the ChatGPT plan, with GPT-6 Sol by default;
+// it has no baseline of its own yet, so nothing selects it unless a request names it.
 const researchService = jsonStore
   ? null
   : new ResearchService({
       store: new ResearchStore(store.databaseHandle()),
+      // Settings → Research agent picks the engine and model for a run that names neither.
+      settings: () => store.settings(),
       registry: createResearchRuntimeRegistry([
         new FakeResearchRuntime(),
         new ClaudeCliResearchRuntime(),
+        new CodexCliResearchRuntime(),
         new ClaudeCliRolesResearchRuntime(),
       ]),
     });
