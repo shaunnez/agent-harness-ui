@@ -3,6 +3,7 @@ import {
   CheckCircle,
   GearSix,
   GlobeHemisphereWest,
+  MagnifyingGlass,
   ShieldCheck,
 } from "@phosphor-icons/react";
 import { useState } from "react";
@@ -32,6 +33,7 @@ import {
 import { stageLabels } from "../runtime/presentation";
 import { type SettingsInput, settingsInput, settingsIssue } from "../runtime/settings";
 import { PolicyChoice, ProviderPresets } from "./PolicyMatrix";
+import { ResearchSettings } from "./ResearchSettings";
 
 /**
  * Both gate choices, once. The stage name carries the context, so the segment text stays
@@ -211,6 +213,14 @@ function SettingsEditor({
           <ShieldCheck size={19} />
           Design generation
         </button>
+        <button
+          type="button"
+          className={section === "research" ? "selected" : ""}
+          onClick={() => setSection("research")}
+        >
+          <MagnifyingGlass size={19} />
+          Research agent
+        </button>
         <button type="button" onClick={onWorld}>
           <GlobeHemisphereWest size={19} />
           World & connection
@@ -218,10 +228,19 @@ function SettingsEditor({
       </nav>
       <div className="settings-editor">
         <header>
-          <h2>Execution defaults</h2>
-          <p>
-            New tasks copy model policies and repair limits. Gate auto-run choices apply at the next gate.
-          </p>
+          {section === "research" ? (
+            <>
+              <h2>Research defaults</h2>
+              <p>New research runs copy these when they start. Delivery tasks are unaffected.</p>
+            </>
+          ) : (
+            <>
+              <h2>Execution defaults</h2>
+              <p>
+                New tasks copy model policies and repair limits. Gate auto-run choices apply at the next gate.
+              </p>
+            </>
+          )}
         </header>
         {stale && (
           <p role="alert" className="form-error">
@@ -572,6 +591,14 @@ function SettingsEditor({
               </section>
             </>
           )}
+          {section === "research" && (
+            <ResearchSettings
+              value={draft.researchPolicies}
+              status={editingStatus}
+              busy={busy}
+              onChange={(researchPolicies) => update({ ...draft, researchPolicies })}
+            />
+          )}
           {section === "design" && (
             <section className="workflow-card">
               <h3>Design generation policies</h3>
@@ -619,7 +646,8 @@ function SettingsEditor({
             {issue && <p role="status">{issue}</p>}
             {saved ? (
               <p role="status">
-                <CheckCircle size={18} /> Defaults saved for new tasks.
+                <CheckCircle size={18} />{" "}
+                {section === "research" ? "Saved for new research runs." : "Defaults saved for new tasks."}
               </p>
             ) : (
               <small>{changed ? "Unsaved changes retained in this session" : "No unsaved changes"}</small>

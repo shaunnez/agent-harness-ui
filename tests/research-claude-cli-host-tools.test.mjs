@@ -218,6 +218,7 @@ test("a fetched web figure verifies, an unfetched one is marked unchecked, and t
       webVerified: 1,
       webNotFetched: 1,
       webExcerptRejected: 0,
+      allowances: 0,
     });
   });
 });

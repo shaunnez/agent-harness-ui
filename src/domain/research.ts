@@ -81,7 +81,25 @@ export interface ResearchRequest {
   /** Opaque operator-supplied labels. Passed to the runtime untouched; a runtime that does
    *  not recognise a key must ignore it. Not a place for Eversor semantics. */
   metadata?: Record<string, string>;
+  /** The Settings choice this run took when it started (`src/research-policies.ts`). Stamped
+   *  by the service, never accepted from a caller. Absent for a runtime the Research section
+   *  does not configure; that runtime used its own default. */
+  researchPolicy?: ResearchRunPolicy;
 }
+
+export type ResearchRunPolicy =
+  | {
+      source: "settings-default" | "settings-for-named-runtime";
+      runtime: "claude-cli" | "codex-cli";
+      provider: "claude" | "codex";
+      model: string;
+      reasoning: string;
+    }
+  | {
+      source: "settings-default" | "settings-for-named-runtime";
+      runtime: "claude-cli-roles";
+      roles: Record<ResearchRole, { provider: "claude"; model: string; reasoning: string }>;
+    };
 
 export interface ResearchUsage {
   inputTokens?: number;
@@ -91,6 +109,10 @@ export interface ResearchUsage {
   toolCalls?: number;
   searchCalls?: number;
   estimatedCostUsd?: number;
+  /** Where `estimatedCostUsd` came from. `provider_reported`: the CLI priced the call itself
+   *  (Claude). `api_rate_estimate`: tokens priced with the rate card, because the plan bills
+   *  nothing per call (Codex on ChatGPT). Absent means provider-reported, as before. */
+  costBasis?: "provider_reported" | "api_rate_estimate";
   /** True when a failure or cancellation means some spend is unaccounted for. Research never
    *  records `usage: null` on a failed run the way the SDLC plane does today (audit §12). */
   partial: boolean;
