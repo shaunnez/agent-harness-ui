@@ -156,9 +156,41 @@ A new `overlay.kind: "research"` scoped to one project, with two views.
 The question classifier (people / SDLC / research routing), the Codex 30 × 3 rerun, the four-role
 runtime's host tools, QV range-priced rows, and any change to delivery projects.
 
-## After compaction, start here
+## Where approved answers go (open)
+
+Approval stays as built for now: a review pinned to the evidence fingerprint, with nothing
+downstream. Shaun is still deciding where the catalogue of approved prices lives. The idea on the
+table: PlanCheck, which prices tenders against its own QV CostBuilder snapshot, sends unmatched
+items to the Harness (perhaps through Linear); a research question runs; the answer is approved
+automatically or by hand according to a setting; an approved answer joins the catalogue and can
+update the tender. That is cross-project, so it is not being built yet.
+
+What slice A must do so that any of these can follow without rework:
+
+- record where a question came from (`source`: manual, or an external request id such as a
+  Linear issue or a PlanCheck tender line), and reuse the question when the same request arrives
+  twice, as Linear intake already does for tasks;
+- keep the question record self-contained and exportable in the 18a shape, with its fingerprint;
+- keep the review decision separate from any publishing step.
+
+## After compaction, start here: slice A (the backend)
 
 1. Read this file, then `AGENTS.md` (the 23 September entries).
-2. Get Shaun's answers to the four decisions above.
-3. Build slice A on a new branch from `main`; the dev preview uses `.claude/launch.json` entries
-   `research-api` (port 4331) and `research-frontier` (port 5174, an allowed origin).
+2. The prototype is on `claude/research-projects-ui-plan`, PR #131 (not merged). Build slice A on
+   a new branch stacked on it, because the backend serves the shapes the prototype already
+   reads: `src/frontier/runtime/research.ts` (`ResearchQuestion`, `ResearchGateway`) and
+   `RuntimeProject.kind`.
+3. Server work: `kind` on projects (store migration, delivery by default, research needs no
+   repository, delivery-only routes refuse research projects); `research_questions` and
+   `research_reviews` tables; `question_id`/`project_id` on `research_runs`; `askQuestion`
+   starting 1 or 3 runs through the existing `createRun` (each keeps its Settings snapshot);
+   question status from `agreementForRuns`, with plan-limit and failed runs as incomplete; the
+   four routes in slice A above; `source` as described in the previous section.
+4. Client work: a live `ResearchGateway` in `src/frontier/runtime/live-gateway.ts`, enable the
+   Research choice in Project setup when the runtime reports research support, and map run
+   events onto question activity.
+5. Tests on a throwaway database with stub runtimes (see `tests/research-policies.test.mjs`).
+   No paid run: the first live question (about $15 of Claude plan usage) needs Shaun's go-ahead.
+6. Preview with `.claude/launch.json` entries `research-api` (port 4331) and
+   `research-frontier` (port 5174, an allowed origin). Do not touch the user's own servers on
+   5199/4318.
