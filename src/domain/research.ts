@@ -81,7 +81,25 @@ export interface ResearchRequest {
   /** Opaque operator-supplied labels. Passed to the runtime untouched; a runtime that does
    *  not recognise a key must ignore it. Not a place for Eversor semantics. */
   metadata?: Record<string, string>;
+  /** The Settings choice this run took when it started (`src/research-policies.ts`). Stamped
+   *  by the service, never accepted from a caller. Absent for a runtime the Research section
+   *  does not configure; that runtime used its own default. */
+  researchPolicy?: ResearchRunPolicy;
 }
+
+export type ResearchRunPolicy =
+  | {
+      source: "settings-default" | "settings-for-named-runtime";
+      runtime: "claude-cli" | "codex-cli";
+      provider: "claude" | "codex";
+      model: string;
+      reasoning: string;
+    }
+  | {
+      source: "settings-default" | "settings-for-named-runtime";
+      runtime: "claude-cli-roles";
+      roles: Record<ResearchRole, { provider: "claude"; model: string; reasoning: string }>;
+    };
 
 export interface ResearchUsage {
   inputTokens?: number;
@@ -91,6 +109,10 @@ export interface ResearchUsage {
   toolCalls?: number;
   searchCalls?: number;
   estimatedCostUsd?: number;
+  /** Where `estimatedCostUsd` came from. `provider_reported`: the CLI priced the call itself
+   *  (Claude). `api_rate_estimate`: tokens priced with the rate card, because the plan bills
+   *  nothing per call (Codex on ChatGPT). Absent means provider-reported, as before. */
+  costBasis?: "provider_reported" | "api_rate_estimate";
   /** True when a failure or cancellation means some spend is unaccounted for. Research never
    *  records `usage: null` on a failed run the way the SDLC plane does today (audit §12). */
   partial: boolean;
@@ -121,11 +143,30 @@ export interface ResearchBudgetState {
   softOverruns?: Array<"maxUsd" | "maxTokens">;
 }
 
+/** Which model actually answered a run, reported by the adapter that started it.
+ *
+ *  This is an identity, not a selection: no credential, no endpoint, no constructor option,
+ *  and nothing a runtime needs in order to be driven. It is here because an operator reading
+ *  a finding has to be able to tell what produced it — in particular whether a deterministic
+ *  stand-in produced it — and a runtime is the only thing that knows. `provider` is a coarse
+ *  family (`anthropic`, `openai-compatible`, `claude-cli`, `fake`); `model` is whatever that
+ *  provider calls the model, reported verbatim rather than mapped onto a house vocabulary.
+ *
+ *  `live: false` marks a run answered by a deterministic stand-in rather than a model, so a
+ *  reader never has to recognise a particular provider name to know a finding is not real. */
+export interface ResearchModelIdentity {
+  provider: string;
+  model: string;
+  live: boolean;
+}
+
 export interface ResearchRunHandle {
   runId: string;
   runtimeId: string;
   status: ResearchRunState;
   startedAt: string;
+  /** What answered this run. Absent only from a runtime that calls no model at all. */
+  model?: ResearchModelIdentity;
   /** Opaque adapter-owned identifiers. Eversor persists this and never interprets it: it is
    *  the one place a runtime may keep correlation data, and it is a flat string map so that
    *  nothing structured can be smuggled into a neutral contract. */
@@ -215,6 +256,8 @@ export interface ResearchArtifact {
 
 export interface ResearchResult {
   runId: string;
+  /** Carried onto the result so a finding read on its own still says what answered it. */
+  model?: ResearchModelIdentity;
   summary?: string;
   findings: ResearchFinding[];
   artifacts: ResearchArtifact[];
@@ -243,6 +286,9 @@ export interface ResearchRuntime {
 export interface ResearchRunRecord {
   id: string;
   runtimeId: string;
+  /** Null until the runtime has started and reported one, and for a runtime that calls no
+   *  model. Never inferred by the host: an unreported identity stays unknown. */
+  model: ResearchModelIdentity | null;
   profile: ResearchProfile;
   status: ResearchRunState;
   createdAt: string;

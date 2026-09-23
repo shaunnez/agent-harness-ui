@@ -1,5 +1,5 @@
-import type { RepairLimits } from "../repair-limits";
 import type { StageId } from "../domain";
+import type { RepairLimits } from "../repair-limits";
 import type {
   AutoRunStage,
   RuntimeEvent,
@@ -567,7 +567,7 @@ export interface RuntimeTask {
     profileStagePolicies?: Record<WorkflowProfileId, Record<string, RuntimeAgentPolicy>>;
     policySnapshotVersion?: number;
     providerConstraint?: "codex" | "claude" | null;
-    repairEscalationPolicies?: Partial<Record<WorkflowProfileId, RuntimeAgentPolicy>>;
+    repairEscalationPolicies?: Partial<Record<WorkflowProfileId, RuntimeAgentPolicy | null>>;
     rolePolicyOverrides?: Record<string, RuntimeAgentPolicy>;
     rolePolicySources?: Record<
       string,
@@ -853,6 +853,8 @@ export interface RuntimeProject {
   repositoryPath: string;
   createdAt: string | null;
   archivedAt?: string | null;
+  /** Absent means delivery. Research projects are a sample-world prototype until the backend exists. */
+  kind?: "delivery" | "research";
 }
 
 export interface RuntimeAgentPolicy {
@@ -943,6 +945,7 @@ export interface RuntimeModelCatalog {
 
 export interface RuntimeSettings {
   repairLimits?: RepairLimits;
+  repairEscalationPolicies?: Record<WorkflowProfileId, RuntimeAgentPolicy | null>;
   projects?: RuntimeProject[];
   grillPolicy: RuntimeGrillPolicy;
   gatePolicies?: RuntimeGatePolicies;
@@ -952,6 +955,9 @@ export interface RuntimeSettings {
   stagePolicies: Record<string, RuntimeAgentPolicy>;
   profileStagePolicies?: Record<WorkflowProfileId, Record<string, RuntimeAgentPolicy>>;
   designPolicies: RuntimeDesignPolicies;
+  /** Research runs only. Absent from settings saved before the section existed, which read as
+   *  the defaults (`researchPoliciesOf`). */
+  researchPolicies?: import("../research-policies.ts").RuntimeResearchPolicies;
   pricing: {
     version: string;
     sourceUrl: string;

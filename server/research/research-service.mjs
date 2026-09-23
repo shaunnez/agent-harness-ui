@@ -11,7 +11,8 @@ import {
   researchSoftOverruns,
   resolveResearchBudget,
 } from "../../src/research-budget-policy.ts";
-import { isResearchProfile } from "../../src/research-runtime-contract.ts";
+import { RESEARCH_ENGINES, RESEARCH_ROLES_ENGINE, researchPoliciesOf } from "../../src/research-policies.ts";
+import { isResearchProfile, readResearchModelIdentity } from "../../src/research-runtime-contract.ts";
 import { DEFAULT_RESEARCH_RUNTIME_ID } from "./research-runtime-registry.mjs";
 
 const MAX_OBJECTIVE_LENGTH = 4_000;
@@ -27,12 +28,17 @@ export class ResearchService {
   #registry;
   #inFlight = new Map();
   #now;
+  #settings;
 
-  constructor({ store, registry, now = () => new Date().toISOString() }) {
+  /** `settings` reads the operator's saved Settings, whose Research section says which engine
+   *  and model answer a run that names neither. Without it, a run with no runtime id goes to the
+   *  fake runtime, as it always has. */
+  constructor({ store, registry, settings = null, now = () => new Date().toISOString() }) {
     if (!store) throw new Error("ResearchService requires a ResearchStore.");
     if (!registry) throw new Error("ResearchService requires a research runtime registry.");
     this.#store = store;
     this.#registry = registry;
+    this.#settings = settings;
     this.#now = now;
   }
 
@@ -42,8 +48,14 @@ export class ResearchService {
 
   async createRun(input) {
     const request = this.#validate(input);
-    const runtimeId = String(input.runtimeId ?? DEFAULT_RESEARCH_RUNTIME_ID);
+    const policies = this.#settings ? researchPoliciesOf(await this.#settings()) : null;
+    // A request that names a runtime still wins; one that names none gets the Settings choice.
+    const runtimeId = String(input.runtimeId ?? policies?.agent.runtime ?? DEFAULT_RESEARCH_RUNTIME_ID);
     const runtime = this.#registry.resolve(runtimeId);
+    // Snapshotted into the stored request, so a finished run always says what answered it and a
+    // later change in Settings never rewrites it.
+    const researchPolicy = snapshotResearchPolicy(runtimeId, policies, input.runtimeId != null);
+    if (researchPolicy) request.researchPolicy = researchPolicy;
     const record = await this.#store.createRun({
       runtimeId,
       request,
@@ -68,6 +80,10 @@ export class ResearchService {
         draft.status = handle.status ?? "running";
         draft.usage = emptyResearchUsage();
         if (handle.runtimeMetadata) draft.runtimeMetadata = { ...handle.runtimeMetadata };
+        // Stamped once, at start, from what the runtime reported. Not re-derived later and
+        // never guessed: a run whose runtime reported nothing stays `model: null` rather than
+        // acquiring a plausible-looking identity it did not earn.
+        draft.model = readResearchModelIdentity(handle.model);
       },
       { now: this.#now() },
     );
@@ -245,6 +261,23 @@ export class ResearchService {
       { now: this.#now() },
     );
   }
+}
+
+/** The part of the Settings choice that applies to this runtime, or null for a runtime the
+ *  Research section does not configure (the fake, or an engine other than the one selected). */
+function snapshotResearchPolicy(runtimeId, policies, named) {
+  if (!policies) return null;
+  const source = named ? "settings-for-named-runtime" : "settings-default";
+  if (runtimeId === RESEARCH_ROLES_ENGINE) return { source, runtime: runtimeId, roles: policies.roles };
+  if (runtimeId in RESEARCH_ENGINES && policies.agent.runtime === runtimeId)
+    return {
+      source,
+      runtime: runtimeId,
+      provider: policies.agent.provider,
+      model: policies.agent.model,
+      reasoning: policies.agent.reasoning,
+    };
+  return null;
 }
 
 function isTerminal(state) {

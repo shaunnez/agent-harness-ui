@@ -43,6 +43,7 @@ test("execution defaults round-trip through the real API without rewriting exist
     settings.stagePolicies = structuredClone(settings.profileStagePolicies.standard);
     settings.grillPolicy = "auto-accept-recommendations";
     settings.repairLimits = { package: 3, candidate: { fast: 2, standard: 5, "high-risk": 6 } };
+    settings.repairEscalationPolicies.standard = { model: "gpt-6-sol", reasoning: "xhigh" };
     settings.gatePolicies = { "dev-review": "auto-accept-recommendations" };
     const saved = await send("/api/settings", settings, "PUT");
     assert.equal(saved.status, 200, await saved.clone().text());
@@ -53,6 +54,10 @@ test("execution defaults round-trip through the real API without rewriting exist
     assert.deepEqual(next.agentConfig.stagePolicies.grill, policy);
     assert.equal(next.grillPolicy, "auto-accept-recommendations");
     assert.deepEqual(next.repairLimits, settings.repairLimits);
+    assert.deepEqual(
+      next.agentConfig.repairEscalationPolicies.standard,
+      settings.repairEscalationPolicies.standard,
+    );
     assert.equal(next.stageRunLimits.implement, 6);
     assert.equal(next.stageRunLimits.test, 6);
     assert.equal(next.status, "queued");
@@ -61,6 +66,26 @@ test("execution defaults round-trip through the real API without rewriting exist
     assert.deepEqual(read.settings.profileStagePolicies.standard.grill, policy);
     assert.equal(read.settings.gatePolicies?.["dev-review"], "auto-accept-recommendations");
     assert.equal(read.settings.gatePolicies?.test ?? "manual", "manual");
+    assert.deepEqual(
+      read.settings.repairEscalationPolicies.standard,
+      settings.repairEscalationPolicies.standard,
+    );
+    for (const rung of [
+      { model: "claude-opus-5-5", reasoning: "high" },
+      { model: "gpt-6-sol", reasoning: "low" },
+      { model: "unavailable-model", reasoning: "high" },
+    ]) {
+      const invalidRung = await send(
+        "/api/settings",
+        {
+          ...settings,
+          repairEscalationPolicies: { ...settings.repairEscalationPolicies, standard: rung },
+        },
+        "PUT",
+      );
+      assert.equal(invalidRung.status, 400, await invalidRung.clone().text());
+      assert.deepEqual(await api.store.settings(), read.settings);
+    }
     for (const invalid of [-1, 11, 1.5, "2", null]) {
       const rejectedLimit = await send(
         "/api/settings",

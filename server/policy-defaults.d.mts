@@ -11,7 +11,10 @@ export function defaultStagePolicies(
 export function defaultProfileStagePolicies(
   provider?: "codex" | "claude",
 ): Record<WorkflowProfileId, Record<RolePolicyId, RuntimeAgentPolicy>>;
-export function defaultRepairEscalationPolicy(
+export function defaultRepairEscalationPolicies(
   provider?: "codex" | "claude",
-  profile?: WorkflowProfileId,
-): RuntimeAgentPolicy;
+): Record<WorkflowProfileId, RuntimeAgentPolicy | null>;
+export function codexSonnetProfileStagePolicies(): Record<
+  WorkflowProfileId,
+  Record<RolePolicyId, RuntimeAgentPolicy>
+>;

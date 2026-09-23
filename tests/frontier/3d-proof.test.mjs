@@ -340,7 +340,7 @@ test("appearance defaults spread the buildings and persist without overwriting a
   );
   const first = fixtureProjects[0],
     second = fixtureProjects[1];
-  const selected = { variant: "relay", palette: "blue" };
+  const selected = { variant: "bastion", palette: "blue" };
   const key = projectAppearanceKey(first),
     otherKey = projectAppearanceKey(second);
   const store = new Map();
@@ -356,6 +356,22 @@ test("appearance defaults spread the buildings and persist without overwriting a
   // A saved choice keeps its building and colour; the colony slot is completed alongside it.
   assert.deepEqual(refreshed[key], { ...selected, slot: "P1" });
   assert.deepEqual(refreshed[otherKey], saved[otherKey]);
+  // Relay is for research projects only: a delivery base saved as Relay moves to another building
+  // and keeps its colour and slot; a research base is always Relay in a research colour.
+  const corrected = assignMissingAppearances(fixtureProjects, {
+    [key]: { variant: "relay", palette: "red", slot: "P1" },
+  })[key];
+  assert.notEqual(corrected.variant, "relay");
+  assert.deepEqual({ palette: corrected.palette, slot: corrected.slot }, { palette: "red", slot: "P1" });
+  const research = { id: "r", name: "R", repositoryPath: "research://r", createdAt: null, kind: "research" };
+  const researchKey = projectAppearanceKey(research);
+  const fitted = assignMissingAppearances([research], {
+    [researchKey]: { variant: "command", palette: "orange", slot: "P1" },
+  })[researchKey];
+  assert.deepEqual(fitted, { variant: "relay", palette: "silver", slot: "P1" });
+  assert.equal(assignMissingAppearances([research], {})[researchKey].variant, "relay");
+  assert.equal(randomAppearance(() => 0, "research").variant, "relay");
+  assert.equal(randomAppearance(() => 0.999, "research").palette, "black");
   assert.deepEqual(
     parseAppearances({ version: 1, projects: { bad: { variant: "castle", palette: "green" } } }),
     {},

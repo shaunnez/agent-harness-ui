@@ -3,8 +3,9 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { defaultProfileStagePolicies } from "../server/model-catalog.mjs";
+import { defaultProfileStagePolicies, defaultRuntimeSettings } from "../server/model-catalog.mjs";
 import { TaskOrchestrator } from "../server/orchestrator.mjs";
+import { codexSonnetProfileStagePolicies } from "../server/policy-defaults.mjs";
 import { JsonTaskStore } from "../server/store.mjs";
 import { parseFastChangeContract, parseGateEvidence, parsePlanResult } from "../server/structured-output.mjs";
 import {
@@ -220,11 +221,20 @@ test("selects deterministic profiles and escalates fast at explicit boundaries",
     "high-risk",
   );
   const policies = defaultProfileStagePolicies();
-  assert.deepEqual(policies.fast.triage, { model: "gpt-6-luna", reasoning: "medium" });
+  assert.deepEqual(policies.fast.triage, { model: "gpt-6-luna", reasoning: "high" });
   assert.deepEqual(policies.fast.implement, { model: "gpt-6-luna", reasoning: "high" });
   assert.deepEqual(policies.standard.implement, { model: "gpt-6-sol", reasoning: "high" });
-  assert.deepEqual(policies["high-risk"].repair, { model: "gpt-6-sol", reasoning: "high" });
+  assert.deepEqual(policies["high-risk"].implement, { model: "gpt-6-sol", reasoning: "high" });
   assert.deepEqual(policies["high-risk"].plan, { model: "gpt-6-sol", reasoning: "high" });
+  assert.deepEqual(policies.standard.specification, { model: "gpt-6-sol", reasoning: "high" });
+  assert.deepEqual(policies.standard.test, { model: "gpt-6-luna", reasoning: "medium" });
+  const recommended = codexSonnetProfileStagePolicies();
+  assert.deepEqual(recommended.fast, policies.fast);
+  assert.deepEqual(recommended.standard, policies.standard);
+  assert.deepEqual(recommended["high-risk"].implement, { model: "claude-sonnet-5", reasoning: "high" });
+  assert.deepEqual(recommended["high-risk"].repair, { model: "claude-sonnet-5", reasoning: "high" });
+  assert.deepEqual(recommended["high-risk"]["dev-review"], { model: "gpt-6-sol", reasoning: "high" });
+  assert.deepEqual(defaultRuntimeSettings().profileStagePolicies, policies);
 });
 
 test("rejects prose ownership and parses a typed blocked prerequisite without packages", () => {
@@ -444,7 +454,7 @@ test("fast path uses zero scouts, one package, focused checks, one full manifest
     );
     assert.deepEqual(
       calls.map((call) => call.reasoning),
-      ["medium", "high", "high"],
+      ["high", "high", "high"],
     );
     assert.equal(current.candidates[0].verificationRuns.length, 1);
     assert.equal(current.workPackages[0].verificationRuns.length, 1);

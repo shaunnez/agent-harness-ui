@@ -1,10 +1,13 @@
 import path from "node:path";
+import { validateMarket } from "./research-provider-contracts.mjs";
 import {
   DEFAULT_SOURCE_BYTE_LIMIT,
   DEFAULT_SOURCE_TIMEOUT_MS,
   fetchValidatedSource,
 } from "./research-source-fetch.mjs";
+import { normalizeRequestedUrl, validatePublicSourceUrl } from "./research-source-policy.mjs";
 import {
+  excerptAppearsIn,
   PDF_SNAPSHOT_FORMAT,
   readVerifiedSnapshot,
   renderPdfPreview,
@@ -12,12 +15,10 @@ import {
   verifySnapshotEvidence,
   writeResearchSnapshot,
 } from "./research-source-snapshots.mjs";
-import { normalizeRequestedUrl, validatePublicSourceUrl } from "./research-source-policy.mjs";
-import { validateMarket } from "./research-provider-contracts.mjs";
 import { ResearchToolError } from "./research-tool-errors.mjs";
 import {
-  asToolError,
   assertStrictObject,
+  asToolError,
   boundedConfidence,
   containsQuoteVerified,
   normalizeAuthority,
@@ -26,8 +27,8 @@ import {
   requiredString,
 } from "./research-tool-validation.mjs";
 
-export { DEFAULT_SOURCE_BYTE_LIMIT, DEFAULT_SOURCE_TIMEOUT_MS, fetchValidatedSource, verifySnapshotEvidence };
 export { ResearchToolError } from "./research-tool-errors.mjs";
+export { DEFAULT_SOURCE_BYTE_LIMIT, DEFAULT_SOURCE_TIMEOUT_MS, fetchValidatedSource, verifySnapshotEvidence };
 export const DEFAULT_RESEARCH_SOURCE_DIRECTORY = path.resolve(".data", "research-sources");
 const MAX_MODEL_CONTENT_CHARS = 50_000;
 
@@ -62,12 +63,13 @@ export class ResearchWebTools {
   #deadlineAtMs = null;
   #ledgers;
   #closed = false;
+  #pdfExtractor;
 
   constructor({
     runId,
     budget,
     context = [],
-    searchProvider,
+    searchProvider = null,
     captureProvider = null,
     providerConfig = { defaultMarket: "NZ", maxPdfPages: 30 },
     providerLedgers = [],
@@ -85,8 +87,15 @@ export class ResearchWebTools {
     // neutral research contract concern, so a caller that needs the ceiling passes it here.
     // Null keeps the existing unlimited behaviour for every caller that does not.
     maxUniqueCaptures = null,
+    // Reads a PDF's physical pages locally (`research-pdf-text.mjs`). Absent, a PDF can only be
+    // read through a capture provider, which is the behaviour every caller had before it.
+    pdfExtractor = null,
   }) {
-    if (!searchProvider?.search) throw new Error("Research web tools require a search provider.");
+    // Optional: a runtime whose model has its own search (the Claude CLI's `WebSearch`) uses
+    // these tools only to retain and verify, and passes none. `web_search` then fails as a tool
+    // error the model can read rather than as a crash.
+    if (searchProvider != null && !searchProvider.search)
+      throw new Error("A research search provider must implement search().");
     if ((captureProvider || providerConfig.searchProvider === "firecrawl") && context.length)
       throw new Error(
         "Public Firecrawl research refuses non-empty document context; queries and URLs leave the machine.",
@@ -94,7 +103,7 @@ export class ResearchWebTools {
     this.#runId = runId;
     this.#budget = budget;
     this.#context = context;
-    this.#searchProvider = searchProvider;
+    this.#searchProvider = searchProvider ?? null;
     this.#captureProvider = captureProvider;
     this.#providerConfig = providerConfig;
     this.#snapshotDirectory = snapshotDirectory;
@@ -123,6 +132,7 @@ export class ResearchWebTools {
       throw new Error("maxUniqueCaptures must be a positive integer when supplied.");
     this.#maxUniqueCaptures = maxUniqueCaptures;
     this.#ledgers = providerLedgers.filter(Boolean);
+    this.#pdfExtractor = pdfExtractor;
     this.#startedAtMs = Date.now();
   }
 
@@ -216,6 +226,11 @@ export class ResearchWebTools {
   }
 
   async #webSearch(input) {
+    if (!this.#searchProvider)
+      throw new ResearchToolError(
+        "search_unavailable",
+        "This run has no host search provider. Use the search tool your runtime provides.",
+      );
     assertStrictObject(input, ["query", "market"]);
     const query = requiredString(input.query, "Search query", 500);
     let market;
@@ -385,24 +400,50 @@ export class ResearchWebTools {
         maxResponseBytes: this.#maxResponseBytes,
         timeoutMs: Math.min(this.#timeoutMs, this.#remainingMs()),
         signal: this.#signal,
+        acceptPdf: Boolean(this.#pdfExtractor),
       });
     } catch (error) {
       throw asToolError(error, error?.code ?? "source_fetch_failed", "Local source capture failed.");
+    }
+    const metadata = {
+      provider: "local",
+      requestedUrl: url,
+      finalUrl: response.url,
+      attempts: priorAttempts,
+      receiptTime: this.#now().toISOString(),
+      normalizationVersion: 1,
+    };
+    if (response.mediaType === "application/pdf") {
+      let validatedPdf;
+      try {
+        validatedPdf = await this.#pdfExtractor(response.bytes, {
+          maxPages: this.#providerConfig.maxPdfPages ?? 30,
+          signal: this.#signal,
+        });
+      } catch (error) {
+        throw asToolError(error, error?.code ?? "source_incomplete", "The PDF could not be read.");
+      }
+      return {
+        mediaType: "application/pdf",
+        content: "",
+        pages: validatedPdf.pages,
+        validatedPdf,
+        metadata: {
+          ...metadata,
+          title: response.url,
+          parserMode: "pdftotext-layout",
+          verifiedPages: validatedPdf.parsedPages,
+          coverage: validatedPdf.coverage,
+          capTruncated: validatedPdf.capTruncated,
+        },
+      };
     }
     const normalized = normalizeSourceContent(response.body, response.mediaType);
     return {
       mediaType: response.mediaType,
       content: normalized.content,
       pages: [],
-      metadata: {
-        provider: "local",
-        requestedUrl: url,
-        finalUrl: response.url,
-        title: normalized.title ?? response.url,
-        attempts: priorAttempts,
-        receiptTime: this.#now().toISOString(),
-        normalizationVersion: 1,
-      },
+      metadata: { ...metadata, title: normalized.title ?? response.url },
     };
   }
 
@@ -481,6 +522,72 @@ export class ResearchWebTools {
     };
   }
 
+  /**
+   * Check one citation against what this run retained, without spending a tool call.
+   *
+   * For a runtime whose model states its citations in a final answer instead of submitting
+   * them through `submit_finding`: the same check, applied after the fact. Throws the same
+   * `ResearchToolError` codes `submit_finding` would, so a caller can say why a citation failed.
+   */
+  verifyEvidence(reference) {
+    if (reference && typeof reference === "object" && containsQuoteVerified(reference))
+      throw new ResearchToolError(
+        "host_verification_required",
+        "The model must not provide quoteVerified; verification is owned by the host.",
+      );
+    return this.#verifyReference(reference);
+  }
+
+  #verifyReference(reference) {
+    const sourceId = requiredString(reference?.sourceId, "Evidence source id", 200);
+    const retained = this.#sources.get(sourceId);
+    if (!retained)
+      throw new ResearchToolError(
+        "source_not_in_run",
+        `Source ${sourceId} does not belong to research run ${this.#runId}.`,
+      );
+    const excerpt = requiredString(reference?.excerpt, "Evidence excerpt", 2_000);
+    if (retained.pdf) {
+      const keys = Object.keys(reference.locator ?? {});
+      if (
+        keys.length !== 1 ||
+        keys[0] !== "page" ||
+        !Number.isInteger(reference.locator.page) ||
+        reference.locator.page < 1
+      )
+        throw new ResearchToolError(
+          "pdf_page_required",
+          "PDF evidence requires only a positive physical-page locator.",
+        );
+      const page = retained.pdf.pages.find((candidate) => candidate.pageNumber === reference.locator.page);
+      if (!page || !excerptAppearsIn(page.content, excerpt))
+        throw new ResearchToolError(
+          "excerpt_not_found",
+          `The submitted excerpt is not an exact substring of retained physical page ${reference.locator.page}.`,
+        );
+    } else {
+      if (reference.locator?.page != null)
+        throw new ResearchToolError("invalid_locator", "HTML/text evidence must not include a page locator.");
+      if (!excerptAppearsIn(retained.content, excerpt))
+        throw new ResearchToolError(
+          "excerpt_not_found",
+          `The submitted excerpt is not an exact substring of retained source ${sourceId}.`,
+        );
+    }
+    return {
+      sourceId,
+      sourceType: retained.source.sourceType,
+      url: retained.source.url,
+      title: retained.source.title,
+      retrievedAt: retained.source.retrievedAt,
+      ...(reference.locator ? { locator: reference.locator } : {}),
+      excerpt,
+      snapshotRef: retained.snapshotRef,
+      quoteVerified: true,
+      authority: normalizeAuthority(reference.authority),
+    };
+  }
+
   #submitFinding(input) {
     if (!input || typeof input !== "object" || Array.isArray(input))
       throw new ResearchToolError("invalid_finding", "A finding must be an object.");
@@ -497,58 +604,7 @@ export class ResearchWebTools {
       );
     if (evidenceInput.length > 10)
       throw new ResearchToolError("too_much_evidence", "A finding may cite at most 10 excerpts.");
-    const evidence = evidenceInput.map((reference) => {
-      const sourceId = requiredString(reference?.sourceId, "Evidence source id", 200);
-      const retained = this.#sources.get(sourceId);
-      if (!retained)
-        throw new ResearchToolError(
-          "source_not_in_run",
-          `Source ${sourceId} does not belong to research run ${this.#runId}.`,
-        );
-      const excerpt = requiredString(reference?.excerpt, "Evidence excerpt", 2_000);
-      if (retained.pdf) {
-        const keys = Object.keys(reference.locator ?? {});
-        if (
-          keys.length !== 1 ||
-          keys[0] !== "page" ||
-          !Number.isInteger(reference.locator.page) ||
-          reference.locator.page < 1
-        )
-          throw new ResearchToolError(
-            "pdf_page_required",
-            "PDF evidence requires only a positive physical-page locator.",
-          );
-        const page = retained.pdf.pages.find((candidate) => candidate.pageNumber === reference.locator.page);
-        if (!page?.content.includes(excerpt))
-          throw new ResearchToolError(
-            "excerpt_not_found",
-            `The submitted excerpt is not an exact substring of retained physical page ${reference.locator.page}.`,
-          );
-      } else {
-        if (reference.locator?.page != null)
-          throw new ResearchToolError(
-            "invalid_locator",
-            "HTML/text evidence must not include a page locator.",
-          );
-        if (!retained.content.includes(excerpt))
-          throw new ResearchToolError(
-            "excerpt_not_found",
-            `The submitted excerpt is not an exact substring of retained source ${sourceId}.`,
-          );
-      }
-      return {
-        sourceId,
-        sourceType: retained.source.sourceType,
-        url: retained.source.url,
-        title: retained.source.title,
-        retrievedAt: retained.source.retrievedAt,
-        ...(reference.locator ? { locator: reference.locator } : {}),
-        excerpt,
-        snapshotRef: retained.snapshotRef,
-        quoteVerified: true,
-        authority: normalizeAuthority(reference.authority),
-      };
-    });
+    const evidence = evidenceInput.map((reference) => this.#verifyReference(reference));
     const finding = {
       id: `${this.#runId}-F${this.#findings.length + 1}`,
       claim: requiredString(input.claim, "Finding claim", 2_000),

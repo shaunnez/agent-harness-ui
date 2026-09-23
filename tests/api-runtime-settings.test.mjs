@@ -217,3 +217,41 @@ test("accepts an all-Claude default matrix, the shape the settings editor's prov
     await cleanup(server, directory);
   }
 });
+
+test("the research agent's engine and model save through Settings, and a mismatched model is refused", async () => {
+  const { directory, origin, server } = await createServer();
+  try {
+    const current = (await (await fetch(`${origin}/api/settings`)).json()).settings;
+    assert.equal(current.researchPolicies.agent.runtime, "claude-cli");
+    assert.equal(current.researchPolicies.agent.model, "claude-opus-5-5");
+    const save = (researchPolicies) =>
+      fetch(`${origin}/api/settings`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          allowedModels: current.allowedModels,
+          defaultModel: current.defaultModel,
+          defaultReasoning: current.defaultReasoning,
+          researchPolicies,
+        }),
+      });
+    const codex = {
+      ...current.researchPolicies,
+      agent: { runtime: "codex-cli", provider: "codex", model: "gpt-6-sol", reasoning: "high" },
+    };
+    const saved = await save(codex);
+    assert.equal(saved.status, 200);
+    assert.deepEqual((await saved.json()).settings.researchPolicies.agent, codex.agent);
+    // Delivery defaults are untouched by a research choice.
+    assert.equal(
+      (await (await fetch(`${origin}/api/settings`)).json()).settings.defaultModel,
+      current.defaultModel,
+    );
+
+    const mismatched = await save({ ...codex, agent: { ...codex.agent, model: "claude-opus-5-5" } });
+    assert.equal(mismatched.status, 400);
+    assert.match((await mismatched.json()).error, /needs a Codex model/);
+  } finally {
+    await cleanup(server, directory);
+  }
+});

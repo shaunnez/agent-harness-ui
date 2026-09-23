@@ -2,12 +2,13 @@ import { Shuffle, X } from "@phosphor-icons/react";
 import type { CSSProperties } from "react";
 import {
   type BaseAppearance,
-  type BasePalette,
   type BaseVariant,
   baseNames,
   basePalettes,
-  baseVariants,
+  type ProjectKind,
+  palettesFor,
   randomAppearance,
+  variantsFor,
 } from "./appearance";
 import type { ProjectBase } from "./layout";
 import type { ProofManifest } from "./model";
@@ -50,12 +51,16 @@ export function BaseAppearancePicker({
         </select>
       </label>
       <BaseAppearanceControls
+        kind={base.project.kind}
         appearance={base.appearance}
         manifest={manifest}
         onChoose={(appearance) => onChoose(base, appearance)}
       />
       <footer>
-        <button type="button" onClick={() => onChoose(base, randomAppearance())}>
+        <button
+          type="button"
+          onClick={() => onChoose(base, randomAppearance(Math.random, base.project.kind))}
+        >
           <Shuffle size={16} /> Randomise
         </button>
         <small role="status">
@@ -69,17 +74,20 @@ export function BaseAppearancePicker({
 }
 
 export function BaseAppearanceControls({
+  kind,
   appearance,
   manifest,
   onChoose,
 }: {
+  kind?: ProjectKind;
   appearance: BaseAppearance;
   manifest: ProofManifest | null;
   onChoose(appearance: BaseAppearance): void;
 }) {
-  // Four crowns on one shared shell. This control is shared by the in-world Appearance tab and
+  // Crowns on one shared shell. This control is shared by the in-world Appearance tab and
   // new-project setup so both paths use the same model catalogue, palette and selection behavior.
-  const variants: readonly BaseVariant[] = baseVariants;
+  // Relay and the research colours belong to research projects; delivery projects get the rest.
+  const variants: readonly BaseVariant[] = variantsFor(kind);
   const preview = (variant: BaseVariant) => manifest?.colony?.crownPreviews?.[variant];
   return (
     <div className="proof-appearance-controls">
@@ -102,7 +110,7 @@ export function BaseAppearanceControls({
       <fieldset>
         <legend>Project colour</legend>
         <div className="proof-palette-options">
-          {(Object.keys(basePalettes) as BasePalette[]).map((palette) => (
+          {palettesFor(kind).map((palette) => (
             <button
               type="button"
               key={palette}

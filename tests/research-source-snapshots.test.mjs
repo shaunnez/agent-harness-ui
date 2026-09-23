@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import {
+  excerptAppearsIn,
   normalizePdfCapture,
   parsePdfSnapshot,
   serializePdfSnapshot,
@@ -137,4 +138,15 @@ test("same-hash reuse rejects a snapshot that is no longer owner-only", async ()
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("a quote matches across whitespace differences and nothing else", () => {
+  const table = "Low voltage mains\nResidential 0 - 14kVA\n$3,193\n$5,339";
+  // A table row quoted on one line is the same quote.
+  assert.equal(excerptAppearsIn(table, "Residential 0 - 14kVA $3,193 $5,339"), true);
+  // A changed figure is not.
+  assert.equal(excerptAppearsIn(table, "Residential 0 - 14kVA $3,139"), false);
+  // Nor is a quote that only differs by a missing space inside a word boundary.
+  assert.equal(excerptAppearsIn(table, "Residential0 - 14kVA"), false);
+  assert.equal(excerptAppearsIn(table, "   "), false);
 });

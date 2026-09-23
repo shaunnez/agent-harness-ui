@@ -1,57 +1,30 @@
+// One live research run through the `claude-cli` runtime, printed in full.
+//
+//   RESEARCH_QV_INDEX=/path/to/indexed-items.jsonl RUN_RESEARCH_DEMO=1 \
+//     npm run research:demo -- "<scope to price>"
+//
+// Spends plan usage on the operator's Claude subscription — roughly $2 to $6 a run — and never
+// an API key: the runtime refuses to start unless `claude auth status` reports claude.ai.
+
 import process from "node:process";
-import { DeepAgentsResearchRuntime } from "../server/research/deepagents/adapter.mjs";
-import { parseResearchProviderConfig } from "../server/research/research-provider-contracts.mjs";
+import { ClaudeCliResearchRuntime } from "../server/research/claude-cli/runtime.mjs";
 import { resolveResearchBudget } from "../src/research-budget-policy.ts";
 
-if (process.env.RUN_RESEARCH_DEMO !== "1") {
-  throw new Error(
-    "Set RUN_RESEARCH_DEMO=1 to confirm a live model and Tavily search run. This command may consume provider credits.",
-  );
-}
-if (!process.env.ANTHROPIC_API_KEY && !process.env.OPENAI_API_KEY && !process.env.RESEARCH_MODEL_API_KEY) {
-  throw new Error("Provide an approved model credential before running the live research demo.");
-}
-const providerConfig = parseResearchProviderConfig(process.env);
-if (
-  providerConfig.searchProvider === "tavily" &&
-  !process.env.TAVILY_API_KEY &&
-  !process.env.RESEARCH_SEARCH_API_KEY
-)
-  throw new Error("Tavily selection requires TAVILY_API_KEY or RESEARCH_SEARCH_API_KEY.");
-if (providerConfig.searchProvider === "firecrawl" && !process.env.FIRECRAWL_API_KEY)
-  throw new Error("Firecrawl selection requires FIRECRAWL_API_KEY.");
-if (providerConfig.searchFallback === "serper" && !process.env.SERPER_API_KEY)
-  throw new Error("Serper fallback selection requires SERPER_API_KEY.");
-if (providerConfig.captureProvider === "firecrawl" && process.env.RESEARCH_PUBLIC_ONLY_ACKNOWLEDGED !== "1")
-  throw new Error(
-    "Public Firecrawl capture requires RESEARCH_PUBLIC_ONLY_ACKNOWLEDGED=1; queries and URLs leave the machine.",
-  );
+if (process.env.RUN_RESEARCH_DEMO !== "1")
+  throw new Error("Set RUN_RESEARCH_DEMO=1 to confirm one live run on the Claude subscription.");
 
 const objective =
   process.argv.slice(2).join(" ").trim() ||
-  "Research Sika waterproofing membrane products currently available in New Zealand. Identify at least two New Zealand suppliers with public pricing where available, and find the manufacturer's installation or application requirements for the most relevant product. Return sourced findings only. If pricing is not publicly available, state that rather than guessing.";
+  "Price supply and installation of 40 m of 100 mm uPVC stormwater pipe in a 900 mm deep trench in Auckland, " +
+    "including bedding, backfill and one connection to an existing manhole. NZD, GST exclusive.";
 const id = `RSCH-DEMO-${new Date().toISOString().replace(/\D/g, "").slice(0, 14)}`;
-const budget = resolveResearchBudget("quick", {
-  maxRuntimeMs: 3 * 60_000,
-  maxModelCalls: 12,
-  maxToolCalls: 16,
-  maxSearchCalls: 4,
-});
-const runtime = new DeepAgentsResearchRuntime();
+const budget = resolveResearchBudget("standard");
+const runtime = new ClaudeCliResearchRuntime();
 const startedAt = Date.now();
-const handle = await runtime.start({ id, objective, profile: "quick", context: [], budget });
+const handle = await runtime.start({ id, objective, profile: "standard", context: [], budget });
 const events = [];
-const collecting = (async () => {
-  for await (const event of runtime.events(id)) events.push(event);
-})();
-
-let status;
-for (;;) {
-  status = await runtime.status(id);
-  if (["completed", "failed", "cancelled"].includes(status.status)) break;
-  await new Promise((resolve) => setTimeout(resolve, 250));
-}
-await collecting;
+for await (const event of runtime.events(id)) events.push(event);
+const status = await runtime.status(id);
 const result = await runtime.result(id);
 const sources = events.filter((event) => event.type === "source.retrieved").map((event) => event.data.source);
 
@@ -59,9 +32,13 @@ process.stdout.write(
   `${JSON.stringify(
     {
       runId: handle.runId,
+      // Named before anything it produced: a reader should not have to reach the findings
+      // before learning what answered.
+      model: handle.model ?? null,
       status,
       durationMs: Date.now() - startedAt,
-      sources,
+      citations: runtime.citationSummary(id),
+      sources: sources.filter((source) => source.contentSha256),
       result,
     },
     null,

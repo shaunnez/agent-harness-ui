@@ -1,6 +1,12 @@
 import { normalizeRepairLimits, repairLimitsIssue, type RepairLimits } from "../../repair-limits.ts";
 import type { RuntimeSettings, RuntimeStatus } from "../../domain.ts";
+import {
+  researchPoliciesIssue,
+  researchPoliciesOf,
+  type RuntimeResearchPolicies,
+} from "../../research-policies.ts";
 import { policyRoles } from "./policies.ts";
+import { isStrongerRepairPolicy } from "../../../server/repair-escalation-strength.mjs";
 
 export type SettingsInput = Pick<
   RuntimeSettings,
@@ -14,6 +20,8 @@ export type SettingsInput = Pick<
 > & {
   repairLimits: RepairLimits;
   profileStagePolicies: NonNullable<RuntimeSettings["profileStagePolicies"]>;
+  repairEscalationPolicies: NonNullable<RuntimeSettings["repairEscalationPolicies"]>;
+  researchPolicies: RuntimeResearchPolicies;
 };
 export function settingsInput(settings: RuntimeSettings): SettingsInput {
   return structuredClone({
@@ -28,8 +36,14 @@ export function settingsInput(settings: RuntimeSettings): SettingsInput {
     },
     grillPolicy: settings.grillPolicy,
     repairLimits: normalizeRepairLimits(settings.repairLimits),
+    repairEscalationPolicies: settings.repairEscalationPolicies ?? {
+      fast: null,
+      standard: null,
+      "high-risk": null,
+    },
     gatePolicies: { ...settings.gatePolicies },
     designPolicies: settings.designPolicies,
+    researchPolicies: researchPoliciesOf(settings),
   });
 }
 export function settingsIssue(input: SettingsInput, status: RuntimeStatus): string | null {
@@ -55,8 +69,20 @@ export function settingsIssue(input: SettingsInput, status: RuntimeStatus): stri
       if (!policy || !valid(policy.model, policy.reasoning))
         return `${profile} / ${role.label} needs an allowed model and supported effort.`;
     }
+  for (const [profile, policy] of Object.entries(input.repairEscalationPolicies)) {
+    if (!policy) continue;
+    if (!valid(policy.model, policy.reasoning))
+      return `${profile} Repair escalation needs an allowed model and supported effort.`;
+    if (
+      !isStrongerRepairPolicy(
+        input.profileStagePolicies[profile as keyof typeof input.profileStagePolicies]?.repair,
+        policy,
+      )
+    )
+      return `${profile} Repair escalation must be stronger than Repair on the same provider.`;
+  }
   for (const [provider, policy] of Object.entries(input.designPolicies))
     if (!valid(policy.model, policy.reasoning, policy.provider))
       return `${provider} needs an allowed provider model and supported effort.`;
-  return null;
+  return researchPoliciesIssue(input.researchPolicies, models, input.allowedModels);
 }

@@ -242,3 +242,6 @@
   white-space: nowrap;
   pointer-events: none;
 }
+.proof-building-options[data-count="1"] {
+  grid-template-columns: minmax(0, 170px);
+}

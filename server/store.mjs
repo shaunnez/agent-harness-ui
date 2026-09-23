@@ -1,3 +1,4 @@
+import { researchPoliciesOf } from "../src/research-policies.ts";
 import { normalizeRepairLimits } from "../src/repair-limits.ts";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -414,6 +415,13 @@ export function migratePersistedTaskState(state) {
     state.settings = defaultRuntimeSettings();
     changed = true;
   } else {
+    // Derived from the saved allowlist rather than copied from the defaults: an allowlist saved
+    // before Opus 5.5 existed would otherwise receive a research default it refuses, and every
+    // later save of Settings would fail on it.
+    if (state.settings.researchPolicies === undefined) {
+      state.settings.researchPolicies = researchPoliciesOf(state.settings);
+      changed = true;
+    }
     const defaults = defaultRuntimeSettings();
     for (const [key, value] of Object.entries(defaults)) {
       if (state.settings[key] === undefined) {

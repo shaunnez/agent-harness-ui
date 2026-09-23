@@ -16,6 +16,7 @@ export function fixtureSettings(): { settings: RuntimeSettings; catalog: Runtime
     settings: {
       grillPolicy: "manual",
       repairLimits: normalizeRepairLimits(null),
+      repairEscalationPolicies: { fast: null, standard: null, "high-risk": null },
       gatePolicies: {},
       allowedModels: ["gpt-6-luna", "gpt-6-sol", "claude-opus-5-5"],
       defaultModel: "gpt-6-luna",

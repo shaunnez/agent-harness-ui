@@ -141,6 +141,7 @@ export function repairAuthorizerSnapshot(task, candidate, requestedStage = null)
   };
   return {
     authorizingGateStage: stage,
+    authorizingGateFreshnessReasonCode: freshness.reasonCode,
     // Persisted for the same reason the other authorizing-gate fields are: the
     // retry-grant path reconstructs this reservation from candidate-revision lineage
     // long after the reservation itself has been replaced, and without a recorded
@@ -167,17 +168,20 @@ export function assertRepairAuthorizerUnchanged(task, candidate, repairReservati
 }
 
 export function sameRepairAuthorizerSnapshot(expected, current) {
-  return [
-    "authorizingGateStage",
-    "authorizingGateProvider",
-    "authorizingGateWorkflowAttempt",
-    "authorizingGateReservationId",
-    "authorizingGateReservedAt",
-    "authorizingGateRunId",
-    "authorizingGateArtifactId",
-    "authorizingGateArtifactCreatedAt",
-    "authorizingGateSnapshotDigest",
-  ].every((field) => expected?.[field] === current?.[field]);
+  return (
+    sameRecordedFreshnessReason(expected, current) &&
+    [
+      "authorizingGateStage",
+      "authorizingGateProvider",
+      "authorizingGateWorkflowAttempt",
+      "authorizingGateReservationId",
+      "authorizingGateReservedAt",
+      "authorizingGateRunId",
+      "authorizingGateArtifactId",
+      "authorizingGateArtifactCreatedAt",
+      "authorizingGateSnapshotDigest",
+    ].every((field) => expected?.[field] === current?.[field])
+  );
 }
 
 export function isCanonicalTimestamp(value) {
@@ -193,22 +197,32 @@ export function timestampAfter(value) {
 }
 
 export function sameRepairReservationAuthority(expected, current) {
-  return [
-    "id",
-    "workflowAttempt",
-    "reservedAt",
-    "candidateId",
-    "candidateRevision",
-    "candidateHeadRevision",
-    "provider",
-    "authorizingGateStage",
-    "authorizingGateProvider",
-    "authorizingGateWorkflowAttempt",
-    "authorizingGateReservationId",
-    "authorizingGateReservedAt",
-    "authorizingGateRunId",
-    "authorizingGateArtifactId",
-    "authorizingGateArtifactCreatedAt",
-    "authorizingGateSnapshotDigest",
-  ].every((field) => expected?.[field] === current?.[field]);
+  return (
+    sameRecordedFreshnessReason(expected, current) &&
+    [
+      "id",
+      "workflowAttempt",
+      "reservedAt",
+      "candidateId",
+      "candidateRevision",
+      "candidateHeadRevision",
+      "provider",
+      "authorizingGateStage",
+      "authorizingGateProvider",
+      "authorizingGateWorkflowAttempt",
+      "authorizingGateReservationId",
+      "authorizingGateReservedAt",
+      "authorizingGateRunId",
+      "authorizingGateArtifactId",
+      "authorizingGateArtifactCreatedAt",
+      "authorizingGateSnapshotDigest",
+    ].every((field) => expected?.[field] === current?.[field])
+  );
+}
+
+function sameRecordedFreshnessReason(expected, current) {
+  return (
+    !Object.hasOwn(expected ?? {}, "authorizingGateFreshnessReasonCode") ||
+    expected.authorizingGateFreshnessReasonCode === current?.authorizingGateFreshnessReasonCode
+  );
 }

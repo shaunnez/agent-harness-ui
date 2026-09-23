@@ -15,12 +15,54 @@ export type LegacyBaseVariant = (typeof legacyBaseVariants)[number];
  * survive being that bright.
  */
 export const basePalettes = {
-  blue: { label: "Blue", color: "#3f9dff", light: "#0038ff" },
-  red: { label: "Red", color: "#ee625d", light: "#e00016" },
-  orange: { label: "Orange", color: "#ffa64d", light: "#ff5c00" },
-  purple: { label: "Purple", color: "#b685ff", light: "#6600cc" },
+  blue: { label: "Blue", color: "#3f9dff", light: "#0038ff", glow: 1 },
+  red: { label: "Red", color: "#ee625d", light: "#e00016", glow: 1 },
+  orange: { label: "Orange", color: "#ffa64d", light: "#ff5c00", glow: 1 },
+  purple: { label: "Purple", color: "#b685ff", light: "#6600cc", glow: 1 },
+  // Research bases: fully saturated surfaces and a stronger identity glow, so a research base is
+  // told apart from a delivery base at a glance.
+  green: { label: "Green", color: "#2ee65c", light: "#00b52e", glow: 1.7 },
+  pink: { label: "Pink", color: "#ff5fb8", light: "#e0007a", glow: 1.7 },
+  silver: { label: "Silver", color: "#dfe6ec", light: "#7f93a8", glow: 1.5 },
+  // Black by day; after dark it glows a deep purple, so the base still reads at night.
+  black: { label: "Black", color: "#24123a", light: "#4b0a8c", glow: 1.7 },
 } as const;
 export type BasePalette = keyof typeof basePalettes;
+export type ProjectKind = NonNullable<RuntimeProject["kind"]>;
+/** Relay is kept for research projects; delivery projects choose among the other three. */
+export const researchBaseVariant: BaseVariant = "relay";
+export const deliveryBaseVariants: readonly BaseVariant[] = ["bastion", "command", "foundry"];
+export const deliveryPalettes: readonly BasePalette[] = ["blue", "red", "orange", "purple"];
+export const researchPalettes: readonly BasePalette[] = ["green", "pink", "silver", "black"];
+export function variantsFor(kind: ProjectKind | undefined): readonly BaseVariant[] {
+  return kind === "research" ? [researchBaseVariant] : deliveryBaseVariants;
+}
+export function palettesFor(kind: ProjectKind | undefined): readonly BasePalette[] {
+  return kind === "research" ? researchPalettes : deliveryPalettes;
+}
+/**
+ * Keeps an appearance inside its project kind: research bases are always Relay in a research
+ * colour, and delivery bases never are. A colour from the other set maps to the one at the same
+ * position, so a correction keeps the project's place in the palette.
+ */
+export function fitAppearance(
+  kind: ProjectKind | undefined,
+  appearance: BaseAppearance,
+  replacementVariant?: BaseVariant,
+): BaseAppearance {
+  const variants = variantsFor(kind);
+  const palettes = palettesFor(kind);
+  const variant = variants.includes(appearance.variant)
+    ? appearance.variant
+    : (replacementVariant ?? variants[0] ?? "command");
+  const other = kind === "research" ? deliveryPalettes : researchPalettes;
+  const palette = palettes.includes(appearance.palette)
+    ? appearance.palette
+    : (palettes[Math.max(0, other.indexOf(appearance.palette))] ?? palettes[0] ?? "blue");
+  return variant === appearance.variant && palette === appearance.palette
+    ? appearance
+    : { ...appearance, variant, palette };
+}
 export const baseNames: Record<BaseVariant, string> = {
   bastion: "Bastion",
   command: "Command",
@@ -77,42 +119,60 @@ function hash(value: string) {
 // Stable pseudorandom defaults are immediately usable even when browser storage is unavailable.
 export function defaultAppearance(project: RuntimeProject): BaseAppearance {
   const n = hash(projectAppearanceKey(project));
-  const palettes = Object.keys(basePalettes) as BasePalette[];
+  const variants = variantsFor(project.kind);
+  const palettes = palettesFor(project.kind);
   return {
-    variant: baseVariants[n % baseVariants.length] ?? "command",
+    variant: variants[n % variants.length] ?? "command",
     palette: palettes[(n >>> 8) % palettes.length] ?? "blue",
   };
 }
-/** Fills in variant, palette and colony slot for projects that lack them; saved values never change. */
+/**
+ * Fills in variant, palette and colony slot for projects that lack them. Saved choices keep their
+ * building and colour unless they break the project-kind rule (a delivery base saved as Relay
+ * before Relay became research-only), which `fitAppearance` corrects.
+ */
 export function assignMissingAppearances(projects: RuntimeProject[], saved: BaseAppearances) {
   const result = { ...saved };
   const slots = assignSlots(projects, savedSlots(saved));
-  const counts = Object.fromEntries(baseVariants.map((variant) => [variant, 0])) as Record<
+  const counts = Object.fromEntries(deliveryBaseVariants.map((variant) => [variant, 0])) as Record<
     BaseVariant,
     number
   >;
+  const leastUsed = (key: string) => {
+    const least = Math.min(...Object.values(counts));
+    const available = deliveryBaseVariants.filter((variant) => counts[variant] === least);
+    return available[hash(key) % available.length] ?? "command";
+  };
   for (const project of projects) {
     const value = saved[projectAppearanceKey(project)];
-    if (value) counts[value.variant]++;
+    if (value && project.kind !== "research" && value.variant in counts) counts[value.variant]++;
   }
   for (const project of [...projects].sort((a, b) => a.id.localeCompare(b.id))) {
     const key = projectAppearanceKey(project);
     const existing = result[key];
     if (existing) {
-      if (slots[key] && existing.slot !== slots[key]) result[key] = { ...existing, slot: slots[key] };
+      const fitted = fitAppearance(
+        project.kind,
+        existing,
+        project.kind === "research" ? undefined : leastUsed(key),
+      );
+      if (fitted !== existing && project.kind !== "research") counts[fitted.variant]++;
+      result[key] = slots[key] && fitted.slot !== slots[key] ? { ...fitted, slot: slots[key] } : fitted;
       continue;
     }
     const fallback = defaultAppearance(project);
-    const least = Math.min(...Object.values(counts));
-    const available = baseVariants.filter((variant) => counts[variant] === least);
-    const variant = available[hash(key) % available.length] ?? "command";
+    const variant = project.kind === "research" ? researchBaseVariant : leastUsed(key);
     result[key] = { ...fallback, variant, ...(slots[key] ? { slot: slots[key] } : {}) };
-    counts[variant]++;
+    if (project.kind !== "research") counts[variant]++;
   }
   return result;
 }
 export function appearanceComplete(appearance: BaseAppearance | undefined): appearance is BaseAppearance {
   return Boolean(appearance?.slot);
+}
+/** Saved, placed, and within its project kind's buildings and colours. */
+export function appearanceSettled(project: RuntimeProject, appearance: BaseAppearance | undefined) {
+  return appearanceComplete(appearance) && fitAppearance(project.kind, appearance) === appearance;
 }
 export function saveAppearance(
   storage: Pick<Storage, "getItem" | "setItem">,
@@ -129,13 +189,10 @@ export function saveAppearance(
   storage.setItem(appearanceStorageKey, JSON.stringify({ version: 1, projects: next }));
   return next;
 }
-export function randomAppearance(random = Math.random): BaseAppearance {
-  const palettes = Object.keys(basePalettes) as BasePalette[];
-  return {
-    variant:
-      baseVariants[
-        Math.min(baseVariants.length - 1, Math.max(0, Math.floor(random() * baseVariants.length)))
-      ] ?? "command",
-    palette: palettes[Math.min(3, Math.max(0, Math.floor(random() * palettes.length)))] ?? "blue",
-  };
+export function randomAppearance(random = Math.random, kind?: ProjectKind): BaseAppearance {
+  const variants = variantsFor(kind);
+  const palettes = palettesFor(kind);
+  const pick = <T>(items: readonly T[]) =>
+    items[Math.min(items.length - 1, Math.max(0, Math.floor(random() * items.length)))];
+  return { variant: pick(variants) ?? "command", palette: pick(palettes) ?? "blue" };
 }

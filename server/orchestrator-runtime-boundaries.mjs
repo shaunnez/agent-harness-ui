@@ -1,3 +1,4 @@
+import { researchPoliciesOf } from "../src/research-policies.ts";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { resolveExecutionProvider } from "./execution-providers.mjs";
@@ -217,7 +218,7 @@ export class RuntimeBoundariesOrchestrator {
       catalog: withConfiguredModels(catalog, settings),
       model: settings.defaultModel,
       reasoning: settings.defaultReasoning,
-      settings,
+      settings: { ...settings, researchPolicies: researchPoliciesOf(settings) },
       scouts: scoutCatalog(),
     };
   }

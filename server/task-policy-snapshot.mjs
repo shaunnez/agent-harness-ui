@@ -1,11 +1,12 @@
 import {
   defaultProfileStagePolicies,
-  defaultRepairEscalationPolicy,
   normalizeModelId,
   POLICY_IDS,
   providerForModelId,
 } from "./model-catalog.mjs";
 import { WORKFLOW_PROFILE_IDS } from "./workflow-profiles.mjs";
+import { defaultRepairEscalationPolicies } from "./policy-defaults.mjs";
+import { validateRepairEscalationPolicies } from "./repair-escalation-policy.mjs";
 
 // Apply explicit roles to every profile so deterministic profile escalation retains
 // the operator's choices. Omitted roles continue to inherit each profile's defaults.
@@ -68,11 +69,16 @@ export function snapshotTaskPolicies(input, settings, knownModels, workflowProfi
     stagePolicies: structuredClone(profileStagePolicies[workflowProfile.selected]),
     rolePolicyOverrides: overrides,
     providerConstraint,
-    repairEscalationPolicies: repairEscalationPolicies(
+    repairEscalationPolicies: validateRepairEscalationPolicies(
+      undefined,
+      hasBlanket || overrides.repair
+        ? {}
+        : providerConstraint
+          ? defaultRepairEscalationPolicies(providerConstraint)
+          : settings.repairEscalationPolicies,
       profileStagePolicies,
-      settings,
       knownModels,
-      providerConstraint,
+      settings.allowedModels,
     ),
     rolePolicySources: Object.fromEntries(
       POLICY_IDS.map((role) => [
@@ -97,25 +103,6 @@ function validatePresetProfiles(provider, settings, knownModels) {
     }
   }
   return profiles;
-}
-
-function repairEscalationPolicies(profileStagePolicies, settings, knownModels, providerConstraint) {
-  return Object.fromEntries(
-    WORKFLOW_PROFILE_IDS.flatMap((profile) => {
-      const selected = profileStagePolicies[profile]?.repair;
-      const provider = providerForModelId(selected?.model);
-      if (!provider || (providerConstraint && provider !== providerConstraint)) return [];
-      const stronger = defaultRepairEscalationPolicy(provider, profile);
-      if (!stronger || (stronger.model === selected.model && stronger.reasoning === selected.reasoning))
-        return [];
-      try {
-        assertEligiblePolicy(stronger, `${profile} repair escalation`, settings, knownModels, provider);
-        return [[profile, structuredClone(stronger)]];
-      } catch {
-        return [];
-      }
-    }),
-  );
 }
 
 function assertEligiblePolicy(policy, label, settings, knownModels, provider) {

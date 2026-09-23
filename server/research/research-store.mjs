@@ -38,8 +38,8 @@ export class ResearchStore {
         INSERT INTO research_runs(
           id, created_at, updated_at, status, runtime_id, profile, revision,
           request_json, budget_json, usage_json, budget_state_json, runtime_metadata_json,
-          error_json, cancellation_requested_at)
-        VALUES (?, ?, ?, 'queued', ?, ?, 1, ?, ?, NULL, NULL, NULL, NULL, NULL)
+          model_json, error_json, cancellation_requested_at)
+        VALUES (?, ?, ?, 'queued', ?, ?, 1, ?, ?, NULL, NULL, NULL, NULL, NULL, NULL)
       `)
         .run(id, now, now, runtimeId, request.profile, JSON.stringify(stored), JSON.stringify(budget));
       return this.#readRun(id);
@@ -72,6 +72,7 @@ export class ResearchStore {
         budgetState: row.budget_state_json ? JSON.parse(row.budget_state_json) : null,
         error: row.error_json ? JSON.parse(row.error_json) : null,
         runtimeMetadata: row.runtime_metadata_json ? JSON.parse(row.runtime_metadata_json) : null,
+        model: row.model_json ? JSON.parse(row.model_json) : null,
         cancellationRequestedAt: row.cancellation_requested_at ?? null,
       };
       mutate(draft);
@@ -79,7 +80,7 @@ export class ResearchStore {
         .prepare(`
         UPDATE research_runs
         SET updated_at = ?, status = ?, revision = revision + 1, usage_json = ?, budget_state_json = ?,
-            runtime_metadata_json = ?, error_json = ?, cancellation_requested_at = ?
+            runtime_metadata_json = ?, model_json = ?, error_json = ?, cancellation_requested_at = ?
         WHERE id = ? AND revision = ?
       `)
         .run(
@@ -88,6 +89,7 @@ export class ResearchStore {
           draft.usage ? JSON.stringify(draft.usage) : null,
           draft.budgetState ? JSON.stringify(draft.budgetState) : null,
           draft.runtimeMetadata ? JSON.stringify(draft.runtimeMetadata) : null,
+          draft.model ? JSON.stringify(draft.model) : null,
           draft.error ? JSON.stringify(draft.error) : null,
           draft.cancellationRequestedAt,
           runId,
@@ -344,6 +346,9 @@ export class ResearchStore {
       .map((row) => ({ id: row.id, kind: row.kind, name: row.name, contentRef: row.content_ref }));
     return {
       runId,
+      // Read back from the run, not from whatever the runtime put in the result blob, so a
+      // finding always reports the identity the run itself is stamped with.
+      ...(run.model ? { model: run.model } : {}),
       ...(summary.summary ? { summary: summary.summary } : {}),
       findings,
       artifacts,
@@ -423,6 +428,8 @@ function runRecord(row) {
   return {
     id: row.id,
     runtimeId: row.runtime_id,
+    // Null until the runtime reports one. Never defaulted: see `readResearchModelIdentity`.
+    model: row.model_json ? JSON.parse(row.model_json) : null,
     profile: row.profile,
     status: row.status,
     createdAt: row.created_at,

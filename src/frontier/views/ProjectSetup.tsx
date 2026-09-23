@@ -8,6 +8,7 @@ import {
   type BaseAppearance,
   baseNames,
   defaultAppearance,
+  fitAppearance,
   projectAppearanceKey,
   readAppearances,
 } from "../world-3d/appearance";
@@ -56,7 +57,19 @@ export function ProjectSetup({
   const [appearance, setAppearance] = useState<BaseAppearance>(() => startingAppearance(project));
   const appearanceManifest = usePreviewManifest();
   const registered = project && !project.id.startsWith("suggested:");
-  const canSave = Boolean(name.trim() && contract && !busy && !checking && connected);
+  const [kind, setKind] = useState<"delivery" | "research">(project?.kind ?? "delivery");
+  const research = kind === "research";
+  // Research projects exist only in the sample world until the research backend serves them.
+  const researchAvailable = gateway.mode === "fixture";
+  const canSave = research
+    ? Boolean(name.trim() && !busy && connected && (researchAvailable || registered))
+    : Boolean(name.trim() && contract && !busy && !checking && connected);
+  function chooseKind(next: "delivery" | "research") {
+    if (next === kind) return;
+    setKind(next);
+    setLocalError(null);
+    setAppearance((current) => fitAppearance(next, current));
+  }
   async function validate() {
     if (checking) return;
     setChecking(true);
@@ -89,16 +102,59 @@ export function ProjectSetup({
     <>
       <div className="overlay-body project-setup-layout">
         <section className="form-surface">
-          <div className="form-progress">
-            <span className={!review ? "current" : ""}>1 · Repository</span>
-            <ArrowRight size={18} />
-            <span className={review ? "current" : ""}>2 · Review setup</span>
-          </div>
+          {!registered && (
+            <div className="design-policy-default project-kind">
+              <h4 id="project-kind-label">Project type</h4>
+              <div className="segmented-radio" role="radiogroup" aria-labelledby="project-kind-label">
+                {(["delivery", "research"] as const).map((option) => (
+                  <label key={option} className={kind === option ? "is-selected" : undefined}>
+                    <input
+                      type="radio"
+                      name="project-kind"
+                      checked={kind === option}
+                      disabled={checking || busy || (option === "research" && !researchAvailable)}
+                      onChange={() => chooseKind(option)}
+                    />
+                    <span>
+                      {option === "delivery" ? "Delivery · a repository" : "Research · costing questions"}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <small>
+                {research
+                  ? "Asks costing questions, three runs each, on the engine chosen in Settings → Research agent. No repository."
+                  : researchAvailable
+                    ? "Tasks run the delivery workflow against a local Git repository."
+                    : "Tasks run the delivery workflow against a local Git repository. Research projects are a sample-world prototype for now."}
+              </small>
+            </div>
+          )}
+          {!research && (
+            <div className="form-progress">
+              <span className={!review ? "current" : ""}>1 · Repository</span>
+              <ArrowRight size={18} />
+              <span className={review ? "current" : ""}>2 · Review setup</span>
+            </div>
+          )}
           <form
             id="project-setup-form"
             onSubmit={(event) => {
               event.preventDefault();
-              if (!review) void validate();
+              if (research) {
+                if (canSave)
+                  void command(async () => {
+                    if (registered)
+                      return gateway.changeProject(project.id, { kind: "rename", name: name.trim() });
+                    const savedProject = await gateway.createProject({
+                      name: name.trim(),
+                      repositoryPath: "",
+                      kind: "research",
+                    });
+                    chooseProjectAppearance(savedProject, appearance);
+                    return savedProject;
+                  }, onDone);
+              } else if (!review) void validate();
               else if (canSave)
                 void command(async () => {
                   const savedProject = registered
@@ -122,32 +178,37 @@ export function ProjectSetup({
                 placeholder="My project"
               />
             </label>
-            <label className="form-row">
-              <span>Repository path</span>
-              <input
-                required
-                disabled={Boolean(registered) || checking}
-                value={path}
-                onChange={(event) => {
-                  setPath(event.target.value);
-                  setContract(null);
-                  setReview(false);
-                  setProposal(null);
-                }}
-                placeholder="/Users/you/projects/my-project"
-              />
-            </label>
-            <p className="quiet">
-              {registered
-                ? "The repository and project identity are fixed. Renaming preserves tasks and history."
-                : "Connect an existing local Git repository. The runtime verifies the path before registration."}
-            </p>
-            {contract && <RepositoryReadiness contract={contract} />}
+            {!research && (
+              <label className="form-row">
+                <span>Repository path</span>
+                <input
+                  required
+                  disabled={Boolean(registered) || checking}
+                  value={path}
+                  onChange={(event) => {
+                    setPath(event.target.value);
+                    setContract(null);
+                    setReview(false);
+                    setProposal(null);
+                  }}
+                  placeholder="/Users/you/projects/my-project"
+                />
+              </label>
+            )}
+            {!research && (
+              <p className="quiet">
+                {registered
+                  ? "The repository and project identity are fixed. Renaming preserves tasks and history."
+                  : "Connect an existing local Git repository. The runtime verifies the path before registration."}
+              </p>
+            )}
+            {!research && contract && <RepositoryReadiness contract={contract} />}
           </form>
           {!registered && (
             <section className="project-appearance-fields" aria-labelledby="project-appearance-heading">
               <h3 id="project-appearance-heading">Base appearance</h3>
               <BaseAppearanceControls
+                kind={kind}
                 appearance={appearance}
                 manifest={appearanceManifest}
                 onChoose={setAppearance}
@@ -158,7 +219,7 @@ export function ProjectSetup({
               </p>
             </section>
           )}
-          {contract && !contract.verification.valid && (
+          {!research && contract && !contract.verification.valid && (
             <section className="setup-verification">
               <h3>Set up verification</h3>
               <p>
@@ -279,11 +340,15 @@ export function ProjectSetup({
           />
           <h2>{name.trim() || "Your project"}</h2>
           <p className="repository-path">
-            {contract?.repositoryRoot ?? (path || "Choose a local repository")}
+            {research || project?.kind === "research"
+              ? "Research project · no repository"
+              : (contract?.repositoryRoot ?? (path || "Choose a local repository"))}
           </p>
           <p className="notice">
             <CheckCircle size={21} />
-            One base for this project’s tasks, agents and handoffs.
+            {research || project?.kind === "research"
+              ? "One base for this project’s research questions and their runs."
+              : "One base for this project’s tasks, agents and handoffs."}
           </p>
           {gateway.mode === "fixture" && (
             <p className="sample-note">Sample setup only. No local repository is inspected or changed.</p>
@@ -298,17 +363,25 @@ export function ProjectSetup({
           type="submit"
           form="project-setup-form"
           className="primary"
-          disabled={busy || checking || !connected || !name.trim() || !path.trim() || (review && !canSave)}
+          disabled={
+            research
+              ? !canSave
+              : busy || checking || !connected || !name.trim() || !path.trim() || (review && !canSave)
+          }
         >
           {busy
             ? "Saving…"
-            : checking
-              ? "Checking repository…"
-              : !review
-                ? "Validate repository"
-                : registered
-                  ? "Save project name"
-                  : "Add project"}
+            : research
+              ? registered
+                ? "Save project name"
+                : "Add research project"
+              : checking
+                ? "Checking repository…"
+                : !review
+                  ? "Validate repository"
+                  : registered
+                    ? "Save project name"
+                    : "Add project"}
           <ArrowRight size={19} />
         </button>
       </footer>

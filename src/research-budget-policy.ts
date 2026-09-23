@@ -46,27 +46,6 @@ const PROFILE_CEILINGS = {
  *  composed, not a dial: a profile that asked for depth 2 could not be honoured. */
 const MAX_DEPTH = 1;
 
-// LangGraph's `recursionLimit` counts every graph superstep, not model calls — a middleware
-// pipeline (subagent, call-limit, tool-limit) can burn several steps per model turn. It must
-// stay well above `maxModelCalls`/`maxToolCalls` so the budget's own ceilings (which report a
-// clean, attributable error) always trip first; `GraphRecursionError` is a backstop against a
-// true runaway loop, not a budget in its own right, so the multiplier below is deliberately
-// generous rather than tightly tuned.
-const RECURSION_STEPS_PER_MODEL_CALL_ESTIMATE = 6;
-const RECURSION_LIMIT_SAFETY_MARGIN = 20;
-
-/** The `recursionLimit` a Deep Agents graph invocation should be given for this budget, so a
- *  larger `maxModelCalls`/`maxToolCalls` (e.g. a higher profile, or a request override) can
- *  never be silently capped by a stale recursion literal. */
-export function graphRecursionLimitForBudget(
-  budget: Pick<ResearchBudget, "maxModelCalls" | "maxToolCalls">,
-): number {
-  return (
-    (budget.maxModelCalls + budget.maxToolCalls) * RECURSION_STEPS_PER_MODEL_CALL_ESTIMATE +
-    RECURSION_LIMIT_SAFETY_MARGIN
-  );
-}
-
 export function researchBudgetForProfile(profile: ResearchProfile): ResearchBudget {
   const ceilings = PROFILE_CEILINGS[profile];
   return {

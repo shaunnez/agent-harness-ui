@@ -21,6 +21,20 @@ export function defaultStagePolicies(provider = DEFAULT_EXECUTION_PROVIDER) {
   return defaultProfileStagePolicies(provider).standard;
 }
 
+// A preset is an explicit operator choice. Ordinary and migrated settings start Off;
+// a provider preset can opt new tasks into its one documented Repair rung.
+export function defaultRepairEscalationPolicies(provider = DEFAULT_EXECUTION_PROVIDER) {
+  if (provider === "claude") {
+    const opusHigh = { model: "claude-opus-5-5", reasoning: "high" };
+    return { fast: { ...opusHigh }, standard: { ...opusHigh }, "high-risk": { ...opusHigh } };
+  }
+  return {
+    fast: { model: "gpt-6-sol", reasoning: "high" },
+    standard: null,
+    "high-risk": null,
+  };
+}
+
 export function defaultProfileStagePolicies(provider = DEFAULT_EXECUTION_PROVIDER) {
   if (provider === "claude") {
     const opusHigh = { model: "claude-opus-5-5", reasoning: "high" };
@@ -28,68 +42,47 @@ export function defaultProfileStagePolicies(provider = DEFAULT_EXECUTION_PROVIDE
     const sonnetHigh = { model: "claude-sonnet-5", reasoning: "high" };
     const sonnetXHigh = { model: "claude-sonnet-5", reasoning: "xhigh" };
     return {
-      fast: profilePolicy(
-        sonnetMedium,
-        sonnetHigh,
-        sonnetHigh,
-        sonnetHigh,
-        sonnetHigh,
-        sonnetMedium,
-        sonnetMedium,
-      ),
-      standard: profilePolicy(
-        sonnetMedium,
-        sonnetHigh,
-        opusHigh,
-        sonnetXHigh,
-        sonnetXHigh,
-        sonnetMedium,
-        sonnetMedium,
-      ),
-      "high-risk": profilePolicy(
-        sonnetHigh,
-        sonnetHigh,
-        opusHigh,
-        sonnetXHigh,
-        sonnetXHigh,
-        sonnetMedium,
-        sonnetMedium,
-      ),
+      fast: profilePolicy(sonnetMedium, opusHigh, sonnetHigh, sonnetHigh, sonnetMedium),
+      standard: profilePolicy(sonnetXHigh, opusHigh, sonnetHigh, sonnetHigh, sonnetMedium),
+      "high-risk": profilePolicy(sonnetXHigh, opusHigh, sonnetHigh, sonnetHigh, sonnetMedium),
     };
   }
   const lunaMedium = { model: "gpt-6-luna", reasoning: "medium" };
   const lunaHigh = { model: "gpt-6-luna", reasoning: "high" };
   const solHigh = { model: "gpt-6-sol", reasoning: "high" };
+  const codexProfile = (implementation) => ({
+    ...profilePolicy(lunaHigh, solHigh, implementation, implementation, solHigh),
+    grill: { ...solHigh },
+    specification: { ...solHigh },
+    test: { ...lunaMedium },
+  });
   return {
-    fast: profilePolicy(lunaMedium, solHigh, solHigh, lunaHigh, lunaHigh, lunaMedium, solHigh),
-    standard: profilePolicy(lunaHigh, solHigh, solHigh, solHigh, solHigh, lunaMedium, solHigh),
-    "high-risk": profilePolicy(lunaHigh, solHigh, solHigh, solHigh, solHigh, lunaMedium, solHigh),
+    fast: codexProfile(lunaHigh),
+    standard: codexProfile(solHigh),
+    "high-risk": codexProfile(solHigh),
   };
 }
 
-// A verified candidate defect may step up without changing the policy used for
-// the original Plan run. Task creation snapshots this choice for reproducibility.
-export function defaultRepairEscalationPolicy(provider = "codex", profile = "standard") {
-  if (provider === "claude")
-    return profile === "fast"
-      ? { model: "claude-sonnet-5", reasoning: "xhigh" }
-      : { model: "claude-opus-5-5", reasoning: "high" };
-  return profile === "fast"
-    ? { model: "gpt-6-sol", reasoning: "high" }
-    : { model: "gpt-6-sol", reasoning: "xhigh" };
+/** Optional Settings preset; new tasks do not consume Claude unless an operator selects it. */
+export function codexSonnetProfileStagePolicies() {
+  const profiles = defaultProfileStagePolicies("codex");
+  const sonnetHigh = { model: "claude-sonnet-5", reasoning: "high" };
+  profiles["high-risk"].implement = { ...sonnetHigh };
+  profiles["high-risk"].repair = { ...sonnetHigh };
+  return profiles;
 }
 
-function profilePolicy(gathering, decisions, planning, implementation, repair, test, finalReview) {
+function profilePolicy(gathering, planning, implementation, repair, finalReview) {
   return {
     triage: { ...gathering },
     scouts: { ...gathering },
-    grill: { ...decisions },
-    specification: { ...decisions },
+    grill: { ...gathering },
+    specification: { ...gathering },
     plan: { ...planning },
     implement: { ...implementation },
     repair: { ...repair },
     "dev-review": { ...planning },
-    test: { ...test },
+    test: { ...gathering },
     "final-review": { ...finalReview },
   };
 }

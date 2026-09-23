@@ -877,14 +877,12 @@ test("splits Claude stage policies without disturbing the Codex defaults", () =>
   for (const policyId of deep) {
     assert.deepEqual(claude[policyId], { model: "claude-opus-5-5", reasoning: "high" }, policyId);
   }
-  for (const policyId of ["triage", "scouts", "test"]) {
-    assert.deepEqual(claude[policyId], { model: "claude-sonnet-5", reasoning: "medium" }, policyId);
-  }
-  for (const policyId of ["grill", "specification"]) {
-    assert.deepEqual(claude[policyId], { model: "claude-sonnet-5", reasoning: "high" }, policyId);
-  }
-  for (const policyId of ["implement", "repair"]) {
-    assert.deepEqual(claude[policyId], { model: "claude-sonnet-5", reasoning: "xhigh" }, policyId);
+  for (const policyId of ["triage", "scouts", "grill", "specification", "implement", "repair", "test"]) {
+    assert.deepEqual(
+      claude[policyId],
+      { model: "claude-sonnet-5", reasoning: ["implement", "repair"].includes(policyId) ? "high" : "xhigh" },
+      policyId,
+    );
   }
   assert.deepEqual(claude["final-review"], { model: "claude-sonnet-5", reasoning: "medium" });
   assert.deepEqual(defaultStagePolicies(), defaultStagePolicies("codex"));
