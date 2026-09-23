@@ -9,7 +9,10 @@ import { formatArgv, parseVerificationManifest } from "../../server/verification
 import { DEFAULT_REPAIR_LIMITS } from "../../src/repair-limits.ts";
 import { loadEvaluationCase } from "./case-contract.mjs";
 import { CODEX_6_IMPLEMENT_COMPARISON, H05_CODEX_COMPARISON } from "./h05-codex-comparison.mjs";
-import { H06_MEDIUM_PROVIDER_COMPARISON } from "./medium-provider-comparison.mjs";
+import {
+  H02_MEDIUM_PROVIDER_COMPARISON,
+  H06_MEDIUM_PROVIDER_COMPARISON,
+} from "./medium-provider-comparison.mjs";
 
 const exec = promisify(execFile);
 const root = fileURLToPath(new URL("../../", import.meta.url));
@@ -40,7 +43,9 @@ const comparisonMode = ["codex-comparison", "codex-6-comparison", "medium-provid
 );
 const comparison =
   mode === "medium-provider-comparison"
-    ? H06_MEDIUM_PROVIDER_COMPARISON
+    ? caseId === "H02"
+      ? H02_MEDIUM_PROVIDER_COMPARISON
+      : H06_MEDIUM_PROVIDER_COMPARISON
     : mode === "codex-6-comparison"
       ? CODEX_6_IMPLEMENT_COMPARISON
       : H05_CODEX_COMPARISON;
@@ -48,8 +53,8 @@ if (mode === "codex-comparison" && caseId !== "H05")
   throw new Error("The historical Codex comparison is qualified only for H05.");
 if (mode === "codex-6-comparison" && !["H02", "H05"].includes(caseId))
   throw new Error("The GPT-6 Codex comparison is qualified only for H02 and H05.");
-if (mode === "medium-provider-comparison" && caseId !== "H06")
-  throw new Error("The medium provider comparison is qualified only for H06.");
+if (mode === "medium-provider-comparison" && !["H02", "H06"].includes(caseId))
+  throw new Error("The medium provider comparison is qualified only for H02 and H06.");
 if (
   caseId !== "H02" &&
   ![

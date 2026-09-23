@@ -3,7 +3,10 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { loadEvaluationCase } from "../scripts/evaluation/case-contract.mjs";
 import { H05_CODEX_COMPARISON, H05_CODEX_COMPARISON_6 } from "../scripts/evaluation/h05-codex-comparison.mjs";
-import { H06_MEDIUM_PROVIDER_COMPARISON } from "../scripts/evaluation/medium-provider-comparison.mjs";
+import {
+  H02_MEDIUM_PROVIDER_COMPARISON,
+  H06_MEDIUM_PROVIDER_COMPARISON,
+} from "../scripts/evaluation/medium-provider-comparison.mjs";
 import {
   buildEvaluationSummary,
   normalizeEvaluationInput,
@@ -128,6 +131,32 @@ test("H06 rotates two independent Sol and Sonnet trials with only delivery roles
       ["B", "sonnet-implement", 1],
       ["C", "sonnet-implement", 2],
       ["D", "sol-implement", 2],
+    ],
+  );
+  assert.equal(trialConcurrency, 2);
+  assert.deepEqual(allowedProviders, ["codex", "claude"]);
+  assert.deepEqual(allowedModels, ["gpt-6-sol", "gpt-6-luna", "claude-sonnet-5"]);
+  for (const stage of Object.keys(policies["sol-implement"])) {
+    const sol = policies["sol-implement"][stage];
+    const sonnet = policies["sonnet-implement"][stage];
+    assert.deepEqual(
+      sonnet,
+      stage === "implement" || stage === "repair" ? { model: "claude-sonnet-5", reasoning: "high" } : sol,
+    );
+  }
+});
+
+test("H02 compares Sol and Sonnet on the qualified high-risk task", async () => {
+  const selected = await loadEvaluationCase("H02");
+  assert.equal(selected.workflowProfile, "high-risk");
+  assert.equal(selected.checkIds.length, 11);
+  const { policies, trials, allowedModels, allowedProviders, trialConcurrency } =
+    H02_MEDIUM_PROVIDER_COMPARISON;
+  assert.deepEqual(
+    trials.map(({ id, variant, repetition }) => [id, variant, repetition]),
+    [
+      ["A", "sol-implement", 1],
+      ["B", "sonnet-implement", 1],
     ],
   );
   assert.equal(trialConcurrency, 2);

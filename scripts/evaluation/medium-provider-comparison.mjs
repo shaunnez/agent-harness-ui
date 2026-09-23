@@ -29,3 +29,15 @@ export const H06_MEDIUM_PROVIDER_COMPARISON = Object.freeze({
   trialConcurrency: 2,
   defaultModel: sol,
 });
+
+export const H02_MEDIUM_PROVIDER_COMPARISON = Object.freeze({
+  policies: H06_MEDIUM_PROVIDER_COMPARISON.policies,
+  trials: Object.freeze([
+    Object.freeze({ id: "A", variant: "sol-implement", repetition: 1 }),
+    Object.freeze({ id: "B", variant: "sonnet-implement", repetition: 1 }),
+  ]),
+  allowedModels: H06_MEDIUM_PROVIDER_COMPARISON.allowedModels,
+  allowedProviders: H06_MEDIUM_PROVIDER_COMPARISON.allowedProviders,
+  trialConcurrency: 2,
+  defaultModel: sol,
+});
