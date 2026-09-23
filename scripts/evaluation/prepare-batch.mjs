@@ -189,7 +189,6 @@ const environment = {
 };
 if (item.repository === "plancheck") {
   const dependencyFiles = [
-    "package-lock.json",
     "frontend/package-lock.json",
     "e2e/package-lock.json",
     "backend/requirements.txt",
@@ -289,17 +288,26 @@ for (const trial of trials) {
   await git(repository, ["config", "user.email", "evaluation@example.invalid"]);
   await git(repository, ["config", "commit.gpgsign", "false"]);
   if (mode !== "dry-run") {
-    const result = await exec("npm", ["ci", "--no-audit", "--no-fund"], {
-      cwd: repository,
-      maxBuffer: 10_000_000,
-    });
-    await writeFile(path.join(privateTrial, "npm-ci.log"), result.stdout + result.stderr);
     if (item.repository === "plancheck") {
       const installed = await exec("make", ["install"], {
         cwd: repository,
         maxBuffer: 10_000_000,
       });
       await writeFile(path.join(privateTrial, "plancheck-install.log"), installed.stdout + installed.stderr);
+      const browserDependencies = await exec("npm", ["ci", "--no-audit", "--no-fund"], {
+        cwd: path.join(repository, "e2e"),
+        maxBuffer: 10_000_000,
+      });
+      await writeFile(
+        path.join(privateTrial, "plancheck-e2e-install.log"),
+        browserDependencies.stdout + browserDependencies.stderr,
+      );
+    } else {
+      const result = await exec("npm", ["ci", "--no-audit", "--no-fund"], {
+        cwd: repository,
+        maxBuffer: 10_000_000,
+      });
+      await writeFile(path.join(privateTrial, "npm-ci.log"), result.stdout + result.stderr);
     }
   }
   const siblings = trials
