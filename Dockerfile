@@ -54,8 +54,7 @@ COPY --from=build --chown=node:node /app/dist/frontier ./dist/frontier
 # the right owner. /w is deliberately short: worktree path length is paid per sandbox rule.
 RUN install -d -o node -g node /app/.data /w /repos /home/node/.config /home/node/.codex
 
-ENV NODE_ENV=production \
-    AGENT_HARNESS_HOST=0.0.0.0 \
+ENV AGENT_HARNESS_HOST=0.0.0.0 \
     AGENT_HARNESS_PORT=4321 \
     AGENT_HARNESS_LINEAR_HOST=0.0.0.0 \
     AGENT_HARNESS_WORKTREE_ROOT=/w \

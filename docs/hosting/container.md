@@ -42,8 +42,18 @@ The container doesn't use your Mac's checkouts. It needs its own clones in the `
 
 ```sh
 docker compose exec harness git clone https://github.com/<org>/<repo>.git /repos/<repo>
-docker compose exec -w /repos/<repo> harness npm ci      # or uv sync, etc.
 ```
+
+Install each project's dependencies from the directory that contains its lockfile. `npm ci` requires a `package-lock.json` in the working directory; a root `package.json` alone is not enough. Pass `--include=dev` when installing a target repository's Node dependencies so its lint, test and build tools are present even if the operator environment sets `NODE_ENV=production`. The image no longer sets `NODE_ENV` globally, and Harness verification does not pass an inherited `NODE_ENV` to repository commands. A repository command can set its own value when needed.
+
+For PlanCheck, the committed lockfile is in `frontend/`, not the repository root:
+
+```sh
+docker compose exec -w /repos/eversor-plancheck/frontend harness npm ci --include=dev
+docker compose exec -w /repos/eversor-plancheck harness make backend-venv
+```
+
+Running `npm ci` at the PlanCheck root fails because there is no root lockfile. Running `npm install` there creates an untracked root `package-lock.json` that must be removed before Implement can start.
 
 Then add the project in the UI with the path `/repos/<repo>`. To make one repository the suggested default, set `AGENT_HARNESS_REPOSITORY=/repos/<repo>` in `.env.harness.local`.
 

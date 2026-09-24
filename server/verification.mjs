@@ -453,12 +453,15 @@ async function runVerificationCommand({ command, worktreePath, candidate, signal
   let result = null;
   let timedOut = false;
   try {
+    const environment = { ...process.env };
+    // The companion's runtime mode is not the target repository's test or build mode.
+    // A manifest command can set NODE_ENV explicitly when its own contract needs one.
+    delete environment.NODE_ENV;
     result = await runProcess(command.command[0], command.command.slice(1), {
       cwd: worktreePath,
-      // The harness's own environment, unsandboxed and deliberately so: this is the trade
-      // the stage makes in exchange for a database, a compose stack or a loopback port
-      // being reachable at all.
-      env: process.env,
+      // Repository commands still inherit the harness's access to databases, compose and
+      // loopback services. Only the companion's Node runtime mode is withheld.
+      env: environment,
       timeoutMs: command.timeoutMs,
       signal,
       label: `verification:${command.id}`,
