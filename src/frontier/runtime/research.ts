@@ -39,6 +39,9 @@ export interface ResearchComponent {
   high: number | null;
   centre: string | null;
   caveat: string | null;
+  /** The working, when the amount is a rate the page states times a quantity; the host checks both. */
+  rate?: { low: number; high: number; unit: string | null };
+  quantity?: { low: number; high: number; unit: string | null; basis: string | null };
   check: ResearchCheck;
 }
 

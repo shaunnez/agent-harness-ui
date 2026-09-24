@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // The scope → pack eval (`research-agent-deepagents-spike-pack/29-EVAL-PREREGISTRATION.md`).
 //
-//   node scripts/research-eval.mjs --arm A0|A2|A3|A4|A5|A6|A7 [--only id,id] [--out <dir>]
+//   node scripts/research-eval.mjs --arm A0|A2|A3|A4|A5|A6|A7|A8 [--only id,id] [--out <dir>]
 //   node scripts/research-eval.mjs --rescore [--out <dir>]
 //   node scripts/research-eval.mjs --arm A4 --set <questions.json> --model <model> --out <dir>   (tuning)
 //
@@ -85,6 +85,15 @@ export const ARMS = {
     reasoning: null,
     make: (env) => new ApiLoopResearchRuntime({ env }),
   },
+  // Doc 29 addendum A8: A7 with the typography rules, the figures check and stated working (a web
+  // component whose amount is not the quoted figure gives its rate and quantity, and the host
+  // checks the rate against the page and the product). Scored with the checks of 25 September.
+  A8: {
+    runtime: "api-loop",
+    model: "opencode-go/deepseek-v4.1-flash",
+    reasoning: null,
+    make: (env) => new ApiLoopResearchRuntime({ env }),
+  },
 };
 
 /** The decision metric's passing checks: a found row, a verified quote (its figures on the page or
@@ -122,16 +131,22 @@ export async function evalQuestions(setPath = null) {
 
 /** Whether a question passes the decision metric: agreed, and every component of every run
  *  checked. */
-export function passes(record) {
+export function passes(record, checked = CHECKED) {
   return (
     record.status === "agreed" &&
     record.runs.every(
       (run) =>
         run.status === "completed" &&
         run.components.length > 0 &&
-        run.components.every((item) => CHECKED.has(item.check)),
+        run.components.every((item) => checked.has(item.check)),
     )
   );
+}
+
+/** The same pass with "Worked from quote" not counting: a diagnostic, not the decision metric. */
+const TRACED = new Set([...CHECKED].filter((check) => check !== "web-derived"));
+export function passesTraced(record) {
+  return passes(record, TRACED);
 }
 
 /** The product's own record for a question's runs: status, agreement and per-component checks. */
@@ -241,6 +256,7 @@ async function runQuestion(runtime, arm, question) {
     arm: arm.id,
     status: record.status,
     passes: passes(record),
+    passesTraced: passesTraced(record),
     consensus: record.consensus,
     range: record.range,
     unit: record.unit,
@@ -293,7 +309,7 @@ async function main() {
     const result = await runQuestion(runtime, arm, question);
     await writeFile(file, `${JSON.stringify(result, null, 2)}\n`);
     console.log(
-      `${armId} ${question.id}: ${result.status}${result.passes ? " PASS" : ""} · $${result.costUsd.toFixed(2)} · ${Math.round(result.elapsedMs / 1000)} s · ${result.runs.map((run) => run.status).join("/")}`,
+      `${armId} ${question.id}: ${result.status}${result.passes ? " PASS" : ""}${result.passes && !result.passesTraced ? " (worked from quote)" : ""} · $${result.costUsd.toFixed(2)} · ${Math.round(result.elapsedMs / 1000)} s · ${result.runs.map((run) => run.status).join("/")}`,
     );
   }
 }

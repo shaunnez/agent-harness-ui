@@ -46,7 +46,8 @@ export function parseFigures(text) {
     const raw = Number(digits.replace(/,/g, ""));
     if (!Number.isFinite(raw)) continue;
     // A digit run glued to letters ("14kVA", "A4", "2x4") is a code or a size, not a figure.
-    const before = source[match.index - 1] ?? "";
+    // The match may begin on the space before the figure; the character before is the one before that.
+    const before = source[start - 1] ?? "";
     const after = source[match.index + whole.length] ?? "";
     if (/[A-Za-z]/.test(before) && !currency) continue;
     if (/[A-Za-z]/.test(after) && !suffix) continue;
@@ -57,6 +58,8 @@ export function parseFigures(text) {
       value: raw * scale,
       scale,
       currency: Boolean(currency),
+      // "10–15 %" is a share: 10 as written, 0.10 as a multiplier.
+      percent: /^\s?%/.test(source.slice(match.index + whole.length)),
       start,
       end: match.index + whole.length,
     });
@@ -70,11 +73,13 @@ export function parseFigures(text) {
     }
     if (!first.currency && second.currency) first.currency = true;
     if (first.currency && !second.currency) second.currency = true;
+    if (second.percent) first.percent = true;
     first.rangeTo = second;
   }
-  return figures.map(({ value, currency, start, end, rangeTo }) => ({
+  return figures.map(({ value, currency, percent, start, end, rangeTo }) => ({
     value,
     currency,
+    ...(percent ? { percent: true } : {}),
     start,
     end,
     ...(rangeTo ? { rangeTo: rangeTo.value } : {}),
@@ -210,7 +215,10 @@ export function figuresSupport(passage, { low, high, context = "" }) {
   const all = parseFigures(passage);
   const money = all.filter((figure) => figure.currency);
   const figures = (money.length ? money : all).filter((figure) => figure.value > 0);
-  const values = figures.map((figure) => figure.value);
+  // A percentage is read both as written and as a multiplier (10% as 10 and as 0.1).
+  const values = figures.flatMap((figure) =>
+    figure.percent ? [figure.value, figure.value / 100] : [figure.value],
+  );
   // A component priced at nothing ("context only, $0") uses no figure, so none can be wrong.
   const ends = [low, high].filter((value) => value != null && Number.isFinite(Number(value))).map(Number);
   if (!ends.length || ends.every((end) => end === 0)) return { support: "match", figures: values };
@@ -228,7 +236,11 @@ export function figuresSupport(passage, { low, high, context = "" }) {
     if (priced.every((end) => onPage(end, factor))) return { support: "match", figures: values };
   const ranges = figures
     .filter((figure) => figure.rangeTo != null)
-    .map((figure) => [Math.min(figure.value, figure.rangeTo), Math.max(figure.value, figure.rangeTo)]);
+    .flatMap((figure) => (figure.percent ? [1, 1 / 100] : [1]).map((scale) => [figure, scale]))
+    .map(([figure, scale]) => [
+      Math.min(figure.value, figure.rangeTo) * scale,
+      Math.max(figure.value, figure.rangeTo) * scale,
+    ]);
   for (const factor of factors)
     for (const [from, to] of ranges)
       if (
@@ -303,4 +315,29 @@ export function statedQuantities(context) {
     for (const value of [Number(match[1]), Number(match[2])])
       if (value > 1 && value <= 100_000) found.add(value);
   return [...found];
+}
+
+/**
+ * A component that states its working: `rate` is the figure as the page gives it and `quantity`
+ * what it was multiplied by, so `amount = rate × quantity`. Both halves are checked in code: the
+ * rate against the passage's figures (no quantity factors, because the rate is meant to be the
+ * page's own figure), and the amount against the product, each end within `FIGURE_TOLERANCE`
+ * (the rate may be GST inclusive, as the page writes it). Returns `{ rate, arithmetic, expected }`:
+ * `rate` is a `figuresSupport` outcome, `arithmetic` is true when the amount is the product, and
+ * `expected` is the product's low and high.
+ */
+export function workingSupport(passage, { rate, quantity, low, high }) {
+  const rateCheck = figuresSupport(passage, { low: rate.low, high: rate.high, context: "" });
+  const expected = { low: rate.low * quantity.low, high: rate.high * quantity.high };
+  const near = (x, y) => Math.abs(x - y) <= FIGURE_TOLERANCE * Math.max(Math.abs(x), Math.abs(y), 1e-9);
+  // A rate the page gives as a percentage ("add 25–40 %") may be written 25 and multiplied as 0.25.
+  const scales = parseFigures(passage).some((figure) => figure.percent) ? [1, 1 / 100] : [1];
+  const arithmetic = scales.some((scale) =>
+    [1, 1 / GST_FACTOR].some(
+      (factor) =>
+        near(Number(low), expected.low * scale * factor) &&
+        near(Number(high), expected.high * scale * factor),
+    ),
+  );
+  return { rate: rateCheck.support, figures: rateCheck.figures, arithmetic, expected };
 }

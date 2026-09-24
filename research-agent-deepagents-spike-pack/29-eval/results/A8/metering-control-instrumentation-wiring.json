@@ -1,0 +1,194 @@
+{
+  "question": "metering-control-instrumentation-wiring",
+  "kind": "pinned",
+  "arm": "A8",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 53.76,
+    "high": 94.39
+  },
+  "range": {
+    "min": 52.73,
+    "max": 96.91
+  },
+  "unit": "$/m of installed control/instrumentation cable route (Auckland, GST exclusive, excluding preliminaries and margin)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.069,
+    "highRatio": 1.152,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0802,
+  "elapsedMs": 197883,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 197879,
+      "band": {
+        "unit": "$/m of installed control/instrumentation cable route (Auckland, GST exclusive, excluding preliminaries and margin)",
+        "low": 56.38,
+        "high": 96.91,
+        "centre": null,
+        "basis": "Sum of the seven components above, each priced separately with no double counting. Per 200m nominal quantity: LOW $56.38 x 200 = $11,276; HIGH $96.91 x 200 = $19,382; CENTRE $76.65 x 200 = $15,329. Amortisation is auditable: components 3-6 are lump sums divided by 200m (16 terminations, one labelling/screen-earthing job, 8-10 test points, one BMS interface) and component 7 is 1-2 weeks of tower hire divided by 200m. QV installed rates used as published supply-and-fix rates; if your brief requires contractor overhead and profit stripped out of QV, this band is conservative at the top. Allowances (components 3, 4 and 6) are 13-15% of the total, i.e. minor, and no design, engineering or certification fee is included because the scope excludes design and consent. The band is wide and confidence is low because (a) QV has no instrumentation cable, termination or point-testing rate, so the cable is a stated-adjustment proxy and the testing rate is borrowed from the intruder-alarm section, and (b) the QV conduit table publishes two unexplained price tiers for the identical 20mm description ($34.7 and $60/m), which alone moves the total by ~$5,000. Excluded per scope: GST, preliminaries, margin, design, consent fees, field devices (meters, irrigation controllers, transmitters), BMS controller/software/point mapping/graphics/commissioning, any new switchboard/panel/circuit protection/230V supply, trenching, drilling, penetrations, after-hours work, live-site permits, asbestos and work above 3m."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 460417,
+        "outputTokens": 22174,
+        "cachedTokens": 380416,
+        "modelCalls": 12,
+        "toolCalls": 29,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.026446,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 460417,
+            "outputTokens": 22174,
+            "estimatedCostUsd": 0.026446,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 184590,
+      "band": {
+        "unit": "$/m of installed control/instrumentation cable route (200m nominal, 8 runs averaging 25m), Auckland, GST exclusive, excludes preliminaries, margin, design and consent fees",
+        "low": 52.73,
+        "high": 84.1,
+        "centre": "Auckland",
+        "basis": "Sum of the eight components above (low 34.7+3.03+2.10+1.80+2.40+6.60+0.60+1.50 = 52.73; high 45.11+3.64+6.30+4.725+7.35+12.375+1.60+3.00 = 84.10). TOTAL FOR THE 200m NOMINAL QUANTITY: $10,546 (low) to $16,820 (high), so the amortisation is auditable (rate/m x 200m). Containment is the largest single component and is a cited QV row; the cable material is a fetched Auckland trade listing; every hourly rate is a fetched Auckland quote, but the HOURS are judgement and carry roughly 35-40% of the mid band, and QV does not state whether its 20mm conduit row already includes wiring - hence confidence LOW and a band spanning about 1.6x. The band sits above a straight market build-up because the QV containment row (AKL 34.7/m) is very high against $2.06-$3.15/m conduit material."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 5,
+        "webVerified": 5,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 484380,
+        "outputTokens": 22457,
+        "cachedTokens": 395264,
+        "modelCalls": 11,
+        "toolCalls": 32,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.028027,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 484380,
+            "outputTokens": 22457,
+            "estimatedCostUsd": 0.028027,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 195373,
+      "band": {
+        "unit": "$/m of installed control/instrumentation cable route (Auckland, GST exclusive)",
+        "low": 53.76,
+        "high": 94.39,
+        "centre": "Auckland — total for the 200m nominal quantity: $10,752 to $18,877 (mid ~$14,815). Band mid-rate ~$74/m.",
+        "basis": "Sum of the ten components above for a 200m route (8 runs x 25m), Auckland, GST exclusive, no preliminaries, margin, design or consent. Dominant item is 20mm surface conduit (QV installed rate, $6,940-$12,000 = 65% of the band), which is QV-sourced, so the band is established; the width is almost entirely the ambiguity between QV's two 20mm 'fixed to masonry' conduit rows ($34.70 and $60.00/m). Labour components use the QV Electrician rate (AKL $83.65/h) with QS-judged hours. Allowances (termination materials + sundries) are only ~5-10% of the total, so the band is not allowance-driven. Confidence low: QV rows are unreviewed, the conduit row ambiguity is unresolved, and QV's own powered-ventilation circuit rate implies a materially lower installed rate than the conduit tables."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 489199,
+        "outputTokens": 22855,
+        "cachedTokens": 417792,
+        "modelCalls": 14,
+        "toolCalls": 40,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.025677,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 489199,
+            "outputTokens": 22855,
+            "estimatedCostUsd": 0.025677,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

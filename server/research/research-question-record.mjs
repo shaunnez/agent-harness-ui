@@ -127,6 +127,8 @@ function runRecord(run, events) {
       high: component.high ?? null,
       centre: component.centre ?? null,
       caveat: component.caveat ?? null,
+      // Only when stated, so a record from before the working fields keeps its fingerprint.
+      ...(component.rate && component.quantity ? { rate: component.rate, quantity: component.quantity } : {}),
       // No check ran is "unchecked", never a pass.
       check: checks?.[index] ?? "unchecked",
     })),

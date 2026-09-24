@@ -18,7 +18,7 @@
 // unverified with the reason, because hiding it would make the band look better sourced than
 // it is.
 
-import { figuresSupport } from "../research-quote-figures.mjs";
+import { figuresSupport, workingSupport } from "../research-quote-figures.mjs";
 import { writeResearchSnapshot } from "../research-source-snapshots.mjs";
 import { rowIdsIn } from "./qv-rows.mjs";
 
@@ -260,6 +260,7 @@ function firstUrl(text) {
  * or none, and the component shows no working).
  */
 function checkFigures(component, passage) {
+  if (component.rate && component.quantity) return checkWorking(component, passage);
   const context = [component.role, component.unit, component.caveat].filter(Boolean).join(" ");
   const { support, figures } = figuresSupport(passage, { low: component.low, high: component.high, context });
   const amount = `${component.low ?? "?"}–${component.high ?? "?"}`;
@@ -282,6 +283,43 @@ function checkFigures(component, passage) {
         ? `The quote states no figure, so it does not support the amount ${amount}.`
         : `The page's figures (${stated}) do not give the amount ${amount}, and the component shows no working.`,
   };
+}
+
+/**
+ * A component that states its working is checked on both halves: its rate must be the page's
+ * figure and its amount must be rate × quantity. A rate only half on the page is "worked from the
+ * quote", as the same quote would be without the working.
+ */
+function checkWorking(component, passage) {
+  const { rate, quantity } = component;
+  const checked = workingSupport(passage, { rate, quantity, low: component.low, high: component.high });
+  const rateText = `${rate.low}–${rate.high}${rate.unit ? ` ${rate.unit}` : ""}`;
+  const stated = checked.figures.length ? checked.figures.slice(0, 6).join(", ") : "none";
+  // One end of the rate on the page is what a band with no working would get for the same quote,
+  // "Worked from quote": showing the working must never score worse than hiding it.
+  if (checked.rate === "partial" && checked.arithmetic)
+    return {
+      verdict: "derived",
+      problem: `Only part of the rate ${rateText} is on the page (the page's figures: ${stated}).`,
+    };
+  if (checked.rate !== "match" && checked.rate !== "within")
+    return {
+      verdict: "unsupported",
+      problem:
+        checked.rate === "no_figures"
+          ? `The quote states no figure, so it does not give the rate ${rateText}.`
+          : `The page's figures (${stated}) do not give the rate ${rateText}.`,
+    };
+  if (!checked.arithmetic)
+    return {
+      verdict: "unsupported",
+      problem: `The amount ${component.low}–${component.high} is not the rate ${rateText} × the quantity ${quantity.low}–${quantity.high} (${round(checked.expected.low)}–${round(checked.expected.high)}).`,
+    };
+  return { verdict: "verified" };
+}
+
+function round(value) {
+  return Math.round(value * 100) / 100;
 }
 
 function clip(text, limit = 160) {

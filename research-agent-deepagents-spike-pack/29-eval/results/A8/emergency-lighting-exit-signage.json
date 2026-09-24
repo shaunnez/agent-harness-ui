@@ -1,0 +1,171 @@
+{
+  "question": "emergency-lighting-exit-signage",
+  "kind": "pinned",
+  "arm": "A8",
+  "status": "agreed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 333.75,
+    "high": 521.2
+  },
+  "range": {
+    "min": 320,
+    "max": 531.4
+  },
+  "unit": "ea - per emergency fitting, averaged over 40 fittings (28 downlights + 12 exit signs), Auckland, GST exclusive",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.086,
+    "highRatio": 1.04,
+    "runsWithBand": 2,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0878,
+  "elapsedMs": 262753,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 262749,
+      "band": null,
+      "checks": [],
+      "citations": null,
+      "usage": {
+        "inputTokens": 555806,
+        "outputTokens": 32317,
+        "cachedTokens": 464128,
+        "modelCalls": 11,
+        "toolCalls": 32,
+        "searchCalls": 7,
+        "estimatedCostUsd": 0.034534,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 555806,
+            "outputTokens": 32317,
+            "estimatedCostUsd": 0.034534,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 167952,
+      "band": {
+        "unit": "ea - per emergency fitting, averaged over 40 fittings (28 downlights + 12 exit signs), Auckland, GST exclusive",
+        "low": 320,
+        "high": 511,
+        "centre": null,
+        "basis": "Sum of eleven distinct components: QV LED Emergency Lighting rows for the 28 downlights and 12 exit signs (assumed supply-and-install, so no separate fitting-install labour added); QV Cable: Copper row for the 12 m average 1.5 mm2 TPS run; QV MCB row for 3 x 16 A devices; QV electrician labour rate for board terminations, discharge testing and documentation; QV elevated platform hire plus a delivery allowance; and one fetched NZ page for the combined CoC/ESC fee. No aggregate or elemental row is added alongside its components, and no part is counted twice. Band 40-off total $12,800 - $20,450 (centre $16,640). Allowances (access delivery, test switch/termination sundries) are about 2-3% of the total, so the band does not rest on judgement pricing. Confidence set low because (a) QV's luminaire rows do not state whether installation labour is included - if they are supply-only, add roughly 1.0-1.6 h/fitting of QV electrician time (+$84 to +$134 per fitting); (b) QV's own 1.5 mm2 TPS rows disagree by more than 2:1 in price; and (c) the exit-sign row is a size proxy only for the specified 24 m viewing-distance blade sign. Range drives: low end = clear void, short pulls, one continuous visit, 2-core cable; high end = 3-core cable, congested void, split visits, 3 days of platform hire and the larger QV exit sign. Excludes GST, preliminaries, margin, design, consent, IQP/BWOF, ongoing re-testing, central battery/inverter/monitoring, new board or sub-main, ceiling grid alteration and fire alarm interfaces, per scope."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 11,
+        "rowsFound": 11,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 263033,
+        "outputTokens": 22063,
+        "cachedTokens": 197248,
+        "modelCalls": 8,
+        "toolCalls": 23,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.023697,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 263033,
+            "outputTokens": 22063,
+            "estimatedCostUsd": 0.023697,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 228656,
+      "band": {
+        "unit": "ea (per emergency fitting, averaged over 28 downlights + 12 exit signs)",
+        "low": 347.5,
+        "high": 531.4,
+        "centre": null,
+        "basis": "Auckland, GST exclusive, 40 fittings. Sum of the ten components above: $13,901 low / $21,257 high for the 40-off scope; $347.50-$531.40 per fitting, midpoint $439.50. Main drivers, in order: (1) the supplied-and-fixed emergency luminaires, 28 x $208-236 plus 12 x $208-347 - QV LED Emergency Lighting rows, which carry 60% of the band; (2) 480 m of 1.5mm2 TPS installed in the ceiling void at $6.60-14.20/m - core count (2C+E vs 3C+E) is the single biggest assumption and drives a $3,648 swing; (3) 40 manual test switches at $38.60 as a proxy. Allowances (board terminations, lift delivery) total only $300-600, about 2-3% of the band, so the estimate is rate-driven rather than allowance-driven. Confidence is LOW for two reasons stated in the caveats, not for want of sources: QV does not state whether its emergency luminaire 'each' rates include fixing labour (no labour has been added on top, so the band understates by roughly $3,350-5,350 if those rates are supply-only, i.e. approximately $431-665/fitting), and the 12 m per fitting cable run is averaged, with the core count unresolved. Low end = 2C+E cable, smaller sign row, no mounting kit, 2-day access, one certification line. High end = 3C+E cable, large sign row, mounting kit, 3-day access plus delivery, both certification documents, fuller test/documentation time. Excludes GST, preliminaries, margin, design, consent and BWOF/IQP fees, the initial IQP inspection and Compliance Schedule entry, ongoing re-testing, central battery/inverter/addressable or self-test systems, new distribution board or sub-main, ceiling grid alteration or patching, and fire alarm interface."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 525461,
+        "outputTokens": 26855,
+        "cachedTokens": 444800,
+        "modelCalls": 11,
+        "toolCalls": 26,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.029547,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 525461,
+            "outputTokens": 26855,
+            "estimatedCostUsd": 0.029547,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

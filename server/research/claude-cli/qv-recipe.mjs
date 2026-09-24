@@ -139,6 +139,28 @@ function readComponent(raw) {
     high: numberOrNull(amount.high),
     centre: stringOrNull(raw?.centre),
     caveat: stringOrNull(raw?.caveat),
+    // The working, when the amount is not the cited figure itself: the rate as the page states
+    // it and the quantity it was multiplied by. Only the API loop's prompt asks for them.
+    ...readWorking(raw),
+  };
+}
+
+function readWorking(raw) {
+  const rate = raw?.rate && typeof raw.rate === "object" ? raw.rate : null;
+  const quantity = raw?.quantity && typeof raw.quantity === "object" ? raw.quantity : null;
+  const rateLow = numberOrNull(rate?.low);
+  const rateHigh = numberOrNull(rate?.high) ?? rateLow;
+  const quantityLow = numberOrNull(quantity?.low ?? quantity?.value);
+  const quantityHigh = numberOrNull(quantity?.high ?? quantity?.value) ?? quantityLow;
+  if (rateLow == null || quantityLow == null) return {};
+  return {
+    rate: { low: rateLow, high: rateHigh, unit: stringOrNull(rate?.unit) },
+    quantity: {
+      low: quantityLow,
+      high: quantityHigh,
+      unit: stringOrNull(quantity?.unit),
+      basis: stringOrNull(quantity?.basis),
+    },
   };
 }
 

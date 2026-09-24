@@ -1,0 +1,193 @@
+{
+  "question": "p-solar",
+  "kind": "pinned",
+  "arm": "A8",
+  "status": "disputed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 10445,
+    "high": 21184
+  },
+  "range": {
+    "min": 9540,
+    "max": 22365
+  },
+  "unit": "sum (whole 30 kWp array, ~60 panels, ~120 m2 panel area, Auckland site, GST exclusive)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.105,
+    "highRatio": 1.361,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.094,
+  "elapsedMs": 253770,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 250720,
+      "band": {
+        "unit": "sum (whole 30 kWp array, ~60 panels, ~120 m2 panel area, Auckland site, GST exclusive)",
+        "low": 10539,
+        "high": 22365,
+        "centre": null,
+        "basis": "Auckland, NZD, GST exclusive. Built by adding non-overlapping components: mounting system $7,155-$16,235 (rails, brackets, clamps and fasteners from NZ supplier pages, plus QV roofer labour), strengthening $1,884-$3,330 (QV proprietary purlins DHS 150/15 to 250/15 for 40-50 m, plus an allowance for bolts, cleats and fixings the QV purlin rate excludes), design and PS1 $1,500-$2,800 (published per-building structural assessment schedule). No QV solar-mounting row exists, so the largest component rests on fetched supplier prices, not a QV rate or a project quote; install hours and purlin quantity are my estimates. Confidence LOW, and the band is deliberately wide: the low end is itemised trade-rate hardware, the high end is branded retail kit pricing (a 4-panel GridFree kit is $700, i.e. $175/panel, or $10,500 for 60 panels). Excludes GST, preliminaries, margin, all electrical work, roof sheet replacement/recoating, scaffolding/edge protection/roof access and consent fees, per the fixed scope."
+      },
+      "checks": [
+        "web-verified",
+        "web-unsupported",
+        "web-unsupported",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 4,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 2,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 862482,
+        "outputTokens": 28387,
+        "cachedTokens": 772864,
+        "modelCalls": 18,
+        "toolCalls": 47,
+        "searchCalls": 9,
+        "estimatedCostUsd": 0.032793,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 862482,
+            "outputTokens": 28387,
+            "estimatedCostUsd": 0.032793,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 253766,
+      "band": {
+        "unit": "sum (whole 30 kWp array: 60 panels, ~120 m2, mounting + one-third purlin strengthening + design/PS1)",
+        "low": 9540,
+        "high": 16430,
+        "centre": "Auckland",
+        "basis": "GST-exclusive lump sum built from cited QV CostBuilder rows (proprietary purlins and bolts, steel erector labour rate) plus fetched NZ vendor prices for proprietary racking components and a fetched NZ structural consultancy fee schedule for the design/PS1. Three rejectable parts: MOUNTING SYSTEM low $5,516 / high $9,114; STRENGTHENING (purlins + bolts) low $1,685 / high $3,138; DESIGN (PS1 + wind calculation) low $2,340 / high $4,180. Excludes GST, preliminaries, margin, PV modules, inverters, cabling and electrical work, roof sheet works, scaffolding/edge protection and consent fees, per scope. Cross-check: a racking vendor benchmark of '$0.08-$0.15 per watt' (novamounting.com/blog/solar-racking-system-cost-2026, source-8) implies $2,400-$4,500 for 30 kWp of racking supply, below my NZ retail-based build-up; that vendor page also notes wind region and uplift requirements push racking cost up, which is the case here."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 5,
+        "webVerified": 5,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 493244,
+        "outputTokens": 26780,
+        "cachedTokens": 408448,
+        "modelCalls": 13,
+        "toolCalls": 41,
+        "searchCalls": 12,
+        "estimatedCostUsd": 0.030013,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 493244,
+            "outputTokens": 26780,
+            "estimatedCostUsd": 0.030013,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 246692,
+      "band": {
+        "unit": "sum",
+        "low": 10445,
+        "high": 21184,
+        "centre": "Auckland",
+        "basis": "Lump sum for the exact scope, Auckland, GST exclusive. Mounting system $6,497-$14,555 + supplementary purlins and bolts $1,448-$2,629 + design and PS1 $2,500-$4,000. Sydney: no - Auckland. Mounting hardware is priced from NZ published vendor prices (Fazcorp $84.95/4.75 m rail, $4.95 brackets, $4.95 clamps; GridFree/KSENG $85/2.4 m rail, $19 L-feet, $17 clamps) at quantities from GridFree's published 4-panel kit BOM (2.4 m rail, 2 L-feet, 3 clamps per panel), with installation labour at the QV Auckland roofer rate; strengthening from QV proprietary purlin and bolt rows; design fee from an Auckland engineering firm's published schedule. The band is wide (about 2x) for one reason: NZ published hardware prices are retail/DIY level, while the only commercial-scale benchmark found is below them - Nova Mounting states 'In 2026 Australia, solar racking typically adds around $0.08-$0.15 per watt' and shows $0.10 to $0.20/W supplied for 30-100 kW arrays (~$3,000-$6,000 for 30 kWp) (source-7). A contractor quote for 60 panels should therefore sit in the lower half of this band; the top end is what the scope costs if every item is bought at retail singles. Allowances are under 5% of the total, so the band is rate-driven. Excludes GST, preliminaries, margin, modules/inverters/cabling, roof sheet work, scaffolding/edge protection and consent fees, as instructed."
+      },
+      "checks": [
+        "web-verified",
+        "web-unsupported",
+        "web-unsupported",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 5,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 2,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 407617,
+        "outputTokens": 29219,
+        "cachedTokens": 322688,
+        "modelCalls": 10,
+        "toolCalls": 34,
+        "searchCalls": 8,
+        "estimatedCostUsd": 0.031239,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 407617,
+            "outputTokens": 29219,
+            "estimatedCostUsd": 0.031239,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -7,6 +7,7 @@ import {
   locatePassage,
   parseFigures,
   statedQuantities,
+  workingSupport,
 } from "../server/research/research-quote-figures.mjs";
 
 const values = (text) => parseFigures(text).map((figure) => figure.value);
@@ -142,4 +143,100 @@ test("a note in brackets does not change the unit a band is priced in", () => {
   assert.equal(unitMeasure("$/ea"), "each");
   assert.equal(unitMeasure("lump sum, 1200m²"), "total");
   assert.equal(unitMeasure("m² treated area (footprint plus 1-2m margin)"), "per m²");
+});
+
+test("stated working is checked on both halves: the rate against the page, the amount as rate × quantity", async () => {
+  assert.deepEqual(
+    workingSupport("roughly +NZ $45–$60 /m²", {
+      rate: { low: 45, high: 60 },
+      quantity: { low: 18, high: 18 },
+      low: 810,
+      high: 1_080,
+    }),
+    { rate: "match", figures: [45, 60], arithmetic: true, expected: { low: 810, high: 1_080 } },
+  );
+  const page =
+    "Electrical Certificate: $30–$50 depending on job complexity. $85.00 + GST an hour after that.";
+  const webTools = {
+    verifyEvidence: (reference) => ({
+      sourceId: reference.sourceId,
+      excerpt: reference.excerpt,
+      quoteVerified: true,
+    }),
+    locateQuote: (_sourceId, excerpt) => {
+      const found = locatePassage(page, excerpt);
+      return found ? { page: null, text: found.text } : null;
+    },
+  };
+  const component = (rate, quantity, low, high) => ({
+    role: "Certificates, shared across 40 fittings",
+    basis: "web",
+    sourceId: "source-1",
+    source: "https://sparky.test/",
+    excerpt: "Electrical Certificate: $30–$50 depending on job complexity",
+    rate,
+    quantity,
+    low,
+    high,
+  });
+  const checked = await checkCostBandCitations(
+    {
+      components: [
+        component({ low: 30, high: 50 }, { low: 0.05, high: 0.05 }, 1.5, 2.5),
+        component({ low: 30, high: 50 }, { low: 0.05, high: 0.05 }, 3, 5),
+        component({ low: 70, high: 90 }, { low: 0.05, high: 0.05 }, 3.5, 4.5),
+        // Half the rate on the page is what the same quote without working would get.
+        component({ low: 50, high: 70 }, { low: 0.05, high: 0.05 }, 2.5, 3.5),
+      ],
+    },
+    { rows: [], webTools },
+  );
+  assert.deepEqual(
+    checked.components.map((item) => item.check),
+    ["web-verified", "web-unsupported", "web-unsupported", "web-derived"],
+  );
+  assert.match(
+    checked.components[1].problems.join(" "),
+    /is not the rate 30–50 × the quantity 0.05–0.05 \(1.5–2.5\)/,
+  );
+  assert.match(checked.components[2].problems.join(" "), /do not give the rate 70–90/);
+});
+
+test("the answer's working is read when stated, and left out when not", async () => {
+  const { parseCostBand } = await import("../server/research/claude-cli/qv-recipe.mjs");
+  const answer = (component) =>
+    `\`\`\`json\n${JSON.stringify({ components: [component], band: { low: 1, high: 2, unit: "ea" } })}\n\`\`\``;
+  const [worked] = parseCostBand(
+    answer({
+      role: "Powdercoat",
+      amount: { low: 810, high: 1080 },
+      rate: { low: 45, high: 60, unit: "per m2" },
+      quantity: { value: 18, unit: "m2", basis: "curtain area" },
+    }),
+  ).components;
+  assert.deepEqual(worked.rate, { low: 45, high: 60, unit: "per m2" });
+  assert.deepEqual(worked.quantity, { low: 18, high: 18, unit: "m2", basis: "curtain area" });
+  const [plain] = parseCostBand(answer({ role: "Door", amount: { low: 1, high: 2 } })).components;
+  assert.equal("rate" in plain, false);
+});
+
+test("a percentage is a figure, read as written and as a multiplier", () => {
+  assert.deepEqual(values("Price runs 10–15 % above Coloursteel"), [10, 15]);
+  assert.equal(
+    workingSupport("Price runs 10–15 % above Coloursteel", {
+      rate: { low: 0.1, high: 0.15 },
+      quantity: { low: 5_399, high: 5_399 },
+      low: 540,
+      high: 810,
+    }).rate,
+    "match",
+  );
+  const uplift = workingSupport("Insulated curtains add roughly 25–40 % over a single-skin door", {
+    rate: { low: 25, high: 40 },
+    quantity: { low: 4_583, high: 6_192 },
+    low: 1_146,
+    high: 2_477,
+  });
+  assert.equal(uplift.rate, "match");
+  assert.equal(uplift.arithmetic, true);
 });

@@ -51,7 +51,14 @@ export function apiLoopSystemPrompt(prompt) {
     "from a page fetched that way. An excerpt is ONE continuous passage copied character for character from " +
     "the fetched text: never join separate passages with '...', never write escape sequences such as \\n, and " +
     "keep it to the sentence or table row that states the figure. Copy figures exactly as the page writes " +
-    "them, including \"k\", dashes and commas: never reformat a number ($1.1k stays $1.1k, not $1,100). " +
+    'them, including "k", dashes and commas: never reformat a number ($1.1k stays $1.1k, not $1,100). ' +
+    "When a web component's amount is not the quoted figure itself (a rate times a quantity, a " +
+    "cost shared across a count, hours times an hourly rate), show the working in two fields: " +
+    '"rate": {"low","high","unit"}, the figure exactly as the page states it, and "quantity": ' +
+    '{"low","high","unit","basis"}, what you multiplied it by (the same number for low and high ' +
+    "when it is fixed; a fraction such as 0.025 for one item shared across 40). The amount must then " +
+    "equal rate × quantity: the host recomputes it and checks the rate against the page, and an " +
+    "amount it cannot trace to the quote is marked unsupported. " +
     "Quote only from fetch_source or " +
     'read_source text, never from a web_search snippet. For a PDF, "page" is required: the physical page ' +
     "number fetch_source or read_source gave for the text you quote; a PDF quote without it cannot be checked. " +

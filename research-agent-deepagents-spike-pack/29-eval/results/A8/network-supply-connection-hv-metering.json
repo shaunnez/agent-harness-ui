@@ -1,0 +1,201 @@
+{
+  "question": "network-supply-connection-hv-metering",
+  "kind": "pinned",
+  "arm": "A8",
+  "status": "disputed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 240580,
+    "high": 273550
+  },
+  "range": {
+    "min": 92404,
+    "max": 292120
+  },
+  "unit": "sum for one complete 300 kVA HV-supplied supply point, live and registered; also $/kVA over 300 kVA (NZD, GST exclusive, Auckland)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 2.778,
+    "highRatio": 1.076,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1242,
+  "elapsedMs": 550789,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 550785,
+      "band": {
+        "unit": "sum for one complete 300 kVA HV-supplied supply point, live and registered; also $/kVA over 300 kVA (NZD, GST exclusive, Auckland)",
+        "low": 256700,
+        "high": 273550,
+        "centre": null,
+        "basis": "Sum of 11 cited/allowanced components: Vector fees $3,470 (design $3,000 + assessment $300 + one energisation site visit $170, cited) + Vector capital contribution for the sole-use 300 kVA transformer and HV protection/switchgear $179,550–$182,010 (EA published distribution-transformer tier rate 598.5–606.7 $/kVA at the 300 kVA increment, used as the proxy for Vector's job-priced specific cost) + Vector distribution-substation-tier development contribution $53,001 (published posted capacity rate $176.67/kVA x 300 kVA, priced per job in practice and deletable) + HV cable $3,750–$5,625 (QV 185mm2 row at $125/m AKL plus a stated 0–50% MV uplift over 30 m) + MV/LV terminations allowance $3,300–$6,800 + LV cable $5,450 (QV 240mm2 + 70mm2 earth, $218/m AKL over 25 m) + CT metering charge $682.50 (published proxy) + metering installation allowance $3,500–$7,500 + coordination/commissioning allowance $4,000–$9,000. $/kVA = $856 low / $912 high (central $884/kVA) over the 300 kVA nominal capacity. Allowances are 4%–9% of the sum, so the band is not allowance-led. Confidence is low because 92% of the sum is Vector fees + capital contribution: the transformer/protection figure is an indicative authority estimate, not Vector's quote, and Vector prices sole-use connections at specific cost per job under its capital contributions policy. Reviewer should treat +/-20% around the central as the real envelope (~$212k–$328k, $707–$1,093/kVA) until Vector issues the CWA. Excludes GST, preliminaries, margin, design/consent fees, substation site works, main switchboard and load side, road-reserve trenching, reinforcement/second feed, retailer contract and standby plant, per the fixed scope."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "web-verified",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 6,
+        "webVerified": 6,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 659191,
+        "outputTokens": 41021,
+        "cachedTokens": 570880,
+        "modelCalls": 16,
+        "toolCalls": 36,
+        "searchCalls": 10,
+        "estimatedCostUsd": 0.039572,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 659191,
+            "outputTokens": 41021,
+            "estimatedCostUsd": 0.039572,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 307336,
+      "band": {
+        "unit": "sum (one complete new supply point, 300 kVA, live and ICP-registered) - GST exclusive, Auckland",
+        "low": 240580,
+        "high": 271560,
+        "centre": null,
+        "basis": "Working estimate band for the fixed scope, centre Auckland, Vector Auckland urban network, GST exclusive. Built by ADDING the twelve distinct components above; nothing is counted twice - no MV switchboard, no main switchboard, no substation slab/enclosure/bollards/fencing, no road-reserve trenching or reinstatement, no preliminaries/margin/design-consent fees (all excluded by the scope), and no separate network-reinforcement charge (scope states none is required). Amortised over the 300 kVA nominal capacity: low $802/kVA, centre $854/kVA, high $905/kVA. About 70% of the sum is one line - the Vector capital contribution proxy for the network-owned 300 kVA transformer and HV protection/switchgear (EA indicative 300 kVA distribution-transformer case, $598.5-$606.7 per kVA x 300 kVA); a +/-10% move on it moves the total by about +/-$18k, so read the band as roughly $220k-$290k at a +/-10% confidence interval on that line. Allowances total only $5.2k (low) to $13.0k (high), i.e. 2-5% of the band, and none is a main cost driver. Confidence is LOW because the dominant figure is a published indicative example rather than Vector's own per-job quotation, because Vector prices the development contribution for the distribution-substation tier only as 'Priced per job', and because the HV cable component has two published bases that differ about 4x."
+      },
+      "checks": [
+        "web-verified",
+        "allowance",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "web-verified",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 699348,
+        "outputTokens": 38555,
+        "cachedTokens": 577408,
+        "modelCalls": 12,
+        "toolCalls": 35,
+        "searchCalls": 10,
+        "estimatedCostUsd": 0.043156,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 699348,
+            "outputTokens": 38555,
+            "estimatedCostUsd": 0.043156,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 305007,
+      "band": {
+        "unit": "sum (one complete new 300 kVA HV supply point, live and registered, GST exclusive, Auckland) — equals $308/kVA (low) to $974/kVA (high) over the 300 kVA nominal capacity; mid range $641/kVA",
+        "low": 92404,
+        "high": 292120,
+        "centre": "Auckland",
+        "basis": "GST-exclusive lump sum for the fixed scope, built by ADDING distinct components: Vector fees (design fee $3,000 + site visit $170 + application/ICP allowance $300-$1,500) + Vector capital contribution (published posted capacity rates $176.67-$715.89 per diversified kVA x 300 kVA = $53,001-$214,767) + 30 m 11 kV cable allowance $6,000-$16,000 + 25 m LV service main (QV $810-$1,200/m x 25 m = $20,250-$30,000) + Category 4 CT metering installation allowance $6,000-$18,000 + lines company CT metering charge proxy $682.50 + coordination/certification allowance $3,000-$8,000. Low total $92,403.50; high total $292,119.50; mid $192,261.50. Vector schedule effective 1 April 2026; QV CostBuilder Auckland (AKL) rates, rows unreviewed. Allowances are $15,300 low / $43,500 high — about 17% / 15% of the band, within the one-third limit, and none of the identified main drivers is carried as an allowance. The main driver (Vector capital contribution including the network-owned transformer and 11 kV switchgear) rests on Vector's own published $/kVA capacity rates for exactly these tiers, NOT on a quoted connection price — Vector prices that 'per job'. Sensitivity: the tier that governs is unresolved (distribution substation vs HV feeder), which alone swings the band by ~$162k; hence low confidence and a floor-to-ceiling reading. Rejectable parts: without the Vector capital contribution component the rest of the scope prices at about $39,400-$77,400. Excludes GST, preliminaries, margin, design and consent fees, substation site works (slab, enclosure, bollards, fencing, access crossing), the main switchboard and everything on its load side, road-reserve/footpath trenching, ducting and reinstatement, network reinforcement or second feed, retailer contract/prepayment/standby generation/UPS/PFC, after-hours energisation and third-party HV outage management."
+      },
+      "checks": [
+        "allowance",
+        "web-verified",
+        "web-verified",
+        "web-unsupported",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 5,
+        "webVerified": 3,
+        "webNotFetched": 1,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 1,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 757182,
+        "outputTokens": 34795,
+        "cachedTokens": 632704,
+        "modelCalls": 12,
+        "toolCalls": 42,
+        "searchCalls": 13,
+        "estimatedCostUsd": 0.041447,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 757182,
+            "outputTokens": 34795,
+            "estimatedCostUsd": 0.041447,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -282,3 +282,57 @@ The recorded result files are left as they were scored; the table is the re-chec
 that were "worked from quote" were quantities times a rate, or a rate spread over a count (hours ×
 $85, $39.90 over 40 fittings). The check can confirm the quoted rate but not the arithmetic,
 because the answer states the arithmetic only in prose.
+
+**Addendum A8 (25 September, registered before its run).** Shaun: "make runs state their arithmetic
+in fixed fields … Then run through A7 and see where we get". This is A7's runtime, model, plan, 13
+questions, three runs, metric and leader rule, run all 13 at once. What changes from A7:
+
+- Prompt (API loop only): the typography-check rule to copy figures exactly, plus stated working.
+  A web component whose amount is not the quoted figure itself gives `rate` (the figure as the page
+  states it) and `quantity` (what it was multiplied by, a fraction for a shared cost), and its
+  amount must equal rate × quantity.
+- Checking (every runtime): the figures check and bracketed-unit rule of 25 September. A component
+  that states its working is **Quote verified** only if its rate is the page's figure and its amount
+  is rate × quantity, within 3% (or 3% after ÷1.15 GST). Otherwise it is **Quote doesn't give it**.
+  It is never "Worked from quote".
+- Tuning: one run of the three practice scopes (stud walls, benchtop, switchboard fault rating)
+  before the eval set, outside the eval.
+
+The metric is unchanged in form: a question passes when it is agreed and every component of every
+run is checked. "Worked from quote" still counts as checked, and the pass count is also reported with
+it not counting.
+
+**A8 tuning and run (25 September).** Tuning on the three practice scopes (outside the eval): stud
+walls and benchtop passed; switchboard fault rating was disputed, with one run unpriced. 7 of 9
+runs used the working fields, and no component was left "worked from quote".
+
+A8 on the eval set, all 13 at once: **3 of 13 passed as run** (interior finishes, metering, open-a2).
+9.2 minutes for the set (HV supply's slowest run took 551 s), $1.23, no errors. 69 of 81 web
+components stated their working.
+
+Reading the 14 web quotes the run marked "Quote doesn't give it" found three checker faults, fixed
+after the run, for every runtime:
+
+- A bare number straight after a word ("runs 10–15 %") was skipped as if it were glued to the word.
+- Percentages were not read as multipliers. A rate of 0.10–0.15 quoted as "10–15 %", or written as
+  25–40 and multiplied as 0.25–0.40, now matches.
+- A stated rate with only one end on the page was marked unsupported, while the same quote without
+  working would have been "worked from quote". It is now "worked from quote", so showing the
+  working never scores worse than hiding it.
+
+Re-checked with these fixes, A8 passes **4 of 13**, all four with every figure traced (roller doors
+joins them). The other arms' re-checked counts in the table above are unchanged by the fixes. The
+recorded A8 result files are left as run.
+
+| Arm | Agreed | Re-checked passes | Traced (not counting "worked from quote") |
+|---|---|---|---|
+| A5 DeepSeek, OpenCode | 7 | 6 | 5 |
+| A7 | 7 | 5 | 2 |
+| A7 repeat | 4 | 2 | 0 |
+| A8 | 6 | 4 | 4 |
+
+A8's remaining failures are mostly disagreement between runs (7 disputed). Of the two agreed
+questions that failed, concrete paving cited a QV row that does not exist and emergency lighting had
+one run with no price. Only three A8 web quotes still fail, and all three are genuine: a band of
+$30–200 citing a page that says $60, a membrane at $115–186 citing $90.62, and a negative omission
+citing a thickness.

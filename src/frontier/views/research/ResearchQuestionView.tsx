@@ -494,6 +494,16 @@ function RunDetail({ run }: { run: ResearchRunRecord }) {
                       ? formatNzd(component.low)
                       : formatBand(component.low, component.high)}
                     {component.unit && <small>{component.unit}</small>}
+                    {component.rate && component.quantity && (
+                      <small>
+                        {formatBand(component.rate.low, component.rate.high)}
+                        {component.rate.unit ? ` ${component.rate.unit}` : ""} ×{" "}
+                        {component.quantity.low === component.quantity.high
+                          ? component.quantity.low
+                          : `${component.quantity.low}–${component.quantity.high}`}
+                        {component.quantity.unit ? ` ${component.quantity.unit}` : ""}
+                      </small>
+                    )}
                   </td>
                   <td>
                     <ResearchCheckBadge check={component.check} />
