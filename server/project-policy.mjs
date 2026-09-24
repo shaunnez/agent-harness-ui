@@ -4,8 +4,15 @@ const TERMINAL = new Set(["completed", "closed", "archived"]);
 
 export function assertProjectAcceptsTask(settings, repositoryPath) {
   const project = (settings.projects ?? []).find(
-    (item) => path.resolve(item.repositoryPath) === path.resolve(repositoryPath),
+    (item) =>
+      item.repositoryPath === repositoryPath ||
+      (item.kind !== "research" && path.resolve(item.repositoryPath) === path.resolve(repositoryPath)),
   );
+  if (project?.kind === "research")
+    throw conflict(
+      "PROJECT_RESEARCH_ONLY",
+      `Research project ${project.name} cannot receive a delivery task.`,
+    );
   if (project?.archivedAt)
     throw conflict("PROJECT_ARCHIVED", `Restore ${project.name} before creating another task.`);
 }

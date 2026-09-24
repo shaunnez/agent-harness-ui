@@ -93,6 +93,7 @@ const researchService = jsonStore
         new ClaudeCliRolesResearchRuntime(),
       ]),
     });
+await researchService?.recoverInterrupted();
 const configuredPullRequestPollIntervalMs = Number(process.env.AGENT_HARNESS_GITHUB_POLL_MS ?? 30_000);
 const pullRequestPollIntervalMs = Number.isFinite(configuredPullRequestPollIntervalMs)
   ? Math.max(5_000, configuredPullRequestPollIntervalMs)

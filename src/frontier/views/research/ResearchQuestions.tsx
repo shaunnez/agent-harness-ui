@@ -18,6 +18,7 @@ const filters = [
   "All",
   "Awaiting review",
   "Disputed",
+  "Quick · unverified",
   "Not established",
   "Did not finish",
   "Reviewed",
@@ -29,6 +30,7 @@ const statusOrder: ResearchQuestionStatus[] = [
   "queued",
   "incomplete",
   "disputed",
+  "unverified",
   "not_established",
   "agreed",
 ];
@@ -38,6 +40,7 @@ function matches(question: ResearchQuestion, filter: Filter) {
   if (filter === "All") return true;
   if (filter === "Awaiting review") return review === "awaiting" || review === "out-of-date";
   if (filter === "Disputed") return question.status === "disputed";
+  if (filter === "Quick · unverified") return question.status === "unverified";
   if (filter === "Not established") return question.status === "not_established";
   if (filter === "Did not finish") return question.status === "incomplete";
   return review === "approved" || review === "rejected";
@@ -78,9 +81,7 @@ export function ResearchQuestions({
   if (!research)
     return (
       <div className="overlay-body">
-        <p className="empty-state">
-          Research projects are a prototype in the sample world. The research backend does not serve them yet.
-        </p>
+        <p className="empty-state">The research backend is unavailable in this runtime.</p>
       </div>
     );
   const all = questions ?? [];
@@ -122,12 +123,14 @@ export function ResearchQuestions({
             <dt>Awaiting review</dt>
             <dd>{awaiting}</dd>
           </div>
-          {(["agreed", "disputed", "not_established", "incomplete", "running"] as const).map((status) => (
-            <div key={status} className={`tone-${researchStatusCopy[status].tone}`}>
-              <dt>{researchStatusCopy[status].label}</dt>
-              <dd>{count(status)}</dd>
-            </div>
-          ))}
+          {(["agreed", "disputed", "unverified", "not_established", "incomplete", "running"] as const).map(
+            (status) => (
+              <div key={status} className={`tone-${researchStatusCopy[status].tone}`}>
+                <dt>{researchStatusCopy[status].label}</dt>
+                <dd>{count(status)}</dd>
+              </div>
+            ),
+          )}
         </dl>
         <div className="research-summary-action">
           <small>New questions run on {engineLabel}</small>
@@ -208,6 +211,7 @@ export function ResearchQuestions({
                               recorded: "Recorded question",
                               "sample-activity": "Sample activity",
                               "prototype-ask": "Asked in this tab",
+                              live: "Live research",
                             }[question.provenance]}
                         </span>
                       </button>

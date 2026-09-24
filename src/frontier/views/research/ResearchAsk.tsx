@@ -134,7 +134,9 @@ export function ResearchAsk({
             not publish. Every figure is marked by how it was checked.
           </p>
           <p className="sample-note">
-            Prototype: asking adds the question to this tab only. Nothing is sent to a model.
+            {research?.live
+              ? "Asking starts real runs on the selected subscription engine. Their results and review are saved in this project."
+              : "Prototype: asking adds the question to this tab only. Nothing is sent to a model."}
           </p>
         </aside>
       </div>

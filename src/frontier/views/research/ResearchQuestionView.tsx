@@ -29,6 +29,7 @@ const statusExplanation: Record<ResearchQuestion["status"], string> = {
     "The runs disagree by more than 1.25× low or 1.35× high. The disagreement is the finding: compare the runs to see which part of the scope is still open.",
   not_established:
     "No run could price the main cost drivers. That is an answer, not an error: the open questions say who to ask.",
+  unverified: "Quick uses one run. Its band or lack of a band cannot show whether another run would agree.",
   incomplete:
     "A run did not finish, so agreement cannot be judged. A run that did not finish is not a run that found nothing.",
   running: "The runs are still working. The answer appears when all of them finish.",
@@ -166,6 +167,19 @@ export function ResearchQuestionView({
           </section>
         </div>
         <aside className="research-detail-aside">
+          {Boolean(question.priorAttempts?.length) && (
+            <section className="research-panel">
+              <h3>Previous attempts</h3>
+              <ul className="research-open">
+                {question.priorAttempts?.map((attempt) => (
+                  <li key={`${attempt.attempt}-${attempt.run}`}>
+                    Attempt {attempt.attempt} · {attempt.run} · <code>{attempt.id}</code> ·{" "}
+                    {attempt.errorMessage ?? attempt.errorCode ?? attempt.status}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
           <CitationSummary question={question} />
           <QvSources question={question} />
           {question.webSources.length > 0 && (
@@ -264,6 +278,19 @@ function ReviewCommand({
       setBusy(false);
     }
   }
+  async function retryStart() {
+    if (!research.retry) return;
+    setBusy(true);
+    setProblem(null);
+    try {
+      await research.retry(question.id);
+      onReviewed();
+    } catch (reason) {
+      setProblem(errorMessage(reason));
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
     <section className={`workflow-command research-command tone-${status.tone}`} aria-label="Question review">
       <div className="workflow-command-row">
@@ -279,6 +306,16 @@ function ReviewCommand({
             {" · "}evidence <code>{question.evidenceSha}</code>
           </small>
         </span>
+        {question.retryable && research.retry && (
+          <button
+            type="button"
+            className="primary"
+            disabled={!connected || busy}
+            onClick={() => void retryStart()}
+          >
+            Retry {question.runsPlanned === 1 ? "Quick · one run" : `${question.runsPlanned} runs`}
+          </button>
+        )}
         {state !== "not-ready" && !decision && (
           <span className="inline-controls research-command-actions">
             <button type="button" disabled={!connected} onClick={() => setDecision("rejected")}>
@@ -521,8 +558,9 @@ function CitationSummary({ question }: { question: ResearchQuestion }) {
       <h3>Citation checks</h3>
       {!question.citationsChecked && (
         <p className="quiet">
-          These runs were recorded before the harness checked citations. QV rows were matched against the
-          capture afterwards; web figures were never fetched.
+          {question.provenance === "live"
+            ? "No checked citations have been recorded for this question yet. Do not treat an uncited figure as verified."
+            : "These runs were recorded before the harness checked citations. QV rows were matched against the capture afterwards; web figures were never fetched."}
         </p>
       )}
       {shown.length ? (

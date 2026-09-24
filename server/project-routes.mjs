@@ -1,6 +1,13 @@
 import path from "node:path";
 
-export function createProjectRoutes({ store, suggestedRepository, send, readJson, validateRepository }) {
+export function createProjectRoutes({
+  store,
+  suggestedRepository,
+  send,
+  readJson,
+  validateRepository,
+  researchAvailable = false,
+}) {
   return async function handleProjectRoute(request, response, url) {
     if (request.method === "GET" && url.pathname === "/api/projects") {
       send(response, 200, {
@@ -14,8 +21,15 @@ export function createProjectRoutes({ store, suggestedRepository, send, readJson
       const name = String(input.name ?? "").trim();
       if (!name) throw new Error("Project name is required.");
       if (name.length > 120) throw new Error("Project name must be 120 characters or fewer.");
-      const repositoryPath = await validateRepository(input.repositoryPath);
-      const project = await store.createProject({ name, repositoryPath });
+      const kind = input.kind ?? "delivery";
+      if (kind !== "delivery" && kind !== "research")
+        throw new Error("Project type must be delivery or research.");
+      if (kind === "research" && !researchAvailable)
+        throw Object.assign(new Error("Research projects require the SQLite research runtime."), {
+          statusCode: 409,
+        });
+      const repositoryPath = kind === "research" ? "" : await validateRepository(input.repositoryPath);
+      const project = await store.createProject({ name, repositoryPath, kind });
       send(response, 201, { project });
       return true;
     }
@@ -41,7 +55,11 @@ export function createProjectRoutes({ store, suggestedRepository, send, readJson
 }
 
 function withSuggestedRepository(projects, suggestedRepository) {
-  const byPath = new Map(projects.map((project) => [path.resolve(project.repositoryPath), project]));
+  const byPath = new Map(
+    projects
+      .filter((project) => project.kind !== "research")
+      .map((project) => [path.resolve(project.repositoryPath), project]),
+  );
   if (suggestedRepository && path.isAbsolute(suggestedRepository)) {
     const repositoryPath = path.resolve(suggestedRepository);
     if (!byPath.has(repositoryPath)) {
@@ -53,5 +71,7 @@ function withSuggestedRepository(projects, suggestedRepository) {
       });
     }
   }
-  return [...byPath.values()].sort((left, right) => left.name.localeCompare(right.name));
+  return [...projects.filter((project) => project.kind === "research"), ...byPath.values()].sort(
+    (left, right) => left.name.localeCompare(right.name),
+  );
 }
