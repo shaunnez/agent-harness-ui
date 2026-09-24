@@ -71,11 +71,9 @@ export interface FrontierGateway {
   worktrees(taskId: string): Promise<RuntimeWorktreeInventoryRow[]>;
   removeWorktree(taskId: string, rowId: string): Promise<RuntimeWorktreeInventoryRow[]>;
   projects(): Promise<RuntimeProject[]>;
-  createProject(input: {
-    name: string;
-    repositoryPath: string;
-    kind?: RuntimeProject["kind"];
-  }): Promise<RuntimeProject>;
+  createProject(
+    input: { name: string; kind: "research" } | { name: string; repositoryPath: string; kind?: "delivery" },
+  ): Promise<RuntimeProject>;
   changeProject(
     id: string,
     change: { kind: "rename" | "archive" | "restore"; name?: string },

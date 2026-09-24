@@ -3,11 +3,57 @@
 // one dispatch line, and it inherits the loopback/CSRF boundary `assertHttpBoundary` applies
 // before any factory is reached.
 
-export function createResearchRoutes({ researchService, send, readJson }) {
+export function createResearchRoutes({ researchService, questionService, send, readJson }) {
   return async function handleResearchRoute(request, response, url) {
     if (request.method === "GET" && url.pathname === "/api/research/runtimes") {
       send(response, 200, { runtimes: researchService.runtimeIds() });
       return true;
+    }
+
+    if (url.pathname === "/api/research/questions") {
+      if (request.method === "GET") {
+        const projectId = url.searchParams.get("projectId");
+        if (!projectId) throw new Error("Choose a research project.");
+        send(response, 200, { questions: await questionService.list(projectId) });
+        return true;
+      }
+      if (request.method === "POST") {
+        const input = await readJson(request);
+        send(response, 201, { question: await questionService.ask(input.projectId, input) });
+        return true;
+      }
+    }
+
+    const questionMatch = url.pathname.match(/^\/api\/research\/questions\/([^/]+)(?:\/(review|retry))?$/);
+    if (questionMatch) {
+      const id = decodeURIComponent(questionMatch[1]);
+      if (request.method === "GET" && !questionMatch[2]) {
+        const question = await questionService.get(id);
+        send(
+          response,
+          question ? 200 : 404,
+          question ? { question } : { error: "Research question not found." },
+        );
+        return true;
+      }
+      if (request.method === "POST" && questionMatch[2] === "review") {
+        const question = await questionService.review(id, await readJson(request));
+        send(
+          response,
+          question ? 200 : 404,
+          question ? { question } : { error: "Research question not found." },
+        );
+        return true;
+      }
+      if (request.method === "POST" && questionMatch[2] === "retry") {
+        const question = await questionService.retry(id);
+        send(
+          response,
+          question ? 200 : 404,
+          question ? { question } : { error: "Research question not found." },
+        );
+        return true;
+      }
     }
 
     if (url.pathname === "/api/research/runs") {

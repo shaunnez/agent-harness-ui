@@ -1,8 +1,8 @@
-import { researchPoliciesOf } from "../src/research-policies.ts";
-import { normalizeRepairLimits } from "../src/repair-limits.ts";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
+import { normalizeRepairLimits } from "../src/repair-limits.ts";
+import { researchPoliciesOf } from "../src/research-policies.ts";
 import { cleanupOrphanAttachmentSets } from "./attachment-storage.mjs";
 import { acquireJsonStoreLock } from "./json-store-lock.mjs";
 import {
@@ -390,21 +390,32 @@ function configuredModels(stagePolicies) {
 
 export function assertProjectIsUnique(projects, input) {
   const name = input.name.trim().toLowerCase();
-  const repositoryPath = path.resolve(input.repositoryPath);
+  if (input.kind && !["delivery", "research"].includes(input.kind))
+    throw new Error("Project type must be delivery or research.");
   if (projects.some((project) => project.name.trim().toLowerCase() === name)) {
     throw new Error("A project with that name already exists.");
   }
-  if (projects.some((project) => path.resolve(project.repositoryPath) === repositoryPath)) {
+  if (
+    input.kind !== "research" &&
+    projects.some(
+      (project) =>
+        project.kind !== "research" &&
+        path.resolve(project.repositoryPath) === path.resolve(input.repositoryPath),
+    )
+  ) {
     throw new Error("That repository is already registered as a project.");
   }
 }
 
 export function projectRecord(input) {
+  const id = crypto.randomUUID();
+  const research = input.kind === "research";
   return {
-    id: crypto.randomUUID(),
+    id,
     name: input.name.trim(),
-    repositoryPath: path.resolve(input.repositoryPath),
+    repositoryPath: research ? `research://${id}` : path.resolve(input.repositoryPath),
     createdAt: new Date().toISOString(),
+    ...(research ? { kind: "research" } : {}),
   };
 }
 

@@ -28,6 +28,17 @@ export function createResearchSchema(db) {
       error_json TEXT,
       cancellation_requested_at TEXT
     );
+    CREATE TABLE IF NOT EXISTS research_questions (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL,
+      objective TEXT NOT NULL,
+      engine_json TEXT NOT NULL,
+      runs_planned INTEGER NOT NULL,
+      created_at TEXT NOT NULL,
+      source_json TEXT NOT NULL,
+      source_key TEXT NOT NULL,
+      review_json TEXT
+    );
     CREATE TABLE IF NOT EXISTS research_events (
       run_id TEXT NOT NULL REFERENCES research_runs(id) ON DELETE CASCADE,
       id TEXT NOT NULL,
@@ -89,6 +100,8 @@ export function createResearchSchema(db) {
     );
     CREATE INDEX IF NOT EXISTS research_runs_updated_idx  ON research_runs(updated_at DESC, id DESC);
     CREATE INDEX IF NOT EXISTS research_runs_status_idx   ON research_runs(status, updated_at DESC);
+    CREATE INDEX IF NOT EXISTS research_questions_project_idx ON research_questions(project_id, created_at DESC);
+    CREATE UNIQUE INDEX IF NOT EXISTS research_questions_source_idx ON research_questions(project_id, source_key);
     CREATE INDEX IF NOT EXISTS research_events_page_idx   ON research_events(run_id, ordinal ASC);
     CREATE INDEX IF NOT EXISTS research_findings_page_idx ON research_findings(run_id, ordinal ASC);
     CREATE INDEX IF NOT EXISTS research_evidence_find_idx ON research_evidence(run_id, finding_id);
@@ -96,6 +109,18 @@ export function createResearchSchema(db) {
   `);
   if (rebuilding) copyLegacySourceIdentity(db);
   addResearchRunModelColumn(db);
+  addResearchQuestionColumns(db);
+}
+
+function addResearchQuestionColumns(db) {
+  const columns = db.prepare("PRAGMA table_info(research_runs)").all();
+  if (!columns.some((column) => column.name === "question_id"))
+    db.exec("ALTER TABLE research_runs ADD COLUMN question_id TEXT");
+  if (!columns.some((column) => column.name === "question_ordinal"))
+    db.exec("ALTER TABLE research_runs ADD COLUMN question_ordinal INTEGER");
+  db.exec(
+    "CREATE UNIQUE INDEX IF NOT EXISTS research_runs_question_idx ON research_runs(question_id, question_ordinal)",
+  );
 }
 
 /** `model_json` arrived after `research_runs` existed, so a database created before it needs

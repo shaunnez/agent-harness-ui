@@ -30,6 +30,7 @@ import type {
   WorkspaceHistoryPage,
   WorkspaceHistoryRequest,
 } from "./domain/workspace-history";
+import type { ResearchEngineSnapshot, ResearchQuestion, ResearchReview } from "./frontier/runtime/research";
 
 export function getWorkspaceHead(options?: ReadRequestOptions) {
   return request<WorkspaceHead>("/api/workspace/history?view=head", options);
@@ -213,13 +214,69 @@ export async function listProjects(options: ReadRequestOptions = {}) {
   return (await request<{ projects: RuntimeProject[] }>("/api/projects", options)).projects;
 }
 
-export async function createProject(input: { name: string; repositoryPath: string }) {
+export async function createProject(
+  input: { name: string; kind: "research" } | { name: string; repositoryPath: string; kind?: "delivery" },
+) {
   return (
     await request<{ project: RuntimeProject }>("/api/projects", {
       method: "POST",
       body: JSON.stringify(input),
     })
   ).project;
+}
+
+export async function listResearchQuestions(projectId: string, options: ReadRequestOptions = {}) {
+  return (
+    await request<{ questions: ResearchQuestion[] }>(
+      `/api/research/questions?projectId=${encodeURIComponent(projectId)}`,
+      options,
+    )
+  ).questions;
+}
+
+export async function getResearchQuestion(id: string, options: ReadRequestOptions = {}) {
+  return (
+    await request<{ question: ResearchQuestion }>(
+      `/api/research/questions/${encodeURIComponent(id)}`,
+      options,
+    )
+  ).question;
+}
+
+export async function askResearchQuestion(
+  projectId: string,
+  input: { objective: string; runs: 1 | 3; engine: ResearchEngineSnapshot },
+) {
+  return (
+    await request<{ question: ResearchQuestion }>(
+      "/api/research/questions",
+      { method: "POST", body: JSON.stringify({ projectId, ...input }) },
+      { retryOnCsrf: false },
+    )
+  ).question;
+}
+
+export async function reviewResearchQuestion(
+  id: string,
+  input: { decision: ResearchReview["decision"]; note: string; evidenceSha: string },
+) {
+  return (
+    await request<{ question: ResearchQuestion }>(
+      `/api/research/questions/${encodeURIComponent(id)}/review`,
+      { method: "POST", body: JSON.stringify(input) },
+      { retryOnCsrf: false },
+    )
+  ).question;
+}
+
+export async function retryResearchQuestion(id: string) {
+  return (
+    await request<{ question: ResearchQuestion }>(
+      `/api/research/questions/${encodeURIComponent(id)}/retry`,
+      { method: "POST" },
+      { retryOnCsrf: false },
+    )
+  ).question;
 }
 
 export async function changeProject(

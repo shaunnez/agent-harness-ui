@@ -1,23 +1,25 @@
+import { spawn } from "node:child_process";
 import { access, stat } from "node:fs/promises";
 import { createServer } from "node:http";
-import { spawn } from "node:child_process";
 import path from "node:path";
-import { defaultWorktreeRoot, GitWorktreeManager } from "./git-worktree.mjs";
-import { assertHttpBoundary, corsHeaders } from "./http-security.mjs";
-import { normalizeModelId, POLICY_IDS } from "./model-catalog.mjs";
-import { withActionEligibility } from "./retry-admission-policy.mjs";
 import { createCandidateWorktreeRoutes } from "./candidate-worktree-routes.mjs";
 import { createChangelogRoutes } from "./changelog-routes.mjs";
 import { createCompanionChatRoutes } from "./companion-chat.mjs";
-import { createRetainedEvidenceRoutes } from "./retained-evidence-routes.mjs";
+import { defaultWorktreeRoot, GitWorktreeManager } from "./git-worktree.mjs";
+import { assertHttpBoundary, corsHeaders } from "./http-security.mjs";
+import { normalizeModelId, POLICY_IDS } from "./model-catalog.mjs";
 import { createProjectRoutes } from "./project-routes.mjs";
-import { createResearchRoutes } from "./research/research-routes.mjs";
-import { createRuntimeSettingsRoutes } from "./runtime-settings-routes.mjs";
-import { createTaskCreator } from "./task-creator.mjs";
-import { createTaskCreationRoutes } from "./task-creation-routes.mjs";
-import { createTaskActionRoutes } from "./task-action-routes.mjs";
-import { createTaskLifecycleRoutes } from "./task-lifecycle-routes.mjs";
 import { RepositoryAuthorityService } from "./repository-authority.mjs";
+import { ResearchQuestionService } from "./research/research-questions.mjs";
+import { createResearchRoutes } from "./research/research-routes.mjs";
+import { ResearchStore } from "./research/research-store.mjs";
+import { createRetainedEvidenceRoutes } from "./retained-evidence-routes.mjs";
+import { withActionEligibility } from "./retry-admission-policy.mjs";
+import { createRuntimeSettingsRoutes } from "./runtime-settings-routes.mjs";
+import { createTaskActionRoutes } from "./task-action-routes.mjs";
+import { createTaskCreationRoutes } from "./task-creation-routes.mjs";
+import { createTaskCreator } from "./task-creator.mjs";
+import { createTaskLifecycleRoutes } from "./task-lifecycle-routes.mjs";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
 const VALID_WORKFLOWS = new Set(["investigate", "implement"]);
@@ -241,6 +243,7 @@ export function createApiServer({
     send,
     readJson,
     validateRepository,
+    researchAvailable: Boolean(researchService),
   });
   const createTask = createTaskCreator({
     store,
@@ -268,7 +271,17 @@ export function createApiServer({
   // The research plane is optional: without a service the paths simply do not exist, which is
   // what keeps the JSON-store companion and the existing API tests unaffected by it.
   const researchRoutes = researchService
-    ? createResearchRoutes({ researchService, send, readJson })
+    ? createResearchRoutes({
+        researchService,
+        questionService: new ResearchQuestionService({
+          store: new ResearchStore(store.databaseHandle()),
+          projects: store,
+          runs: researchService,
+          settings: () => store.settings(),
+        }),
+        send,
+        readJson,
+      })
     : () => false;
   const companionChatRoutes = createCompanionChatRoutes({
     store,

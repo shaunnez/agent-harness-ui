@@ -59,8 +59,7 @@ export function ProjectSetup({
   const registered = project && !project.id.startsWith("suggested:");
   const [kind, setKind] = useState<"delivery" | "research">(project?.kind ?? "delivery");
   const research = kind === "research";
-  // Research projects exist only in the sample world until the research backend serves them.
-  const researchAvailable = gateway.mode === "fixture";
+  const researchAvailable = Boolean(gateway.research);
   const canSave = research
     ? Boolean(name.trim() && !busy && connected && (researchAvailable || registered))
     : Boolean(name.trim() && contract && !busy && !checking && connected);
@@ -124,9 +123,7 @@ export function ProjectSetup({
               <small>
                 {research
                   ? "Asks costing questions, three runs each, on the engine chosen in Settings → Research agent. No repository."
-                  : researchAvailable
-                    ? "Tasks run the delivery workflow against a local Git repository."
-                    : "Tasks run the delivery workflow against a local Git repository. Research projects are a sample-world prototype for now."}
+                  : "Tasks run the delivery workflow against a local Git repository."}
               </small>
             </div>
           )}
@@ -148,7 +145,6 @@ export function ProjectSetup({
                       return gateway.changeProject(project.id, { kind: "rename", name: name.trim() });
                     const savedProject = await gateway.createProject({
                       name: name.trim(),
-                      repositoryPath: "",
                       kind: "research",
                     });
                     chooseProjectAppearance(savedProject, appearance);

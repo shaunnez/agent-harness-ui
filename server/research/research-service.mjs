@@ -46,7 +46,7 @@ export class ResearchService {
     return this.#registry.ids();
   }
 
-  async createRun(input) {
+  async createRun(input, { questionId = null, questionOrdinal = null } = {}) {
     const request = this.#validate(input);
     const policies = this.#settings ? researchPoliciesOf(await this.#settings()) : null;
     // A request that names a runtime still wins; one that names none gets the Settings choice.
@@ -60,6 +60,8 @@ export class ResearchService {
       runtimeId,
       request,
       budget: request.budget,
+      questionId,
+      questionOrdinal,
       now: this.#now(),
     });
     let handle;
@@ -97,6 +99,17 @@ export class ResearchService {
 
   async listRuns(options) {
     return this.#store.listRuns(options);
+  }
+
+  /** CLI processes are not resumable after this companion exits. Make interrupted work
+   *  inspectable as a failure instead of leaving the UI showing a worker forever. */
+  async recoverInterrupted() {
+    const interrupted = await this.#store.listInterruptedRuns();
+    for (const run of interrupted)
+      await this.#fail(run.id, {
+        code: "companion_interrupted",
+        message: "The companion stopped before this research run finished.",
+      });
   }
 
   async listEvents(runId, options) {
@@ -221,7 +234,11 @@ export class ResearchService {
     if (!record) return null;
     const status = await runtime.status(runId).catch(() => null);
     const result = await runtime.result(runId).catch(() => null);
-    if (result) await this.#store.recordResult(runId, result, { now: this.#now() });
+    if (result) {
+      const costBand = typeof runtime.costBand === "function" ? runtime.costBand(runId) : null;
+      const citations = typeof runtime.citationSummary === "function" ? runtime.citationSummary(runId) : null;
+      await this.#store.recordResult(runId, { ...result, costBand, citations }, { now: this.#now() });
+    }
     const terminal = status?.status && isTerminal(status.status) ? status.status : "failed";
     const usage = normalizeUsage(status?.usage ?? result?.usage, terminal);
     const overruns = researchSoftOverruns(record.budget, usage);

@@ -1,13 +1,13 @@
 /**
  * Research projects: one question, answered by three runs (or a labelled one-run Quick ask), with
- * every cited figure marked by how it was checked. Only the sample world provides a gateway for
- * this today; the shapes are the ones slice A of the research-projects plan will serve.
+ * every cited figure marked by how it was checked.
  */
 
 export type ResearchQuestionStatus =
   | "agreed"
   | "disputed"
   | "not_established"
+  | "unverified"
   | "incomplete"
   | "running"
   | "queued";
@@ -123,6 +123,16 @@ export interface ResearchQuestion {
   asOf: string | null;
   basis: string | null;
   runs: ResearchRunRecord[];
+  /** A retry keeps the earlier failed starts inspectable. */
+  priorAttempts?: Array<{
+    id: string;
+    attempt: number;
+    run: string;
+    status: ResearchRunRecord["status"];
+    errorCode: string | null;
+    errorMessage: string | null;
+  }>;
+  retryable?: boolean;
   qvSources: ResearchQvSource[];
   webSources: string[];
   openQuestions: string[];
@@ -133,11 +143,12 @@ export interface ResearchQuestion {
   evidenceSha: string;
   review: ResearchReview | null;
   /** Where a sample record came from, so the window can say so. */
-  provenance: "recorded" | "sample-activity" | "prototype-ask";
+  provenance: "recorded" | "sample-activity" | "prototype-ask" | "live";
   provenanceNote: string;
 }
 
 export interface ResearchGateway {
+  readonly live?: boolean;
   questions(projectId: string): Promise<ResearchQuestion[]>;
   question(id: string): Promise<ResearchQuestion>;
   review(
@@ -148,12 +159,14 @@ export interface ResearchGateway {
     projectId: string,
     input: { objective: string; runs: 1 | 3; engine: ResearchEngineSnapshot },
   ): Promise<ResearchQuestion>;
+  retry?(id: string): Promise<ResearchQuestion>;
 }
 
 export const researchStatusCopy: Record<ResearchQuestionStatus, { label: string; tone: string }> = {
   agreed: { label: "Agreed", tone: "completed" },
   disputed: { label: "Disputed", tone: "answer" },
   not_established: { label: "Not established", tone: "idle" },
+  unverified: { label: "Quick · unverified", tone: "answer" },
   incomplete: { label: "Did not finish", tone: "blocked" },
   running: { label: "Running", tone: "running" },
   queued: { label: "Not started", tone: "idle" },
@@ -241,7 +254,7 @@ export function headlineBand(question: ResearchQuestion) {
 
 export type ResearchReviewState = "awaiting" | "approved" | "rejected" | "out-of-date" | "not-ready";
 export function reviewState(question: ResearchQuestion): ResearchReviewState {
-  if (question.status === "running" || question.status === "queued") return "not-ready";
+  if (question.status === "running" || question.status === "queued" || question.retryable) return "not-ready";
   if (!question.review) return "awaiting";
   if (question.review.evidenceSha !== question.evidenceSha) return "out-of-date";
   return question.review.decision;

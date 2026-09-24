@@ -31,6 +31,11 @@ export function useResearch<T>(
     };
   }, [gateway, key, version]);
   const reload = useCallback(() => setVersion((value) => value + 1), []);
+  useEffect(() => {
+    if (!gateway?.live) return;
+    const timer = window.setInterval(reload, 5_000);
+    return () => window.clearInterval(timer);
+  }, [gateway, reload]);
   const current = state.key === key ? state : { key, value: null, error: null };
   return { value: current.value, error: current.error, loading: !current.value && !current.error, reload };
 }

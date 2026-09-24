@@ -11,8 +11,9 @@
 // COMMIT synchronously, so a task transaction and a research transaction can never interleave
 // on the single-threaded event loop.
 
-import { DEFAULT_RESEARCH_SOURCE_DIRECTORY } from "./research-web-tools.mjs";
+import crypto from "node:crypto";
 import { verifySnapshotEvidence } from "./research-source-snapshots.mjs";
+import { DEFAULT_RESEARCH_SOURCE_DIRECTORY } from "./research-web-tools.mjs";
 
 const RUN_ID_PREFIX = "RSCH";
 
@@ -29,7 +30,14 @@ export class ResearchStore {
     this.#sourceSnapshotDirectory = sourceSnapshotDirectory;
   }
 
-  async createRun({ runtimeId, request, budget, now = new Date().toISOString() }) {
+  async createRun({
+    runtimeId,
+    request,
+    budget,
+    questionId = null,
+    questionOrdinal = null,
+    now = new Date().toISOString(),
+  }) {
     return this.#transaction(() => {
       const id = this.#nextRunId();
       const stored = { ...request, id };
@@ -38,11 +46,103 @@ export class ResearchStore {
         INSERT INTO research_runs(
           id, created_at, updated_at, status, runtime_id, profile, revision,
           request_json, budget_json, usage_json, budget_state_json, runtime_metadata_json,
-          model_json, error_json, cancellation_requested_at)
-        VALUES (?, ?, ?, 'queued', ?, ?, 1, ?, ?, NULL, NULL, NULL, NULL, NULL, NULL)
+          model_json, error_json, cancellation_requested_at, question_id, question_ordinal)
+        VALUES (?, ?, ?, 'queued', ?, ?, 1, ?, ?, NULL, NULL, NULL, NULL, NULL, NULL, ?, ?)
       `)
-        .run(id, now, now, runtimeId, request.profile, JSON.stringify(stored), JSON.stringify(budget));
+        .run(
+          id,
+          now,
+          now,
+          runtimeId,
+          request.profile,
+          JSON.stringify(stored),
+          JSON.stringify(budget),
+          questionId,
+          questionOrdinal,
+        );
       return this.#readRun(id);
+    });
+  }
+
+  async createQuestion({ projectId, objective, engine, runsPlanned, now = new Date().toISOString() }) {
+    return this.#transaction(() => {
+      const settings = this.#db.prepare("SELECT payload_json FROM settings WHERE id = 1").get();
+      const project = JSON.parse(settings?.payload_json ?? "{}").projects?.find(
+        (item) => item.id === projectId,
+      );
+      if (project?.kind !== "research" || project.archivedAt) {
+        const error = new Error(
+          project?.archivedAt
+            ? `Restore ${project.name} before asking a question.`
+            : "Research project not found.",
+        );
+        error.statusCode = project?.archivedAt ? 409 : 404;
+        throw error;
+      }
+      const sourceKey = `manual:${crypto.createHash("sha256").update(objective.trim().replace(/\s+/g, " ").toLowerCase()).digest("hex")}`;
+      const existing = this.#db
+        .prepare("SELECT * FROM research_questions WHERE project_id = ? AND source_key = ?")
+        .get(projectId, sourceKey);
+      if (existing) return { question: questionRecord(existing), created: false };
+      const id = crypto.randomUUID();
+      this.#db
+        .prepare(`
+        INSERT INTO research_questions(id, project_id, objective, engine_json, runs_planned, created_at, source_json, source_key)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `)
+        .run(
+          id,
+          projectId,
+          objective,
+          JSON.stringify(engine),
+          runsPlanned,
+          now,
+          JSON.stringify({ kind: "manual" }),
+          sourceKey,
+        );
+      return { question: this.#readQuestion(id), created: true };
+    });
+  }
+
+  async listQuestions(projectId) {
+    return this.#db
+      .prepare(`
+      SELECT * FROM research_questions WHERE project_id = ? ORDER BY created_at DESC, id DESC
+    `)
+      .all(projectId)
+      .map(questionRecord);
+  }
+
+  async getQuestion(id) {
+    return this.#readQuestion(id);
+  }
+
+  async questionRuns(id) {
+    return this.#db
+      .prepare(`
+      SELECT * FROM research_runs WHERE question_id = ? ORDER BY question_ordinal ASC
+    `)
+      .all(id)
+      .map(runRecord);
+  }
+
+  async questionEvidenceSha(id) {
+    return this.#questionEvidenceSha(id);
+  }
+
+  async reviewQuestion(id, { decision, note, reviewer, evidenceSha, now = new Date().toISOString() }) {
+    return this.#transaction(() => {
+      if (!this.#readQuestion(id)) return null;
+      if (this.#questionEvidenceSha(id) !== evidenceSha) {
+        const error = new Error("The question evidence changed. Reload it before reviewing.");
+        error.statusCode = 409;
+        throw error;
+      }
+      const review = { decision, note, reviewer, decidedAt: now, evidenceSha };
+      this.#db
+        .prepare("UPDATE research_questions SET review_json = ? WHERE id = ?")
+        .run(JSON.stringify(review), id);
+      return review;
     });
   }
 
@@ -57,6 +157,13 @@ export class ResearchStore {
     `)
       .all(Math.max(1, Math.min(200, Number(limit) || 50)));
     return rows.map(runRecord);
+  }
+
+  async listInterruptedRuns() {
+    return this.#db
+      .prepare("SELECT * FROM research_runs WHERE status NOT IN ('completed', 'failed', 'cancelled')")
+      .all()
+      .map(runRecord);
   }
 
   /** Apply `mutate` to a mutable draft of the run's writable fields under the recorded
@@ -284,6 +391,8 @@ export class ResearchStore {
         summary: result.summary ?? null,
         unresolvedQuestions: result.unresolvedQuestions ?? [],
         truncatedBy: result.truncatedBy ?? null,
+        costBand: result.costBand ?? null,
+        citations: result.citations ?? null,
       };
       this.#db
         .prepare(`
@@ -355,6 +464,8 @@ export class ResearchStore {
       usage: run.usage ?? { partial: true },
       ...(summary.unresolvedQuestions?.length ? { unresolvedQuestions: summary.unresolvedQuestions } : {}),
       ...(summary.truncatedBy ? { truncatedBy: summary.truncatedBy } : {}),
+      ...(summary.costBand ? { costBand: summary.costBand } : {}),
+      ...(summary.citations ? { citations: summary.citations } : {}),
     };
   }
 
@@ -390,6 +501,24 @@ export class ResearchStore {
   #readRun(runId) {
     const row = this.#db.prepare("SELECT * FROM research_runs WHERE id = ?").get(runId);
     return row ? runRecord(row) : null;
+  }
+
+  #readQuestion(id) {
+    const row = this.#db.prepare("SELECT * FROM research_questions WHERE id = ?").get(id);
+    return row ? questionRecord(row) : null;
+  }
+
+  #questionEvidenceSha(id) {
+    const question = this.#db
+      .prepare("SELECT objective, engine_json, runs_planned FROM research_questions WHERE id = ?")
+      .get(id);
+    if (!question) return null;
+    const runs = this.#db
+      .prepare(`
+      SELECT id, status, revision FROM research_runs WHERE question_id = ? ORDER BY question_ordinal ASC
+    `)
+      .all(id);
+    return crypto.createHash("sha256").update(JSON.stringify({ question, runs })).digest("hex");
   }
 
   #readSource(runId, sourceId) {
@@ -442,6 +571,21 @@ function runRecord(row) {
     budgetState: row.budget_state_json ? JSON.parse(row.budget_state_json) : null,
     error: row.error_json ? JSON.parse(row.error_json) : null,
     cancellationRequestedAt: row.cancellation_requested_at ?? null,
+    questionId: row.question_id ?? null,
+    questionOrdinal: row.question_ordinal ?? null,
+  };
+}
+
+function questionRecord(row) {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    objective: row.objective,
+    engine: JSON.parse(row.engine_json),
+    runsPlanned: Number(row.runs_planned),
+    createdAt: row.created_at,
+    review: row.review_json ? JSON.parse(row.review_json) : null,
+    source: JSON.parse(row.source_json),
   };
 }
 
