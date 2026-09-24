@@ -43,6 +43,11 @@ export const OPENCODE_SOFT_TOOL_CALLS = 50;
 export const OPENCODE_MAX_RUNTIME_MS = 15 * 60_000;
 export const OPENCODE_AGENT = "research";
 
+/** Pinned rather than "random" (Shaun, 24 September: "pin parallel"). Across DeepSeek's first 369
+ *  searches through the Go plan's providers, Parallel returned results on 91 of 91; Firecrawl
+ *  returned none on 43 of 91, and "random" keeps one provider for a whole session. */
+export const OPENCODE_WEB_SEARCH_PROVIDER = "parallel";
+
 const EXPORT_TIMEOUT_MS = 30_000;
 
 /** Built up from an allowlist. `HOME` stays, because the Go plan login lives under it; no
@@ -146,7 +151,7 @@ export function openCodeConfig({ systemPrompt, mcpConfig, allowedTools }) {
   ];
   return {
     mcp: { servers },
-    ...(policy.webSearch ? { websearch: { provider: "random" } } : {}),
+    ...(policy.webSearch ? { websearch: { provider: OPENCODE_WEB_SEARCH_PROVIDER } } : {}),
     agents: {
       [OPENCODE_AGENT]: {
         description: "Cost research: QV rows, web search and fetched pages, nothing else.",

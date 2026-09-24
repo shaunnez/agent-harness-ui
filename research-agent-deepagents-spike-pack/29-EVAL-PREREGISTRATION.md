@@ -141,6 +141,12 @@ and one cap:
 - A hard 15-minute cap per run, below the shared 20 minutes. Every A0 and A3 run finished inside
   5 minutes, so the stricter cap binds only this arm. A run that hits it fails.
 
+Web search: pinned to OpenCode's `parallel` provider (Shaun: "pin parallel"), where A4 used
+`random`. The Go plan's providers served A4 and the tuning runs; by provider, Parallel returned
+results on 91 of 91 searches, Tavily 59/59, TinyFish 50/50, Exa 40/40, Firecrawl 48/91 (43 empty),
+and `random` keeps one provider for a whole session. Separately, 37 searches failed with HTTP 401
+before any provider was chosen; pinning may not remove those, and A5 reports them if they recur.
+
 Reasoning variant: none. On three tuning scopes outside the eval (stud partition walls, benchtop,
 switchboard fault rating) `#max` was no more consistent than the default and took about twice as
 long; `#xhigh` is not offered.

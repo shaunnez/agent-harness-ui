@@ -83,6 +83,7 @@ test("the configuration denies everything but Code Mode over the recipe's server
     type: "local",
     command: ["node", "relay.mjs", "/tmp/s.sock", "search_qv"],
   });
+  assert.deepEqual(config.websearch, { provider: "parallel" });
   const agent = config.agents.research;
   assert.equal(config.default_agent, "research");
   assert.deepEqual(agent.permissions, [
