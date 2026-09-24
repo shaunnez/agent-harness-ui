@@ -23,6 +23,13 @@ import { CollapsibleText } from "../../ui/CollapsibleText";
 import { ResearchCheckBadge, ResearchStatusBadge } from "./ResearchBadges";
 import { useResearch } from "./use-research";
 
+/** A QV CostBuilder rowId is a long content hash plus a `:table:row` locator. Never show the raw
+ *  hash in the UI — the locator is the only human-legible part. */
+function qvRowLabel(rowId: string): string {
+  const locator = rowId.split(":").slice(1).join(":");
+  return locator ? `QV ${locator}` : "QV row";
+}
+
 const statusExplanation: Record<ResearchQuestion["status"], string> = {
   agreed: "All three runs banded within 1.25× on the low end and 1.35× on the high. Read the consensus.",
   disputed:
@@ -516,7 +523,7 @@ function RunDetail({ run }: { run: ResearchRunRecord }) {
                   </td>
                   <td>
                     {component.rowId ? (
-                      <code title={component.rowId}>QV {component.rowId.split(":").slice(1).join(":")}</code>
+                      <code title={component.rowId}>{qvRowLabel(component.rowId)}</code>
                     ) : component.source ? (
                       <a href={component.source.split(" ; ")[0]} target="_blank" rel="noreferrer">
                         {component.source.replace(/^https?:\/\//, "").split(/[/?]/)[0]}
@@ -592,8 +599,8 @@ function QvSources({ question }: { question: ResearchQuestion }) {
             <details>
               <summary>
                 <span>
-                  <strong>{row.desc ?? "Row text not bundled with this sample"}</strong>
-                  <small>{row.section ?? row.rowId}</small>
+                  <strong>{row.desc ?? qvRowLabel(row.rowId)}</strong>
+                  <small title={row.rowId}>{row.section ?? "Row text not bundled with this sample"}</small>
                 </span>
                 <span className="research-qv-rate">
                   {row.regional[centre] ? `$${row.regional[centre]}` : "—"}

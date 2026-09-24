@@ -277,12 +277,12 @@ export class ResearchQuestionService {
         if (source.sourceType === "internal_record" && source.metadata?.rowId)
           qvSources.set(source.metadata.rowId, {
             rowId: source.metadata.rowId,
-            section: null,
-            group: null,
-            desc: source.title,
-            unit: null,
+            section: source.metadata.section ?? null,
+            group: source.metadata.group ?? null,
+            desc: source.metadata.desc ?? null,
+            unit: source.metadata.unit ?? null,
             url: source.url,
-            regional: {},
+            regional: source.metadata.regional ?? {},
             citedBy: 0,
           });
         else if (source.url) webSources.add(source.url);
