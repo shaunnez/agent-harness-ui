@@ -1,0 +1,186 @@
+{
+  "question": "door-hardware-sets",
+  "kind": "pinned",
+  "arm": "A7",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 1169,
+    "high": 1563
+  },
+  "range": {
+    "min": 768,
+    "max": 2426
+  },
+  "unit": "ea (per door leaf, one complete hardware set fitted)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 2.366,
+    "highRatio": 1.86,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1026,
+  "elapsedMs": 230177,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 219111,
+      "band": {
+        "unit": "ea (per door leaf, one complete hardware set fitted)",
+        "low": 768,
+        "high": 1304,
+        "centre": "Auckland",
+        "basis": "Sum of the eight components above (no component counted twice: the QV mortice-lock row that includes furniture is used only as a cross-check, the QV hinge row is an alternative to the vendor hinge, and the restricted cylinder/keying line already contains a cylinder). Low end = mid-market hardware (Lockwood 3772 lock body, Schlage Form SSS furniture, Carbine EN 1154 size 3 closer, Yale BB hinges), wall-mounted stop, 1.75 hr at the QV Auckland carpenter rate. High end = QV-priced premium commercial hardware (QV lock furniture $365, QV SS hinge $39.20 each, closer with mounting plate), floor-mounted SS stop, 2.5 hr, higher setup allowance. Costs only - GST, preliminaries, margin, design/consent, the leaf, frame, hanging, machining, access control, fire-rated or smoke-seal hardware and access equipment are excluded per the brief. 25 leaves: $19,200 - $32,600 (mid ~$25,900). The band is wide because published NZ prices for the same grade span about 2x between mid-market vendor list prices and QV's premium-brand rows; it also straddles the brief's own $620-$880/leaf band, which is reached only with mid-market hardware. No premium is carried for a satin-stainless closer cover, so an SSS finish on the closer is an add."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 5,
+        "webVerified": 5,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 835128,
+        "outputTokens": 36866,
+        "cachedTokens": 745344,
+        "modelCalls": 13,
+        "toolCalls": 42,
+        "searchCalls": 10,
+        "estimatedCostUsd": 0.037823,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 835128,
+            "outputTokens": 36866,
+            "estimatedCostUsd": 0.037823,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 230173,
+      "band": {
+        "unit": "ea (per door leaf, one complete hardware set fitted to that leaf)",
+        "low": 1169,
+        "high": 1563,
+        "centre": "Auckland",
+        "basis": "Bottom-up per-leaf build: QV CostBuilder Auckland rows for the mortice lockset ($830), the 3 stainless butt hinges ($117.60, supply only), the door stop ($20.50-51) and the carpenter labour rate ($81.30/hr x 1.0-1.5 hr); fetched NZ vendor pages for the EN 2-4 adjustable overhead closer ($159.16-275 supply) and for restricted-keyway keying ($35-95 per door); one minor allowance for setup and handover ($10-25 per leaf). 25 leaves, one building, one floor, one visit; GST exclusive; Auckland 2026. Every line except the setup/handover allowance is genuinely per-leaf, so the rate holds for longer runs. Nominal 25-leaf total $29,200-$39,100 (mid ~$34,100). QV rows are unreviewed. Confidence is low because the largest line (the lockset) rests on a QV row whose fixing inclusion is unstated and whose brand/grade (Legge 991) is at or above the specified Grade 2, and because QV's own complete fire doorset rows imply a much smaller hardware content than QV's Hardware section rates do - QV is not internally consistent here. If QV's Hardware rates are supply only rather than supply-and-fix, add ~$60-100 per leaf and the band becomes ~$1,230-1,660. The separate QS band of $620-880 per leaf is only reachable with commodity imported Grade 2 hardware at supply prices, for which QV publishes no row."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 627470,
+        "outputTokens": 31715,
+        "cachedTokens": 545536,
+        "modelCalls": 19,
+        "toolCalls": 36,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.032956,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 627470,
+            "outputTokens": 31715,
+            "estimatedCostUsd": 0.032956,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 191738,
+      "band": {
+        "unit": "ea (per door leaf, complete hardware set fitted)",
+        "low": 1817,
+        "high": 2426,
+        "centre": "Auckland",
+        "basis": "Sum of the nine components above: QV-cited mortice lockset (830-1040) + QV-cited LCN overhead closer (800-980) + ball-bearing SSS hinges (43-118) + hinge fitting labour at QV's $81.30/h carpenter rate (33-49) + QV door stop (20.50-51) + restricted-keyway cylinder upgrade (45-95) + key cutting (30-60) + master-key schedule setup (10-20) + site setup/handover (6-14). Per leaf; 25 leaves = $45,400-$60,700 excl. GST. Two main cost drivers (lockset ~52% of mid, closer ~42% of mid together with it) rest on cited QV rows, so the band is established; allowances carry only ~3% of the total. Confidence is LOW because (a) QV hardware rows are UNREVIEWED and their inclusions are unstated - I have assumed the non-'Supply Only' tables are supply-and-fix, and if they are supply-only the band rises by ~$120-165 per leaf; (b) QV's lockset rows are Legge/Lockwood commercial combination-lock grade, above the Grade 2 equivalent specified, and a mid-grade lock could cut the lockset line to ~$450-700; (c) restricted keying is not published anywhere in NZ, only standard key cutting. This band sits 2.5-3x above the indicative $620-880/ea in the brief, and the difference is product grade (LCN closer, commercial mortice set, restricted cylinder) plus the full cost of 75 registered keys - not labour. Fire-rated leaves, hold-opens, access control, preliminaries and margin are excluded per the brief."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 776819,
+        "outputTokens": 25251,
+        "cachedTokens": 679040,
+        "modelCalls": 14,
+        "toolCalls": 41,
+        "searchCalls": 7,
+        "estimatedCostUsd": 0.031855,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 776819,
+            "outputTokens": 25251,
+            "estimatedCostUsd": 0.031855,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -212,3 +212,9 @@ open-a2, solar, site electrical). 4.9 minutes for the set, peak 1.55 GB for 39 r
 errors, 3 failed web quotes. On HV supply one run returned no price and two priced it (disputed,
 Review). Shaun asked for one repeat of A7 unchanged ("Rerun"), to see how much a set of 13 varies
 between runs; it is written to `29-eval/repeat/A7/` and reported beside A7, not as a new arm.
+
+**A7 repeat (24 September).** Unchanged, all 13 at once, 4.7 minutes, $1.18: 3 of 13 passed
+(emergency lighting, interior finishes, metering). Six of the 13 questions changed outcome between
+the two A7 runs; only emergency lighting passed both times. So one pass over 13 questions moves by
+two or three questions from chance alone, which is the size of every gap between arms in this eval:
+A5's 7 against A7's 5 and 3 is not, on this evidence, a difference in the arms.

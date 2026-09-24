@@ -1,0 +1,170 @@
+{
+  "question": "open-a1",
+  "kind": "open",
+  "arm": "A7",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 60,
+    "high": 166
+  },
+  "range": {
+    "min": 50,
+    "max": 170
+  },
+  "unit": "m2",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.4,
+    "highRatio": 1.133,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0612,
+  "elapsedMs": 136500,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 132420,
+      "band": {
+        "unit": "m2",
+        "low": 70,
+        "high": 170,
+        "centre": "Auckland",
+        "basis": "Specialist licensed removal + independent assessor clearance, GST exclusive, NZD, Auckland. Sum of the two components above: removal $60-$150/m2 plus assessor $10-$22/m2 = $70-$172/m2, rounded to $70-$170/m2 (mid-point approx. $120/m2). Assumed: non-friable asbestos cement soffit sheet (Class B), sound condition, single storey with reasonable eaves access, approx. 40 m2 area, licensed Class B removalist, waste to an authorised facility and treated as included in the removalist's published 'Everything' rate, WorkSafe notification made (no charge). Disposal is NOT added as a separate line to avoid double counting; if the quote is removal-only, add approx. $5-$7/m2 (Spicer Landfill, Porirua City, source-9: \"Special waste (eg asbestos, animal carcasses) (Pre-arranged delivery only ) *Minimum charge $227.50\" at \"$455.00\" \"Per tonne\"; Hutt City's published 2026-27 asbestos rate is $409/tonne with a $205 minimum per PropertyHelp, source-11). Confidence is low: the rates are contractor-published market guides rather than a priced rate, QV holds no asbestos row, and area, asbestos type and condition, access/height, containment and disposal arrangements are all undecided. Ring for firm prices: CARE Asbestos Removal (Auckland), Revolve Asbestos Solutions (Epsom, Auckland), Chemcare (Auckland), Hazmat Asbestos (Lower Hutt/Wellington), Asbestos & Biological / Harcourt Insulation (Onehunga and Hornby, Christchurch), PropertyHelp (Auckland/Waikato). Adjust +/-5% for Wellington/Christchurch labour and travel."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 362575,
+        "outputTokens": 15375,
+        "cachedTokens": 294144,
+        "modelCalls": 11,
+        "toolCalls": 34,
+        "searchCalls": 7,
+        "estimatedCostUsd": 0.020372,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 362575,
+            "outputTokens": 15375,
+            "estimatedCostUsd": 0.020372,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 109143,
+      "band": {
+        "unit": "NZD per m2 of soffit area, GST-exclusive",
+        "low": 60,
+        "high": 166,
+        "centre": null,
+        "basis": "Sum of three distinct components: specialist Class B removal+disposal ($50-$120/m2) + independent B-Class assessor clearance ($350-$400 per job, spread over an assumed 35 m2 soffit = $10.0-$11.4/m2) + access allowance ($0-$35/m2). Low case = large, accessible, single-storey soffit with no extra access and the removalist's large-area B-Class rate; high case = modest area, awkward/fragile sheet, two-storey eaves needing scaffold, top of the published cladding band. QV CostBuilder contributes no priced row - its library contains no asbestos section at all, and its closest rows (take down suspended ceiling system AKL $25.40/m2, tipping fees) cover only non-hazardous take-down and are deliberately NOT added. Centre Auckland; all published sources used are Auckland/NZ-based. Confidence low: the only NZ per-m2 removalist rate found applies to 120 m2+ removals, the assessor component is area-dependent, published guides are unreviewed and GST treatment is inconsistent between them. Excludes replacement soffit and fascia as instructed."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 453090,
+        "outputTokens": 14676,
+        "cachedTokens": 385664,
+        "modelCalls": 11,
+        "toolCalls": 34,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.020076,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 453090,
+            "outputTokens": 14676,
+            "estimatedCostUsd": 0.020076,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 136497,
+      "band": {
+        "unit": "m2 of soffit area",
+        "low": 50,
+        "high": 150,
+        "centre": "Auckland",
+        "basis": "Per m2 of soffit, removal and licensed disposal of non-friable (B-Class) asbestos cement soffit lining, GST exclusive. Priced on the stated assumption that the soffit is asbestos-containing and must be removed by a licensed removalist (over 10m2 of non-friable ACM requires a licensed Class B removalist and WorkSafe notification). Assumes a single-storey building with good ground-level access, a soffit run of at least ~20-30m2, material intact and non-friable, and standard B-Class controls (drop sheets, bagging, no full enclosure). Low end anchors on CARE's large-area tiers ($50-$55/m2 at 120-200m2+) and Revolve's $30-$100/m2 cladding range; centre anchors on CARE's published $60/m2 B-Class rate plus a modest premium for overhead working; high end anchors on CARE's up-to-2x multiplier for rendered/obstructed material, CARE's $600 minimum for jobs under 10m2, and Chemcare's ~$2,000+ example for a small soffit job (~$200/m2 at 10m2, so the top of the band should be read as $150/m2 and above for very small areas). EXCLUDED and to be added separately: licensed assessor/visual clearance ($350-$400 per job) and scaffold/EWP hire for upper-level access ($397/week per QV). Also excluded: replacement soffit and linings, flashings, framing, gutters/fascia, painting, insulation, asbestos survey/lab testing (~$75+ per sample), and any Class A (friable) removal - if testing shows AIB or textured coating to the soffit, use Class A pricing instead (CARE: $100/m2, $3,500 minimum under 35m2, plus $1,000+ clearance and $400/day air monitoring). Rates are Auckland-based contractor figures; Wellington/Christchurch and regional travel can move them by roughly +/-10-15%. Verify by ringing two or three licensed removalists with the measured soffit area, height and the lab result."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 346755,
+        "outputTokens": 16360,
+        "cachedTokens": 279552,
+        "modelCalls": 10,
+        "toolCalls": 30,
+        "searchCalls": 5,
+        "estimatedCostUsd": 0.020735,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 346755,
+            "outputTokens": 16360,
+            "estimatedCostUsd": 0.020735,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

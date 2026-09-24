@@ -1,0 +1,205 @@
+{
+  "question": "concrete-paving-slab",
+  "kind": "pinned",
+  "arm": "A7",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 165.58,
+    "high": 220
+  },
+  "range": {
+    "min": 165,
+    "max": 277
+  },
+  "unit": "$/m2 of finished slab (measured on plan), Auckland, Q3 2026, subcontract, GST exclusive",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.285,
+    "highRatio": 1.324,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.109,
+  "elapsedMs": 227485,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 227481,
+      "band": {
+        "unit": "$/m2 of finished slab (measured on plan), Auckland, Q3 2026, subcontract, GST exclusive",
+        "low": 165.58,
+        "high": 209.22,
+        "centre": null,
+        "basis": "Sum of the 15 distinct components above; nothing counted twice and no aggregate row added on top of its components. 300 m2 totals: low $49,674, high $62,766, midpoint $56,220. Bottom-up build = $165.58-$209.22/m2. The band width is dominated by one item - the spec's contradictory 'SE92 mesh (665 grade)', which spans QV's SE92 row at $52.00/m2 and its 665 row at $20.30/m2 ($6,100-$15,600 over 300 m2); excluding that item the remaining components span only $145.28-$157.22/m2. Allowances carry about 1.5% of the total, well under a third. Cross-checks: QV's own all-in rows adjusted to this scope imply MORE, not less - External Works in-situ concrete paving 150mm (f8d9cf5a...:t6:r5, AKL $144/m2) plus 25 MPa uplift, mesh, GAP40, trim, spoil, pump, sawcut, isolation, chairs and set-out gives ~$206-$242/m2; Substructure slab on ground 150mm (f0968d72...:t3:r3, AKL $199/m2) less vapour barrier and sand blinding, with broom in lieu of power float, plus trim/joints/set-out gives ~$206-$217/m2. Those aggregates are cited as cross-checks only and are NOT added. No Q3 2026 escalation applied: QV's concrete supply table shows 0% for 2024-2025 and no published basis exists to move the rates. GST, preliminaries, margin, design, engineering and consent fees are excluded per scope."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 14,
+        "rowsFound": 14,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 655810,
+        "outputTokens": 38601,
+        "cachedTokens": 558080,
+        "modelCalls": 12,
+        "toolCalls": 40,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.039494,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 655810,
+            "outputTokens": 38601,
+            "estimatedCostUsd": 0.039494,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 207423,
+      "band": {
+        "unit": "$/m2 of finished slab (300 m2, one pour area, Auckland, Q3 2026, subcontract, GST exclusive)",
+        "low": 165,
+        "high": 220,
+        "centre": null,
+        "basis": "Bottom-up from 13 cited QV CostBuilder rows (Auckland column, all unreviewed) plus two minor allowances covering ~3% of the total, priced against the fixed scope only. Sum of component mid-points $196/m2; band midpoint $193/m2. 300 m2 total $49,500 (low) to $66,000 (high), centre ~$58,000. Independent cross-check: QV's integrated 'Concrete Slab on Ground 25MPa concrete, pumped and power floated, with edge formwork at 0.4m/m2, Economesh reinforcing mesh, polythene vapour barrier, 150mm hardfill, 25mm sand blinding, 150mm thick' (f0968d72...t3:r3, AKL $199/m2) adjusted to this scope - deduct sand blinding $12.90 and polythene $7.50 (out of scope), upgrade mesh Economesh 147 to SE92 (+$27), reduce edge formwork 0.4 to 0.233 m/m2 and F4 to F1 class (-$18.70), add sawcut $0.91, isolation joint $1.81, trim to falls $11.10, cart spoil $3.50, broom instead of power float (-$1.70) - gives $200/m2, within 2% of the bottom-up. The band is dominated by concrete supply+place+finish (~$81/m2) and the QV SE92 mesh row ($52/m2). SENSITIVITY: if mesh is priced at a bare market supply-and-fix rate (~$20-25/m2) instead of QV's SE92 row, the whole band falls ~$27-32/m2 to roughly $135-190/m2; that single unreviewed row is why confidence is medium rather than high. Falls are formed by subgrade profiling, so QV's 'Screed to falls' hand finish ($11.30/m2, 3012e40c...t6:r2) is not added - if falls are instead cut in the concrete, add ~$11/m2. QV's 'Add extra for mesh to smaller areas' ($3/m2) is not added (single 300 m2 pour). No QV row exists for nuclear-density compaction testing of the GAP40 to 95% MDD - exclude it or allow $300-600 for the job. Excluded per scope: GST, preliminaries, margin, design/engineering/consent fees, bulk earthworks and soft-spot undercut, drainage/services under the slab, sealer, hardener, line marking, kerbs, thickened or dowelled edges, demolition, traffic management, dewatering, contaminated spoil."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 14,
+        "rowsFound": 14,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 484076,
+        "outputTokens": 35054,
+        "cachedTokens": 397952,
+        "modelCalls": 10,
+        "toolCalls": 31,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.035145,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 484076,
+            "outputTokens": 35054,
+            "estimatedCostUsd": 0.035145,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 208260,
+      "band": {
+        "unit": "$/m2 of finished slab, Auckland, Q3 2026, subcontract rate, GST exclusive",
+        "low": 212,
+        "high": 277,
+        "centre": null,
+        "basis": "Sum of 12 priced components, no double counting: QV CostBuilder Auckland rows for subgrade trim, spoil cart, 150mm GAP40 subbase, 150mm in-situ concrete paving (adjusted 17.5 to 25 MPa), mesh, bar chairs, edge formwork, sawcutting, isolation joint, pump hire and curing compound, plus one stated allowance for set-out. 25 MPa supply is not double-counted inside the paving composite; the base-course row and the mesh rows are not added to the composite slab-on-grade rate. For 300 m2: low $63,476, high $83,193, midpoint ~$73,300 (band shown rounded: $63,500 - $83,200, mid $73,300). Two published QV rates were sanity-checked against QV's own slab-on-grade composite (150mm 25 MPa pumped slab on 150mm hardfill with mesh and 0.4m/m2 edge formwork, AKL 199/m2, id f0968d722af3d033d91c79c47fe7ecbea989e5abaecc3422c66d853ac075ca53:t3:r3); reconciling that composite to this scope (no polythene or sand blinding, SE92 in lieu of Economesh, 0.233 m/m2 of edge formwork, plus joints, cure, set-out and trim) gives about $225-230/m2, inside the lower half of the band. Width is driven mainly by the SE92-versus-665 mesh conflict ($20.30 to $52.00/m2, ~$32/m2) and by QV's external-paving rate not itemising its inclusions. Excluded per brief: GST, preliminaries, margin, design/engineering/consent fees, bulk earthworks and undercutting, drainage and services, sealer/hardener, line marking, kerbs, thickened edges, dowelled construction joints, demolition, traffic management, dewatering, contaminated spoil. No web source was needed for any main cost driver - QV publishes all of them; the only web figure used is the vendor mesh sheet price, quoted from source-1. Index: QV CostBuilder rates are undated in the library; band issued for Q3 2026 and should be re-indexed if the tender quarter moves."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 11,
+        "rowsFound": 11,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 657964,
+        "outputTokens": 40358,
+        "cachedTokens": 602496,
+        "modelCalls": 15,
+        "toolCalls": 36,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.034342,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 657964,
+            "outputTokens": 40358,
+            "estimatedCostUsd": 0.034342,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

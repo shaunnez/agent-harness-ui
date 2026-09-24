@@ -1,0 +1,182 @@
+{
+  "question": "open-a2",
+  "kind": "open",
+  "arm": "A7",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 235,
+    "high": 435
+  },
+  "range": {
+    "min": 190,
+    "max": 620
+  },
+  "unit": "m2 of building floor area (NZD, GST exclusive)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.368,
+    "highRatio": 1.55,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1221,
+  "elapsedMs": 280926,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 241918,
+      "band": {
+        "unit": "m2 of building floor area (NZD, GST exclusive)",
+        "low": 190,
+        "high": 435,
+        "centre": null,
+        "basis": "Christchurch, construction cost of ground improvement only, per m2 of building floor area, GST exclusive. Low end = QV-priced shallow excavate-and-replace reinforced gravel raft, 1.0m deep (QV rows t12:r3 + t12:r4 + t12:r5, adjusted for depth and treatment area) plus the minor allowance. High end = vibro-replacement stone columns at 900mm dia / 18-20% area replacement, priced from EQC's tendered Canterbury ground improvement rates (Kingston Partners, June 2015, Table 2.4) converted from m2 treated to m2 of floor area and escalated x1.48 with the Stats NZ construction services PPI. A rotovated soil-cement raft ($324-$369/m2 of floor area) and driven timber poles ($430-$560/m2) sit inside/above this range as further alternatives. Assumes a single-storey light commercial building of about 500 m2 on a roughly square footprint, with 1-2m of treatment beyond the building line; smaller footprints or wider treatment margins increase the rate per m2 of floor area. Excludes building foundations and structural work, geotechnical investigation and design, construction testing/monitoring and consenting. Confidence is LOW because the treatment method and depth are undecided (that choice, not the unit rate, drives the >2x spread), the QV rows are unreviewed residential TC1/TC2 build-ups, the deep-treatment leg rests on 2014-15 tendered rates escalated by a national index, and the per-m2-of-floor-area conversion depends on an assumed footprint and treatment margin."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 1100495,
+        "outputTokens": 27128,
+        "cachedTokens": 963584,
+        "modelCalls": 15,
+        "toolCalls": 39,
+        "searchCalls": 10,
+        "estimatedCostUsd": 0.039704,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1100495,
+            "outputTokens": 27128,
+            "estimatedCostUsd": 0.039704,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 280922,
+      "band": {
+        "unit": "NZD per m2 of building floor area, GST exclusive",
+        "low": 260,
+        "high": 620,
+        "centre": "Christchurch",
+        "basis": "Sum of: excavate-and-dispose + compacted hardfill raft + triaxial geogrid (all current QV CostBuilder Christchurch rows, t12:r3/t12:r4/t12:r5 low case and t13:r4/t13:r12/t13:r13 high case), converted from treated area to building floor area by x1.15 (low) to x1.30 (high) for the 1-2m perimeter treatment margin, plus a dewatering/shoring allowance of $0-$60 and a verification-testing/monitoring allowance of $5-$20. Low case = shallow (~1.0-1.2m) reinforced gravel raft above the water table on a larger footprint: 92+145+15+0+5 = $257. High case = deep (~3m) replacement below the water table on a smaller footprint, or dense 3.8m driven timber poles at 1.0m centres: 117+373+47+60+20 = $617. Cross-checked against the EQC 2015 published Canterbury rates escalated x1.42 to $208-$385/m2 of treated area, which brackets the QV-built figures. The most likely zone for the common Canterbury solutions (1.2-2m raft, or stone columns) is $270-$360/m2 of floor area; the upper half of the band is reserved for deep below-water-table treatment or proprietary column methods. Confidence is low because the treatment method and depth are undecided (that choice alone swings the answer ~2x), the 2015 rates are index-escalated rather than re-tendered, the QV rows are unreviewed, and the building footprint is unknown. Method and depth must be fixed by a site-specific geotechnical assessment before this becomes a firm price. Excludes building foundations, slabs and structural work, and geotechnical investigation and design, per the pinned scope."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 1563067,
+        "outputTokens": 31954,
+        "cachedTokens": 1404032,
+        "modelCalls": 17,
+        "toolCalls": 47,
+        "searchCalls": 9,
+        "estimatedCostUsd": 0.04724,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1563067,
+            "outputTokens": 31954,
+            "estimatedCostUsd": 0.04724,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 187911,
+      "band": {
+        "unit": "m2 of building floor area",
+        "low": 235,
+        "high": 400,
+        "centre": "Christchurch",
+        "basis": "GST exclusive, NZD, Christchurch, 2026. Method alternatives, NOT additive: (a) excavate-and-replace reinforced gravel raft = QV rows r3+r4+r5+geotextile = $232.40/m2 of treated area; (b) stone columns = $212-292/m2 treated (2015 EQC tendered rates x1.40-1.50); (c) rotovated soil-cement raft = $266-304/m2 treated (same basis). Each is multiplied by the 1.10-1.30 treatment-area overrun allowance to give per m2 of floor area: lowest = stone columns $212 x 1.10 = ~$235; highest = soil-cement raft $304 x 1.30 = ~$395-400. Midpoint ~$310/m2. On a 1,000 m2 single-storey building this is roughly $235,000-$400,000 for the ground improvement alone. Excludes building foundations and structural work, geotechnical investigation and design, and repairs to existing damage, per the pinned scope; also excludes enabling works (service diversions, driveways, reinstatement), consenting and construction monitoring, which EQC excluded from its rate set. Confidence is LOW because the method and treatment depth are undecided, the stone-column and soil-cement rates are 2015 residential-scale tenders escalated 40-50%, and commercial raft rates and mob/demob differ from residential ones. Cross-check: CCC's Aranui Library ground improvement added $202,867 in 2012 for ~1,007 m2 coverage (~$201/m2 then, ~$320/m2 today), inside this band. Driven timber poles (MBIE G5b, $208.23-271.31/m2 treated in 2015) were excluded as a residential method not generally used for commercial buildings, and deep piling (5-10 m) is building foundation work and outside scope."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-unverified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 1,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 995081,
+        "outputTokens": 28071,
+        "cachedTokens": 890624,
+        "modelCalls": 16,
+        "toolCalls": 44,
+        "searchCalls": 13,
+        "estimatedCostUsd": 0.035183,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 995081,
+            "outputTokens": 28071,
+            "estimatedCostUsd": 0.035183,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}
