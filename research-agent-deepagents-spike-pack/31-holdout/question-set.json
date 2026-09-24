@@ -1,0 +1,186 @@
+{
+  "pinned": [
+    {
+      "id": "data-rack-and-network-hardware",
+      "file": "data-rack-and-network-hardware.txt",
+      "recorded": {
+        "status": "agreed",
+        "consensus": {
+          "low": 28000,
+          "high": 42000
+        },
+        "range": {
+          "min": 24000,
+          "max": 42000
+        },
+        "unit": "ea (per completed comms rack, 96 certified links)"
+      }
+    },
+    {
+      "id": "deflection-head-acoustic-seal",
+      "file": "deflection-head-acoustic-seal.txt",
+      "recorded": {
+        "status": "agreed",
+        "consensus": {
+          "low": 100.7,
+          "high": 158
+        },
+        "range": {
+          "min": 100,
+          "max": 184.95
+        },
+        "unit": "m"
+      }
+    },
+    {
+      "id": "facade-coating-application",
+      "file": "facade-coating-application.txt",
+      "recorded": {
+        "status": "disputed",
+        "consensus": {
+          "low": 43,
+          "high": 71
+        },
+        "range": {
+          "min": 41,
+          "max": 76
+        },
+        "unit": "m2"
+      }
+    },
+    {
+      "id": "garden-bed-planting",
+      "file": "garden-bed-planting.txt",
+      "recorded": {
+        "status": "disputed",
+        "consensus": {
+          "low": 110,
+          "high": 200
+        },
+        "range": {
+          "min": 90,
+          "max": 215
+        },
+        "unit": "m2"
+      }
+    },
+    {
+      "id": "glass-kitchen-splashback",
+      "file": "glass-kitchen-splashback.txt",
+      "recorded": {
+        "status": "agreed",
+        "consensus": {
+          "low": 620,
+          "high": 790
+        },
+        "range": {
+          "min": 600,
+          "max": 850
+        },
+        "unit": "m2"
+      }
+    },
+    {
+      "id": "glazed-vision-panel",
+      "file": "glazed-vision-panel.txt",
+      "recorded": {
+        "status": "agreed",
+        "consensus": {
+          "low": 1100,
+          "high": 1900
+        },
+        "range": {
+          "min": 1100,
+          "max": 1900
+        },
+        "unit": "ea"
+      }
+    },
+    {
+      "id": "joinery-finishing-painting",
+      "file": "joinery-finishing-painting.txt",
+      "recorded": {
+        "status": "agreed",
+        "consensus": {
+          "low": 92.5,
+          "high": 167.5
+        },
+        "range": {
+          "min": 90,
+          "max": 175
+        },
+        "unit": "m2 of finished face area"
+      }
+    },
+    {
+      "id": "site-establishment-relocation",
+      "file": "site-establishment-relocation.txt",
+      "recorded": {
+        "status": "agreed",
+        "consensus": {
+          "low": 3300,
+          "high": 7000
+        },
+        "range": {
+          "min": 3100,
+          "max": 7500
+        },
+        "unit": "sum"
+      }
+    },
+    {
+      "id": "solar-connection-switchboard-works",
+      "file": "solar-connection-switchboard-works.txt",
+      "recorded": {
+        "status": "disputed",
+        "consensus": {
+          "low": 7635,
+          "high": 12660
+        },
+        "range": {
+          "min": 6150,
+          "max": 18900
+        },
+        "unit": "ea"
+      }
+    },
+    {
+      "id": "sprinkler-system-installation",
+      "file": "sprinkler-system-installation.txt",
+      "recorded": {
+        "status": "disputed",
+        "consensus": {
+          "low": 45,
+          "high": 68
+        },
+        "range": {
+          "min": 35,
+          "max": 75
+        },
+        "unit": "m2"
+      }
+    },
+    {
+      "id": "steel-connection-fabrication",
+      "file": "steel-connection-fabrication.txt",
+      "recorded": {
+        "status": "disputed",
+        "consensus": {
+          "low": 195,
+          "high": 293
+        },
+        "range": {
+          "min": 180,
+          "max": 430
+        },
+        "unit": "ea"
+      }
+    },
+    {
+      "id": "subgrade-prep-basecourse-replacement",
+      "file": "subgrade-prep-basecourse-replacement.txt",
+      "recorded": null
+    }
+  ],
+  "open": "open-scopes.json"
+}

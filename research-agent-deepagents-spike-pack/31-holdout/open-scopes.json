@@ -1,0 +1,104 @@
+[
+  {
+    "id": "open-b1",
+    "objective": "Client wants a price for a 1.8 m high timber paling fence along a 40 m rear boundary of a house in Auckland, with the old fence taken down and removed.",
+    "scope": {
+      "item": "1.8 m high timber paling fence with old fence removal",
+      "measure": "total",
+      "unitText": "complete fence job along the rear boundary",
+      "quantityBasis": "40 m of rear boundary",
+      "centre": "Auckland",
+      "inclusions": [
+        "Supply and install 1.8 m high timber paling fence",
+        "Take down and remove old fence"
+      ],
+      "exclusions": [
+        "GST"
+      ],
+      "assumptions": [
+        "Fence follows the full 40 m rear boundary"
+      ],
+      "clarifications": [
+        "Timber type, paling style, post and rail specification, and finish",
+        "Access, ground conditions, and disposal requirements"
+      ]
+    },
+    "scopedBy": {
+      "runtime": "codex-cli",
+      "model": "gpt-6-luna",
+      "reasoning": "medium"
+    },
+    "scopeMs": 7918,
+    "scopeCostUsd": 0.001102
+  },
+  {
+    "id": "open-b2",
+    "objective": "What does it cost to replace the carpet in a 150 m2 office with luxury vinyl plank flooring, including lifting the old carpet and preparing the floor?",
+    "scope": {
+      "item": "Replace office carpet with luxury vinyl plank flooring",
+      "measure": "per m²",
+      "unitText": "m² of floor area",
+      "quantityBasis": "150 m²",
+      "centre": "",
+      "inclusions": [
+        "Lift and remove existing carpet",
+        "Prepare the floor for new flooring",
+        "Supply and install luxury vinyl plank flooring"
+      ],
+      "exclusions": [
+        "Disposal fees for old carpet",
+        "Floor repairs beyond standard preparation",
+        "Furniture moving",
+        "Skirting or trim work"
+      ],
+      "assumptions": [
+        "Price is for the full 150 m² office floor area.",
+        "Standard floor preparation is sufficient."
+      ],
+      "clarifications": [
+        "Whether carpet disposal is included",
+        "Extent of floor preparation and any repairs",
+        "Whether furniture moving and skirting or trim work are required"
+      ]
+    },
+    "scopedBy": {
+      "runtime": "codex-cli",
+      "model": "gpt-6-luna",
+      "reasoning": "medium"
+    },
+    "scopeMs": 7340,
+    "scopeCostUsd": 0.000283
+  },
+  {
+    "id": "open-b3",
+    "objective": "Tenant wants to know what Chorus will charge to bring fibre into a new six-unit light industrial building.",
+    "scope": {
+      "item": "Chorus fibre connection to a new six-unit light industrial building",
+      "measure": "total",
+      "unitText": "total for the building connection",
+      "quantityBasis": "One new six-unit building",
+      "centre": "",
+      "inclusions": [
+        "Chorus charges to bring fibre to the building"
+      ],
+      "exclusions": [
+        "Internal cabling and fit-out within the building"
+      ],
+      "assumptions": [
+        "Price the building-level connection, not six separate tenant connections"
+      ],
+      "clarifications": [
+        "Whether Chorus charges separately for each unit",
+        "Whether civil works or reinstatement are included",
+        "Whether the connection is a standard service or requires network extension"
+      ]
+    },
+    "scopedBy": {
+      "runtime": "codex-cli",
+      "model": "gpt-6-luna",
+      "reasoning": "medium"
+    },
+    "scopeMs": 7970,
+    "scopeCostUsd": 0.0011
+  }
+]

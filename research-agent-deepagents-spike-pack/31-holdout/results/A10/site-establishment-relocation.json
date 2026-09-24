@@ -1,0 +1,325 @@
+{
+  "question": "site-establishment-relocation",
+  "kind": "pinned",
+  "arm": "A10",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 5664,
+    "high": 9409
+  },
+  "range": {
+    "min": 5378,
+    "max": 10400
+  },
+  "unit": "sum (one complete relocation event of a single site compound, in place, on an operating site)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.06,
+    "highRatio": 1.134,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1509,
+  "elapsedMs": 435408,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 247797,
+      "band": {
+        "unit": "sum (one complete relocation event of a single site compound, in-place on an operating site)",
+        "low": 3320,
+        "high": 6580,
+        "centre": null,
+        "basis": "Auckland, GST-exclusive, one mobilisation and one demobilisation, no second move. Labour from QV Labour Rates (Blocklayer $82.40/hr, Carpenter $81.30/hr leading-hand proxy, General Labourer $60.55/hr, Electrician $83.65/hr); fence dismantle/re-erect from QV Preliminaries/Site Fences ($2.90/m + $2.90/m = $5.80/m); plant mobilisation from QV Mobile Crane Hire 'Delivery and pickup, per visit' $100; consumables from QV General Site Safety Equipment and Cable: Copper rows; hiab hourly rate and the electrical certification fee from fetched vendor pages (no QV rows exist for these). The labour content of the band totals ~24-25 person-hours, i.e. the scoped 3-person x 8-hour gang day, priced once: per-metre fence and blockwork rates replace, not duplicate, the gang-day labour. Allowances (bearing packers/pads, mortar, sundries) carry under 15% of the total. Excludes GST, preliminaries, margin, design/consent fees, new hardstand/aggregate/seal, new panels/containers/blocks, sub-mains and switchboard works beyond the 20m reconnect, traffic management/road occupancy, weekly hire, overnight security, and any second move event. There is no GST, margin or preliminaries loading in these figures. NOTE ON THE SUPPLIED BAND: the $10,500-$16,500 proposal double counts labour (it adds $22/m fence and $34/m blockwork, both of which include the labour already carried in its $1,872 gang-day line), and its $1,350 electrical and $2,040 blockwork lines are well above what the QV labour rows imply. Realistic cost-plan band for this exact scope is roughly a third of that, with a subcontractor's lump-sum quote sitting above it once margin and off-site overhead are added back."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 8,
+        "rowsFound": 8,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 574577,
+        "outputTokens": 29234,
+        "cachedTokens": 496000,
+        "modelCalls": 16,
+        "toolCalls": 29,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.030815,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 574577,
+            "outputTokens": 29234,
+            "estimatedCostUsd": 0.030815,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 165982,
+      "band": {
+        "unit": "sum (one complete relocation event of a single site compound, in place, on an operating site)",
+        "low": 5700,
+        "high": 10400,
+        "centre": "Auckland",
+        "basis": "Sum of the eleven components above: low 5,679 and high 10,406, rounded to 5,700-10,400, median about 7,700. Nominal quantity is ONE event, so the per-sum figure is the whole total and no amortisation denominator is involved. Main cost drivers are all sourced: the 3-person gang and blockwork re-set (QV Labour Rates t0:r7/r12/r1/r3), the hiab (QV Mobile Crane Hire t9:r2/r18/r21), the fence dismantle/re-erect (QV Site Fences t4:r3/r4) and the electrician (QV Labour Rates t0:r10), with the blockwork mortar from QV Concrete Blockwork t1:r4. Only four minor items are allowances (gate handling, bearing packers/pads, signage/tape/barriers, tidy and sweep) and they total 13-19% of the band, under a third, so the band is established and confidence is medium rather than low. Confidence is held at medium, not high, because the QV rows are UNREVIEWED, the reassembly-time judgement on the fence relocation is the widest single assumption, and container/electrician/blockwork hours are QS judgement priced at cited rates. GST-exclusive; preliminaries, margin, design and consent fees, traffic management, hardstand construction, new fence/containers/blocks and any second move are excluded per the fixed scope. For a one-off small works order, subcontract minimum-mobilisation loading is not in QV rates, so the upper half of the band is the more likely outturn."
+      },
+      "checks": [
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 287882,
+        "outputTokens": 21914,
+        "cachedTokens": 224128,
+        "modelCalls": 9,
+        "toolCalls": 22,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.023384,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 287882,
+            "outputTokens": 21914,
+            "estimatedCostUsd": 0.023384,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 389875,
+      "band": {
+        "unit": "sum (one complete relocation event of a single site compound: 120 m panel fence incl. 4.0 m double gate, 2 x 20 ft containers moved 60 m, hiab, 60 m block bay wall re-set, electrical reconnect + CoC, gang day, tidy)",
+        "low": 6637,
+        "high": 10727,
+        "centre": null,
+        "basis": "Nominal quantity is ONE event, so these amounts are the whole-of-scope totals (no further amortisation). Low = sum of component lows, high = sum of component highs, median = sum of component centres. Rates: QV CostBuilder Auckland rows for temporary site fence install/dismantle, mobile-crane (hiab proxy) hourly + delivery/pickup, 100 mm structural blockwork less block supply, blockwork mortar, partial-demolition of 100 mm masonry, copper TPS cable, safety signage/tape/mesh, and the labour-rate table (General Labourer, Blocklayer as leading-hand proxy); one fetched web page for the electrical CoC fee. Two small allowances (gate re-hang, container bearing packing) total 535 at the median, about 6% of the band, so the band rests on published rates, not judgement. Excludes GST, preliminaries and general, margin, design/consent fees, new hardstand/aggregate/seal, new panels or containers, new sub-mains beyond the 20 m reconnect, traffic management or road-occupancy, a second move event, ongoing hire and overnight security, per the fixed scope. Confidence is medium rather than high because (a) no QV row exists for a hiab, for container relocation or for a relocatable site office, so proxies are used; (b) the bay-wall geometry is ambiguous and worth about 2,000 of the total; (c) all QV rows are unreviewed against this specification."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 516612,
+        "outputTokens": 26618,
+        "cachedTokens": 430848,
+        "modelCalls": 11,
+        "toolCalls": 31,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.030128,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 516612,
+            "outputTokens": 26618,
+            "estimatedCostUsd": 0.030128,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 435406,
+      "band": {
+        "unit": "sum (one complete relocation event, GST exclusive, Auckland)",
+        "low": 5378,
+        "high": 9175,
+        "centre": "Auckland; mid-point ~$7,300 per event",
+        "basis": "Sum of 11 priced components for ONE relocation event on an operating Auckland commercial site (3,000 m2, existing hardstand both ends): $5,378 low to $9,175 high, mid-point ~$7,300. Nominal quantity is one event, so the band IS the total - no amortisation divisor. Sources: 8 unreviewed QV CostBuilder rows (Auckland column) for temporary site fence install/dismantle, mobile-plant mobilisation, electrician, blocklayer/concrete worker and general labourer rates; 1 fetched vendor page for hiab hire (source-1) and 1 fetched electrical contractor page for the CoC fee (source-2); 3 disclosed allowances (gate re-hang, bearing packers/pads, signage and barriers) totalling 12% (low) to 18% (high) of the band, so the band is not allowance-led. Confidence LOW because: QV rows are unreviewed; the block-wall geometry ('1 course, 0.6 m blocks') is ambiguous and its QV proxies span $144-$250/m2; the QV fence table does not state height; QV has no hiab row and the web band spans all hiab sizes; and QV publishes no leading-hand rate. Low end = one clean uninterrupted day with the existing fence and blocks re-used successfully. High end = a second part-day for the lifting plant, heavier re-levelling, 5 electrician hours, and the top blockwork row. Principal exclusions per the scope: GST, preliminaries, margin, design/consent fees, new hardstand/seal, new fence or containers or blocks, works outside the 20 m reconnect, traffic management, a second move event, weekly hire, overnight security. Excluded but worth flagging: fence subcontractor transport to/from base (QV t4:r5/r6, $204 each) if they mobilise twice, and any second hiab visit (+$840 to +$1,200 on this build-up)."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 714703,
+        "outputTokens": 28715,
+        "cachedTokens": 609152,
+        "modelCalls": 13,
+        "toolCalls": 41,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.034889,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 714703,
+            "outputTokens": 28715,
+            "estimatedCostUsd": 0.034889,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 213443,
+      "band": {
+        "unit": "sum (one complete relocation event of a single site compound, Auckland, 3,000 m2 operating site)",
+        "low": 5664,
+        "high": 9409,
+        "centre": null,
+        "basis": "Sum of 18 distinct priced heads, no aggregate row added to its own parts. Main cost drivers (fence install/dismantle, hiab, blocklayer, electrician, general gang) are all priced from cited QV CostBuilder rows (AKL column, unreviewed); allowances (gate re-hang, container packers/re-levelling, electrical materials, barrier mesh) carry about 12-17% of the total, below one third. Nominal quantity is 1 event, so the amortised total is the same as the rate. Low end assumes one clean day, the specialist fencing crew, and no overlap between trade lines and the gang day; high end assumes 2x the QV fence labour for single-day small-quantity working, a 5-hour hiab, an 8-hour electrical reconnect, +20% gang productivity loss and a second transport movement. Excludes GST, preliminaries, margin, design/consent fees, new hardstand, new panels/containers/blocks, works outside the site boundary and any second move. Confidence low: the QV Site Fences rows are contract-term hire rates applied to a one-day relocation, and there is an overlap risk between the trade rates and the separately priced 3-person gang day."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 14,
+        "rowsFound": 14,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 434461,
+        "outputTokens": 28954,
+        "cachedTokens": 345856,
+        "modelCalls": 9,
+        "toolCalls": 29,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.031701,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 434461,
+            "outputTokens": 28954,
+            "estimatedCostUsd": 0.031701,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -121,9 +121,13 @@ const CHECKED = new Set(["qv-found", "web-verified", "web-derived", "allowance"]
 /** The frozen question set: ten pinned scopes and the three scoped open questions. */
 export async function evalQuestions(setPath = null) {
   const set = JSON.parse(await readFile(setPath ?? path.join(EVAL_DIRECTORY, "question-set.json"), "utf8"));
-  const open = setPath
-    ? []
-    : JSON.parse(await readFile(path.join(EVAL_DIRECTORY, "open-scopes.json"), "utf8"));
+  // A set file may name its own scoped open questions, relative to itself (the held-out suite does).
+  const openFile = setPath
+    ? set.open
+      ? path.join(path.dirname(setPath), set.open)
+      : null
+    : path.join(EVAL_DIRECTORY, "open-scopes.json");
+  const open = openFile ? JSON.parse(await readFile(openFile, "utf8")) : [];
   const pinned = [];
   for (const entry of set.pinned) {
     const objective = await readFile(path.join(PACK_DIRECTORY, "16-pinned-scopes", entry.file), "utf8");

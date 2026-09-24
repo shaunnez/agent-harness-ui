@@ -1,0 +1,311 @@
+{
+  "question": "steel-connection-fabrication",
+  "kind": "pinned",
+  "arm": "A10",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 219,
+    "high": 434.22
+  },
+  "range": {
+    "min": 194.25,
+    "max": 469
+  },
+  "unit": "ea (per completed connection: one member end to one supporting member)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.234,
+    "highRatio": 1.206,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1321,
+  "elapsedMs": 421886,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 186877,
+      "band": {
+        "unit": "ea (per completed connection: one member end to one supporting member)",
+        "low": 239.64,
+        "high": 434.22,
+        "centre": null,
+        "basis": "Auckland, GST exclusive, NZD, 40 identical connections, one delivery. Additive build: fabricated 10mm fin plate supply/cut/drill/weld (82.46-149.78) + 20% small-quantity uplift (16.49-29.96) + 4 no. M20 8.8/S galvanised bolts (38.40-43.20) + shop IZS primer over 0.13 m2 (5.59-7.93) + site touch-up allowance (8.00-20.00) + site labour to lift/land/bolt, 0.6-1.0 crew-hr at the QV steel erector rate (54.90-91.50) + EWP hire amortised, 1-2 days / 40 (5.05-11.85) + one freight delivery amortised (3.75-10.00) + CC2 visual and 10% MPI inspection package amortised (25.00-70.00). Sum of component lows = 239.64; sum of component highs = 434.22. Total for 40 connections: 9,585.60 low, 17,368.80 high, 13,477.20 at the centre. MAIN DRIVER IS SOURCED: the plate fabrication rate comes from two published QV tiers that bracket the fabrication intensity implied by 600 mm of 6 mm fillet weld plus four drilled holes; the weld is never counted twice. Cartage and site erection are added separately because the QV 'Plates and brackets' build-up (rows t2:r16-r22) shows they are NOT in the per-kg plate rate. Allowances (site touch-up, freight, inspection/NDT) total roughly 20% of the mid total, i.e. under one third, so the band is stated rather than nulled; all three are minor, non-driver items. Confidence is medium, not high, because: (a) the plate rate is unreviewed QV and its 'hrs fabrication/tonne' inclusions are inferential; (b) the QV bolt row is a friction-grip 8.8 bolt, not an 8.8/S snug-tight galvanised one, and its row description does not say whether installation is included; (c) the shop system is a C3 IZS over blast used as a proxy for a 75 micron IZS shop primer; (d) three components are judgement allowances; (e) QV's 15% margin sits inside the plate rate although this brief excludes margin, and the 20% small-quantity uplift should be deducted if the package is part of a larger steel contract. Interface to check before firming: holes in the primary beam web are assumed formed as part of the incoming members per the brief; if not, add QV row t6:r2, 'Drill bolt holes', 10.30-17.10 each (AKL) x 4 holes = 41.20-68.40 per connection."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 370811,
+        "outputTokens": 22879,
+        "cachedTokens": 304640,
+        "modelCalls": 10,
+        "toolCalls": 26,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.024567,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 370811,
+            "outputTokens": 22879,
+            "estimatedCostUsd": 0.024567,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 370952,
+      "band": {
+        "unit": "$/ea per completed connection (one 310UB40 member end bolted to a 460UB74 web via a 200x300x10 fin plate, 6mm fillet welds, 4 x M20 8.8 galvanised bolts, shop primed, CC2 visual + 10% MPI)",
+        "low": 219,
+        "high": 469,
+        "centre": "Auckland",
+        "basis": "Auckland, GST exclusive, no preliminaries, margin, design/PS1/consent fees, hot dip galvanising, fire protection, site welding, scaffolding/edge protection, traffic management or NDT remedial - per your scope. Sum of 8 priced components above (low $219.3, high $469.2; central planning value $330.6). For the 40 connections: low $8,772, high $18,768, central $13,222. 188 kg of fabricated plate, 160 bolts, 24 m of 6mm fillet weld, 80 drilled holes, 4 welds MPI-tested. Every line except the freight upper end and the touch-up is a cited QV row; allowances are under 10% of the total, so the band is rate-based. Confidence is medium rather than high because (a) the dominant plate line sits between QV's 120 and 250 hrs/tonne fabrication-intensity rows - a 1.85x spread that cannot be resolved without the fabricator's method statement, (b) there is no exact QV bolt row for M20 8.8/S galvanised, and (c) the inspection line is an hourly proxy, not a published NDT price. The low end is optimistic (lightest fabrication intensity, non-galvanised bolt proxy, minimum inspector hours, 1.5 EWP days); a fabricator's price for a 40-connection retrofit batch with CC2 documentation will most likely fall in the mid-to-upper half of the band."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 326284,
+        "outputTokens": 24048,
+        "cachedTokens": 263424,
+        "modelCalls": 9,
+        "toolCalls": 27,
+        "searchCalls": 5,
+        "estimatedCostUsd": 0.024648,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 326284,
+            "outputTokens": 24048,
+            "estimatedCostUsd": 0.024648,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 238738,
+      "band": {
+        "unit": "ea (per completed connection)",
+        "low": 194.25,
+        "high": 388.87,
+        "centre": "Auckland",
+        "basis": "Sum of 8 priced components, no overlap: QV all-in plate rate (supply, cut, drill, overheads, shop drawings), QV shop fillet weld per metre, QV bolt assembly per bolt, QV IZS + touch-up per m2 on the connection only, QV Steel Erector rate x assumed hours, QV EWP day rates, plus two stated allowances (freight, CC2 visual + 10% MPI). No margin, preliminaries, design/PS1, members, galvanising, fire protection, site welding, temporary works, scaffolding or NDT remediation added. QV rates carry the contractor's own overhead and the 15% margin shown in QV's build-up table. Probable mid about $290/ea (plate nearer 70-110 hrs/tonne), i.e. about $11,600. TOTAL FOR 40 CONNECTIONS: low $7,770, high $15,555 (40 x $194.25 = $7,770; 40 x $388.87 = $15,555)."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 9,
+        "rowsFound": 9,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 550686,
+        "outputTokens": 26764,
+        "cachedTokens": 460928,
+        "modelCalls": 12,
+        "toolCalls": 33,
+        "searchCalls": 7,
+        "estimatedCostUsd": 0.030905,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 550686,
+            "outputTokens": 26764,
+            "estimatedCostUsd": 0.030905,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 211408,
+      "band": {
+        "unit": "$/ea completed connection (one secondary member end to primary web), GST exclusive",
+        "low": 393.73,
+        "high": 646.22,
+        "centre": "Auckland",
+        "basis": "Sum of the 8 components above per connection: plate supply/cut/drill/shop weld $179.73-218.17 + blast & IZS primer $6.45-12.20 + site touch-up $5-15 + bolts $38.40-52.40 + site bolting labour $137.25-274.50 + EWP hire $8.15-20.20 + freight $3.75-8.75 + CC2 VT & 10% MPI $15-45 = $393.73-646.22 per connection. TOTAL FOR THE 40 CONNECTIONS = $15,749-25,849 (i.e. $15,750-25,850), which is the amortisation check: plate freight, EWP, inspection and the sub-1,000 kg setup uplift are all spread over the 40. Exclusions honoured: GST, preliminaries, margin (the QV rate's own 15% margin is inside the published rate, not added), design/PS1/consent, the incoming members, HDG, fire protection, finish coat, site welding, temporary works, propping, crane hire, scaffolding, edge protection, traffic management, failed-NDT remediation. Allowances are only $23.75-68.75/ea, about 6-11% of the band, so the band is established and not allowance-driven; the two largest lines (plate fabrication and site bolting labour) are built on cited QV rows, the second with an estimated man-hour quantity. Confidence is low rather than medium because (a) QV prices this plate only through an hours-per-tonne ladder whose top rung $38.6/kg may still be light for a 4.7 kg plate, and (b) site hours are judged, not published. Cross-checks that support the result: QV's member rates of $8.4-9.8/kg for UB/UC, plus the published 'add 15% for plate connections per tonne' adjustment, imply roughly $235 of connection value per beam end; and QV's Frame/Beams row for 310UB40 ($622/m including end plates, connections, blast and primer, erected) sits comfortably above this band."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 276656,
+        "outputTokens": 26586,
+        "cachedTokens": 227200,
+        "modelCalls": 11,
+        "toolCalls": 24,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.024052,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 276656,
+            "outputTokens": 26586,
+            "estimatedCostUsd": 0.024052,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 421882,
+      "band": {
+        "unit": "$/ea (per completed connection, one 310UB40 member end into a 460UB74 primary beam web)",
+        "low": 274.41,
+        "high": 438.82,
+        "centre": "Auckland",
+        "basis": "Sum of 13 distinct components, each priced once, GST-exclusive. 10 of 13 lines are QV CostBuilder rows: plate supply $2.40-2.60/kg (4.71 kg plate), profile cut, 4 drilled holes, 0.6 m of 6 mm shop fillet weld, 4 x M20 8.8 bolts, steel erector $91.50/h and labourer $60.55/h, articulated boom EWP at $202/day (amortised), blast-and-IZS primer at $43-61/m2 and touch-up primer. Cross-check: the four shop-fabrication lines total $115-186 (mid $150) against QV's independent 'Connection plates, 200 hrs fabrication/tonne' row at $31.8/kg = $149.78 for a 4.71 kg plate, and the labour-rate route agrees, so I have not added that row as well. Only three lines are allowances (detail drawing/CNC setup $5-20, freight $4-8, inspection $18-38) - $27 low to $66 high, i.e. 10-15% of the total, so the band is sourcing-led, not judgement-led. QV's 20% small-quantity add for this section (work under 1,000 kg; the plates total only 188 kg) has NOT been added on top, because the top of the fabrication build-up already sits at QV's 200 hrs/tonne rate. Confidence lowered to medium by the spread in shop-hour and site-hour content and by QV rows being unreviewed; the widest single risk is the plate fabrication line, where a fabricator's fixed price for 40 identical plates could sit anywhere between the low and high ends. Totals for the nominal 40 connections: $10,976 low, $17,553 high, midpoint approx $14,264 ($357/ea)."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 10,
+        "rowsFound": 10,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 334294,
+        "outputTokens": 27819,
+        "cachedTokens": 264960,
+        "modelCalls": 9,
+        "toolCalls": 27,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.027886,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 334294,
+            "outputTokens": 27819,
+            "estimatedCostUsd": 0.027886,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

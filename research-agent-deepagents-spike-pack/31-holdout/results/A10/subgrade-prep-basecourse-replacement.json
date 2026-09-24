@@ -1,0 +1,308 @@
+{
+  "question": "subgrade-prep-basecourse-replacement",
+  "kind": "pinned",
+  "arm": "A10",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 219,
+    "high": 336
+  },
+  "range": {
+    "min": 213,
+    "max": 339
+  },
+  "unit": "$/m3 of in-situ undercut volume (Auckland, GST exclusive)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.089,
+    "highRatio": 1.021,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1731,
+  "elapsedMs": 493034,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 205561,
+      "band": {
+        "unit": "m3 in-situ undercut volume (= compacted replacement volume)",
+        "low": 273,
+        "high": 357,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components (no aggregate row added with its own components): excavation 25.0-37.5 + cart 30.2-37.5 + cleanfill gate 45.5-56.0 + geotextile 13.0-21.6 + AP40 supply/place/compact 138-158 + allowances 21-46 (water/trim, testing, mobilisation) = 273-357 per m3. Midpoint $315/m3; total for the nominal 150 m3 = $40,950-$53,550, midpoint $47,250. Auckland, GST exclusive, excludes preliminaries, margin, design, geotechnical fees, consent fees, dewatering, breaking out or reinstating overlying surfacing, traffic management, contaminated spoil and stabilisation. Allowances carry ~8% of the low total and ~13% of the high. Main drivers (AP40 package and cleanfill gate fee) are each on a cited QV row or a fetched Auckland price list; confidence medium because the AP40 line rests on a stated GAP40-to-AP40 adjustment of an unreviewed QV row and because QV's cart row does not state whether a tip fee is included."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 405211,
+        "outputTokens": 27364,
+        "cachedTokens": 340096,
+        "modelCalls": 12,
+        "toolCalls": 25,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.027206,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 405211,
+            "outputTokens": 27364,
+            "estimatedCostUsd": 0.027206,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 321578,
+      "band": {
+        "unit": "$/m3 of in-situ undercut volume (Auckland, GST exclusive)",
+        "low": 219,
+        "high": 332,
+        "centre": "Auckland",
+        "basis": "Sum of the eight components above. Nominal 150 m3 (500 m2 x 300mm, two 250 m2 patches) gives $32,900 - $49,800, midpoint $41,400. Sources: 14 QV CostBuilder Auckland rows (unreviewed, cited by row id) for excavate, cart, geotextile and basecourse; one fetched Auckland cleanfill price list (source-2) for the gate fee, the only item QV does not publish; three labelled allowances at 10% of the midpoint. All figures NZD, GST exclusive, Auckland centre, no preliminaries, margin, design or geotechnical fees. Confidence is low, not because anything is unpriced but because the two largest lines - the 300mm TNZ M/4 basecourse ($90-150/m3, QV's own roads rows versus QV's bulk-fill build-up plus grade step) and the cleanfill gate fee ($44-52/m3 against a QV-implied ~$21/m3) - each carry a spread that published rates do not resolve. Sensitivity: every $10/t on delivered AP40 moves the band about $21/m3; every $10/m3 loose on the cleanfill gate moves it about $12/m3. At 1,000 m3 rather than 150 m3 expect the same scope at roughly $185-250/m3 as the mobilisation and small-quantity penalties amortise."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 437836,
+        "outputTokens": 43439,
+        "cachedTokens": 359168,
+        "modelCalls": 11,
+        "toolCalls": 31,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.038941,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 437836,
+            "outputTokens": 43439,
+            "estimatedCostUsd": 0.038941,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 493031,
+      "band": {
+        "unit": "m3 in-situ undercut volume (150 m3 nominal; equals compacted replacement volume)",
+        "low": 213,
+        "high": 339,
+        "centre": "Auckland",
+        "basis": "Sum of the components: 25-37.5 excavate and load (QV AKL rows) + 19.9-37.5 cart 25km round trip (QV hauling and disposal/carting rows) + 43.68-53.76 cleanfill gate fee (published Auckland clean-fill tipping rate, source-1) + 12.72-23.2 Bidim A24 proxy (QV non-woven rows) + 90-147 TNZ M/4 AP40 supplied, carted, placed and compacted (QV GAP40/GAP40-to-pads/NRB M/4 roading rows, with the M/4 spec uplift shown by QV's own indicative supply prices) + 6.67 grade and trim formation (QV row) + 2-5 water and sundries allowance + 5.33-11 testing allowance + 8-17 mobilisation allowance. Midpoint about 270/m3, i.e. about 40,500 for the nominal 150 m3. Allowances carry under 10% of the total, so the band rests on the cited rows and the fetched cleanfill price, not on the allowances. GST exclusive, excludes preliminaries, margin, design, geotechnical and consent fees, contaminated spoil, dewatering, breaking out or reinstating any overlying surfacing, traffic management and shift premiums, as instructed. Above the supplied band (185-255/m3) chiefly because the published Auckland cleanfill gate rate (26.00-28.00/t, i.e. 44-54/m3 in-situ once bulking and density are applied) exceeds the 28/m3 loose assumed, and because QV's M/4-grade basecourse in place prices at 112-147/m3 against the 88/m3 implied by the supplied build-up - whose own stated basis (about 44/t delivered x 2.15 t/m3 compacted plus 5% loss) computes to roughly 99/m3, not 62/m3."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 508958,
+        "outputTokens": 42070,
+        "cachedTokens": 427904,
+        "modelCalls": 13,
+        "toolCalls": 43,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.038684,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 508958,
+            "outputTokens": 42070,
+            "estimatedCostUsd": 0.038684,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 437566,
+      "band": {
+        "unit": "NZD per m3 of in-situ undercut volume (= compacted replacement volume), GST exclusive",
+        "low": 245,
+        "high": 319,
+        "centre": "Auckland",
+        "basis": "Sum of nine separately priced components, per m3 in-situ, Auckland, GST exclusive, Q1-2026 rates. Excludes (per scope) GST, preliminaries, margin, design, geotechnical engineer's fees, consent fees, contaminated/asbestos spoil and any managed-fill or Class A premium, dewatering, undercut beyond 300mm, breaking out or reinstating any overlying seal/slab/surfacing, traffic management, temporary works, shift premiums and cement/lime stabilisation. LOW = sum of component lows ($244.87); HIGH = sum of component highs ($319.21); midpoint $282/m3. Allowances (water/sundries, testing, mobilisation) total $18.55/m3 at the midpoint - 6.6% of the band, so the band rests on sourced rows rather than on judgement. The largest component, AP40 basecourse supply/spread/consolidate at $112-138/m3 (40% of midpoint), rests on the cited QV row d2f8402515bbdf813cdb14f78c04616b2379638bb82729718b17c996ec0683a1:t8:r12 with a stated TNZ M/4 uplift taken from QV's own indicative supply rows. Per m2 of 500 m2 worked area this is $82.50-107.50/m2, i.e. $0.28-0.36 per mm of dig-out depth. Note this band sits ABOVE the indicative band in the brief ($185-255/m3): the two reasons are that the published Auckland cleanfill rate for clean dry clay is $26.00/t (~$47/m3 in-situ), not the ~$19/t implied by the brief, and that QV's complete GAP40 supply/spread/consolidate rate is $112/m3 before the M/4 upgrade. SENSITIVITIES: clay density 1.5-1.9 t/m3 moves the band by -$5 to +$0; a non-VENM assessment adds the $15/t levy (+$25.50-28.50/m3); if AP40 falls to a $38/t delivered equivalent the band falls about $12/m3; at 1,000 m3 the same scope would land materially lower (mobilisation, cleanfill rate and plant minimums all amortise better)."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 355892,
+        "outputTokens": 36638,
+        "cachedTokens": 265344,
+        "modelCalls": 9,
+        "toolCalls": 33,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.036361,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 355892,
+            "outputTokens": 36638,
+            "estimatedCostUsd": 0.036361,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 191727,
+      "band": {
+        "unit": "$/m3 in-situ undercut volume (equals compacted replacement volume)",
+        "low": 232,
+        "high": 336,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components: excavate 25.00-34.00 + cart 30.20-37.50 + cleanfill gate fee 40.80-46.80 + geotextile 14.15-23.58 + AP40 placed 101-143 + trim/level 6.67-13.33 + water and sundries 1-3 + testing 6.70-16.70 + mobilisation 6-18. Low end 232 and high end 336 are the component sums; midpoint 284 is the sum of component midpoints (band ends rounded in the write-up to 230-335). Allowances carry 9% of the midpoint, so the band is not allowance-driven. Nominal 150 m3: 34,800 to 50,400, midpoint 42,600. GST exclusive. Two interpretive risks keep confidence at medium rather than high: (a) QV's own AKL rates for GAP40-type fill placed and compacted scatter from 75 to 117 per m3, a 56% spread, and the AP40 premium of 26 per m3 rests on two rows headed 'Indicative Supply Prices'; (b) the QV removal row appears to carry a token disposal allowance of about 4-8 per m3 in-situ, so the cleanfill gate fee line may overlap it to that extent, making the top of the band conservative."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 435417,
+        "outputTokens": 37476,
+        "cachedTokens": 379904,
+        "modelCalls": 10,
+        "toolCalls": 30,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.031952,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 435417,
+            "outputTokens": 37476,
+            "estimatedCostUsd": 0.031952,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

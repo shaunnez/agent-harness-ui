@@ -1,0 +1,313 @@
+{
+  "question": "garden-bed-planting",
+  "kind": "pinned",
+  "arm": "A10",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 117,
+    "high": 193
+  },
+  "range": {
+    "min": 116,
+    "max": 195
+  },
+  "unit": "m2 of planted garden bed (plan area), 200 m2 nominal quantity",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.009,
+    "highRatio": 1.043,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1327,
+  "elapsedMs": 408972,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 78014,
+      "band": {
+        "unit": "m2 of planted garden bed (plan area), 200 m2 nominal quantity",
+        "low": 117,
+        "high": 187,
+        "centre": "Auckland",
+        "basis": "QV CostBuilder AKL rates (unreviewed) for imported topsoil spread into beds, rotary hoeing to receive topsoil, and ground cover / shrub / tree planting-including-staking, plus labelled allowances for the fertiliser tablets, the 12-month establishment maintenance and the 5% replacement plants. Every component is stated as the total for the whole 200 m2 nominal quantity and then divided by 200 to give the per-m2 band - no component is counted twice and no per-m2 rate is repeated. Component totals for 200 m2: topsoil $8,940-10,320; cultivate/rip $620; groundcover $7,440-13,920; shrubs $1,160-2,030; trees $232-928; fertiliser $430-850; maintenance (12 visits, whole band) $4,200-7,800; replacement plants (whole band) $470-940. Sum $23,492-37,408 for 200 m2 = $117-187/m2, mid ~$152/m2 (total mid ~$30,450). Allowances carry roughly a quarter of the total, dominated by maintenance, which is why confidence is low; the QV plant rows also do not state whether nursery supply is included. Excludes GST, preliminaries, margin, design/fees, mulch, turf, irrigation, edging, bulk earthworks and traffic management per the scenario."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 1,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 324566,
+        "outputTokens": 9379,
+        "cachedTokens": 268800,
+        "modelCalls": 16,
+        "toolCalls": 27,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.014799,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 324566,
+            "outputTokens": 9379,
+            "estimatedCostUsd": 0.014799,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 206154,
+      "band": {
+        "unit": "m2 of planted garden bed",
+        "low": 117,
+        "high": 195,
+        "centre": "Auckland",
+        "basis": "Working estimate band, not a certified price. Every component is expressed per m2 of bed and the components sum directly to the band (no one-off lump sums remain): imported topsoil (QV External Works/Top Soil 300mm m2 row, cross-checked against the m3 'filled into beds' row), subgrade cultivation (QV rotary hoeing row + small-bed uplift), the three QV External Works/Trees and Shrubs supply-and-plant rows, maintenance from the QV Landscaper labour rate at a stated 0.30-0.60 crew-hour per m2, and three minor allowances (fertiliser tablets, set-out/sundries/greenwaste/travel, 5% replacement plants) carrying about 5% of the mid total. Low = sum of low ends (116.82/m2), high = sum of high ends (195.36/m2), mid = 156.11/m2. Totals for the 200 m2 nominal quantity: low $23,366, mid $31,221, high $39,076, NZD, GST exclusive. Principal risks: whether the QV plant rows include nursery supply (~45% of the total, inclusions unstated) and the maintenance hours, which are QS judgement."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 421898,
+        "outputTokens": 29150,
+        "cachedTokens": 340736,
+        "modelCalls": 10,
+        "toolCalls": 28,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.030687,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 421898,
+            "outputTokens": 29150,
+            "estimatedCostUsd": 0.030687,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 280133,
+      "band": {
+        "unit": "NZD per m2 of planted garden bed (measured on plan); total for the 200 m2 nominal quantity in brackets",
+        "low": 116,
+        "high": 193,
+        "centre": null,
+        "basis": "Sum of the eleven priced components above, each expressed per m2 of planted bed so the one-off items (12-month maintenance, 5% replacements, bed prep) extend over the measured area. Sum is $116.02/m2 low to $192.77/m2 high, rounded to $116-$193, centre $154.4/m2. Totals for the 200 m2 nominal quantity: $23,204 low / $30,879 centre / $38,554 high (rounded ~$23,200 / ~$30,880 / ~$38,550). Auckland QV CostBuilder rates, GST exclusive, beds of 15-40 m2. The low end takes the bottom of every QV range plus 4 maintenance hours per visit; the high end the top of every range plus 8 hours - a deliberate 'everything unfavourable' limb, so the true outturn is more likely to sit inside than outside it. Main drivers are all cited QV rows: plants 42% of the mid band (rows t12:r1/r3/r5), topsoil 32% (row t10:r8), establishment maintenance 15-17% (Landscaper rate t0:r17 x stated hours). Allowances (bed prep, fertiliser, set-out/water-in, green-waste) total only ~4% of the low end and ~8% of the high end, so the band is established rather than allowance-driven. Confidence is medium not high: the QV rows are UNREVIEWED, the supply-and-plant reading of the per-plant rows is inferred from their wording, and the maintenance hours are judgement. Strip the 12-month maintenance and its disposal and the installed-only rate is $98.0-$155.6/m2 (mid ~$127/m2). Excludes GST, preliminaries, margin, design and landscape architect fees, consent fees, mulch, turf, irrigation, edging/kerbing/headers, geotextile, root barriers, weed mat, bulk earthworks, subsoil drainage, contaminated spoil, retaining/planter walls, traffic management, temporary fencing and out-of-hours access, as instructed."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 346286,
+        "outputTokens": 32037,
+        "cachedTokens": 278400,
+        "modelCalls": 10,
+        "toolCalls": 27,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.03024,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 346286,
+            "outputTokens": 32037,
+            "estimatedCostUsd": 0.03024,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 191542,
+      "band": {
+        "unit": "$/m2 of planted garden bed, Auckland, GST exclusive",
+        "low": 110.5,
+        "high": 188.54,
+        "centre": "Auckland",
+        "basis": "Sum of ten distinct components, none overlapping: QV External Works Top Soil row t10:r8 for the 300mm imported topsoil (the largest item at ~40% of the low end), QV Top Soil t10:r1 for cultivation with a stated 2.0x small-bed uplift, QV Trees and Shrubs t12:r1/r3/r5 for the groundcover, shrub and tree planting (installed, staking included), QV Landscaper labour row eb0a...:t0:r17 x a stated 36-96 hour quantum for the 12 establishment visits, the same QV planting rows re-applied at 5% for replacement stock, and two labelled allowances (fertiliser tablets; set-out/debris/clean-up) that together are only 3-5% of the total. Low end takes every QV row at the bottom of its published range with minimum maintenance hours and minimum allowances - treat it as the optimistic bound, not the expected outcome; the likely tender range is narrower and nearer the middle. On the 200 m2 nominal quantity the band is $22,099 to $37,708, midpoint about $29,900 ($149.52/m2). This is ~20% below the $145-215/m2 figures floated in the brief mainly because the 12 establishment visits are priced at the QV landscaper hour with no margin or preliminaries, whereas the brief's $500-900 per visit implies 7-13 hours at that rate; the two scope items flagged as dominating in the brief (topsoil ~27%, maintenance ~24%) are confirmed as the two largest non-planting items here."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 8,
+        "rowsFound": 8,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 349965,
+        "outputTokens": 26633,
+        "cachedTokens": 278656,
+        "modelCalls": 10,
+        "toolCalls": 32,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.027512,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 349965,
+            "outputTokens": 26633,
+            "estimatedCostUsd": 0.027512,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 408969,
+      "band": {
+        "unit": "$ per m2 of planted garden bed, measured on plan",
+        "low": 124,
+        "high": 194,
+        "centre": "Auckland",
+        "basis": "Sum of ten distinct components at the 200 m2 nominal quantity: imported 300mm topsoil (QV External Works / Top Soil t10:r8, AKL 44.8-52/m2), subgrade cultivation (t10:r1 proxy), planting of 800 groundcover + 50 shrubs + 2 specimen trees (QV External Works / Trees and Shrubs t12:r1, t12:r3, t12:r5), fertiliser tablets (web supplier price), 12 establishment visits priced from the QV Landscaper labour rate (eb0a74bf1a2048f73c2f6f997f7b8674d2646a00874236613c599b2dd62087c8:t0:r17), 5% replacements (5% of the QV planting rows) and two small allowances (set-out/debris/clean-up; maintenance travel and consumables) worth 3-4% of the total. 200 m2 total: 24,800-38,800, mid about 31,800 (159/m2). All QV rows are unreviewed. Low confidence because (a) the three Trees and Shrubs 'each' rows do not itemise inclusions and are read as supply-and-fix - about two-fifths of the band - and if supply is quoted separately it must be added; (b) no published rate exists for establishment maintenance, so its 6-10 man-hours per visit is my estimate and it carries about a fifth of the band; (c) the topsoil row is plain imported top soil, not a screened garden mix. The low end is the riskier figure: the QV groundcover low rate suits tube-grade stock, not PB2/1.5L. Installed-only (excluding the 12-month maintenance lines) is about 96-148/m2."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 385472,
+        "outputTokens": 30003,
+        "cachedTokens": 315392,
+        "modelCalls": 10,
+        "toolCalls": 28,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.02946,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 385472,
+            "outputTokens": 30003,
+            "estimatedCostUsd": 0.02946,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}
