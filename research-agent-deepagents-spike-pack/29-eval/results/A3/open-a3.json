@@ -1,0 +1,165 @@
+{
+  "question": "open-a3",
+  "kind": "open",
+  "arm": "A3",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 100,
+    "high": 152
+  },
+  "range": {
+    "min": 82,
+    "max": 236
+  },
+  "unit": "NZD/m² of roof area, GST exclusive",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 2.61,
+    "highRatio": 2.593,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.021,
+  "elapsedMs": 139239,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 83493,
+      "band": {
+        "unit": "NZD/m² of roof area, GST exclusive",
+        "low": 100,
+        "high": 152,
+        "centre": "Wellington, $132/m²",
+        "basis": "QV butyl membrane rates for 1 mm black through 1.5 mm grey, laid on plywood or concrete. At 1,200 m² this indicates $120,000–$182,400, with a Wellington 1.5 mm black centre of $158,400. This is the membrane cost only, not the net premium or saving against a specified Coloursteel alternative. Low confidence reflects the unspecified membrane selection and the assumption of a suitable existing deck."
+      },
+      "checks": [
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 111057,
+        "outputTokens": 3022,
+        "cachedTokens": 77824,
+        "toolCalls": 14,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.005613,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 111057,
+            "outputTokens": 3022,
+            "estimatedCostUsd": 0.005613,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 139236,
+      "band": {
+        "unit": "NZD/m² of roof area, GST exclusive",
+        "low": 214,
+        "high": 236,
+        "centre": "$222/m², Christchurch",
+        "basis": "Sum of the three distinct components. Assumes a continuous plywood deck can be installed over existing purlins without structural changes, then covered with 1.5 mm black butyl rubber membrane. Prices the membrane roof alone; no Coloursteel option credit or deduction is included. For 1,200 m², the indicative extension is $256,800–$283,200, with a Christchurch-centred estimate of $266,400. Existing roof removal or disposal, flashings, gutters, drainage, structural changes, and insulation or ceiling work are excluded."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 180438,
+        "outputTokens": 6753,
+        "cachedTokens": 140800,
+        "toolCalls": 19,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.008748,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 180438,
+            "outputTokens": 6753,
+            "estimatedCostUsd": 0.008748,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 73129,
+      "band": {
+        "unit": "NZD/m² of roof area, GST exclusive",
+        "low": 82,
+        "high": 91,
+        "centre": null,
+        "basis": "Indicative cost impact of the membrane option less the avoided new Coloursteel roof option, using conservative cross-region rate bounds: (146−64) to (152−61) = NZD 82–91/m², centre about NZD 87/m². For 1,200 m², this is approximately NZD 98,400–109,200, centre NZD 104,400. Assumes 1.5 mm butyl membrane on an existing suitable solid substrate; existing roof removal and disposal, structural changes, insulation or ceiling work, flashings, gutters, and drainage are excluded. Rates are unreviewed QV CostBuilder rows. Low confidence reflects the unspecified membrane build-up and the proxy nature of the Coloursteel rate. This is a working estimate, not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 172559,
+        "outputTokens": 3362,
+        "cachedTokens": 136448,
+        "toolCalls": 17,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.006657,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 172559,
+            "outputTokens": 3362,
+            "estimatedCostUsd": 0.006657,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,162 @@
+{
+  "question": "open-a1",
+  "kind": "open",
+  "arm": "A3",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 60,
+    "high": 120
+  },
+  "range": {
+    "min": 60,
+    "max": 150
+  },
+  "unit": "NZD/m² of soffit area, GST exclusive",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1,
+    "highRatio": 1.5,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0529,
+  "elapsedMs": 119319,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 119317,
+      "band": {
+        "unit": "NZD/m² of soffit area, GST exclusive",
+        "low": 60,
+        "high": 150,
+        "centre": "Auckland",
+        "basis": "Working estimate for specialist removal and disposal, assuming intact, bonded, non-friable asbestos cement soffit. Based on CARE's published B-Class rate for soffits, widened to the published asbestos roofing range for uncertain access and conditions. Low confidence because area, material condition, access/height, containment and disposal arrangements are undecided; small-job minimums and separately charged assessor costs may affect the tender total."
+      },
+      "checks": [
+        "web-not-fetched"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 1,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 214281,
+        "outputTokens": 5229,
+        "cachedTokens": 177408,
+        "toolCalls": 13,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.008076,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 214281,
+            "outputTokens": 5229,
+            "estimatedCostUsd": 0.008076,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 98978,
+      "band": {
+        "unit": "m² of soffit area",
+        "low": 60,
+        "high": 120,
+        "centre": "NZD/m², GST exclusive",
+        "basis": "QV CostBuilder searches found no asbestos removal rate. The band uses published NZ Class B asbestos-removal rates; the rate is for the pinned removal-and-disposal scope under the stated assumptions. Area and site conditions remain unknown, so confidence is low."
+      },
+      "checks": [
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 498334,
+        "outputTokens": 4228,
+        "cachedTokens": 431360,
+        "toolCalls": 25,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.025193,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 498334,
+            "outputTokens": 4228,
+            "estimatedCostUsd": 0.025193,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 100025,
+      "band": {
+        "unit": "NZD per m² of soffit area, GST exclusive",
+        "low": 60,
+        "high": 100,
+        "centre": "Auckland",
+        "basis": "One sourced specialist removal rate band; no replacement soffit included. Assumes the area is sufficient to avoid a small-job minimum. Where the area is under 10m², CARE publishes a $600+ minimum, so the effective rate is at least $600 divided by the measured area."
+      },
+      "checks": [
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 319790,
+        "outputTokens": 4353,
+        "cachedTokens": 264192,
+        "toolCalls": 14,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.019668,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 319790,
+            "outputTokens": 4353,
+            "estimatedCostUsd": 0.019668,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,290 @@
+{
+  "question": "metering-control-instrumentation-wiring",
+  "kind": "pinned",
+  "arm": "A2",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 52.12,
+    "high": 90.6
+  },
+  "range": {
+    "min": 50.65,
+    "max": 90.65
+  },
+  "unit": "m",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.042,
+    "highRatio": 1.441,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 1.3058,
+  "elapsedMs": 399432,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 275562,
+      "band": {
+        "unit": "m",
+        "low": 50.65,
+        "high": 62.91,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components per lineal metre of installed cable route, GST exclusive, NZD, Auckland. Total for 200m nominal = $10,131–$12,583. Conduit is the main driver (~66%, QV t4:r3). Labour for draw-in, terminations, labelling, testing and BMS interface is QV electrician rate x stated judgement hours (~20%). Cable material is from a web supplier price. True allowances (termination consumables) are ~2–3% of the total. Nothing is double counted: the conduit rate is containment only, the cable is material plus separate draw-in labour, and the E8 coax installed rate is not used. Excludes GST, P&G, margin and design."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 1212739,
+        "outputTokens": 15739,
+        "cachedTokens": 1102566,
+        "modelCalls": 1,
+        "toolCalls": 45,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.408092,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 1212737,
+            "outputTokens": 8884,
+            "estimatedCostUsd": 0.052679,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 2,
+            "outputTokens": 6855,
+            "estimatedCostUsd": 0.3554132,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 1212737,
+            "outputTokens": 8884,
+            "cachedTokens": 1091840,
+            "estimatedCostUsd": 0.052679
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 2,
+            "outputTokens": 6855,
+            "cachedTokens": 10726,
+            "estimatedCostUsd": 0.3554132
+          }
+        ]
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 399428,
+      "band": {
+        "unit": "m",
+        "low": 52.12,
+        "high": 90.6,
+        "centre": "Auckland",
+        "basis": "Sum of components per lineal metre of installed cable route, GST exclusive. 200m nominal total $10,425-$18,119, most likely about $14,000 (about $70/m). The conduit bracket (QV t4:r3 to t4:r14) is about 65% of cost. The cable is a QV TPS proxy with a stated uplift. Termination/testing labour is the QV hourly rate times judged hours. Judgement-based items are about 18% of the total. Confidence is low because the two QV conduit rates differ without explanation, the cable supply rate is a proxy, and labour hours are not published."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 1599045,
+        "outputTokens": 19729,
+        "cachedTokens": 1475016,
+        "modelCalls": 4,
+        "toolCalls": 69,
+        "searchCalls": 8,
+        "estimatedCostUsd": 0.443189,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 1599039,
+            "outputTokens": 13560,
+            "estimatedCostUsd": 0.072951,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 6169,
+            "estimatedCostUsd": 0.3702376,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 573705,
+            "outputTokens": 6311,
+            "cachedTokens": 493568,
+            "estimatedCostUsd": 0.030632
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 179534,
+            "outputTokens": 3546,
+            "cachedTokens": 132608,
+            "estimatedCostUsd": 0.007792
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 845800,
+            "outputTokens": 3703,
+            "cachedTokens": 763392,
+            "estimatedCostUsd": 0.034527
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 6169,
+            "cachedTokens": 85448,
+            "estimatedCostUsd": 0.3702376
+          }
+        ]
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 355496,
+      "band": {
+        "unit": "m",
+        "low": 52.8,
+        "high": 90.65,
+        "centre": "Auckland",
+        "basis": "Sum of components per metre of installed route: conduit $34.70-$60.00 (QV E1/E2) + cable supply $3.72-$3.89 (ECS web) + labour build-ups at QV Auckland electrician $83.65/h (cable draw-in $4.18-$8.37, terminations $3.35-$5.02, testing $2.09-$3.35, BMS interface $1.67-$3.35, labelling $0.84-$1.67) + allowances $2.25-$5.00. Total for 200m nominal: $10,560-$18,129, centre about $14,300 (about $72/m). Pure allowances are 4-6% of total; judged labour hours on a cited rate add about 15%. Main uncertainty: the unexplained QV conduit tier spread. If $83.65/h is a base rate rather than charge-out, labour lines rise about $500-$1,000. GST, preliminaries, margin and all listed exclusions are not included."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 902879,
+        "outputTokens": 18828,
+        "cachedTokens": 850313,
+        "modelCalls": 4,
+        "toolCalls": 55,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.454566,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 902873,
+            "outputTokens": 11143,
+            "estimatedCostUsd": 0.041154,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 7685,
+            "estimatedCostUsd": 0.4134122,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 576394,
+            "outputTokens": 6538,
+            "cachedTokens": 503040,
+            "estimatedCostUsd": 0.029635
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 230481,
+            "outputTokens": 3272,
+            "cachedTokens": 185600,
+            "estimatedCostUsd": 0.00798
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 95998,
+            "outputTokens": 1333,
+            "cachedTokens": 74752,
+            "estimatedCostUsd": 0.003539
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 7685,
+            "cachedTokens": 86921,
+            "estimatedCostUsd": 0.4134122
+          }
+        ]
+      }
+    }
+  ]
+}

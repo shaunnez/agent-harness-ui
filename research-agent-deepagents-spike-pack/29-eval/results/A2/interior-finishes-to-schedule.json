@@ -1,0 +1,278 @@
+{
+  "question": "interior-finishes-to-schedule",
+  "kind": "pinned",
+  "arm": "A2",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 139000,
+    "high": 173000
+  },
+  "range": {
+    "min": 137000,
+    "max": 175000
+  },
+  "unit": "sum",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.022,
+    "highRatio": 1.048,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 1.4144,
+  "elapsedMs": 394440,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 267827,
+      "band": {
+        "unit": "sum",
+        "low": 139000,
+        "high": 167000,
+        "centre": "Auckland",
+        "basis": "Sum of 12 QV-cited lines plus 4 minor allowances ($6.8k-$15.1k, 5-9% of total). No double counting: skirting supply and paint are separate build-up components, and the MDF backing is added because the T&G proxy excludes a substrate. Midpoint about $153k, or $191/m2 over 800 m2 NLA. GST, preliminaries and margin are excluded. Confidence is medium because carpet, vinyl, LVT, battens and smoothing compound all use proxy rows."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 12,
+        "rowsFound": 12,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 264152,
+        "outputTokens": 17817,
+        "cachedTokens": 201702,
+        "modelCalls": 1,
+        "toolCalls": 44,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.446751,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 264150,
+            "outputTokens": 9637,
+            "estimatedCostUsd": 0.014046,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 2,
+            "outputTokens": 8180,
+            "estimatedCostUsd": 0.4327052,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 264150,
+            "outputTokens": 9637,
+            "cachedTokens": 190976,
+            "estimatedCostUsd": 0.014046
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 2,
+            "outputTokens": 8180,
+            "cachedTokens": 10726,
+            "estimatedCostUsd": 0.4327052
+          }
+        ]
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 394437,
+      "band": {
+        "unit": "sum",
+        "low": 137000,
+        "high": 175000,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components at QV Auckland rates, most as stated proxies with adjustments, plus minor allowances. Allowances are $16.6k–$30.9k, about 12–18% of the total. Centre about $156,000, about $195/m2 over 800 m2 NLA. GST, preliminaries and margin are excluded."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 8,
+        "rowsFound": 8,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 6
+      },
+      "usage": {
+        "inputTokens": 355580,
+        "outputTokens": 21959,
+        "cachedTokens": 290534,
+        "modelCalls": 1,
+        "toolCalls": 55,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.492462,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 355578,
+            "outputTokens": 13247,
+            "estimatedCostUsd": 0.030685,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 2,
+            "outputTokens": 8712,
+            "estimatedCostUsd": 0.4617772,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 355578,
+            "outputTokens": 13247,
+            "cachedTokens": 279808,
+            "estimatedCostUsd": 0.030685
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 2,
+            "outputTokens": 8712,
+            "cachedTokens": 10726,
+            "estimatedCostUsd": 0.4617772
+          }
+        ]
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 283477,
+      "band": {
+        "unit": "sum",
+        "low": 140000,
+        "high": 173000,
+        "centre": "Auckland",
+        "basis": "Sum of nine QV-cited components ($126,370-$146,634) plus five minor allowances ($13,560-$26,100), rounded. Allowances are about 10-15% of the total. Equals about $175-$216/m2 over the 800 m2 NLA. GST exclusive, NZD. Excludes preliminaries and margin. Confidence is medium because every finish is priced from a proxy row: carpet grade, LVT wear layer and the batten assembly are the main spec gaps."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 9,
+        "rowsFound": 9,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 525381,
+        "outputTokens": 18243,
+        "cachedTokens": 446694,
+        "modelCalls": 1,
+        "toolCalls": 45,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.475142,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 525379,
+            "outputTokens": 8938,
+            "estimatedCostUsd": 0.033305,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 2,
+            "outputTokens": 9305,
+            "estimatedCostUsd": 0.4418372,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 525379,
+            "outputTokens": 8938,
+            "cachedTokens": 435968,
+            "estimatedCostUsd": 0.033305
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 2,
+            "outputTokens": 9305,
+            "cachedTokens": 10726,
+            "estimatedCostUsd": 0.4418372
+          }
+        ]
+      }
+    }
+  ]
+}

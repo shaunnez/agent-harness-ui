@@ -1,10 +1,12 @@
 # Handoff: scoping, the pack runtime, and a paused eval
 
 24 September 2026. **Start here after compaction.** Branch `claude/research-projects-backend`.
-Pushed at `f33781d` (slice A backend + PlanCheck source); everything below is uncommitted on disk.
+The build below is committed (`5daabd8`); eval results are committed as they land.
 Plan: `28-SCOPE-PACK-EVAL-PLAN.md`. Frozen eval: `29-EVAL-PREREGISTRATION.md`.
 
-Shaun stopped the eval: "Stop them, we'll try later." Nothing is running. Resume only when he says.
+Shaun resumed the eval later on 24 September ("re-run luna alone the luna with opus"). A3 is
+complete; A2 was running when this was last committed (10 of 13). The runner skips recorded
+questions, so `node scripts/research-eval-local.mjs --arm A2` finishes whatever is left.
 
 ## Built this session (`npm test` 872 pass, `test:frontier` 169, typecheck and lint clean)
 
@@ -50,11 +52,11 @@ Results: `29-eval/results/<arm>/<question>.json`. Runs hit by Luna capacity are 
 
 **Metric:** agreed, with every component of every run `qv-found`, `web-verified` or `allowance`.
 
-| Arm | Assessed | Pass | Cost / question | Wall time / question | Per run |
-|---|---|---|---|---|---|
-| A0 Opus 5.5 alone | 13 of 13 | 5 | $2.99 avg ($1.74–$4.80) | 140 s | 122 s |
-| A3 Luna alone | 8 of 13 | 3 | $0.06 avg | 225 s | ~190 s |
-| A2 Luna → Opus | 0 of 13 | — | ~$1.45 expected (smoke) | ~6 min expected | ~340 s |
+| Arm | Assessed | Pass | Cost / question | Wall time / question |
+|---|---|---|---|---|
+| A0 Opus 5.5 alone | 13 of 13 | 5 | $2.99 avg ($1.74–$4.80) | 140 s |
+| A3 Luna alone | 13 of 13 | 4 | $0.06 avg | 204 s |
+| A2 Luna → Opus | 10 of 13 (running) | 4 | $1.45 avg | 449 s |
 
 A0 by question: passes are facade, concrete paving, door hardware, interior finishes and roof
 (open-a3). Roller doors is disputed: only one of three runs found a band. Agreed but a component failed its check: emergency lighting
@@ -63,20 +65,30 @@ not on the page; all three runs gave an identical $270–420). Disputed: solar (
 open-a1 (2.17×), site electrical (1.33×, $4.80). Not established: HV network supply, which is the
 right answer and means no arm can score above 12 of 13.
 
-A3 by question: passes are door hardware, emergency lighting, metering wiring. Disputed: facade
+A3 by question: passes are door hardware, emergency lighting, metering wiring, site electrical.
+Not established: HV network supply. Disputed: open-a1, open-a2, open-a3 (as well as the three below). Disputed: facade
 (high 1.42×), concrete paving (the runs' units differed), roller doors (1.42×/1.38×). Agreed but
 failed checks: interior finishes (1 QV row missing), solar (3 web quotes unverified; only two runs
 banded).
 
-**Paused because GPT-6 Luna returned "Selected model is at capacity"** on 3 A3 questions (site
+A2 so far: passes are facade, emergency lighting, interior finishes, solar. Disputed: concrete
+paving, metering wiring, door hardware, roller doors, site electrical. Not established: HV network
+supply. Left: open-a1, open-a2, open-a3.
+
+**Earlier pause (resolved):** GPT-6 Luna returned "Selected model is at capacity"** on 3 A3 questions (site
 electrical, HV network supply, open-a1) and on 2 of 3 A2 runs of the first question. A retrieval
 failure fails before Opus runs, so it costs little, but any failed run makes the question
 incomplete and it must be re-run whole.
 
 ## Waiting on Shaun
 
-- **When to resume.** Order: A3's three set-aside questions (cheap, ChatGPT plan), then A2 in full.
-  Check Luna capacity first with one scope call (`ResearchScoper`, about $0.001).
+- **Sol as a fourth arm?** Offered, not approved. GPT-6 Sol was measured earlier only on 7 scopes
+  with its own prompt (`26-CODEX-BASELINE-RESULT.md`), so it has no score on this set. Adding it
+  changes the pre-registered eval and needs Shaun's go-ahead.
+- **Where research lives** (advice only, not decided): PlanCheck must run in dev and prod, so it
+  cannot call the harness. Advised a PlanCheck-owned research request queue that the harness pulls
+  from and posts approved answers back to, replaceable later by a hosted worker; flagged plan
+  terms and usage limits for production use of the subscriptions.
 - Done: the lone-band fix (Shaun: "Fix and commit and push"). A question where one of several runs
   found a band is `disputed` (`loneBand`), results re-scored, correction recorded in doc 29. Two
   banded runs that agree still count as agreed; revisit only if Shaun asks.

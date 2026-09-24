@@ -1,0 +1,310 @@
+{
+  "question": "acp-facade-cladding-install",
+  "kind": "pinned",
+  "arm": "A2",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 687,
+    "high": 1005
+  },
+  "range": {
+    "min": 678,
+    "max": 1072
+  },
+  "unit": "m2 net cladding face area",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.077,
+    "highRatio": 1.077,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 1.5314,
+  "elapsedMs": 428381,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 392790,
+      "band": {
+        "unit": "m2 net cladding face area",
+        "low": 730,
+        "high": 1005,
+        "centre": "Auckland",
+        "basis": "Sum of components: $328,320-452,164 for 450 m2 net = $729.6-1,004.8/m2, GST exclusive, NZD, Auckland. The three main drivers (panels, carrier, flashings) come from QV proxies with stated uplifts; allowances are 4-6% of the total. Confidence is low because (a) QV does not say whether its ACP rates include the carrier, a double-count risk of up to about $175/m2, and (b) the 3mm PVDF flashing rate is a judgement uplift on a 0.95mm row. Preliminaries, margin, GST and all listed exclusions are not priced."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 612737,
+        "outputTokens": 21973,
+        "cachedTokens": 555070,
+        "modelCalls": 4,
+        "toolCalls": 61,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.492132,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 612731,
+            "outputTokens": 14839,
+            "estimatedCostUsd": 0.02692,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 7134,
+            "estimatedCostUsd": 0.4652124,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 219625,
+            "outputTokens": 6537,
+            "cachedTokens": 163328,
+            "estimatedCostUsd": 0.010531
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 200310,
+            "outputTokens": 2845,
+            "cachedTokens": 155904,
+            "estimatedCostUsd": 0.007422
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 192796,
+            "outputTokens": 5457,
+            "cachedTokens": 144896,
+            "estimatedCostUsd": 0.008967
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 7134,
+            "cachedTokens": 90942,
+            "estimatedCostUsd": 0.4652124
+          }
+        ]
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 428375,
+      "band": {
+        "unit": "$/m2 net cladding face area",
+        "low": 687,
+        "high": 1072,
+        "centre": "Wellington",
+        "basis": "Sum of components, GST exclusive NZD. 450 m2 total $309,040-482,244. Main drivers (panel, subframe, flashings, lift) priced from QV proxies with stated adjustments; allowances ~5-6% of total. Confidence low: E1 is a broad-range proxy with undocumented inclusions, subframe and 3mm PVDF flashings are uplifted from thinner/steel proxies, and if E1 includes a carrier the subframe line double-counts (~$590-900/m2 would result)."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 604064,
+        "outputTokens": 23006,
+        "cachedTokens": 565888,
+        "modelCalls": 4,
+        "toolCalls": 56,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.528268,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 604058,
+            "outputTokens": 14465,
+            "estimatedCostUsd": 0.025429,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 8541,
+            "estimatedCostUsd": 0.5028392,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 163342,
+            "outputTokens": 7034,
+            "cachedTokens": 128512,
+            "estimatedCostUsd": 0.008285
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 251622,
+            "outputTokens": 4785,
+            "cachedTokens": 204800,
+            "estimatedCostUsd": 0.009123
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 189094,
+            "outputTokens": 2646,
+            "cachedTokens": 135680,
+            "estimatedCostUsd": 0.008021
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 8541,
+            "cachedTokens": 96896,
+            "estimatedCostUsd": 0.5028392
+          }
+        ]
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 409532,
+      "band": {
+        "unit": "m2 net cladding face area (openings deducted)",
+        "low": 678,
+        "high": 995,
+        "centre": "Auckland",
+        "basis": "Sum of the components above. 450 m2 total = 305,125 low to 447,604 high (GST excl, NZD). Panels 206,100-279,000, subframe 45,000-76,500, flashings 37,240-63,840, boom 8,410-12,014, allowances 8,375-16,250 (about 3% of the total). QV rows are nationally uniform for the ACP and boom items and Auckland rates are used for the rest. Confidence is low because every main driver (panel system, aluminium subframe, 3mm PVDF flashings) is a close QV row with a judgement uplift, not a matching rate. Possible double count: if the QV ACP system rate already includes a carrier, the subframe component should be removed. Excludes preliminaries, margin, design, consent, air barrier, fire barriers, scaffold and producer statements, as instructed."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 641563,
+        "outputTokens": 22597,
+        "cachedTokens": 588365,
+        "modelCalls": 4,
+        "toolCalls": 57,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.510979,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 641557,
+            "outputTokens": 14829,
+            "estimatedCostUsd": 0.035887,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 7768,
+            "estimatedCostUsd": 0.4750922,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 164089,
+            "outputTokens": 7406,
+            "cachedTokens": 113408,
+            "estimatedCostUsd": 0.009905
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 200540,
+            "outputTokens": 2419,
+            "cachedTokens": 156160,
+            "estimatedCostUsd": 0.007209
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 276928,
+            "outputTokens": 5004,
+            "cachedTokens": 224256,
+            "estimatedCostUsd": 0.018773
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 7768,
+            "cachedTokens": 94541,
+            "estimatedCostUsd": 0.4750922
+          }
+        ]
+      }
+    }
+  ]
+}

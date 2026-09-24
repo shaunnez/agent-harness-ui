@@ -1,0 +1,271 @@
+{
+  "question": "network-supply-connection-hv-metering",
+  "kind": "pinned",
+  "arm": "A2",
+  "status": "not_established",
+  "passes": false,
+  "consensus": null,
+  "range": null,
+  "unit": null,
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": null,
+    "highRatio": null,
+    "runsWithBand": 0,
+    "runsTotal": 3
+  },
+  "costUsd": 1.2839,
+  "elapsedMs": 481363,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 396330,
+      "band": null,
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 1263762,
+        "outputTokens": 17643,
+        "cachedTokens": 1151424,
+        "modelCalls": 4,
+        "toolCalls": 65,
+        "searchCalls": 8,
+        "estimatedCostUsd": 0.421661,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 1263756,
+            "outputTokens": 13179,
+            "estimatedCostUsd": 0.06453500000000001,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 4464,
+            "estimatedCostUsd": 0.35712639999999995,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 685861,
+            "outputTokens": 6390,
+            "cachedTokens": 585984,
+            "estimatedCostUsd": 0.036488
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 359478,
+            "outputTokens": 3368,
+            "cachedTokens": 298752,
+            "estimatedCostUsd": 0.020646
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 218417,
+            "outputTokens": 3421,
+            "cachedTokens": 179456,
+            "estimatedCostUsd": 0.007401
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 4464,
+            "cachedTokens": 87232,
+            "estimatedCostUsd": 0.35712639999999995
+          }
+        ]
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 481359,
+      "band": null,
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 1217444,
+        "outputTokens": 21932,
+        "cachedTokens": 1121770,
+        "modelCalls": 4,
+        "toolCalls": 74,
+        "searchCalls": 7,
+        "estimatedCostUsd": 0.449376,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 1217438,
+            "outputTokens": 16478,
+            "estimatedCostUsd": 0.069499,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 5454,
+            "estimatedCostUsd": 0.37987719999999997,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 517039,
+            "outputTokens": 8940,
+            "cachedTokens": 438784,
+            "estimatedCostUsd": 0.031132
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 427740,
+            "outputTokens": 4059,
+            "cachedTokens": 369920,
+            "estimatedCostUsd": 0.022007
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 272659,
+            "outputTokens": 3479,
+            "cachedTokens": 226560,
+            "estimatedCostUsd": 0.01636
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 5454,
+            "cachedTokens": 86506,
+            "estimatedCostUsd": 0.37987719999999997
+          }
+        ]
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 395753,
+      "band": null,
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 1393962,
+        "outputTokens": 18344,
+        "cachedTokens": 1274447,
+        "modelCalls": 4,
+        "toolCalls": 78,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.412839,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 1393956,
+            "outputTokens": 14016,
+            "estimatedCostUsd": 0.07466300000000001,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 4328,
+            "estimatedCostUsd": 0.33817579999999997,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 544497,
+            "outputTokens": 5482,
+            "cachedTokens": 474368,
+            "estimatedCostUsd": 0.027625
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 418137,
+            "outputTokens": 4379,
+            "cachedTokens": 367872,
+            "estimatedCostUsd": 0.020695
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 431322,
+            "outputTokens": 4155,
+            "cachedTokens": 350208,
+            "estimatedCostUsd": 0.026343
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 4328,
+            "cachedTokens": 81999,
+            "estimatedCostUsd": 0.33817579999999997
+          }
+        ]
+      }
+    }
+  ]
+}

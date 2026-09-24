@@ -1,0 +1,302 @@
+{
+  "question": "door-hardware-sets",
+  "kind": "pinned",
+  "arm": "A2",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 2190,
+    "high": 2640
+  },
+  "range": {
+    "min": 1760,
+    "max": 2870
+  },
+  "unit": "ea (per leaf, complete set fitted)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.392,
+    "highRatio": 1.323,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 1.4813,
+  "elapsedMs": 535424,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 442419,
+      "band": {
+        "unit": "ea (per leaf, complete set fitted)",
+        "low": 1760,
+        "high": 2170,
+        "centre": "Auckland",
+        "basis": "Sum of component rows, excl. GST, Auckland 2026. Lock body + furniture + cylinder + closer + hinges + stop + labour + two minor allowances. Allowances are $30–60 per leaf, about 2–3% of the total. The QV LCN closer ($800–880) is the main driver and is probably conservative for an EN 1154 size 3 closer. Finish uplifts to SSS are judgement. 25-leaf total is about $44k–$54k."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "web-unverified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 1,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 1799957,
+        "outputTokens": 22788,
+        "cachedTokens": 1709492,
+        "modelCalls": 3,
+        "toolCalls": 67,
+        "searchCalls": 7,
+        "estimatedCostUsd": 0.485395,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 1799951,
+            "outputTokens": 16412,
+            "estimatedCostUsd": 0.081073,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 6376,
+            "estimatedCostUsd": 0.40432239999999997,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 1312168,
+            "outputTokens": 11218,
+            "cachedTokens": 1189888,
+            "estimatedCostUsd": 0.056667
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 487783,
+            "outputTokens": 5194,
+            "cachedTokens": 428032,
+            "estimatedCostUsd": 0.024406
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 6376,
+            "cachedTokens": 91572,
+            "estimatedCostUsd": 0.40432239999999997
+          }
+        ]
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 310998,
+      "band": {
+        "unit": "ea (per door leaf, complete set fitted)",
+        "low": 2450,
+        "high": 2870,
+        "centre": "Auckland",
+        "basis": "Sum of components: low $2,466, high $2,864, rounded. All main cost drivers come from QV Auckland rates plus the Allegion 2025 price book for the cylinder. Allowances are about 2% of the total. The lock and closer rows are heavier-duty proxies and don't confirm finish. The lock row may include furniture or a cylinder, which would reduce the band by up to about $300-500 per leaf. GST exclusive, NZD, no preliminaries or margin. 25 leaves is about $61k-$72k."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-unverified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 1,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 576767,
+        "outputTokens": 17594,
+        "cachedTokens": 566058,
+        "modelCalls": 4,
+        "toolCalls": 53,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.445635,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 576761,
+            "outputTokens": 10528,
+            "estimatedCostUsd": 0.028913,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 7066,
+            "estimatedCostUsd": 0.41672200000000004,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 280081,
+            "outputTokens": 5759,
+            "cachedTokens": 229632,
+            "estimatedCostUsd": 0.019002
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 103767,
+            "outputTokens": 1222,
+            "cachedTokens": 84992,
+            "estimatedCostUsd": 0.003338
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 192913,
+            "outputTokens": 3547,
+            "cachedTokens": 161024,
+            "estimatedCostUsd": 0.006573
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 7066,
+            "cachedTokens": 90410,
+            "estimatedCostUsd": 0.41672200000000004
+          }
+        ]
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 535422,
+      "band": {
+        "unit": "ea (per leaf, complete set fitted)",
+        "low": 2190,
+        "high": 2640,
+        "centre": "Auckland",
+        "basis": "Sum of components, GST exclusive, NZD. QV supply rows cover lockset, closer, hinges and stop. Labour uses Methvin fix-only norms (lockset, closer) at the QV Auckland carpenter rate. Keys use the Allegion 2025 price book. Allowances (cylinder upgrade, minor fitting labour, master-key setup, site setup/handover) total $167-307, about 8-12% of the band. The furniture row E3 is not added because the lockset row is assumed to include trim. If the QV lock/closer/stop rows already include fixing, the labour lines partly double-count and the result trends to the low end. Confidence is low: the lockset and closer rows are functional and spec proxies with unverified inclusions. The uncited $620-880 figure in the scope text was not used because it conflicts with the pack. 25 leaves = about $54,800-66,000."
+      },
+      "checks": [
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "web-unverified",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 1,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 1810518,
+        "outputTokens": 28823,
+        "cachedTokens": 1690398,
+        "modelCalls": 4,
+        "toolCalls": 90,
+        "searchCalls": 5,
+        "estimatedCostUsd": 0.550261,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 1810512,
+            "outputTokens": 19529,
+            "estimatedCostUsd": 0.082745,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 9294,
+            "estimatedCostUsd": 0.46751639999999994,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 611876,
+            "outputTokens": 9680,
+            "cachedTokens": 539648,
+            "estimatedCostUsd": 0.032499
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 217190,
+            "outputTokens": 2666,
+            "cachedTokens": 182528,
+            "estimatedCostUsd": 0.006624
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 981446,
+            "outputTokens": 7183,
+            "cachedTokens": 878080,
+            "estimatedCostUsd": 0.043622
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 9294,
+            "cachedTokens": 90142,
+            "estimatedCostUsd": 0.46751639999999994
+          }
+        ]
+      }
+    }
+  ]
+}

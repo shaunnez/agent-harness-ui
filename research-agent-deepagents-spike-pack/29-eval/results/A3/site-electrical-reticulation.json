@@ -1,0 +1,188 @@
+{
+  "question": "site-electrical-reticulation",
+  "kind": "pinned",
+  "arm": "A3",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 122000,
+    "high": 168000
+  },
+  "range": {
+    "min": 116000,
+    "max": 170000
+  },
+  "unit": "sum NZD, GST exclusive, whole site",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.211,
+    "highRatio": 1.269,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1016,
+  "elapsedMs": 236813,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 228050,
+      "band": {
+        "unit": "sum NZD, GST exclusive, whole site",
+        "low": 140500,
+        "high": 170000,
+        "centre": "Auckland",
+        "basis": "Sum of the four separately priced packages above. Indicative midpoint NZD 155,250. Equivalent over the 250 m nominal route: NZD 562–680 per lineal metre, midpoint NZD 621/m. Low confidence reflects unreviewed QV rates, diameter/cable/pit/board proxies, and the pavement reinstatement split. Excludes GST, preliminaries, margin, design, consent fees and all other stated exclusions."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 457076,
+        "outputTokens": 11261,
+        "cachedTokens": 361216,
+        "toolCalls": 64,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.034842,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 457076,
+            "outputTokens": 11261,
+            "estimatedCostUsd": 0.034842,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 236809,
+      "band": {
+        "unit": "NZD lump sum, GST exclusive, Auckland",
+        "low": 116000,
+        "high": 134000,
+        "centre": null,
+        "basis": "Additive cost plan band for the four requested packages: trenching and reinstatement $15,000–$23,250; conduit and cable $78,380–$79,380; pits $11,600–$15,400; board and spurs $10,706–$14,656. Rounded total band. Implied rate over the 250 m nominal route: $464–$536/m, centre $500/m. Allowances are a minor share of the total; confidence remains low because several exact configurations rely on QV proxies."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 8,
+        "rowsFound": 8,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 483458,
+        "outputTokens": 10655,
+        "cachedTokens": 396800,
+        "toolCalls": 45,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.033259,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 483458,
+            "outputTokens": 10655,
+            "estimatedCostUsd": 0.033259,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 193908,
+      "band": {
+        "unit": "sum",
+        "low": 122000,
+        "high": 168000,
+        "centre": "Auckland: NZD 145,000",
+        "basis": "QS working estimate for the fixed scope, GST exclusive, NZD. Approx. $488–$672 per lineal metre over the 250 m nominal route, with a centre of $580/m. Four review groups: trenching and reinstatement approx. $17,000–$26,000; conduit and cable approx. $82,000–$100,000; pits approx. $16,000–$24,000; board and spurs approx. $7,000–$19,000. Low confidence: QV rates are unreviewed, several are proxies, and the hardstand material and pit details affect the result."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 11,
+        "rowsFound": 11,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 422113,
+        "outputTokens": 9885,
+        "cachedTokens": 323840,
+        "toolCalls": 46,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.033545,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 422113,
+            "outputTokens": 9885,
+            "estimatedCostUsd": 0.033545,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}
