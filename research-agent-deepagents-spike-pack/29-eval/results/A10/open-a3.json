@@ -1,0 +1,280 @@
+{
+  "question": "open-a3",
+  "kind": "open",
+  "arm": "A10",
+  "status": "disputed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 92,
+    "high": 135
+  },
+  "range": {
+    "min": 58,
+    "max": 211
+  },
+  "unit": "NZD per m2 of roof area, net change (membrane roof in place less the long-run Coloursteel roof it replaces), GST exclusive",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.655,
+    "highRatio": 1.586,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1112,
+  "elapsedMs": 328766,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 143128,
+      "band": {
+        "unit": "NZD per m2 of roof area, net change (membrane roof in place less the long-run Coloursteel roof it replaces), GST exclusive",
+        "low": 92,
+        "high": 133,
+        "centre": "Auckland",
+        "basis": "Sum of the three priced lines: membrane 123-152 + substrate 77-89 - Coloursteel credit 108 = 92-133 $/m2 net increase; point estimate 113 $/m2, i.e. 110,400 - 159,600 on 1,200 m2 (about 135,000). All three lines are QV CostBuilder rows (AKL), unreviewed, used as proxies where the specification differs; no allowances are used, so no allowance share. Confidence is low because the membrane type and the substrate build-up are undecided and two of the three rows are proxies, and because fall-forming, wind-uplift design and any purlin changes are excluded but could be significant on a real warehouse. Non-additive cross-check: a published Auckland roofing guide (source-1) states 'As a general guide, expect installed membrane roofing in Auckland in the region of $120-$250+ per square metre , with small areas costing more per metre than large open decks.' - that guide is a complete-system guide including edge detailing, so it is quoted only as corroboration of the upper end of lines 1+2 and is not added into the band."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 341085,
+        "outputTokens": 15810,
+        "cachedTokens": 270464,
+        "modelCalls": 9,
+        "toolCalls": 27,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.020891,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 341085,
+            "outputTokens": 15810,
+            "estimatedCostUsd": 0.020891,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 143431,
+      "band": {
+        "unit": "NZD/m2 of roof area - net change (membrane roof incl. substrate, less long-run Coloursteel roof replaced), GST exclusive",
+        "low": 58,
+        "high": 211,
+        "centre": "Auckland",
+        "basis": "Sum of cited QV rows: low = 69 (Soprasun 4AR single layer) + 76 (17mm ply substrate) - 87 (high-rib BB900 0.55mm steel credit) = 58/m2. High = 186 (Sopralene Flam Unilay double layer aggregate) + 89 (CD H3 17mm ply) - 64 (corrugate 0.55mm steel credit) = 211/m2. Midpoint 134.5/m2. On 1200m2: $69,600 / $161,400 / $253,200. Rounded working figure for the cost plan: +$130 to +$135/m2 net, i.e. order $160k on the 1200m2 roof. Spread is driven by the undecided membrane type and profile/spec of the displaced steel roof, not by allowance content - no allowance is used anywhere in the band. Excludes (per pinned scope): removal/disposal of existing roofing, structural changes, insulation/ceiling, flashings/gutters/drainage. If the underlay and safety netting displaced from the steel roof are also credited, add up to ~$27/m2 at the top of the band. Assuming a mid-range torch-on bituminous membrane over new plywood on existing purlins, the best single-point estimate is the midpoint, ~$135/m2 net or ~$160,000 on 1200m2."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 177101,
+        "outputTokens": 17114,
+        "cachedTokens": 132864,
+        "modelCalls": 8,
+        "toolCalls": 25,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.017303,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 177101,
+            "outputTokens": 17114,
+            "estimatedCostUsd": 0.017303,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 151141,
+      "band": {
+        "unit": "NZD/m2 of roof area, net change (membrane roof incl. substrate less long-run Coloursteel roof), GST exclusive",
+        "low": 26,
+        "high": 156,
+        "centre": "Auckland",
+        "basis": "Component sum, not an aggregate row: membrane 115-186 + plywood substrate deck 76-102 less Coloursteel credit 132-165 = low 115+76-165 = 26; high 186+102-132 = 156; mid-point approx 91/m2. On the 1,200 m2 roof: approx $31,000 to $187,000, mid-point approx $109,000. Band width is driven by the undecided membrane type (QV's own membrane rows spread 69-215/m2) and by which long-run profile is being replaced (QV painted rows spread 115-220/m2). Access/edge protection is common to both options and nets out. Excludes per pinned scope: removal/disposal of existing roofing, structural changes, insulation and ceiling, flashings, gutters and drainage. QV rows are unreviewed."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 403840,
+        "outputTokens": 16509,
+        "cachedTokens": 331392,
+        "modelCalls": 10,
+        "toolCalls": 24,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.021767,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 403840,
+            "outputTokens": 16509,
+            "estimatedCostUsd": 0.021767,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 328764,
+      "band": {
+        "unit": "m2 of roof area, net change (membrane roof less long-run ColourSteel roof), Auckland, GST exclusive",
+        "low": 96,
+        "high": 135,
+        "centre": "Auckland",
+        "basis": "Sum of cited components: membrane build-up 213 to 241/m2 (membrane 137-152 + 17mm ply substrate 76-89) less ColourSteel credit 106-117/m2 = net +96 to +135/m2. At 1,200 m2: +$115,200 to +$162,000, midpoint ~$138,600 (~$115.50/m2). Auckland rates; Wellington/Christchurch are within about 3-5% of these rows. No allowances used for any component, so the whole band rests on QV rows (three of them proxies). The band is wide because (a) the membrane type/build-up is undecided and priced on the QV butyl proxy, (b) the substrate is a proxy (flooring/cladding ply, not a purpose-made roof deck), and (c) the ColourSteel profile is undecided (low-rib vs high-rib vs concealed-fix). Excludes removal/disposal of existing roofing, structural changes, insulation/ceiling work, and flashings, gutters and drainage, per the pinned scope. Not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 481185,
+        "outputTokens": 21848,
+        "cachedTokens": 409728,
+        "modelCalls": 12,
+        "toolCalls": 24,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.025057,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 481185,
+            "outputTokens": 21848,
+            "estimatedCostUsd": 0.025057,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 321259,
+      "band": {
+        "unit": "m2 of roof area (net change per m2 = membrane roof in place less the long-run Coloursteel roof it replaces)",
+        "low": 54,
+        "high": 130,
+        "centre": null,
+        "basis": "Straight addition of the three components (sum of lows 115+76-137 = 54; sum of highs 149+97-116 = 130; centre = midpoint 92 $/m2 of roof). Auckland centre, GST exclusive, QV CostBuilder rows only, no allowances used. Over the stated 1,200 m2 of warehouse roof: low $64,800, high $156,000, centre about $110,000 net increase - i.e. a membrane roof costs roughly $55-$130/m2 more than the long-run Coloursteel roof it replaces. Priced as a design-stage substitution (credit for the Coloursteel roof no longer needed), NOT as a retrofit over an existing roof: removal/disposal of existing roofing, flashings, gutters and drainage, insulation, ceiling and structural changes are all excluded per the pinned scope. Assumed membrane: two-layer torch-applied polyester-reinforced SBS bituminous sheet membrane over a new 17-20mm H3.2 structural plywood substrate screwed to the purlins. Confidence low: the membrane build-up and the substrate thickness are undecided (together the whole band), the QV membrane family alone spans $115-$149/m2, and the substrate rests on proxy rows. QV rows are unreviewed trade rates: no allowance has been added for preliminaries, margin, escalation or the contractor's access/set-out, so treat as a cost-plan band, not a price. Cross-check: QV elemental roof for an Auckland warehouse under 20m clear span with Colorsteel cladding is 323.35/m2 of floor area (row cd70564ef8ec5355f54ac2526672ff834c8ae5424dd8a9ce5036fd1cbeae8ab7:t0:r8) for the whole roof element (structure + covering), consistent with a covering-only credit near $120/m2."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 333798,
+        "outputTokens": 22423,
+        "cachedTokens": 253824,
+        "modelCalls": 8,
+        "toolCalls": 26,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.026211,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 333798,
+            "outputTokens": 22423,
+            "estimatedCostUsd": 0.026211,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

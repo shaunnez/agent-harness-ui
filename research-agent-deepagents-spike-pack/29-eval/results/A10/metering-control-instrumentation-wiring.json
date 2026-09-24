@@ -1,0 +1,306 @@
+{
+  "question": "metering-control-instrumentation-wiring",
+  "kind": "pinned",
+  "arm": "A10",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 50.6,
+    "high": 87.91
+  },
+  "range": {
+    "min": 50.18,
+    "max": 87.96
+  },
+  "unit": "$/m of installed control/instrumentation cable route (200m nominal, Auckland, GST exclusive)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.025,
+    "highRatio": 1.046,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1583,
+  "elapsedMs": 400169,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 204585,
+      "band": {
+        "unit": "$/m of installed control/instrumentation cable route (200m nominal, Auckland, GST exclusive)",
+        "low": 50.18,
+        "high": 87.91,
+        "centre": null,
+        "basis": "Sum of eight distinct, non-overlapping components (no component repeats another's inclusions): QV conduit row(s) $34.70-$60.00/m; web cable material $3.03/m; draw-in labour $2.10-$4.20/m; 16 terminations $3.35-$6.69/m; testing $2.50-$5.00/m; BMS cabinet interface $1.67-$3.35/m; labelling $0.84-$1.67/m; scaffold $1.99-$3.97/m. Totals for the 200m nominal quantity: LOW $10,036, HIGH $17,582, CENTRE $13,810. Allowances carry about 23% of the centre (under one third), so the band is established rather than null, but confidence is low: the conduit (60-70% of the total) rests on two QV rows that the library describes identically at $34.70 and $60.00 for the same 20mm/masonry description, and the conduit rate is assumed to include saddles/fixings and to exclude wiring. Cross-check (not added): QV t10:r10 'PVC conduited circuit, based on 12m of conduit' AKL $390 each = $32.50/m all-in for conduit plus a circuit, consistent with the conduit component. Field devices, BMS controller/software/commissioning, new panels/230V supply, trenching/core drilling and after-hours/live-site permits are excluded per the fixed scope."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 2,
+        "rowsMissing": 5,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 690676,
+        "outputTokens": 22282,
+        "cachedTokens": 603008,
+        "modelCalls": 15,
+        "toolCalls": 40,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.028328,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 690676,
+            "outputTokens": 22282,
+            "estimatedCostUsd": 0.028328,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 188811,
+      "band": {
+        "unit": "m",
+        "low": 50.6,
+        "high": 84.1,
+        "centre": "Auckland",
+        "basis": "Sum of seven distinct components per lineal metre of installed cable route: cable material (NZ reseller list price, GST exclusive) + drawing-in labour (allowance at the cited QV Electrician rate) + 20 mm PVC conduit (cited QV rows, low family to high family) + 16 terminations (allowance at the cited QV Electrician rate) + continuity/insulation and 2-loop testing (same) + BMS cabinet interface/schedule/labelling (same) + mobile scaffold hire (cited QV plant hire row). 200 m nominal total = $10,126 low to $16,824 high (mid approx. $13,470). Allowances are about a quarter of the mid total (under one third), so the band is established; but containment, the largest component, spans $34.70-$60.00/m because QV carries two parallel 20 mm conduit families under identical wording and does not say whether saddles/bends are included - that single unresolved item is why confidence is medium rather than high. GST exclusive; excludes preliminaries, margin, design and consents per the stated scope; field devices, BMS controller/software and any 230V supply are excluded. Because QV rates exclude margin and preliminaries, a contractor's selling price will sit above the top of this band."
+      },
+      "checks": [
+        "web-verified",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 3,
+        "rowsMissing": 1,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 669233,
+        "outputTokens": 21881,
+        "cachedTokens": 552320,
+        "modelCalls": 13,
+        "toolCalls": 41,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.032323,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 669233,
+            "outputTokens": 21881,
+            "estimatedCostUsd": 0.032323,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 288957,
+      "band": {
+        "unit": "$ per lineal metre of installed cable route (200 m nominal total, 8 runs averaging 25 m)",
+        "low": 55.4,
+        "high": 93.8,
+        "centre": null,
+        "basis": "Auckland, GST exclusive. Eight distinct components added, no part counted twice: containment (QV installed rate), cable supply (vendor list), cable draw-in (QV proxy), terminations, testing, BMS interface/documentation (QV electrician hourly rate x estimator hours), scaffold hire (vendor rate), sundries (labelled allowance). Totals for the 200 m nominal quantity: low $11,074, high $18,767, midpoint $14,920. Contains no preliminaries, margin, design, consent fees, field devices, BMS controller/software, switchboards, 230 V supply, trenching or core drilling, and no after-hours or above-3 m work, per the fixed scope. Containment is about 63-64% of the band and carries the single widest uncertainty (two apparently identical QV 20 mm rows at AKL 34.7/m and AKL 60/m whose material the row text does not identify, about +/-$25/m). QV-rate-based labour components are 18-20% of the band; the only pure allowance is sundries at 1-2%, so no allowance carries the band. Confidence is low because the containment material is ambiguous and the cable draw-in is a proxy rate, not a measured row."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 1004779,
+        "outputTokens": 30422,
+        "cachedTokens": 897024,
+        "modelCalls": 19,
+        "toolCalls": 45,
+        "searchCalls": 8,
+        "estimatedCostUsd": 0.037108,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1004779,
+            "outputTokens": 30422,
+            "estimatedCostUsd": 0.037108,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 370994,
+      "band": {
+        "unit": "NZD per lineal metre of installed control/instrumentation cable route (GST exclusive, Auckland)",
+        "low": 51.43,
+        "high": 87.96,
+        "centre": "Auckland",
+        "basis": "Sum of 9 distinct components, none double counted: cable material (web, ASI Automation per-metre list price, no trade discount) + cable drawing labour (QV electrician rate x estimated hours) + 20mm PVC conduit s&i (QV Conduits, two identically worded 20mm rows $34.7/$60/m - range carried) + 16 terminations labour (QV electrician rate x estimated hours) + termination materials (allowance) + testing/loop checks (QV electrician rate x estimated hours) + BMS cabinet interface labour (QV electrician rate x estimated hours) + labelling (allowance) + mobile scaffold hire (QV Plant Hire $397/week x 1-2 weeks). Allowances are minor, ~3-4% of the band. The conduit line is ~68-75% of the band and is the principal uncertainty, hence medium (not high) confidence. For the 200m nominal quantity the band is $10,286 - $17,592; a single cost-plan figure of ~$70/m ($14,000 for 200 m) is a reasonable centre. Excludes GST, preliminaries, margin, design, consents, field devices, BMS controller/software/commissioning, switchboards and 230V supply, trenching/core drilling, after-hours, permits and asbestos."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 573590,
+        "outputTokens": 24590,
+        "cachedTokens": 472064,
+        "modelCalls": 11,
+        "toolCalls": 35,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.031399,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 573590,
+            "outputTokens": 24590,
+            "estimatedCostUsd": 0.031399,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 400165,
+      "band": {
+        "unit": "$/m of installed control/instrumentation cable route (measured along the cable route including containment), Auckland, NZD, GST exclusive",
+        "low": 53.14,
+        "high": 91.96,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components, then divided by the 200 m nominal quantity: components total $10,628.46 (low) to $18,392.80 (high), i.e. $53.14/m to $91.96/m. Total for the 200 m nominal quantity: $10,628 to $18,393. Nothing is counted twice: the cable supply is priced from the fetched supplier page and its installation labour is a separate line, so the QV 'installed cable' rows (which include supply) are not used; the conduit row, whose inclusions for saddles/bends/couplings are unstated, has not had those fittings added again. Allowances (termination materials, documentation) are only $290-$780, about 3-4% of the band, well under a third. The wide range is driven almost entirely by one item: QV publishes two identically-headed 20 mm conduit rows (AKL 34.70 and AKL 60.00) without saying what differs, and containment is 65-70% of the band. All labour hour quantities are the QS's judgement applied to the cited QV Electrician rate of $83.65/hr and are the second-largest uncertainty. Confidence is low for those two reasons and because the cable supply rests on a single vendor list page whose unit of measure is not printed. It is a working estimate band for a cost plan, not a certified price. Excluded as instructed: GST, preliminaries, margin, design and consent fees, the field devices, the BMS controller/software/mapping/graphics/commissioning, any new switchboard or 230V supply, trenching, core drilling, after-hours work, isolation permits, asbestos and work above 3 m."
+      },
+      "dropped": true,
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 596630,
+        "outputTokens": 23632,
+        "cachedTokens": 507264,
+        "modelCalls": 12,
+        "toolCalls": 34,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.029106,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 596630,
+            "outputTokens": 23632,
+            "estimatedCostUsd": 0.029106,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // The scope → pack eval (`research-agent-deepagents-spike-pack/29-EVAL-PREREGISTRATION.md`).
 //
-//   node scripts/research-eval.mjs --arm A0|A2|A3|A4|A5|A6|A7|A8|A9 [--only id,id] [--out <dir>]
+//   node scripts/research-eval.mjs --arm A0|A2|A3|A4|A5|A6|A7|A8|A9|A10 [--only id,id] [--out <dir>]
 //   node scripts/research-eval.mjs --rescore [--out <dir>]
 //   node scripts/research-eval.mjs --arm A4 --set <questions.json> --model <model> --out <dir>   (tuning)
 //
@@ -97,6 +97,15 @@ export const ARMS = {
   // Doc 29 addendum A9: A8 with the host's answer check (one revision), the QV-first rule, and five
   // runs per question of which the three closest are scored by the unchanged three-run rule.
   A9: {
+    runtime: "api-loop",
+    model: "opencode-go/deepseek-v4.1-flash",
+    reasoning: null,
+    runs: 5,
+    make: (env) => new ApiLoopResearchRuntime({ env }),
+  },
+  // Doc 29 addendum A10: A9 with the not-a-price rule (check and prompt) and open-a3 pinned to the
+  // net change.
+  A10: {
     runtime: "api-loop",
     model: "opencode-go/deepseek-v4.1-flash",
     reasoning: null,

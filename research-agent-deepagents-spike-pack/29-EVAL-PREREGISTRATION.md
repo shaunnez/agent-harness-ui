@@ -440,3 +440,26 @@ re-run on the new scope.
 
 **Five runs by default (Shaun: "5 is fine for now").** A question in the app now starts five runs,
 of which the three closest are scored. Three runs and a one-run Quick remain available.
+
+**Addendum A10 (25 September, registered before its run).** Shaun: "Do it". This is A9's runtime,
+model, five runs, metric and leader rule, all 13 at once, plus the not-a-price rule (check and
+prompt) and open-a3 on its net-change scope. There is no practice run: the rule was replayed on
+the 612 recorded web citations instead. A10 is reported both on its first three runs and on the
+closest three of five, so it can be set beside the three-run arms.
+
+**A10 run (25 September).** All 13 at once (65 runs), 10.3 minutes, $2.14. One open-a1 run ended
+with no answer (`api_loop_empty_output`), which makes that question incomplete; its other four runs
+would not have agreed anyway. On the closest three of five, **7 agreed and 6 passed, all six fully
+traced**, and **HV supply was correctly unpriced**: all five runs returned no price, the first time
+a DeepSeek arm has done so. On its first three runs alone, A10 agreed 6 and passed 4.
+
+| | Opus A0 | A5 #1 | A5 #2 | A8 | A9 (3 of 5) | A10 first 3 | A10 (3 of 5) |
+|---|---|---|---|---|---|---|---|
+| Passes | 5 | 6 | 4 | 4 | 10 | 4 | 6 |
+| Fully traced | 5 | 5 | 3 | 4 | 7 | 4 | 6 |
+| Right answers (passes, plus HV unpriced) | 6 | 6 | 4 | 4 | 9 (HV's pass was wrong) | 5 | 7 |
+
+Open-a3 on its net-change scope was still disputed: its runs gave 92–133, 58–211, 26–156, 96–135
+and 54–130 per m², a net figure every time but with lows too far apart. Door hardware was disputed for
+the sixth DeepSeek arm running. Concrete paving, which passed in A9, was disputed. Between A9 and A10
+the five-run count moved from 10 to 6, the same size of swing as between A7 and its repeat.
