@@ -1,5 +1,7 @@
 # Model policy, Astra evaluation and automatic routing plan
 
+> Historical long-form plan. Policy fidelity and initial H02/H05 trials have since run. The current provisional role matrix and evaluation evidence are in [MODEL-EVAL-DEFAULT-POLICY-2026-09-23.md](experiments/MODEL-EVAL-DEFAULT-POLICY-2026-09-23.md). The provisional defaults supersede this plan's older no-default-change instruction; the proposed 48-run statistical programme remains optional.
+
 Date: 11 September 2026
 Status: proposed delivery plan; implementation and evaluation runs have not started.
 
