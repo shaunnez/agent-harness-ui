@@ -90,6 +90,15 @@ test("no band anywhere is no price; a missing band, a failed run or one run is r
     "no_price",
   );
 
+  // Two runs agreeing while the third found no source for the main cost: review, never confident.
+  const refused = gradeQuestion({
+    status: "agreed",
+    unitsDiffer: null,
+    runs: [run(100, 150), run(105, 155), empty],
+  });
+  assert.equal(refused.grade, "review");
+  assert.match(refused.reasons.join(" "), /did not price it/);
+
   const lone = gradeQuestion({ status: "disputed", unitsDiffer: null, runs: [run(100, 150), empty, empty] });
   assert.equal(lone.grade, "review");
   assert.match(lone.reasons.join(" "), /Not every run produced a price/);

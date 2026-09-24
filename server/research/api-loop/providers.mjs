@@ -14,6 +14,9 @@ export const API_LOOP_PROVIDERS = Object.freeze({
     label: "OpenCode Go",
     endpoint: "https://opencode.ai/zen/go/v1",
     keyEnv: "OPENCODE_API_KEY",
+    // Go refuses a request without it ("MissingSessionID … cannot be routed efficiently"); one id per
+    // run keeps a run's calls on one route, which is also what lets its prompt cache hit.
+    sessionHeader: "x-opencode-session",
     rates: { "deepseek-v4.1-flash": { input: 0.15, output: 0.6, cacheRead: 0.003 } },
   }),
   baseten: Object.freeze({

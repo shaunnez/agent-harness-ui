@@ -260,6 +260,11 @@ test("PDF capture is deduplicated, readable by physical page and page-grounded",
       }),
       (error) => error.code === "excerpt_not_found",
     );
+    // The after-the-run check finds the page a PDF quote is on when the citation named none, by the
+    // same exact test; a quote on no page stays unfound, and HTML sources are never searched.
+    assert.equal(tools.locatePdfPage(first.result.source.id, "THERMAL PERFORMANCE"), 2);
+    assert.equal(tools.locatePdfPage(first.result.source.id, "not on any page"), null);
+    assert.equal(tools.locatePdfPage("source-unknown", "THERMAL PERFORMANCE"), null);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

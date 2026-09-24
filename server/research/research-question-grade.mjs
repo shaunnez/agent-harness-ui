@@ -7,7 +7,7 @@
 //   | unsure     | disputed, every run priced in one measure, midpoints within 35%,   | the best band and full range, |
 //   |            | every component checked                                            | flagged "wide estimate"       |
 //   | no_price   | every run finished and none produced a band                        | "not established"             |
-//   | review     | anything else                                                      | nothing automatic             |
+//   | review     | anything else, including any run that finished without a price      | nothing automatic             |
 //
 // The best band is the median of the runs' lows and the median of their highs, taken separately.
 // Derived, like the status, and left out of the evidence fingerprint: the same runs always grade
@@ -52,6 +52,11 @@ export function gradeQuestion(record) {
   if (!checked) reasons.push("A source did not check out.");
   const heavy = runs.some((run) => allowanceShare(run.components) >= MAX_ALLOWANCE_SHARE);
   if (heavy) reasons.push("Allowances carry a third or more of a run.");
+  // A run that finished and could not price it is a warning, not a gap to ignore: two runs agreeing
+  // on a switchboard fault study while the third said no source prices it is the case that most
+  // needs a person (proposed after the A6 tuning runs; Shaun approved it, 24 September).
+  if (runs.some((run) => run.status === "completed" && (run.low == null || run.high == null)))
+    reasons.push("A run found no source for the main cost and did not price it.");
   if (!reasons.length && record.status === "agreed") return graded("confident", best, range, []);
 
   const mids = banded.map((run) => (run.low + run.high) / 2);

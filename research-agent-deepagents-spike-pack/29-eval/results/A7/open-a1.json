@@ -1,0 +1,169 @@
+{
+  "question": "open-a1",
+  "kind": "open",
+  "arm": "A7",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 62,
+    "high": 180
+  },
+  "range": {
+    "min": 50,
+    "max": 200
+  },
+  "unit": "m2 of soffit area",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.3,
+    "highRatio": 1.667,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0497,
+  "elapsedMs": 127848,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 88958,
+      "band": {
+        "unit": "m2 of soffit area",
+        "low": 65,
+        "high": 200,
+        "centre": "Auckland",
+        "basis": "Single-component band: specialist Class B asbestos removal and disposal of non-friable cement-sheet soffit lining, $65-$200/m2 (centre approx $115/m2, weighted to the lower half for soffits over about 25 m2). Built on fetched NZ vendor pages, because QV CostBuilder publishes no asbestos or hazardous-materials rows whatsoever (verified: search_qv 'asbestos' returned no rows and list_qv_sections 'asbestos' returned no sections). The nearest QV proxies were examined and rejected as inapplicable: partial-demolition 'Take down suspended ceiling system' AKL $25.40/m2 (no asbestos controls, wrong material), Tipping Fees clean fill AKL $129/t and mixed debris AKL $602/t (asbestos goes to a licensed cell, not these). Confidence low: 3x published spread, one soffit-specific figure dated 2019, and per-m2 outcome is highly area- and access-sensitive. Not a certified price. Excludes replacement soffit, fixed scaffolding, and any per-job clearance certificate."
+      },
+      "checks": [
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 280245,
+        "outputTokens": 12949,
+        "cachedTokens": 235392,
+        "modelCalls": 10,
+        "toolCalls": 24,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.015204,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 280245,
+            "outputTokens": 12949,
+            "estimatedCostUsd": 0.015204,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 127845,
+      "band": {
+        "unit": "m2 of soffit",
+        "low": 50,
+        "high": 120,
+        "centre": "Auckland",
+        "basis": "Band equals component 1 only - the published all-in Class B specialist removal rate for non-friable asbestos-cement soffit sheet per m2 of soffit, GST exclusive, Auckland, priced on: soffit is non-friable cement sheet (Class B), single storey with reasonable ground-level/step-ladder access, sound condition, area over 10 m2 so no minimum charge, disposal to a licensed cell with normal cartage, excluding replacement soffit, scaffolding/EWP, tarps/waterproofing and restoration. Component 2 (disposal gate fee ~$4-$6/m2) is already assumed inside component 1 and is not added. Component 3 (assessor clearance $350-$400 per job) is a per-job item not converted into the per m2 band. Set low = CARE $50/m2 volume B-Class rate; high = CARE 2x uplift for rendered/obscured soffits ($120/m2), consistent with Revolve's published $50-$150/m2 roofing range. Off-form or high-level work and friable (A-Class) material fall outside this band."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 504837,
+        "outputTokens": 16622,
+        "cachedTokens": 454528,
+        "modelCalls": 14,
+        "toolCalls": 28,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.018883,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 504837,
+            "outputTokens": 16622,
+            "estimatedCostUsd": 0.018883,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 79071,
+      "band": {
+        "unit": "m2 of soffit area",
+        "low": 62,
+        "high": 180,
+        "centre": "Auckland",
+        "basis": "Sum of two distinct components, no double counting: (1) licensed Class B specialist removal of bonded asbestos-cement soffit sheeting including containment, wrapping, cartage and disposal at $50-$150/m2, from published NZ removalist rates (Revolve Asbestos cladding range $30-$100/m2 adjusted up for soffit access; CARE's $60/m2 B-Class 'everything'; Chemcare's ~$200/m2 on small areas); plus (2) independent licensed assessor clearance certificate and pre-removal lab testing at $12-$30/m2, being CARE's $400+ B-Class assessor cost and ProLabs' $75+/test expressed on the 40 m2 assumed area. Planning midpoint ~$120/m2. QV CostBuilder contributes NOTHING to this total - a keyword sweep of the library returns zero rows for 'asbestos', 'hazardous' or 'contaminated removal'; QV's nearest benchmarks (Partial Demolition - take down suspended ceiling system $25.40/m2 AKL; Tipping Fees - mixed debris $602/tonne AKL) are non-asbestos strip-out and generic disposal proxies and are NOT added here, to avoid counting the same work twice. GST exclusive, NZD, Auckland. Confidence low: the main driver is sourced from multiple published pages but is commercial removalist guidance rather than a reviewed library rate, and the four undecided scope variables (soffit area, asbestos type and condition, access and height, containment and disposal arrangements) each move the rate substantially."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 297771,
+        "outputTokens": 11729,
+        "cachedTokens": 245504,
+        "modelCalls": 9,
+        "toolCalls": 24,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.015614,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 297771,
+            "outputTokens": 11729,
+            "estimatedCostUsd": 0.015614,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

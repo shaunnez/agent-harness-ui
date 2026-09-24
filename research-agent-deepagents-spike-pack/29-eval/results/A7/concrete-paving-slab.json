@@ -1,0 +1,192 @@
+{
+  "question": "concrete-paving-slab",
+  "kind": "pinned",
+  "arm": "A7",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 166,
+    "high": 222
+  },
+  "range": {
+    "min": 141,
+    "max": 228
+  },
+  "unit": "$/m2 of finished slab, measured on plan (Auckland, Q3 2026, subcontract, excl. GST)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.234,
+    "highRatio": 1.107,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0854,
+  "elapsedMs": 168073,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 150338,
+      "band": {
+        "unit": "$/m2 of finished slab, measured on plan (Auckland, Q3 2026, subcontract, excl. GST)",
+        "low": 174,
+        "high": 222,
+        "centre": "Auckland",
+        "basis": "Sum of the nine distinct components above: $174/m2 low, $222/m2 high, midpoint $198/m2. For the 300 m2 pour area that is $52,290 low, $66,720 high, midpoint about $59,500. All main cost drivers are QV CostBuilder rows (unreviewed) in the Auckland column; the only non-QV items are three small allowances (set-out $2-4/m2, mesh chairs/tie wire $1.50-3.00/m2 folded into the mesh line, and the widened placing rate). No time escalation has been applied - the QV library price level is presented as the Q3 2026 Auckland level per the brief. Cross-check: the QV whole-element rate 'Concrete Slab on Ground 25MPa concrete, pumped and power floated, with edge formwork at 0.4m/m2, Economesh reinforcing mesh, polythene vapour barrier, 150mm hardfill, 25mm sand blinding - 150mm thick' is $199/m2 AKL; adjusted to this scope it lands at about $238/m2, i.e. at the top of or just above this band, hence medium confidence. Band widens materially if the mesh is actually 665 (about $142-190/m2) or if area drops below about 150 m2 / access forces line-pump or barrow placement."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 8,
+        "rowsFound": 8,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 348456,
+        "outputTokens": 29105,
+        "cachedTokens": 305280,
+        "modelCalls": 11,
+        "toolCalls": 34,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.024855,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 348456,
+            "outputTokens": 29105,
+            "estimatedCostUsd": 0.024855,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 168070,
+      "band": {
+        "unit": "$/m2 of finished slab (150mm reinforced concrete paving, GAP40 subbase, broom finish, sawcut joints, falls formed in subgrade)",
+        "low": 166,
+        "high": 228,
+        "centre": "Auckland",
+        "basis": "Sum of the 11 components above, each from a QV CostBuilder Auckland row except the set-out allowance. Low total $165.7/m2, high total $228.2/m2, so the band is $166-228/m2; midpoint ~$197/m2, i.e. $49,700-$68,500 with a midpoint of ~$59,100 for the 300 m2 (20m x 15m) pour area, GST exclusive, subcontract rate, deferring preliminaries, margin, design/consent fees, and all excluded items. Cross-check: QV's composite 150mm slab-on-grade row (Auckland $199/m2, incl. 150mm hardfill, Economesh mesh, polythene, 25mm sand blinding, power float, edge formwork at 0.4 m/m2, pumped 25MPa concrete) adjusted to this scope deducts polythene $7.4 and sand $12.9 and the surplus 0.167 m/m2 of edge formwork ($11), and adds SE92-over-Economesh ($32.8), subgrade trim/compact/cart ($19-25), joints ($2.4-3.5) and set-out ($1.5-4), landing at ~$223-233/m2 - the top of the band, confirming the component route is the optimistic one. Band width is dominated by the SE92 mesh row (item 7 spans $28/m2 of the $62/m2 band); every other component spans ~$10/m2 in total. No escalation to Q3 2026 has been applied to the library base date. QV rows are unreviewed."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 10,
+        "rowsFound": 10,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 381102,
+        "outputTokens": 35375,
+        "cachedTokens": 316032,
+        "modelCalls": 9,
+        "toolCalls": 28,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.031934,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 381102,
+            "outputTokens": 35375,
+            "estimatedCostUsd": 0.031934,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 156328,
+      "band": {
+        "unit": "$/m2 of finished slab (Auckland, Q3 2026, subcontracted trade rate, GST exclusive)",
+        "low": 141,
+        "high": 206,
+        "centre": null,
+        "basis": "Sum of the ten distinct components above, all Auckland QV CostBuilder rows except component J (labelled allowance). Low column = $141.22/m2 = $42,366 for 300 m2; high column = $205.97/m2 = $61,791 for 300 m2; midpoint $173.60/m2 = $52,079. Every component is priced once only: place/finish is taken from the finish-operation rows in the low case and from the paving-by-volume differential in the high case, never both; mesh laps and fixing are assumed inside the QV mesh rows and are not added again; formwork rows are installed rates. Band width is driven by (i) the specification naming both 'SE92' and '(665 grade)', which are priced 2.5x apart ($20.30 vs $52.00/m2), and (ii) whether the slab edge is an F1 paving edge ($33/lm) or a fair-faced F4 edge ($66/lm). Confirm SE92 (200x200x9mm ductile 500E) and the band narrows to about $180-206/m2 ($54,000-61,800); confirm 665 grade 150x150x5.3mm and it narrows to about $141-170/m2 ($42,400-51,000). Cross-check: the QV composite 150mm 25 MPa pumped slab-on-ground row (edge formwork 0.4m/m2, Economesh, polythene, sand blinding, 150mm hardfill) is $199/m2 AKL; substituting SE92, deleting polythene and sand blinding, and re-scaling the formwork to our 70 lm lands at about $195/m2. No preliminaries, margin, GST, design, engineering or consent fees are included, and no excluded item (bulk earthworks, undercut, drainage, ducts, kerbs, thickened or dowelled edges, sealer, line marking, traffic management, dewatering, contaminated spoil) is priced."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 9,
+        "rowsFound": 9,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 466793,
+        "outputTokens": 30558,
+        "cachedTokens": 406528,
+        "modelCalls": 13,
+        "toolCalls": 28,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.028594,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 466793,
+            "outputTokens": 30558,
+            "estimatedCostUsd": 0.028594,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

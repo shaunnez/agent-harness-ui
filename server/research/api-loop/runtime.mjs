@@ -50,10 +50,13 @@ export function apiLoopSystemPrompt(prompt) {
     "Web pages: find them with web_search and read them only with fetch_source; a figure is citable only " +
     "from a page fetched that way. An excerpt is ONE continuous passage copied character for character from " +
     "the fetched text: never join separate passages with '...', never write escape sequences such as \\n, and " +
-    "keep it to the sentence or table row that states the figure. Before finishing, check the largest " +
+    "keep it to the sentence or table row that states the figure. Quote only from fetch_source or " +
+    'read_source text, never from a web_search snippet. For a PDF, "page" is required: the physical page ' +
+    "number fetch_source or read_source gave for the text you quote; a PDF quote without it cannot be checked. " +
+    "Before finishing, check the largest " +
     "component: if it rests on no cited QV row, close proxy or fetched quote, the band is not established. " +
     `You have about ${API_LOOP_SOFT_TOOL_CALLS} tool calls in total: if the main cost is still unsourced by ` +
-    "then, finish with not established rather than keep searching. You may call several tools in one step."
+    "then, finish with not established rather than keep searching."
   );
 }
 

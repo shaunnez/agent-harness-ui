@@ -1,0 +1,178 @@
+{
+  "question": "p-solar",
+  "kind": "pinned",
+  "arm": "A7",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 11750,
+    "high": 22540
+  },
+  "range": {
+    "min": 9950,
+    "max": 22700
+  },
+  "unit": "sum for the whole scope (30 kWp, ~60 panels, ~120 m2 array; mounting system + strengthening + design/PS1)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.211,
+    "highRatio": 1.097,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0836,
+  "elapsedMs": 179185,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 179182,
+      "band": {
+        "unit": "sum for the whole scope (30 kWp, ~60 panels, ~120 m2 array; mounting system + strengthening + design/PS1)",
+        "low": 9950,
+        "high": 20700,
+        "centre": "Auckland",
+        "basis": "Sum of the five components above: mounting hardware $3,000-$5,000 + mounting labour $4,050-$7,650 + supplementary purlins $1,150-$2,950 + purlin bolts/cleats $250-$600 + design and PS1 $1,500-$4,500. GST exclusive, excludes preliminaries and margin, PV modules, inverters, cabling and all electrical work, roof sheet work, scaffolding/edge protection and consent fees, per the scope. Equivalent to $332-$690 per kWp, or $83-$173 per m2 of panel area. Confidence is low and the band is deliberately wide: no QV row exists for the proprietary rail system or for solar mounting labour, so the largest component (mounting system, roughly 60-70% of the total) is built from NZ retail/wholesale component pages plus an Australian per-watt benchmark, and the mounting labour hours are QS judgement on cited QV hourly rates. The strengthening and design legs are stronger: QV purlin/bolt/cleat rows plus a NZ Government cost estimate and published NZ engineering rates. One supplier quote plus one engineer's fixed fee would justify narrowing this to roughly $11,000-$16,000."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 939634,
+        "outputTokens": 25497,
+        "cachedTokens": 840064,
+        "modelCalls": 15,
+        "toolCalls": 47,
+        "searchCalls": 14,
+        "estimatedCostUsd": 0.032754,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 939634,
+            "outputTokens": 25497,
+            "estimatedCostUsd": 0.032754,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 166856,
+      "band": {
+        "unit": "sum for the whole 30 kWp / ~60 panel / ~120 m2 array, mounting + strengthening + design only",
+        "low": 11750,
+        "high": 22700,
+        "centre": "Auckland",
+        "basis": "QV has no solar PV content whatsoever (searched solar/photovoltaic/mounting/clamp/rail across Metalwork, Roof, Frame and Electrical), so this band is assembled from: NZ retail solar mounting hardware (GridFree kit, fetched), QV proprietary purlin rows and QV labour-rate rows for the strengthening, and a published per-kW structural certification table (Gamcorp, fetched) for the PS1 design. Component 1 (mounting system, $8,200-$14,500) is the largest at ~70% of the band; it rests on a fetched NZ retail kit price with a stated trade adjustment plus one labour allowance, so the band is established but of LOW confidence. Roughly $196-$378 per panel, or $392-$757 per kWp. GST exclusive, excludes preliminaries and margin per scope. An exact band cannot be tightened until the engineer fixes bracket spacing and purlin sections, which is precisely what the design fee buys."
+      },
+      "checks": [
+        "web-verified",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 733030,
+        "outputTokens": 21945,
+        "cachedTokens": 664320,
+        "modelCalls": 17,
+        "toolCalls": 43,
+        "searchCalls": 9,
+        "estimatedCostUsd": 0.025466,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 733030,
+            "outputTokens": 21945,
+            "estimatedCostUsd": 0.025466,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 141743,
+      "band": {
+        "unit": "sum for the whole array (30 kWp, ~60 panels, ~120 m2 of panel area, existing steel portal warehouse, Auckland high wind zone)",
+        "low": 12050,
+        "high": 22540,
+        "centre": "Auckland",
+        "basis": "Additive, GST exclusive. Mounting system (rows 1+2): $7,300 low / $11,400 high. Strengthening, one third of the footprint (rows 3+4): $2,350 low / $4,640 high. Structural design and PS1 (rows 5+6): $2,400 low / $6,500 high. Total $12,050 low / $22,540 high, midpoint ~$17,300, i.e. about $400-750 per kWp of array for this scope alone. Reviewed against the published NZ benchmark that mounting hardware is ~10% and labour+installation 15-20% of a fully installed system (solarscout.co.nz) on NZ commercial rooftop pricing of NZD $1,400-1,800/kW (sunergise.nz): this band sits at the upper end of that, reflecting clamped non-penetrating fixings to 0.55 mm trapezoidal ribs on an 8 degree roof, a high wind zone, and supplementary purlins to one third of the footprint. QV CostBuilder contains no solar mounting row; the QV rates used are proprietary purlins, steelwork bolts and bolt-hole drilling. Because the mounting installation labour is a judgement allowance worth roughly 40-45% of the mounting subtotal, confidence is LOW. Excluded per scope: GST, preliminaries, margin, PV modules, inverters, cabling and all electrical work, roof sheet replacement/repair/recoating, scaffolding/edge protection/roof access, consent fees."
+      },
+      "checks": [
+        "web-verified",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 606484,
+        "outputTokens": 19757,
+        "cachedTokens": 526976,
+        "modelCalls": 14,
+        "toolCalls": 33,
+        "searchCalls": 7,
+        "estimatedCostUsd": 0.025361,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 606484,
+            "outputTokens": 19757,
+            "estimatedCostUsd": 0.025361,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

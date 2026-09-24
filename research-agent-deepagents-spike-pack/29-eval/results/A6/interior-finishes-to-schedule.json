@@ -1,0 +1,201 @@
+{
+  "question": "interior-finishes-to-schedule",
+  "kind": "pinned",
+  "arm": "A6",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 144000,
+    "high": 185000
+  },
+  "range": {
+    "min": 138400,
+    "max": 202000
+  },
+  "unit": "sum (whole finishes-schedule package on the 800 m2 NLA floor)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.04,
+    "highRatio": 1.124,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1209,
+  "elapsedMs": 307696,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 307693,
+      "band": {
+        "unit": "sum (whole finishes-schedule package on the 800 m2 NLA floor)",
+        "low": 144000,
+        "high": 202000,
+        "centre": "Auckland CBD",
+        "basis": "Sum of 13 distinct components: the six specified finishes (vinyl wall covering, feature paint, carpet tile, LVT, batten feature wall, MDF skirting), plasterboard substrate prep, latex smoothing to 100% of floor area, trims/transitions, surface protection, skip disposal, site measure/setout, and out-of-hours access loading. GST exclusive; excludes preliminaries, margin, design and consent fees per the brief. Midpoint $173,000 = $216/m2 over 800 m2 NLA, against the brief's $170,000/$213 per m2 — close in total but distributed differently (my smoothing-compound and skirting lines carry more, paint and LVT less). Main cost driver: loose-lay carpet tile, ~40% of the midpoint, on cited QV rows t2:r7/r8; the smoothing compound (~18%) is also fully cited. Proxy substitutions (Type II vinyl wall covering, LVT plank, MUF=MDF skirting, 60mm-centre batten count) and web/allowance items (~6–11% of the band) are why confidence is medium, not high. No allowance carries a main driver."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 9,
+        "rowsFound": 9,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 858281,
+        "outputTokens": 42158,
+        "cachedTokens": 650880,
+        "modelCalls": 13,
+        "toolCalls": 46,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.058358,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 858281,
+            "outputTokens": 42158,
+            "estimatedCostUsd": 0.058358,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 194515,
+      "band": {
+        "unit": "sum (whole finishes-schedule package, one tenancy floor, 800 m2 NLA)",
+        "low": 144000,
+        "high": 185000,
+        "centre": null,
+        "basis": "Sum of the six measured finishes priced from cited QV Auckland rows (vinyl wall covering, acrylic paint, carpet tile, LVT plank, batten wall in three parts, MDF skirting) plus QV-cited latex smoothing compound over 730 m2 and QV-cited floor protection, plus minor allowances (wall substrate prep, trims/transitions, rubbish removal, site measure/setout, out-of-hours loading) which carry about 8% of the low total and 12% of the high. Carpet tile is the largest line at $64k-$73k. No web sources used - QV covered every trade in scope. GST exclusive, Auckland, no preliminaries, margin, design or consent fees. Midpoint $163,000 = $203/m2 over the 800 m2 NLA."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 10,
+        "rowsFound": 10,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 329259,
+        "outputTokens": 24859,
+        "cachedTokens": 235904,
+        "modelCalls": 7,
+        "toolCalls": 48,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.029626,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 329259,
+            "outputTokens": 24859,
+            "estimatedCostUsd": 0.029626,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 215052,
+      "band": {
+        "unit": "sum (whole finishes-schedule package, one 800 m2 NLA tenancy floor)",
+        "low": 138400,
+        "high": 179700,
+        "centre": "Auckland",
+        "basis": "Component-by-component add of Auckland QV CostBuilder rows plus two labelled allowances, GST exclusive. Low $138,400 / high $179,700; midpoint $159,000 = $199/m2 over the 800 m2 NLA. Largest lines: carpet tile 640 m2 $64,000-72,960; latex smoothing compound 730 m2 $24,674-36,500; vinyl wall covering 220 m2 $14,520-15,840; MDF skirting 260 lm $7,930-9,516. Allowances (substrate prep, waste/skip/sundries, measure-setout-out-of-hours) total $6,380-15,200, i.e. 5-8% of the band, well under a third. Excludes GST, preliminaries, margin, design and consent fees, base-build plasterboard/partitions/framing, ceilings, joinery, glazing film, signage, floor levelling beyond smoothing compound, asbestos and existing-finish removal, and scaffolding/hoists/lift protection. QV rows are unreviewed. Widened for the LVT proxy and the batten-wall proxy, which are the two components where QV has no exact row."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 8,
+        "rowsFound": 8,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 456190,
+        "outputTokens": 26419,
+        "cachedTokens": 349184,
+        "modelCalls": 8,
+        "toolCalls": 47,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.03295,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 456190,
+            "outputTokens": 26419,
+            "estimatedCostUsd": 0.03295,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

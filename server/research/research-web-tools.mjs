@@ -32,6 +32,12 @@ export { DEFAULT_SOURCE_BYTE_LIMIT, DEFAULT_SOURCE_TIMEOUT_MS, fetchValidatedSou
 export const DEFAULT_RESEARCH_SOURCE_DIRECTORY = path.resolve(".data", "research-sources");
 const MAX_MODEL_CONTENT_CHARS = 50_000;
 
+/** What one web_search hands the model. Raised from 5 and 2,000 for the API loop's Parallel search,
+ *  whose excerpts carry the price lines a result is worth (24 September). Only runtimes that use the
+ *  host's web_search see it; the CLIs search with their own tools. */
+const MAX_SEARCH_RESULTS = 8;
+const MAX_SNIPPET_CHARACTERS = 3_000;
+
 export class ResearchWebTools {
   #runId;
   #budget;
@@ -243,7 +249,7 @@ export class ResearchWebTools {
     try {
       response = await this.#searchProvider.search(query, {
         market,
-        maxResults: 5,
+        maxResults: MAX_SEARCH_RESULTS,
         signal: this.#signal,
         remainingMs: this.#remainingMs(),
       });
@@ -254,7 +260,7 @@ export class ResearchWebTools {
     const results = [];
     const seen = new Set();
     for (const candidate of response?.results ?? []) {
-      if (results.length === 5) break;
+      if (results.length === MAX_SEARCH_RESULTS) break;
       try {
         await validatePublicSourceUrl(candidate.url, {
           lookup: this.#lookup,
@@ -267,7 +273,7 @@ export class ResearchWebTools {
         results.push({
           title: String(candidate.title ?? "Untitled result").slice(0, 500),
           url: normalizedUrl,
-          snippet: String(candidate.snippet ?? "").slice(0, 2_000),
+          snippet: String(candidate.snippet ?? "").slice(0, MAX_SNIPPET_CHARACTERS),
           ...(candidate.publishedAt ? { publishedAt: String(candidate.publishedAt) } : {}),
         });
       } catch {
@@ -536,6 +542,18 @@ export class ResearchWebTools {
         "The model must not provide quoteVerified; verification is owned by the host.",
       );
     return this.#verifyReference(reference);
+  }
+
+  /**
+   * The physical page of a retained PDF that holds this excerpt, when the citation named none, or
+   * null. Only for the after-the-run check: the page is found by the same exact-substring test the
+   * check then applies, so a quote still has to be on the page word for word. The first page that
+   * holds it wins, and a quote on no page stays unverified.
+   */
+  locatePdfPage(sourceId, excerpt) {
+    const retained = this.#sources.get(String(sourceId ?? ""));
+    if (!retained?.pdf || typeof excerpt !== "string" || !excerpt.trim()) return null;
+    return retained.pdf.pages.find((page) => excerptAppearsIn(page.content, excerpt))?.pageNumber ?? null;
   }
 
   #verifyReference(reference) {

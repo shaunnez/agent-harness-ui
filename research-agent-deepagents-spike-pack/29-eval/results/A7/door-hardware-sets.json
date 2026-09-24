@@ -1,0 +1,187 @@
+{
+  "question": "door-hardware-sets",
+  "kind": "pinned",
+  "arm": "A7",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 965,
+    "high": 1725
+  },
+  "range": {
+    "min": 730,
+    "max": 2480
+  },
+  "unit": "per door leaf (one complete hardware set fitted)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.637,
+    "highRatio": 1.699,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0915,
+  "elapsedMs": 200666,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 171387,
+      "band": {
+        "unit": "per door leaf (one complete hardware set fitted)",
+        "low": 730,
+        "high": 1460,
+        "centre": "Auckland",
+        "basis": "Sum of the eight components above; GST exclusive, NZD, Auckland 2026, one building, one floor, one visit, 25 leaves. Nominal 25-leaf total $18,250 - $36,500. Mid ~$1,095/leaf. QV CostBuilder searched first (Hardware branch: hinges, mortice locks, cylinder locks, closers, door stops, door furniture; plus Labour Rates); web used only for proprietary/vendor pricing and vendor keying charges that QV never publishes. Allowances (restricted cylinder upgrade, keying/keys/handover) total $65-$170/leaf = 9-12% of the band, so the band is not allowance-driven. Confidence medium: the goods prices are cited trade prices for the specified tier, but QV's own comparable rows are ~1.6x trade, and if the schedule names QV's premium institutional items the same scope prices at roughly $2,200-$2,400/leaf. The supplied $620-$880 is reproducible only at the bottom of this band and only with a non-SSS closer."
+      },
+      "checks": [
+        "web-verified",
+        "allowance",
+        "allowance",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 7,
+        "webVerified": 7,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 509382,
+        "outputTokens": 28900,
+        "cachedTokens": 439168,
+        "modelCalls": 11,
+        "toolCalls": 39,
+        "searchCalls": 8,
+        "estimatedCostUsd": 0.02919,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 509382,
+            "outputTokens": 28900,
+            "estimatedCostUsd": 0.02919,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 200662,
+      "band": {
+        "unit": "per door leaf (ea), one complete hardware set fitted",
+        "low": 965,
+        "high": 1725,
+        "centre": "Auckland",
+        "basis": "Sum of the nine components above (no component counted twice: all hardware is priced supply-only at published or vendor rates and all fixing is in the single labour line; QV's mortice-lock row, which bundles 502/514 furniture, has been deliberately excluded to avoid double counting against the separately priced furniture set). Mid-point $1,345/leaf. Nominal 25 leaves: $24,100 - $43,100, mid about $33,600, excl. GST, Auckland, 2026. Allowance-based content (restricted cylinder, keys, set-up) is $135-$270, about 14-16% of the band, so the band is carried by sourced rates. The band is deliberately wide at the top because the two branded items swing on brand: QV's own closer table is LCN at $800-$1,200 and QV's commercial mortice lockset rows are $830-$1,040, so an LCN/Lockwood-Selector-plus-brass-plate schedule would sit above this range, while a value-engineered Dormakaba/Lockwood rose-furniture specification would sit at the bottom. Sensitivity: a fire-rated leaf is out of scope here, but would add a fire-rated closer, certified hinges and intumescent items; a 5-leaf run instead of 25 lifts the amortised lines to roughly $1,010-$1,790/leaf."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 4,
+        "webVerified": 4,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 753622,
+        "outputTokens": 32110,
+        "cachedTokens": 672384,
+        "modelCalls": 15,
+        "toolCalls": 43,
+        "searchCalls": 10,
+        "estimatedCostUsd": 0.033469,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 753622,
+            "outputTokens": 32110,
+            "estimatedCostUsd": 0.033469,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 167929,
+      "band": {
+        "unit": "ea (per door leaf, complete hardware set fitted to that leaf)",
+        "low": 1195,
+        "high": 2480,
+        "centre": "Auckland",
+        "basis": "Sum of the eight components above: low $1,193.60, high $2,479.80, arithmetic mid ~$1,837/leaf. Nominal 25 leaves, one building, one floor, one visit: ~$29,900 (low) to ~$62,000 (high), mid ~$45,900, excl. GST, Auckland, 2026. THE LOW END assumes mid-market NZ vendor hardware (Doric-class mortice lock body, Doric DC-class medium surface-mounted closer at vendor price) on a 2.0 hr fit; THE HIGH END assumes QV's commercial-schedule hardware rows throughout (heavy mortice lock assembly $830, LCN closer with designer cover $800) on a 3.0 hr locksmith-rate fit. The specified set is mid-grade commercial non-fire, which sits in the lower half of this band — a realistic single figure is more like $1,200–$1,500/leaf. NOT INCLUDED: GST, preliminaries, margin, design, consent; the door leaf, frame, hanging and any morticing/machining; access control (readers, electric strikes, mag locks, power supplies, cabling); fire-rated or smoke-seal hardware, intumescent kits, hold-open; roller/sliding/security-grille/panic hardware; scaffolding, access equipment, making good paint or finishes. TWO CAVEATS THAT CONTROL THIS ESTIMATE: (1) QV labels its hinge and door-furniture tables 'Supply Only' but leaves the lock, closer and door-stop tables unlabelled — I have treated every QV hardware row as supply only and priced fitting once; if the lockset and closer rows already include fixing, deduct the labour line ($163–$300/leaf). (2) The QV lock rows quote lever-furniture series codes, so furniture may already be in the lockset rate; no separate furniture row has been added anywhere. NOTE: this band is materially above the $620–$880/leaf in the scenario brief, which the cited supply rates alone do not support."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 9,
+        "rowsFound": 9,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 437559,
+        "outputTokens": 30692,
+        "cachedTokens": 375808,
+        "modelCalls": 10,
+        "toolCalls": 34,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.028805,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 437559,
+            "outputTokens": 30692,
+            "estimatedCostUsd": 0.028805,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

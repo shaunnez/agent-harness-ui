@@ -13,6 +13,7 @@
 //   and asked once more with no tools, so a run that cannot source its main cost says so rather
 //   than searching until the deadline fails it.
 
+import { randomUUID } from "node:crypto";
 import { isFinalAnswerText } from "../claude-cli/stream.mjs";
 import { priceApiUsage, resolveApiModel } from "./providers.mjs";
 
@@ -55,6 +56,7 @@ export async function runChatLoop({
 }) {
   const { provider, remoteModel } = resolveApiModel(model);
   const apiKey = env?.[provider.keyEnv];
+  const headers = provider.sessionHeader ? { [provider.sessionHeader]: `research-${randomUUID()}` } : {};
   const deadline = now() + timeoutMs;
   const byName = new Map(tools.map((tool) => [tool.name, tool]));
   const toolDefinitions = tools.map((tool) => ({
@@ -112,7 +114,7 @@ export async function runChatLoop({
         messages,
         ...(state.wrappedUp ? {} : { tools: toolDefinitions, tool_choice: "auto" }),
       };
-      const reply = await chat({ provider, apiKey, body, fetchImpl, sleep, signal, deadline, now });
+      const reply = await chat({ provider, apiKey, headers, body, fetchImpl, sleep, signal, deadline, now });
       state.modelCalls += 1;
       addUsage(state.totals, reply.usage);
       const choice = reply.choices?.[0] ?? {};
@@ -237,7 +239,7 @@ export async function runChatLoop({
   };
 }
 
-async function chat({ provider, apiKey, body, fetchImpl, sleep, signal, deadline, now }) {
+async function chat({ provider, apiKey, headers, body, fetchImpl, sleep, signal, deadline, now }) {
   for (let attempt = 0; ; attempt += 1) {
     const remaining = deadline - now();
     if (remaining <= 0)
@@ -248,6 +250,7 @@ async function chat({ provider, apiKey, body, fetchImpl, sleep, signal, deadline
       return await chatOnce({
         provider,
         apiKey,
+        headers,
         body,
         fetchImpl,
         signal,
@@ -267,11 +270,11 @@ async function chat({ provider, apiKey, body, fetchImpl, sleep, signal, deadline
   }
 }
 
-async function chatOnce({ provider, apiKey, body, fetchImpl, signal, timeoutMs }) {
+async function chatOnce({ provider, apiKey, headers = {}, body, fetchImpl, signal, timeoutMs }) {
   const timeout = AbortSignal.timeout(timeoutMs);
   const response = await fetchImpl(`${provider.endpoint}/chat/completions`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json", ...headers },
     body: JSON.stringify(body),
     signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
   });

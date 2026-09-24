@@ -6,9 +6,21 @@
 
 const DEFAULT_ENDPOINT = "https://api.parallel.ai/v1/search";
 const DEFAULT_TIMEOUT_MS = 20_000;
-/** "fast" (~700 ms) rather than "advanced" (~3 s): a run makes about six searches, and the
- *  model, not search, is where its time goes. */
-const DEFAULT_MODE = "fast";
+/** "advanced" (~3-5 s): better ranking, and a run's time is the model's, not search's (about 11%
+ *  of an OpenCode run). Tried 24 September: 10 results, ~1,250 characters of excerpt each, 8 of 10
+ *  on .nz sites for a roofing query. v1 accepts only `objective`, `search_queries` and `mode`:
+ *  `max_results`, `country` and `location` are refused as extra inputs. */
+const DEFAULT_MODE = "advanced";
+
+const MARKETS = { NZ: "New Zealand", AU: "Australian", US: "United States" };
+
+/** Parallel ranks against a stated goal, so the bare query becomes one. */
+export function parallelObjective(query, market = "NZ") {
+  const place = MARKETS[market];
+  return place
+    ? `Find current ${place} prices${market === "NZ" ? " (NZD, GST exclusive)" : ""} for: ${query}`
+    : `Find current published prices for: ${query}`;
+}
 
 export class ParallelSearchProvider {
   #apiKey;
@@ -32,14 +44,18 @@ export class ParallelSearchProvider {
     this.#mode = mode;
   }
 
-  async search(query, { maxResults = 5, signal: callerSignal } = {}) {
+  async search(query, { market = "NZ", maxResults = 8, signal: callerSignal } = {}) {
     let response;
     try {
       const timeoutSignal = AbortSignal.timeout(this.#timeoutMs);
       response = await this.#fetch(this.#endpoint, {
         method: "POST",
         headers: { "x-api-key": this.#apiKey, "Content-Type": "application/json" },
-        body: JSON.stringify({ objective: query, search_queries: [query], mode: this.#mode }),
+        body: JSON.stringify({
+          objective: parallelObjective(query, market),
+          search_queries: [query],
+          mode: this.#mode,
+        }),
         signal: callerSignal ? AbortSignal.any([callerSignal, timeoutSignal]) : timeoutSignal,
       });
     } catch (error) {
@@ -58,7 +74,7 @@ export class ParallelSearchProvider {
       results: (payload.results ?? []).slice(0, maxResults).map((result) => ({
         title: String(result.title ?? "Untitled result").slice(0, 500),
         url: String(result.url ?? ""),
-        snippet: (Array.isArray(result.excerpts) ? result.excerpts.join(" … ") : "").slice(0, 2_000),
+        snippet: (Array.isArray(result.excerpts) ? result.excerpts.join(" … ") : "").slice(0, 3_000),
         ...(result.publish_date ? { publishedAt: String(result.publish_date) } : {}),
       })),
       metadata: {

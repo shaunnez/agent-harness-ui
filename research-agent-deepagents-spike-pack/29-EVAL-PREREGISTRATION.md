@@ -182,3 +182,33 @@ tool calls the model is told to answer and asked once more with no tools. Cost i
 rate card (OpenCode Go DeepSeek 4.1 Flash: $0.15 in, $0.003 cached, $0.60 out per million), an
 API-rate estimate. The question it answers: does the thin loop keep A5's 7 of 13 at lower memory
 and no slower, so it can be the production worker (with Baseten in place of OpenCode Go).
+
+**A6 run (24 September).** All 13 questions at once (39 runs): 1 of 13 passed. Every run finished;
+peak memory 1.66 GB for 39 runs; 6.3 minutes for the set; no rate limits; $1.29 API-rate. Against
+A5: 37 tool calls a run (15), 13 failed web quotes (2), 11 of them PDF rows cited with no page.
+
+## Addendum A7 (24 September, before any A7 run)
+
+Shaun: "Run". A6's runtime after tuning on the three scopes outside the eval; same model, plan, 13
+questions, three runs, metric and leader rule, run all 13 at once. Changes from A6:
+
+- Prompt: quote only from fetched text, never a search snippet; a PDF quote must give its physical
+  page; the "you may call several tools in one step" line removed.
+- Search: Parallel `advanced` mode with the objective "Find current New Zealand prices (NZD, GST
+  exclusive) for: <query>", up to 8 results with excerpts to 3,000 characters (v1 refuses
+  `max_results`, `country` and `location`).
+- Checking (every runtime from now on, approved by Shaun): a PDF quote that names no page is looked
+  for on every retained page of that PDF, still word for word. Results recorded before this keep
+  their checks.
+- Grading (every runtime, approved by Shaun): a question with any finished run that produced no
+  price is Review, never Confident. It does not change the frozen pass metric.
+
+On the tuning scopes: stud walls and benchtop passed with no failed checks; switchboard fault rating,
+unpriced by the Opus baseline, was priced by all three runs ($20k–46k) and read Review only because
+one web quote failed. The eval set was not used for this tuning.
+
+**A7 run (24 September).** All 13 at once: 5 of 13 passed (concrete paving, emergency lighting,
+open-a2, solar, site electrical). 4.9 minutes for the set, peak 1.55 GB for 39 runs, $1.15, no
+errors, 3 failed web quotes. On HV supply one run returned no price and two priced it (disputed,
+Review). Shaun asked for one repeat of A7 unchanged ("Rerun"), to see how much a set of 13 varies
+between runs; it is written to `29-eval/repeat/A7/` and reported beside A7, not as a new arm.

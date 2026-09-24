@@ -1,0 +1,174 @@
+{
+  "question": "open-a2",
+  "kind": "open",
+  "arm": "A6",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 230,
+    "high": 560
+  },
+  "range": {
+    "min": 228.8,
+    "max": 655
+  },
+  "unit": "m2 of building floor area",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.18,
+    "highRatio": 1.401,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0932,
+  "elapsedMs": 234407,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 234404,
+      "band": {
+        "unit": "m2 of building floor area",
+        "low": 228.8,
+        "high": 467.6,
+        "centre": null,
+        "basis": "Christchurch, NZD, GST exclusive, construction of ground improvement only. Sum of the four components: low = 218.8 + 0 + 0 + 10 = 228.8; high = 218.8 + 206.0 + 12.8 + 30 = 467.6. Low end = 1.0 m geogrid-reinforced GAP65 gravel raft at current QV CostBuilder Christchurch rates, treated area about equal to the building footprint. High end = 2.0 m undercut-and-replace with a second geogrid layer plus enabling works. Both ends are supported independently by EQC/Tonkin & Taylor Ground Improvement Programme Table 5.2 (source-2, physical page 26), whose construction-only rates per m2 of treated footprint were: 1.2m thick reinforced gravel raft $176 to $225; 1.2m thick reinforced soil-cement raft $180 to $230; 4m deep stone columns $145 to $195; 4m deep driven timber poles $240 to $270; Horizontal Soil Mixed beams $410 to $522 - over treated areas of 204 m2 to 270 m2 for a 146 m2 house, i.e. $246 to $500 per m2 of building footprint in 2015 dollars. The band therefore covers a shallow replacement raft through to 4 m deep stone columns, but NOT driven timber poles or HSM beams, which sit above the high end. Confidence is LOW: the method and treatment depth are undecided; the QV rows are unreviewed and written for a TC1/TC2 residential house; the EQC rates are 2015 residential cleared-site tender rates; and the treated area can exceed the building footprint by up to about 1.85x, which raises the per-m2-of-floor-area figure. If treatment must extend well beyond the building line, multiply the low-to-mid part of the band by the area ratio. Main cost driver (undercut, disposal, imported hardfill, geogrid) rests on cited QV rows, so the band is established."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 618092,
+        "outputTokens": 22649,
+        "cachedTokens": 508928,
+        "modelCalls": 11,
+        "toolCalls": 32,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.031491,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 618092,
+            "outputTokens": 22649,
+            "estimatedCostUsd": 0.031491,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 195784,
+      "band": {
+        "unit": "$ per m2 of building floor area (GST exclusive)",
+        "low": 230,
+        "high": 655,
+        "centre": "Christchurch",
+        "basis": "Ground improvement construction cost only, Christchurch, 2025 price level (GST-excl). Priced basis = excavate-and-replace ground improvement (QV current Christchurch rates for excavation/disposal, GAP65 hardfill and triaxial geogrid, per m2 of building floor area, 1 m to 3 m treatment depth: $219-$631) plus a small enabling-works allowance ($10-$25). Two independently derived method rates fall inside the band, which is the cross-check: reinforced gravel/soil-cement raft $350-$457 and 4 m stone columns $379-$515 per m2 of floor area (EQC/Tonkin & Taylor 2015 pilot tenders, uplifted 42% per QV CostBuilder's published non-residential construction cost index). Assumptions priced: treatment method not selected (replacement vs densification vs reinforcement); treatment depth 1-3 m; treatment area ~1.4x the building footprint (as QV's own build-up and the pilot both imply); no dewatering or excavation support; design, geotechnical investigation and repairs excluded, as is testing/monitoring unless instructed. Confidence is low and the band is wide because method, depth and footprint are undecided, the web rates are 2015-based, and QV rows are unreviewed. If design requires treatment deeper than ~4 m, expect rates above the top of this band."
+      },
+      "checks": [
+        "qv-found",
+        "allowance",
+        "web-unverified",
+        "web-unverified",
+        "web-unverified"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 3,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 887353,
+        "outputTokens": 30170,
+        "cachedTokens": 788480,
+        "modelCalls": 13,
+        "toolCalls": 44,
+        "searchCalls": 12,
+        "estimatedCostUsd": 0.035298,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 887353,
+            "outputTokens": 30170,
+            "estimatedCostUsd": 0.035298,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 195615,
+      "band": {
+        "unit": "$/m2 of building floor area (GST exclusive, Christchurch)",
+        "low": 270,
+        "high": 560,
+        "centre": null,
+        "basis": "Price basis: construction of the ground improvement only, as a rate per m2 of building floor area, Christchurch, GST excl. Components are ALTERNATIVE methods (replacement/densified crust vs deep stone columns) and are not additive; the band spans them. Centre $420/m2 is QV row f0968d72...:t13:r14 (current Christchurch, import GAP40 + geogrid replacement) and is corroborated by escalating the 2015 published reinforced-gravel-raft rate to today (~$380-$490/m2 of floor area). Low $270/m2 is the QV re-use variant. High $560/m2 is the escalated 2015 stone-column rate. Assumption priced on: a shallow-to-moderate depth solution (MBIE G1-type densified/reinforced crust, roughly 1.2-2m treatment) is the base case, with 4m stone columns as the deep alternative; treatment depth, treated area beyond the footprint, groundwater and lateral-spreading proximity are all site-specific and must come from the geotechnical design. Excluded: building foundations, slab, reinforcing, piles, structural work, geotechnical investigation and design, resource/building consenting, and repairs to existing damage. Not decided / to be confirmed: whether design, verification testing and construction monitoring are in the client's scope (the cited sources all exclude them; if required, add QV professional fee rows d0d1ceed...:t0:r5 Warehouse 7.0-9.0% or r1 1-3 storey administration 11.0-12.5% of construction cost, plus a testing allowance). Prevalence context: liquefaction-induced damage affected approximately 51,000 of the 140,000 urban residential properties in Canterbury and caused approximately 15,000 homes to be damaged beyond economic repair (EQC/T+T Ground Improvement Programme report, p.9); CCC has mapped liquefaction vulnerability across all flat land in Christchurch District, and since November 2021 the Building Code requires the liquefaction hazard at every site to be understood before consent. Confidence is LOW because the method and depth are undecided, the QV TC3 rows are unreviewed residential-guidance build-ups used as a commercial proxy, and the deep-treatment figure rests on 2015 web rates escalated by judgement."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-unverified"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 1,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 573689,
+        "outputTokens": 19346,
+        "cachedTokens": 484736,
+        "modelCalls": 11,
+        "toolCalls": 40,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.026405,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 573689,
+            "outputTokens": 19346,
+            "estimatedCostUsd": 0.026405,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

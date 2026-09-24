@@ -1,0 +1,177 @@
+{
+  "question": "open-a3",
+  "kind": "open",
+  "arm": "A7",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 196,
+    "high": 290
+  },
+  "range": {
+    "min": 82,
+    "max": 304
+  },
+  "unit": "NZD per m2 of roof area, GST exclusive, Auckland",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 2.415,
+    "highRatio": 1.689,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.078,
+  "elapsedMs": 175167,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 122597,
+      "band": {
+        "unit": "NZD per m2 of roof area, GST exclusive, Auckland",
+        "low": 198,
+        "high": 304,
+        "centre": null,
+        "basis": "Membrane roofing in place replacing long-run ColourSteel on a 1200 m2 warehouse roof, covering-only per the pinned scope (excludes removal/disposal, structural change, insulation/ceiling, flashings/gutters/drainage). Components added: membrane covering (QV AKL 115-186) + new plywood substrate deck (QV AKL 77-102) + minor fixing/sundries allowance (6-16) = 198-304/m2; 1200 m2 = $237,600-$364,800 (mid approx $301,000). Component 4 is a zeroed cross-check and does not enter the sum; allowances carry only 3-6% of the total. Assumed build-up: two-layer torch-applied reinforced bituminous membrane over new 19-21mm H3.2 plywood on the existing purlins; falls assumed adequate. Comparator (long-run ColourSteel, NOT added to the band): QV AKL roof covering incl. wire netting, underlay and 0.1m flashing per m2 — BB900/Steelspan/Topspan MagnaFlow 0.55mm $116/m2 (05507449...:t0:r38), LT7 MagnaFlow 0.55mm $117/m2 (t0:r49), corrugate MagnaFlow 0.55mm $91/m2 (t0:r7); sheet-only rows LT7 $88 and BB900 $87 (528b0345...:t1:r29/r36). Cost impact of the switch = +$81 to +$188/m2, approx +$100k to +$225k over 1200 m2; the membrane roof is roughly 1.7x to 2.6x the long-run ColourSteel covering. If no new substrate is required (membrane over an existing sound concrete or metal deck) the band falls to $121-$202/m2. Confidence low because the membrane type and build-up are undecided, the substrate assumption swings about 40% of the total, and QV rows are unreviewed; unpriced risks are tapered falls and any engineer-required strengthening for the added dead load."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 317761,
+        "outputTokens": 21837,
+        "cachedTokens": 254208,
+        "modelCalls": 8,
+        "toolCalls": 22,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.023398,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 317761,
+            "outputTokens": 21837,
+            "estimatedCostUsd": 0.023398,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 131582,
+      "band": {
+        "unit": "NZD per m2 of roof area, GST exclusive",
+        "low": 82,
+        "high": 180,
+        "centre": "Auckland",
+        "basis": "Arithmetic: membrane 115-186 + substrate deck 76-102 - Coloursteel credit 109-108 = 82-180/m2 additional, centre approx. 131/m2 (membrane 150 + deck 89 - coloursteel 108). On the 1200 m2 roof that is approx. $98,000 low, $216,000 high, centre approx. $157,000. Assumed build-up: two-layer torch-on bituminous membrane over a new 17-21mm H3.2 plywood deck fixed to purlins; long-run Coloursteel baseline being replaced; no removal, flashings, gutters, drainage, insulation or structural work; covering-only rates both sides; normal access only. IF A SUITABLE SUBSTRATE ALREADY EXISTS (existing plywood deck or concrete slab), delete the deck component and the impact falls to approx. $6-$78/m2 (centre approx. $42/m2, i.e. approx. $7,000-$94,000 over 1200 m2) - the substrate is the single biggest driver of this comparison, which is why confidence is low. Wellington/Christchurch vary by only a few dollars per m2 on these rows."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 338483,
+        "outputTokens": 23761,
+        "cachedTokens": 277632,
+        "modelCalls": 10,
+        "toolCalls": 28,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.024217,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 338483,
+            "outputTokens": 23761,
+            "estimatedCostUsd": 0.024217,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 175164,
+      "band": {
+        "unit": "NZD per m2 of roof area, GST exclusive",
+        "low": 196,
+        "high": 290,
+        "centre": "Auckland",
+        "basis": "MEMBRANE ROOF IN PLACE, warehouse roof, 1,200 m2 of roof area. Band = components marked ADDED: membrane 115-186 + plywood substrate deck 76-89 + access/sundries allowance 5-15 = 196-290/m2, i.e. about $235,000-$348,000 for 1,200 m2. ASSUMPTIONS PRICED: (1) new-build / full-replacement pricing, both coverings as new work, no removal or disposal (per the pinned exclusion) - see component 7 if it is a re-roof; (2) membrane is a TWO-LAYER TORCH-ON BITUMINOUS system (Sopralene/Soprasun/Polibit class) laid to falls over a NEW 17mm H3.2 structural plywood deck fixed to the existing purlins - the substrate is included because a membrane cannot span purlins unsupported while long-run steel can, and it is roughly two-thirds of the differential; (3) excludes removal, structural changes, insulation or ceiling work, flashings, gutters and drainage, all per the pinned scope; (4) roof area = 1,200 m2 as stated, eaves height assumed low-rise 6-8m with reasonable access. SENSITIVITY: strip the substrate out (membrane over a substrate by others) and the band is $120-$201/m2; use QV's cheaper single-layer torch-on rows and the bottom is lower again. COMPARATOR (not added): long-run Coloursteel, 0.55mm pre-painted trapezoidal (Colorsteel MAXAM) with netting and underlay, $116-$138/m2 Auckland - $139,000-$166,000 for 1,200 m2. COST IMPACT OF SWITCHING: +$58 to +$174/m2, i.e. roughly +$70,000 to +$210,000 on 1,200 m2; the membrane option is roughly 1.4x to 2.5x the long-run steel covering. MAIN UNCERTAINTIES: (a) membrane type is undecided - a single-ply TPO/PVC mechanically fixed over a profiled steel deck is a different build-up with a different substrate rate and is NOT priced (see not_established); (b) QV rows are unreviewed and the QV double-layer torch-on spread is itself $115-$186/m2; (c) the plywood rate is a flooring/cladding proxy. Because (a) is undecided and the substrate assumption swings the total by about 35%, confidence is LOW. This is a cost-plan band, not a certified price; obtain installed rates from membrane applicators before committing."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 4,
+        "webVerified": 4,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 665817,
+        "outputTokens": 29120,
+        "cachedTokens": 591616,
+        "modelCalls": 15,
+        "toolCalls": 42,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.030377,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 665817,
+            "outputTokens": 29120,
+            "estimatedCostUsd": 0.030377,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

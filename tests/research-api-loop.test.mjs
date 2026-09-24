@@ -110,6 +110,8 @@ test("models route to their provider, DeepSeek's own API is not one, and usage i
   assert.match(prompt, /Use search_qv, then web_search, then fetch_source\./);
   assert.match(prompt, /ONE continuous passage/);
   assert.match(prompt, /about 50 tool calls/);
+  assert.match(prompt, /For a PDF, "page" is required/);
+  assert.doesNotMatch(prompt, /several tools in one step/);
 });
 
 test("the loop runs a step's tool calls through the host and returns the answer, usage and counts", async () => {
@@ -159,6 +161,9 @@ test("the loop runs a step's tool calls through the host and returns the answer,
   });
   assert.equal(requests[0].url, "https://opencode.ai/zen/go/v1/chat/completions");
   assert.equal(requests[0].headers.Authorization, `Bearer ${KEY}`);
+  // OpenCode Go routes by session: one id for every call of a run.
+  assert.match(requests[0].headers["x-opencode-session"], /^research-/);
+  assert.equal(requests[1].headers["x-opencode-session"], requests[0].headers["x-opencode-session"]);
   assert.equal(requests[0].body.model, "deepseek-v4.1-flash");
   assert.deepEqual(
     requests[0].body.tools.map((tool) => tool.function.name),
@@ -334,6 +339,43 @@ test("Parallel search is called with the key on the host and its excerpts become
   assert.equal(seen.url, "https://api.parallel.ai/v1/search");
   assert.equal(seen.headers["x-api-key"], "par-key");
   assert.deepEqual(seen.body.search_queries, ["channel drain price"]);
+  assert.equal(seen.body.mode, "advanced");
+  assert.equal(
+    seen.body.objective,
+    "Find current New Zealand prices (NZD, GST exclusive) for: channel drain price",
+  );
   assert.deepEqual(found.results, [{ title: "A", url: "https://x.test/a", snippet: "one … two" }]);
   assert.throws(() => new ParallelSearchProvider({}), /PARALLEL_API_KEY/);
+});
+
+test("a PDF quote without a page is checked on the page the host finds it on, and only there", async () => {
+  const { checkCostBandCitations } = await import("../server/research/claude-cli/citations.mjs");
+  const seen = [];
+  const webTools = {
+    locatePdfPage: (_sourceId, excerpt) => (excerpt === "Butt Joint $40" ? 7 : null),
+    verifyEvidence: (reference) => {
+      seen.push(reference.locator ?? null);
+      if (reference.locator?.page !== 7)
+        throw Object.assign(new Error("PDF page required"), { code: "pdf_page_required" });
+      return { sourceId: reference.sourceId, sourceType: "web", quoteVerified: true, authority: "secondary" };
+    },
+  };
+  const component = (excerpt) => ({
+    role: "Joint",
+    basis: "web",
+    sourceId: "source-1",
+    source: "https://x.test/c.pdf",
+    excerpt,
+    low: 40,
+    high: 40,
+  });
+  const checked = await checkCostBandCitations(
+    { components: [component("Butt Joint $40"), component("A made-up line")] },
+    { rows: [], webTools },
+  );
+  assert.deepEqual(
+    checked.components.map((item) => item.check),
+    ["web-verified", "web-unverified"],
+  );
+  assert.deepEqual(seen, [{ page: 7 }, null]);
 });

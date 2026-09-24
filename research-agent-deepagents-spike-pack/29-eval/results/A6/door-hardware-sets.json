@@ -1,0 +1,186 @@
+{
+  "question": "door-hardware-sets",
+  "kind": "pinned",
+  "arm": "A6",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 1045,
+    "high": 2070.61
+  },
+  "range": {
+    "min": 1042.5,
+    "max": 2490
+  },
+  "unit": "per door leaf, one complete hardware set fitted to that leaf",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.381,
+    "highRatio": 1.469,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1228,
+  "elapsedMs": 273682,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 273680,
+      "band": {
+        "unit": "per door leaf, one complete hardware set fitted to that leaf",
+        "low": 1042.5,
+        "high": 2070.61,
+        "centre": "Auckland",
+        "basis": "Sum of the nine components above, per leaf, GST exclusive, 25 leaves, one building, one floor, one visit. Anchored on QV CostBuilder hardware and labour rows (unreviewed, cited by row id) and on fetched NZ vendor pages for the items QV's library does not carry at the specified duty class. Nominal 25 leaves: $26,000–$51,800. Band is wide because QV's nearest rows for the two largest items (mortice lock, closer) are one to two duty classes above the specified ANSI/BHMA Grade 2 / EN 1154 size 3, and are roughly 3–4x the fetched mainstream NZ prices. For an internal, non-fire-rated office/corridor door the low half of the band is the more likely outcome; the high end is the premium-brand/Legge-LCN-TS97 case. Published list prices used, so a competitive 25-door hardware package should land below the mid. No allowance carries more than a small share of the total."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 4,
+        "webVerified": 4,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 717406,
+        "outputTokens": 29231,
+        "cachedTokens": 609536,
+        "modelCalls": 13,
+        "toolCalls": 41,
+        "searchCalls": 12,
+        "estimatedCostUsd": 0.035548,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 717406,
+            "outputTokens": 29231,
+            "estimatedCostUsd": 0.035548,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 242259,
+      "band": {
+        "unit": "ea (per door leaf, one complete hardware set fitted)",
+        "low": 1440,
+        "high": 2490,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components: QV supply rows for lockset/furniture, hinges and door stop; QV Carpenter labour rate x 1.25-2.0 hr; fetched NZ supplier list for the EN 2-4 closer and the per-cylinder keying charge; two labelled allowances (restricted cylinder upgrade, master-key/site setup amortised) which together carry only ~6-9% of the total. Nominal 25 leaves: ~$36,000-$62,300 (mid ~$49,200). Width is driven by one unresolved question - whether QV's mortice lock rows bundle the 502/514 furniture - and by QV's premium Legge/Neptune ranges against a mid-market Grade 2 spec. No main cost driver rests on an allowance. Excludes GST, preliminaries, margin, the leaf/frame/hanging and all machining, access control, fire-rated hardware and access equipment."
+      },
+      "checks": [
+        "qv-found",
+        "web-unverified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-unverified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 2,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 790829,
+        "outputTokens": 26406,
+        "cachedTokens": 673152,
+        "modelCalls": 13,
+        "toolCalls": 44,
+        "searchCalls": 9,
+        "estimatedCostUsd": 0.035515,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 790829,
+            "outputTokens": 26406,
+            "estimatedCostUsd": 0.035515,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 218176,
+      "band": {
+        "unit": "ea (per door leaf, one complete hardware set fitted to that leaf, GST excl., Auckland)",
+        "low": 1045,
+        "high": 1695,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components: QV Auckland supply-only rates for the mortice lockset/furniture (row t1:r9, adjusted -35% to Grade 2 duty), hinges (t0:r11 x3, +25% for ball-bearing) and door stop (t22:r4/r6); Baber Lock & Key NZ trade list (GST stripped, escalated) for the EN 1154 adjustable-power 2-4 overhead closer and for pin-tumbler keying and key blanks, with QV t24:r2 as the premium anchor for the closer high end; QV Labour Rates Carpenter AKL 81.30/hr at 1.75-2.5 hr for installation; and one labelled allowance for the restricted-keyway cylinder upgrade. No QV aggregate row (e.g. a doorset or security-door row) has been added alongside these components, and no separately priced part (fixings, labour, closer soffit) is added on top of a rate that already includes it. Nominal 25 leaves: ~$26,000 - $42,000 excluding GST and margin. The two main cost drivers (lockset, closer) are both sourced, so the band is established; confidence is medium because the lockset carries a stated -35% class adjustment and the closer rate is a 2019 incl-GST list escalated to 2026."
+      },
+      "checks": [
+        "qv-found",
+        "allowance",
+        "web-unverified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-unverified"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 2,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 1146754,
+        "outputTokens": 20432,
+        "cachedTokens": 901632,
+        "modelCalls": 16,
+        "toolCalls": 52,
+        "searchCalls": 8,
+        "estimatedCostUsd": 0.051732,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1146754,
+            "outputTokens": 20432,
+            "estimatedCostUsd": 0.051732,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

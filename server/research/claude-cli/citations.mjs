@@ -158,10 +158,13 @@ function checkWebCitation(component, webTools) {
         authority: "secondary",
       },
     };
+  // A PDF quote that names no page is looked for on every retained page of that PDF (Shaun,
+  // 24 September): 11 of DeepSeek's 13 failed quotes on the API loop were PDF rows with no page.
+  const page = component.page ?? webTools.locatePdfPage?.(component.sourceId, component.excerpt ?? "") ?? null;
   const reference = {
     sourceId: component.sourceId,
     excerpt: component.excerpt ?? "",
-    ...(component.page != null ? { locator: { page: component.page } } : {}),
+    ...(page != null ? { locator: { page } } : {}),
     authority: "secondary",
   };
   try {

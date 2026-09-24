@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // The scope → pack eval (`research-agent-deepagents-spike-pack/29-EVAL-PREREGISTRATION.md`).
 //
-//   node scripts/research-eval.mjs --arm A0|A2|A3|A4|A5|A6 [--only id,id] [--out <dir>]
+//   node scripts/research-eval.mjs --arm A0|A2|A3|A4|A5|A6|A7 [--only id,id] [--out <dir>]
 //   node scripts/research-eval.mjs --rescore [--out <dir>]
 //   node scripts/research-eval.mjs --arm A4 --set <questions.json> --model <model> --out <dir>   (tuning)
 //
@@ -70,6 +70,15 @@ export const ARMS = {
   // Doc 29 addendum A6: the same model and prompt rules as A5 through the thin API loop, with web
   // search on Parallel through the host. Needs OPENCODE_API_KEY and PARALLEL_API_KEY in the env.
   A6: {
+    runtime: "api-loop",
+    model: "opencode-go/deepseek-v4.1-flash",
+    reasoning: null,
+    make: (env) => new ApiLoopResearchRuntime({ env }),
+  },
+  // Doc 29 addendum A7: A6 after tuning on three scopes outside the eval (PDF page rule, no
+  // several-tools line, Parallel advanced with an NZ pricing objective and fuller results). A6's
+  // recorded results were produced before these changes and stand as recorded.
+  A7: {
     runtime: "api-loop",
     model: "opencode-go/deepseek-v4.1-flash",
     reasoning: null,
