@@ -1,0 +1,184 @@
+{
+  "question": "network-supply-connection-hv-metering",
+  "kind": "pinned",
+  "arm": "A5",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 101251,
+    "high": 195502
+  },
+  "range": {
+    "min": 94471,
+    "max": 357938
+  },
+  "unit": "NZD lump sum per supply point (300 kVA connected capacity), GST exclusive",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.162,
+    "highRatio": 2.613,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1372,
+  "elapsedMs": 742012,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 362305,
+      "band": {
+        "unit": "NZD lump sum per supply point (300 kVA connected capacity), GST exclusive",
+        "low": 94471,
+        "high": 357938,
+        "centre": null,
+        "basis": "Working estimate (not a certified price) for one complete, live and registered 300 kVA HV supply point, Vector Auckland urban network, priced in Auckland rates and GST exclusive. Sum of the nine components above: low $94,471, high $357,938. Amortised over 300 kVA: low $315/kVA, high $1,193/kVA, centre $500/kVA. Main cost driver is Vector's capital contribution for the network-owned 300 kVA dedicated substation and HV protection/switchgear, which Vector prices per job; it is proxied on Vector's published posted capacity rates ($176.67/kVA distribution substation, $715.89/kVA HV feeder, 1 Apr 2026). Because the scenario states no network reinforcement, the centre ($150,000) sits below the arithmetic midpoint (~$226,000); the band would narrow materially once Vector issues its Customer Works Agreement price. Allowances (HV terminations, metering, coordination) carry well under one third of the total. Confidence low."
+      },
+      "checks": [
+        "web-verified",
+        "web-unverified",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 4,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 1,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 1513280,
+        "outputTokens": 37056,
+        "cachedTokens": 1394688,
+        "toolCalls": 30,
+        "searchCalls": 17,
+        "estimatedCostUsd": 0.044206,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1513280,
+            "outputTokens": 37056,
+            "estimatedCostUsd": 0.044206,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 742010,
+      "band": {
+        "unit": "sum (one complete 300 kVA HV-supplied supply point, live and registered)",
+        "low": 101251,
+        "high": 195502,
+        "centre": null,
+        "basis": "Auckland, NZD, GST exclusive. Sum of eight distinct components (no overlap): Vector design fee (web), Vector capital contribution incl. transformer/HV switchgear (web capacity-rate proxy), 30 m HV cable (QV proxy) + 11kV terminations (allowance), 30 m within-site HV trench (allowance), 25 m LV service (QV), Category 4 CT metering (allowance), coordination/commissioning/certification (allowance). Low $101,251 = $337.50/kVA; high $195,502 = $651.67/kVA; centre $148,377 = $494.59/kVA over the 300 kVA nominal capacity. Allowances carry ~17-23% of the total, under one third. Dominant uncertainty is Vector's per-job connection fee for the transformer and HV switchgear, which is proxied (not published) by the distribution-substation capacity rate; that single item is ~52-54% of the band, so confidence is low and the band should be replaced by Vector's Customer Works Agreement figure as soon as it is issued."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 3136558,
+        "outputTokens": 44130,
+        "cachedTokens": 3025664,
+        "toolCalls": 48,
+        "searchCalls": 16,
+        "estimatedCostUsd": 0.052189,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 3136558,
+            "outputTokens": 44130,
+            "estimatedCostUsd": 0.052189,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 441721,
+      "band": {
+        "unit": "sum",
+        "low": 109801,
+        "high": 137001,
+        "centre": "Auckland",
+        "basis": "Working estimate band for one complete 300 kVA HV-supplied supply point, GST-exclusive, Auckland. Sum of: Vector fees (application/assessment allowance + $3,000 design fee) + Vector capital contribution (posted network-capacity rate $176.67/kVA x 300 kVA = $53,001, plus a weak equipment-only proxy for the sole-use transformer/HV switchgear connection fee) + HV cable allowance + QV LV service main + metering allowance + coordination allowance. Amortised: $366-$457 per kVA over the 300 kVA nominal capacity. Allowances are 14-26% of the total, so the band does not rest on judgement alone, but the two largest Vector lines are indicative/per-job and the transformer line is an offshore proxy - hence LOW confidence. NOT a certified price; Vector's per-job connection fee and development contribution must be substituted when the Customer Works Agreement issues."
+      },
+      "checks": [
+        "allowance",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 1174420,
+        "outputTokens": 37818,
+        "cachedTokens": 1075328,
+        "toolCalls": 23,
+        "searchCalls": 13,
+        "estimatedCostUsd": 0.040781,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1174420,
+            "outputTokens": 37818,
+            "estimatedCostUsd": 0.040781,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

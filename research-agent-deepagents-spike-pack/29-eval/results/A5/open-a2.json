@@ -1,0 +1,165 @@
+{
+  "question": "open-a2",
+  "kind": "open",
+  "arm": "A5",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 226.8,
+    "high": 445
+  },
+  "range": {
+    "min": 224,
+    "max": 491
+  },
+  "unit": "NZD per m2 of building floor area (GST exclusive)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.058,
+    "highRatio": 1.103,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0553,
+  "elapsedMs": 749400,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 411441,
+      "band": {
+        "unit": "NZD per m2 of building floor area (GST exclusive)",
+        "low": 237,
+        "high": 491,
+        "centre": "Christchurch",
+        "basis": "Working estimate (not a certified price). Main item = excavation-and-replacement ground improvement priced from QV CostBuilder Canterbury TC guidance rows (unreviewed): $218.8/m2 shallow (1 m) to $420/m2 deep replacement (subtotal row t13:r14). Add minor allowances: verification testing/monitoring $11-42/m2, set-out/access/sundries $7-29/m2. Total $237-491/m2, midpoint ~$360/m2. Low confidence because: (1) the ground-improvement method and treatment depth are not decided (1 m vs 2 m+ drives most of the spread); (2) QV rates derive from residential MBIE TC guidance and are a proxy for light commercial; (3) 'how common' is answered at citywide/qualitative level only - the site-specific likelihood needs the geotechnical report and CCC liquefaction/TC mapping. Assumption priced: single-storey, footprint = floor area, full-footprint treatment, construction-only (design and investigation excluded)."
+      },
+      "checks": [
+        "qv-found",
+        "allowance",
+        "allowance",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 1221819,
+        "outputTokens": 26678,
+        "cachedTokens": 1164160,
+        "toolCalls": 27,
+        "searchCalls": 10,
+        "estimatedCostUsd": 0.028148,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1221819,
+            "outputTokens": 26678,
+            "estimatedCostUsd": 0.028148,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 403128,
+      "band": {
+        "unit": "NZ$ per m2 of building floor area (GST exclusive)",
+        "low": 226.8,
+        "high": 445,
+        "centre": "Christchurch",
+        "basis": "Christchurch, GST exclusive, $/m2 of floor area. Low = QV TC1/TC2 'excavate and replace upper layers of soil with compacted gravels + geogrid' earthworks at nominal 1.0 m depth ($80 excavate/dispose + $126 GAP65 hardfill + $12.8 geogrid = $218.8/m2) + low QA allowance $8 = $226.8/m2. High = same base + deeper TC3 imported-GAP40 build-up uplift $201.2 + high QA allowance $25 = $445/m2. Centre $336/m2 is the midpoint. Built by ADDING distinct components; the concrete floor slab ($213/m2 in the same QV build-ups) and all building foundation/structural work are EXCLUDED per the pinned scope, as are geotechnical investigation and design. Method assumption: excavate-and-replace with hardfill + geogrid (the standard published NZ ground-improvement approach for liquefaction-prone ground and the only method carried in QV CostBuilder); treatment depth 1.0 m (low) to ~3 m (high). Rate is per m2 of building floor area, so it is sensitive to the ratio of treated area (usually footprint + a perimeter margin) to floor area on multi-storey or partly-paved sites; for a single-storey building treated area ≈ floor area. Confidential band, not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-verified",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 1487172,
+        "outputTokens": 22988,
+        "cachedTokens": 1426432,
+        "toolCalls": 53,
+        "searchCalls": 14,
+        "estimatedCostUsd": 0.027183,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1487172,
+            "outputTokens": 22988,
+            "estimatedCostUsd": 0.027183,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 749398,
+      "band": {
+        "unit": "NZD per m2 of building floor area (GST exclusive)",
+        "low": 224,
+        "high": 445,
+        "centre": "Christchurch",
+        "basis": "Excavate-and-replace (geogrid-reinforced gravel raft) ground improvement — the standard Christchurch/MBIE liquefaction mitigation for lightly loaded buildings. Low end = shallow ~1 m soil replacement (QV MBIE TC1/TC2 detail: excavate/dispose $80 + GAP65 hardfill $126 + triaxial geogrid $12.80 = $218.80/m2) plus minor allowance $5. High end = deep ~3 m imported GAP40 replacement with 2 geogrid layers (QV MBIE TC3 Type 1 build-up total $420/m2) plus minor allowance $25. Mid ~$330/m2. Excludes building foundations and floor slab (QV slab $213/m2 not added), geotechnical investigation and design, repairs, and (assumed) construction testing/monitoring. Rates are all-in per m2 of floor area from unreviewed QV CostBuilder rows, Christchurch. Method and treatment depth are undecided, which drives the ~2x spread and the low confidence; if the method/depth is fixed, confidence rises. Stone columns/vibro-replacement, compaction grouting, dynamic/rapid-impact compaction and deep soil mixing are not priced in QV — obtain contractor quotes if specified."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "partial": false
+      }
+    }
+  ]
+}

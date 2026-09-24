@@ -1,0 +1,175 @@
+{
+  "question": "p-solar",
+  "kind": "pinned",
+  "arm": "A5",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 11300,
+    "high": 21100
+  },
+  "range": {
+    "min": 10800,
+    "max": 26800
+  },
+  "unit": "lump sum for the whole 30 kWp array (sum of the six components)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.132,
+    "highRatio": 1.295,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0882,
+  "elapsedMs": 264511,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 264509,
+      "band": {
+        "unit": "lump sum for the whole 30 kWp array (sum of the six components)",
+        "low": 12230,
+        "high": 20694,
+        "centre": "Auckland",
+        "basis": "Sum of cited component costs: proprietary rails, clamps and rib brackets (NZ supplier component prices), mounting-only installation labour (QV roofer/labourer charge-out rates x QS-estimated hours), supplementary purlins to one third of the footprint (QV proprietary purlin rates), a minor bolts/cleats allowance, and the PS1 wind/uplift design fee (NZ consulting hourly rates). NZD, GST exclusive. Excludes preliminaries, margin, scaffolding/edge protection/roof access, PV modules, inverters, cabling and all electrical work, roof sheet work, and consent fees. Equivalent to roughly $207-$345 per panel or $410-$690 per kWp. Allowances carry under 10% of the total, so the band rests on sourced rates; confidence is low because the rail/clamp prices are light retail component prices, and the labour hours and strengthened area are QS estimates rather than a contractor's take-off."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 1199947,
+        "outputTokens": 23752,
+        "cachedTokens": 1090816,
+        "toolCalls": 29,
+        "searchCalls": 12,
+        "estimatedCostUsd": 0.033893,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1199947,
+            "outputTokens": 23752,
+            "estimatedCostUsd": 0.033893,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 198952,
+      "band": {
+        "unit": "sum",
+        "low": 11300,
+        "high": 26800,
+        "centre": "Auckland",
+        "basis": "Sum of five distinct components: mounting hardware supply $4,300-9,400 + mounting installation labour $3,200-8,600 + supplementary purlins $1,500-3,300 + purlin bolts $300-500 + structural design/PS1 $2,000-5,000 = $11,300-26,800, midpoint ~$19,000. GST exclusive, NZD, Auckland (AKL) rates, and excludes preliminaries, margin, scaffolding/access, electrical work, roof repair and consent fees as instructed. Grouped for review as: mounting system $7,500-18,000; strengthening (purlins + bolts) $1,800-3,800; design fee $2,000-5,000 - each can be rejected without disturbing the others. Basis split: QV supplies the purlin and bolt rows (full cost, no double count); QV publishes no solar racking or PS1 rows, so the mounting supply and labour (the main cost drivers, ~65-70% of the band) are derived from cited NZ commercial-solar benchmarks and published cost shares, and the design fee from a cited NZ PS1 range. The band is wide on purpose: the mounting system is proprietary with no published NZ rate, and the mounting share of install labour is QS judgement. Building Consent is no longer required for most residential solar in NZ, but the PS1 is a project-specified deliverable here; if the array falls under the consented commercial building, add consent review time. Confidence is low because one allowance-style split carries roughly a third of the low end, and mounting labour rates should be tested with two Auckland solar installers. NOT a certified price."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 796372,
+        "outputTokens": 23048,
+        "cachedTokens": 706432,
+        "toolCalls": 16,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.029439,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 796372,
+            "outputTokens": 23048,
+            "estimatedCostUsd": 0.029439,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 183289,
+      "band": {
+        "unit": "lump sum (whole array, GST excl)",
+        "low": 10800,
+        "high": 21100,
+        "centre": "Auckland",
+        "basis": "Sum of the five component rows for the fixed scope: proprietary mounting supply (web proxy + stated high-wind adjustment), mounting installation labour (allowance, no published NZ rate), supplementary purlins (QV rows, AKL), purlin bolts (allowance) and the PS1/wind design fee (web engineer rates). Allowances carry about 29% of the low total, just under a third. The mounting supply is scaled from a residential line item and the labour/design are proxies, so confidence is low and the band is deliberately wide - it is a cost-plan range, not a certified price. Excludes GST, preliminaries, margin, PV modules/inverters/cabling, roof works, scaffolding/access and consent fees. To firm it up, obtain vendor quotes (e.g. Clenergy NZ, Renusol, S-5!, Unirac, Roof Tech) and a fixed-price PS1 quote from a CPEng structural engineer."
+      },
+      "checks": [
+        "web-verified",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 386321,
+        "outputTokens": 17203,
+        "cachedTokens": 295296,
+        "toolCalls": 13,
+        "searchCalls": 8,
+        "estimatedCostUsd": 0.024861,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 386321,
+            "outputTokens": 17203,
+            "estimatedCostUsd": 0.024861,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

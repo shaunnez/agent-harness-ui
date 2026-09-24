@@ -1,0 +1,185 @@
+{
+  "question": "door-hardware-sets",
+  "kind": "pinned",
+  "arm": "A5",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 1330,
+    "high": 2330
+  },
+  "range": {
+    "min": 1060,
+    "max": 2430
+  },
+  "unit": "ea (per door leaf, one complete hardware set fitted)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.915,
+    "highRatio": 1.397,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1108,
+  "elapsedMs": 317518,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 317515,
+      "band": {
+        "unit": "ea (per door leaf, one complete hardware set fitted)",
+        "low": 1330,
+        "high": 2330,
+        "centre": "Auckland",
+        "basis": "Sum of the components above, per leaf, excl. GST, Auckland 2026, 25 leaves / one floor / one visit. Main drivers (lockset, closer, hinges, door stop) are sourced from QV CostBuilder Hardware rows with NZ vendor benchmarks for the mid-tier equivalents; QV rows are unreviewed and are treated as supply-and-fix unless the section is marked 'Supply Only' (hinges and all door-furniture sections are 'Supply Only'). Allowances (closer backplate, installation labour, keying/restricted cylinder) carry ~12% of the low and ~18% of the high - under the one-third limit. The band is wide and confidence low because QV's library only prices top-tier architectural hardware (LCN designer-cover closers, Legge 990/991 sets with 500-series furniture) while the specified hardware is Grade 2 / EN 1154 size 3 mid-tier: the low end uses NZ vendor prices for mid-tier equivalents, the high end the QV rows. This is a cost-plan band, not a certified price, and it sits well above the $620-$880 suggestion, which appears to reflect lower-tier or older supply pricing. For 25 leaves: ~$33,250 - $58,250 (mid ~$45,700)."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 1528907,
+        "outputTokens": 39619,
+        "cachedTokens": 1440384,
+        "toolCalls": 26,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.041371,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1528907,
+            "outputTokens": 39619,
+            "estimatedCostUsd": 0.041371,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 313405,
+      "band": {
+        "unit": "per leaf (each), one complete hardware set fitted to one already-hung, pre-morticed leaf",
+        "low": 2030,
+        "high": 2430,
+        "centre": "Auckland 2026, excl. GST — 25 leaves: ~$50,800 – $60,700",
+        "basis": "Sum of distinct components, no double counting: QV Hardware supply rows (mortice lockset incl. both furniture pieces, overhead closer, 3 SS hinges, door stop) + QV Labour Rates carpenter $81.30/hr x 1.5–2.5 hr + web-anchored locksmith keying/keys amortised over 25 + two minor allowances (restricted cylinder uplift, site setup/handover). Lockset and closer are ~70% of the band and are premium architectural-schedule grades; a mid-grade Grade 2 / EN 1154 size 3 equivalent would reduce the band materially, and a NZ supplier cross-check (dormakaba MS2602KX body $128.06 excl GST, handles and cylinder excluded) shows QV sits at the top of the market. QV rows are UNREVIEWED. Allowances carry ~4% of the total. Excludes GST, preliminaries, margin, design/consent fees, the leaf/frame/hanging/machining, access control, fire/smoke hardware, and the leaf hanging. Excluded from this band: the scenario's own $620–$880/leaf, which is not supported by any QV row I could find."
+      },
+      "checks": [
+        "web-verified",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 1458319,
+        "outputTokens": 35556,
+        "cachedTokens": 1360256,
+        "toolCalls": 27,
+        "searchCalls": 7,
+        "estimatedCostUsd": 0.040124,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1458319,
+            "outputTokens": 35556,
+            "estimatedCostUsd": 0.040124,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 226017,
+      "band": {
+        "unit": "per leaf, ex GST, NZD",
+        "low": 1060,
+        "high": 1740,
+        "centre": "Auckland",
+        "basis": "Bottom-up: NZ trade/retail supply of lockset body + satin-SS furniture + cylinder + commercial overhead closer, QV AKL rates for hinges, door stop and carpenter labour, plus allowances for restricted master-keying and handover. Low end = 2019 NZ trade list GST-stripped and escalated +25% with a mainstream retail closer and wall stop; high end = +40% escalation, premium QV LCN closer row, SS floor stop and upper labour. NO QV row exists for a Grade 2 lockset assembly or for keying, so those two are proxy/allowance. QV rows are UNREVIEWED. Allowances are ~4% of the total. Excludes GST, preliminaries, margin, leaf/frame/morticing, access control and fire hardware per the fixed scope. 25 leaves = $26,500-$43,400."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "web-unverified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 5,
+        "webVerified": 4,
+        "webNotFetched": 0,
+        "webExcerptRejected": 1,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 593431,
+        "outputTokens": 31117,
+        "cachedTokens": 533248,
+        "toolCalls": 15,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.029297,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 593431,
+            "outputTokens": 31117,
+            "estimatedCostUsd": 0.029297,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

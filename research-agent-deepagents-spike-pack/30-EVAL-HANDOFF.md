@@ -64,10 +64,10 @@ Results: `29-eval/results/<arm>/<question>.json`. Runs hit by Luna capacity are 
 | A2 Luna → Opus | 13 of 13 | 5 | $1.37 avg | 7.2 min |
 | A3 Luna alone | 13 of 13 | 4 | $0.06 avg | 3.4 min |
 | A4 DeepSeek 4.1 Flash, first prompt | 10 of 13 (stopped) | 0 | $0.10 avg | 5.4 min |
-| A5 DeepSeek 4.1 Flash, fixed prompt + 15-min cap | not run | — | ~$0.08 expected | — |
+| A5 DeepSeek 4.1 Flash, fixed prompt + 15-min cap | 13 of 13 | **7** | $0.09 avg | 5.8 min (4 at a time) |
 
-Shaun runs A5 himself: `node scripts/research-eval-local.mjs --arm A5` (about an hour; OpenCode Go
-plan, workspace privacy region set to Global). No arm leads: A0 and A2 tie at 5, A3 is one behind.
+A5 leads (7 vs 5) and Shaun made DeepSeek the intended default; the full write-up, grades and the
+35% "wide estimate" cutoff are in `30-EVAL-RESULT.md`.
 
 A0 by question: passes are facade, concrete paving, door hardware, interior finishes and roof
 (open-a3). Roller doors is disputed: only one of three runs found a band. Agreed but a component failed its check: emergency lighting

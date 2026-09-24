@@ -156,3 +156,9 @@ questions. They are general rules, not answers, but the eval set is not unseen f
 Shaun declined a further, more specific rule about unsourced study and engineering fees; the base
 prompt already says a professional fee with no source is not established. The tuning scopes' results
 are not reported as a score.
+
+**A5 run (24 September).** Shaun ran it four questions at a time ("run it 4 at a time"), so A5's
+wall times are not comparable with the other arms'; pass count and cost are. One
+industrial-roller-doors run failed with "The PlanCheck rate library is unreachable" while another
+agent restarted PlanCheck; the question was set aside to `results/unassessed/A5/` and re-run once,
+as this document allows. Result: 7 of 13. Written up in `30-EVAL-RESULT.md`.
