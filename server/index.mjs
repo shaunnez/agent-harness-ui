@@ -16,6 +16,7 @@ import { ResearchService } from "./research/research-service.mjs";
 import { ResearchStore } from "./research/research-store.mjs";
 import { acquireRuntimeLock } from "./runtime-lock.mjs";
 import { SqliteTaskStore } from "./sqlite-store.mjs";
+import { createStaticUi } from "./static-ui.mjs";
 import { JsonTaskStore } from "./store.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -26,6 +27,18 @@ const databasePath =
 const configuredRepository = process.env.AGENT_HARNESS_REPOSITORY;
 const suggestedRepository = configuredRepository ?? root;
 const port = Number(process.env.AGENT_HARNESS_PORT ?? 4310);
+// Loopback unless told otherwise. A container sets 0.0.0.0 because its own loopback is not
+// reachable from outside it; the container runtime then publishes the port to the host's
+// loopback only (see compose.yaml). Never set this on a machine whose other interfaces are
+// reachable: the Host check below is not an access control against a client that lies.
+const bindHost = process.env.AGENT_HARNESS_HOST ?? "127.0.0.1";
+const linearBindHost = process.env.AGENT_HARNESS_LINEAR_HOST ?? "127.0.0.1";
+// The built UI is served from the companion's own origin when a build exists. `npm run
+// dev:frontier` is unaffected: Vite keeps serving source on 5199 and proxies `/api` here.
+const staticUi =
+  process.env.AGENT_HARNESS_UI_DIR === "off"
+    ? null
+    : await createStaticUi(process.env.AGENT_HARNESS_UI_DIR ?? path.join(root, "dist", "frontier"));
 
 const jsonStore = process.env.AGENT_HARNESS_STORE === "json";
 const linearConfig = await readLinearConfig(process.env.AGENT_HARNESS_LINEAR_CONFIG);
@@ -123,6 +136,7 @@ const server = createApiServer({
   suggestedRepository,
   researchService,
   linearIntake,
+  staticUi,
   reportHttpMetric(metric) {
     if (
       process.env.AGENT_HARNESS_HTTP_METRICS === "1" ||
@@ -139,15 +153,16 @@ server.once("error", async (error) => {
   await shutdown(1);
 });
 
-server.listen(port, "127.0.0.1", () => {
-  console.log(`Agent Harness local runtime listening on http://127.0.0.1:${port}`);
+server.listen(port, bindHost, () => {
+  console.log(`Agent Harness local runtime listening on http://${bindHost}:${port}`);
+  if (staticUi) console.log(`Frontier UI served at http://127.0.0.1:${port}/`);
   if (linearServer) {
     linearServer.once("error", async () => {
       console.error("Linear webhook listener failed to start; stopping this companion.");
       await shutdown(1);
     });
-    linearServer.listen(linearPort, "127.0.0.1", () => {
-      console.log(`Linear webhook listener: http://127.0.0.1:${linearPort}/linear/webhook`);
+    linearServer.listen(linearPort, linearBindHost, () => {
+      console.log(`Linear webhook listener: http://${linearBindHost}:${linearPort}/linear/webhook`);
       linearIntake.start();
     });
   }

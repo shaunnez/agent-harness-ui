@@ -7,6 +7,7 @@ output/
 .data/
 .env
 .env.*
+!.env.harness.example
 *.log
 
 # Independent hosted journal and local Mission Frontier production archives.
