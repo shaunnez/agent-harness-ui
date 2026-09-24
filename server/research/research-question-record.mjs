@@ -7,6 +7,7 @@
 
 import { createHash } from "node:crypto";
 import { agreementForRuns } from "./claude-cli/agreement.mjs";
+import { gradeQuestion } from "./research-question-grade.mjs";
 
 const ACTIVITY_PER_RUN = 80;
 
@@ -88,6 +89,9 @@ export function questionRecord({ question, runs, events = new Map(), review = nu
   return {
     ...evidence,
     runs: runRecords,
+    // What may go back to a tender, and the best band to send. Derived from the same runs as the
+    // status, and outside the fingerprint so it can never make a standing review stale.
+    grading: gradeQuestion({ status, unitsDiffer, runs: runRecords }),
     // Everything a reviewer judged, and nothing about the review itself or the live activity
     // feed, so a review stays current until the evidence behind it changes.
     evidenceSha: fingerprint(evidence),
@@ -270,9 +274,11 @@ function provenanceNote(run, question) {
   const plan =
     run?.runtimeId === "codex-cli"
       ? "the ChatGPT plan"
-      : run?.runtimeId === "claude-cli"
-        ? "the Claude plan"
-        : `the ${run?.runtimeId ?? "unknown"} runtime`;
+      : run?.runtimeId === "opencode-cli"
+        ? "the OpenCode Go plan"
+        : run?.runtimeId === "claude-cli"
+          ? "the Claude plan"
+          : `the ${run?.runtimeId ?? "unknown"} runtime`;
   const origin =
     question.source?.kind === "external"
       ? `Raised by ${question.source.provider} request ${question.source.requestId}`

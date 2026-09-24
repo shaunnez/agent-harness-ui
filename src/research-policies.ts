@@ -7,15 +7,28 @@
 
 import type { ResearchRole } from "./domain/research.ts";
 
-export type ResearchEngineId = "claude-cli" | "codex-cli";
-export type ResearchProviderId = "claude" | "codex";
+export type ResearchEngineId = "claude-cli" | "codex-cli" | "opencode-cli";
+export type ResearchProviderId = "claude" | "codex" | "opencode";
 
 export const RESEARCH_ENGINES: Readonly<
   Record<ResearchEngineId, { provider: ResearchProviderId; label: string; plan: string }>
 > = Object.freeze({
   "claude-cli": { provider: "claude", label: "Claude CLI", plan: "Claude subscription" },
   "codex-cli": { provider: "codex", label: "Codex CLI", plan: "ChatGPT plan" },
+  "opencode-cli": { provider: "opencode", label: "OpenCode CLI", plan: "OpenCode Go plan" },
 });
+
+/** The models the OpenCode engine offers research. Its own list, not the delivery catalogue or
+ *  allowlist: these models never answer a delivery stage, so they must not appear in its pickers.
+ *  "default" is the only reasoning: the eval ran DeepSeek with no variant, and `#max` was no
+ *  more consistent (`30-EVAL-RESULT.md`). */
+export const OPENCODE_RESEARCH_MODELS: readonly {
+  id: string;
+  label: string;
+  reasoningLevels: readonly string[];
+}[] = Object.freeze([
+  { id: "opencode-go/deepseek-v4.1-flash", label: "DeepSeek 4.1 Flash", reasoningLevels: ["default"] },
+]);
 
 /** The four-role comparison runs every role through the Claude CLI. */
 export const RESEARCH_ROLES_ENGINE = "claude-cli-roles";
@@ -48,10 +61,18 @@ export interface RuntimeResearchPolicies {
 
 const OPUS_HIGH = Object.freeze({ provider: "claude", model: "claude-opus-5-5", reasoning: "high" } as const);
 
-/** Opus 5.5 for everything. Nobody has measured a cheaper model on this work: on the top-30
- *  scopes Sonnet 5 priced 2 of 4 where Opus priced 3 of 4. */
+const DEEPSEEK_AGENT = Object.freeze({
+  runtime: "opencode-cli",
+  provider: "opencode",
+  model: "opencode-go/deepseek-v4.1-flash",
+  reasoning: "default",
+} as const);
+
+/** DeepSeek 4.1 Flash on OpenCode for the research agent: 7 of 13 on the 24 September eval,
+ *  against Opus 5.5's 5, at about $0.09 a question (`30-EVAL-RESULT.md`; Shaun made it the
+ *  default). Opus 5.5 for the four-role comparison, which runs every role on the Claude CLI. */
 export const DEFAULT_RESEARCH_POLICIES: Readonly<RuntimeResearchPolicies> = Object.freeze({
-  agent: Object.freeze({ runtime: "claude-cli", ...OPUS_HIGH }),
+  agent: DEEPSEEK_AGENT,
   roles: Object.freeze({
     planner: OPUS_HIGH,
     researcher: OPUS_HIGH,
@@ -80,7 +101,7 @@ export function researchPoliciesOf(
     return defaults;
   const fallback = { provider: "claude" as const, model: design.model, reasoning: design.reasoning };
   return {
-    agent: { runtime: "claude-cli", ...fallback },
+    agent: defaults.agent,
     roles: Object.fromEntries(RESEARCH_ROLE_IDS.map((role) => [role, { ...fallback }])) as Record<
       ResearchRole,
       ResearchRolePolicy
@@ -119,10 +140,13 @@ export function researchPoliciesIssue(
     return null;
   };
   const engine = RESEARCH_ENGINES[policies.agent?.runtime as ResearchEngineId];
-  if (!engine) return "Choose Claude CLI or Codex CLI for the research agent.";
+  if (!engine) return "Choose Claude CLI, Codex CLI or OpenCode CLI for the research agent.";
   if (policies.agent.provider !== engine.provider)
     return `The research agent's ${engine.label} runs ${engine.provider} models only.`;
-  const agentIssue = check("The research agent", policies.agent, engine.provider);
+  const agentIssue =
+    engine.provider === "opencode"
+      ? openCodeIssue(policies.agent)
+      : check("The research agent", policies.agent, engine.provider);
   if (agentIssue) return agentIssue;
   for (const role of RESEARCH_ROLE_IDS) {
     const policy = policies.roles?.[role];
@@ -130,6 +154,14 @@ export function researchPoliciesIssue(
     const issue = check(`The ${role} role`, policy, "claude");
     if (issue) return issue;
   }
+  return null;
+}
+
+function openCodeIssue(policy: { model?: unknown; reasoning?: unknown }): string | null {
+  const model = OPENCODE_RESEARCH_MODELS.find((entry) => entry.id === policy?.model);
+  if (!model) return "The research agent needs an OpenCode research model.";
+  if (typeof policy.reasoning !== "string" || !model.reasoningLevels.includes(policy.reasoning))
+    return `${model.label} does not support ${String(policy.reasoning ?? "that")} reasoning.`;
   return null;
 }
 

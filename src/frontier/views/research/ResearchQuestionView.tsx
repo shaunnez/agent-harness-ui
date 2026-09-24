@@ -8,6 +8,7 @@ import {
   formatNzd,
   type ResearchCheck,
   type ResearchGateway,
+  type ResearchGrading,
   type ResearchQuestion,
   type ResearchRunRecord,
   researchCheckCopy,
@@ -105,6 +106,7 @@ export function ResearchQuestionView({
                   : `The runs priced this in different units (${question.unitsDiffer.join("; ")}), so their bands cannot be compared and there is no consensus.`}
               </p>
             )}
+            {question.grading && <GradingNote grading={question.grading} />}
             {finished && (
               <>
                 <div className="research-answer-bands">
@@ -609,5 +611,24 @@ function QvSources({ question }: { question: ResearchQuestion }) {
         ))}
       </ul>
     </section>
+  );
+}
+
+/** What goes back to a tender for this question, and why. */
+function GradingNote({ grading }: { grading: ResearchGrading }) {
+  const band = grading.bestBand ? formatBand(grading.bestBand.low, grading.bestBand.high) : null;
+  const range = grading.range ? formatBand(grading.range.low, grading.range.high) : null;
+  const text =
+    grading.grade === "confident"
+      ? `Confident: ${band} goes back to the tender.`
+      : grading.grade === "unsure"
+        ? `Wide estimate: ${band} goes back to the tender, flagged, with the full range ${range}.`
+        : grading.grade === "no_price"
+          ? "No price: no run could source the main costs, so the tender item reads not established."
+          : `Needs review before anything goes back to the tender. ${grading.reasons.join(" ")}`;
+  return (
+    <p className={`research-grading grade-${grading.grade}`} role="note">
+      {text}
+    </p>
   );
 }

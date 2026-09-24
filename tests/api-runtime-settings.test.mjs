@@ -222,8 +222,9 @@ test("the research agent's engine and model save through Settings, and a mismatc
   const { directory, origin, server } = await createServer();
   try {
     const current = (await (await fetch(`${origin}/api/settings`)).json()).settings;
-    assert.equal(current.researchPolicies.agent.runtime, "claude-cli");
-    assert.equal(current.researchPolicies.agent.model, "claude-opus-5-5");
+    // DeepSeek on OpenCode by default since the 24 September eval (`30-EVAL-RESULT.md`).
+    assert.equal(current.researchPolicies.agent.runtime, "opencode-cli");
+    assert.equal(current.researchPolicies.agent.model, "opencode-go/deepseek-v4.1-flash");
     const save = (researchPolicies) =>
       fetch(`${origin}/api/settings`, {
         method: "PUT",

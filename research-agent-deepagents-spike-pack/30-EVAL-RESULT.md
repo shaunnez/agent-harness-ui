@@ -106,8 +106,10 @@ it stays. The 35% rests on five answers and a proxy: calibrate it on real bids.
 
 ## Next
 
-1. Make `opencode-cli` with DeepSeek 4.1 Flash the Settings default (engine list, model options,
-   validation, picker), keeping Opus and Luna selectable.
-2. Build the grades and best band into the question record, so the research API returns them.
+1. Done: `opencode-cli` with DeepSeek 4.1 Flash is the Settings default, Opus and Luna still
+   selectable. A Settings choice saved earlier keeps its engine until changed.
+2. Done: every question record carries `grading` (grade, label, best band, range, reasons).
+2a. Parity check for production: the same 13 questions on DeepSeek through Baseten (key pending),
+   with Parallel search on its own key, on the same OpenCode runtime.
 3. The production path: DeepSeek workers, a container, hosting, and the PlanCheck research queue
    (`31-PLANCHECK-RESEARCH-QUEUE-PLAN.md`, drafted in another worktree).

@@ -12,6 +12,7 @@ import { ClaudeCliRolesResearchRuntime } from "./research/claude-cli/roles-runti
 import { ClaudeCliResearchRuntime } from "./research/claude-cli/runtime.mjs";
 import { CodexCliResearchRuntime } from "./research/codex-cli/runtime.mjs";
 import { FakeResearchRuntime } from "./research/fake-research-runtime.mjs";
+import { OpenCodeCliResearchRuntime } from "./research/opencode-cli/runtime.mjs";
 import { PackResearchRuntime } from "./research/pack/runtime.mjs";
 import { ResearchQuestionService } from "./research/research-question-service.mjs";
 import { ResearchQuestionStore } from "./research/research-question-store.mjs";
@@ -85,6 +86,9 @@ try {
 // 2026 and what it did well moved into `claude-cli` (host-owned tools, checked citations).
 // `codex-cli` is the same recipe and harness on the ChatGPT plan, with GPT-6 Sol by default;
 // it has no baseline of its own yet, so nothing selects it unless a request names it.
+// `opencode-cli` (DeepSeek 4.1 Flash on the OpenCode Go plan) is the Settings default since the
+// 24 September eval: 7 of 13 against Opus 5.5's 5 (`30-EVAL-RESULT.md`). A saved Settings choice
+// still wins, and a request that names a runtime still wins over both.
 const researchStore = jsonStore ? null : new ResearchStore(store.databaseHandle());
 const researchService = jsonStore
   ? null
@@ -96,6 +100,7 @@ const researchService = jsonStore
         new FakeResearchRuntime(),
         new ClaudeCliResearchRuntime(),
         new CodexCliResearchRuntime(),
+        new OpenCodeCliResearchRuntime(),
         new ClaudeCliRolesResearchRuntime(),
         new PackResearchRuntime(),
       ]),

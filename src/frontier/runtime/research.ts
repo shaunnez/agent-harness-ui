@@ -77,7 +77,7 @@ export interface ResearchRunRecord {
 }
 
 export interface ResearchEngineSnapshot {
-  runtime: "claude-cli" | "codex-cli";
+  runtime: "claude-cli" | "codex-cli" | "opencode-cli";
   model: string;
   reasoning: string | null;
 }
@@ -100,6 +100,17 @@ export interface ResearchReview {
   decidedAt: string;
   /** The evidence fingerprint the reviewer saw. A different current fingerprint makes it out of date. */
   evidenceSha: string;
+}
+
+export type ResearchGrade = "confident" | "unsure" | "no_price" | "review";
+
+export interface ResearchGrading {
+  grade: ResearchGrade;
+  label: string;
+  /** The median of the runs' lows and of their highs; only on confident and unsure. */
+  bestBand: { low: number; high: number } | null;
+  range: { low: number; high: number } | null;
+  reasons: string[];
 }
 
 export interface ResearchQuestion {
@@ -145,6 +156,9 @@ export interface ResearchQuestion {
   /** Each banded run's unit, when the runs priced in different measures (or in a measure other
    *  than the pinned scope's) and so cannot be compared. */
   unitsDiffer?: string[] | null;
+  /** What may go back to a tender, decided in code from the runs (`research-question-grade.mjs`).
+   *  Absent on recorded and sample questions; null while runs are still going. */
+  grading?: ResearchGrading | null;
   /** The pinned scope every run was given, or null for a question asked without one. */
   scope?: ResearchScope | null;
   scopedBy?: ResearchScopedBy | null;
@@ -291,6 +305,7 @@ export function researchEngineLabel(engine: ResearchEngineSnapshot) {
       "claude-sonnet-5": "Claude Sonnet 5",
       "gpt-6-sol": "GPT-6 Sol",
       "gpt-6-luna": "GPT-6 Luna",
+      "opencode-go/deepseek-v4.1-flash": "DeepSeek 4.1 Flash",
     }[engine.model] ?? engine.model;
   const reasoning = engine.reasoning
     ? engine.reasoning === "xhigh"
@@ -301,7 +316,12 @@ export function researchEngineLabel(engine: ResearchEngineSnapshot) {
 }
 
 export function researchEnginePlan(engine: ResearchEngineSnapshot) {
+  if (engine.runtime === "opencode-cli") return "OpenCode CLI · OpenCode Go plan";
   return engine.runtime === "codex-cli" ? "Codex CLI · ChatGPT plan" : "Claude CLI · Claude plan";
+}
+
+export function researchEngineName(engine: ResearchEngineSnapshot) {
+  return researchEnginePlan(engine).split(" · ")[0];
 }
 
 export function formatNzd(value: number | null | undefined) {

@@ -7,6 +7,7 @@ import {
   type ResearchQuestion,
   type ResearchQuestionStatus,
   researchEngineLabel,
+  researchEngineName,
   researchStatusCopy,
   reviewState,
   reviewStateCopy,
@@ -236,9 +237,7 @@ export function ResearchQuestions({
                       <span className="research-engine" title={researchEngineLabel(question.engine)}>
                         {researchEngineLabel(question.engine).split(" · ")[0]}
                       </span>
-                      <small className="research-cell-note">
-                        {question.engine.runtime === "codex-cli" ? "Codex CLI" : "Claude CLI"}
-                      </small>
+                      <small className="research-cell-note">{researchEngineName(question.engine)}</small>
                     </td>
                     <td>
                       <span className={`state-badge tone-${review.tone}`}>{review.label}</span>
