@@ -1,0 +1,185 @@
+{
+  "question": "industrial-roller-doors",
+  "kind": "pinned",
+  "arm": "A7",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 9480,
+    "high": 13825
+  },
+  "range": {
+    "min": 9460,
+    "max": 18567
+  },
+  "unit": "ea (one complete motorised insulated roller door, supplied, installed and commissioned into a prepared opening)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.364,
+    "highRatio": 1.447,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0839,
+  "elapsedMs": 242791,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 176584,
+      "band": {
+        "unit": "ea (one complete motorised insulated roller door, supplied, installed and commissioned into a prepared opening)",
+        "low": 9460,
+        "high": 12830,
+        "centre": "Auckland",
+        "basis": "Sum of the six components per door: door unit $7,600-$9,300 + motor $1,100-$1,600 + controls/safety $500-$1,200 + final electrical connection $150-$420 + scissor lift (amortised) $50-$160 + delivery/offload (amortised) $60-$150 = $9,460-$12,830 per door. Total for the nominal 4 identical doors = $37,840-$51,320, which is where the amortised lift and delivery sit. GST exclusive, NZD, Auckland, QV rates already GST exclusive and web rates converted from GST-inclusive where used. Excludes GST, preliminaries, margin, design and consent, the structural opening, the 3-phase supply/submain/isolator/containment, vision panels/wicket doors/fire rating/wind upgrade, remote controls beyond the fixed station, loop detectors, PLC/card interface, painting and patching, temporary weather closure, and service/warranty beyond 12 months, all per scope. Confidence is LOW because the largest component (the insulated aluminium motorised door unit, ~65% of the door) is a QV proxy for a steel chain-operated shutter with a 65-90% uplift, and no NZ publisher prints a rate for this exact specification."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 353235,
+        "outputTokens": 22261,
+        "cachedTokens": 277888,
+        "modelCalls": 10,
+        "toolCalls": 28,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.025492,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 353235,
+            "outputTokens": 22261,
+            "estimatedCostUsd": 0.025492,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 202824,
+      "band": {
+        "unit": "$/ea (one complete motorised insulated roller shutter door, supplied, installed and commissioned into a prepared opening)",
+        "low": 9480,
+        "high": 13825,
+        "centre": "Auckland",
+        "basis": "Auckland, NZD, GST EXCLUSIVE, one door 4.0m W x 4.5m H nominal 18.0 m2, 4 identical doors installed in one visit, no preliminaries, margin, design or consent (all excluded by the scenario). Per-door band = sum of components: low 7400+1100+500+270+0+85+125 = 9480; high 9300+2300+1200+500+0+225+300 = 13825; midpoint 11,653/ea. TOTAL FOR THE 4-DOOR NOMINAL QUANTITY: low 37,920; high 55,300; midpoint 46,600 - the two amortised items (scissor lift and delivery) are divided by 4 inside each per-door figure. Allowances (controls/safety 500-1200 and delivery 125-300) carry 625-1500 of each per-door figure, about 7-11% of the band - well under a third, so the band is carried by cited QV rows and proxies, not by judgement. Whole-door rate is a QV proxy for a different curtain material (zincalume steel for insulated aluminium) with the adjustment stated; the corroborating published pages are retailer price guides, not project quotes, so treat the band as a cost-plan check, not a certified price."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 4,
+        "webVerified": 4,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 402824,
+        "outputTokens": 22816,
+        "cachedTokens": 303744,
+        "modelCalls": 9,
+        "toolCalls": 27,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.029463,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 402824,
+            "outputTokens": 22816,
+            "estimatedCostUsd": 0.029463,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 242789,
+      "band": {
+        "unit": "ea (one complete motorised 4.0m x 4.5m insulated roller shutter, supplied, installed and commissioned into a prepared opening)",
+        "low": 12902,
+        "high": 18567,
+        "centre": "Auckland",
+        "basis": "Sum of the ten components above, per door: low $6,502 + $1,620 + $1,300 + $600 + $1,100 + $500 + $800 + $80 + $100 + $300 = $12,902; high $7,121 + $2,520 + $2,136 + $1,200 + $1,440 + $1,300 + $1,800 + $200 + $250 + $600 = $18,567. Mid-point approx $15,700/ea. Nominal quantity 4 identical doors, one visit: total $51,608 (low) to $74,268 (high), mid approx $62,900. GST exclusive, excludes preliminaries, margin, design and consent fees. QV rows used are unreviewed and UK/NZ vendor guides are not project quotes: treat this as a cost-plan band, not a price. Allowances (hood, controls/safety, delivery) are ~13% of the mid total. Indications from the fetched guides that bracket this band: installed medium commercial doors $4,000-$7,500 and large 5-8m installed $7,000-$12,000, before an insulated aluminium curtain, full safety package and 3-phase drive are added."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 4,
+        "webVerified": 4,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 438568,
+        "outputTokens": 26983,
+        "cachedTokens": 360832,
+        "modelCalls": 13,
+        "toolCalls": 33,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.028933,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 438568,
+            "outputTokens": 26983,
+            "estimatedCostUsd": 0.028933,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

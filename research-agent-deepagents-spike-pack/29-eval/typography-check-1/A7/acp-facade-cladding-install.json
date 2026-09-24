@@ -1,0 +1,183 @@
+{
+  "question": "acp-facade-cladding-install",
+  "kind": "pinned",
+  "arm": "A7",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 594,
+    "high": 867
+  },
+  "range": {
+    "min": 575,
+    "max": 941
+  },
+  "unit": "NZD per m2 of net cladding face area, GST exclusive, Auckland",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.094,
+    "highRatio": 1.146,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0719,
+  "elapsedMs": 233196,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 233194,
+      "band": {
+        "unit": "NZD per m2 of net cladding face area, GST exclusive, Auckland",
+        "low": 575,
+        "high": 941,
+        "centre": "Auckland",
+        "basis": "Sum of six distinct components, each amortised over the 450 m2 net face area: ACP cassette system 458-760/m2 (QV d522ac53...:t1:r7 with ...:t1:r9 as floor, 65%-of-published-span basis); flashings 266 lm at 140-205/lm = 82.8-121.2/m2 (QV 528b0345...:t21:r25/r26 with stated gauge and finish adjustment); joint baffle approx 560 lm at 8-16/lm = 10.0-19.9/m2 (QV 9bd8f998...:t39:r17 as proxy); boom lift 30 shifts at 267-340 = 17.8-22.7/m2 (QV 253b838a...:t8:r15, market-checked at 'from $340'/day on source-4); lift delivery and pickup allowance 1.1-2.7/m2; sundries allowance 5-15/m2. Totals: 575 low / 758 mid / 941 high per m2, i.e. $258,600 low, $341,000 mid, $423,600 high for the 450 m2. Excludes GST, preliminaries, margin, design, consent, PS1/PS3, air barrier, C-clause fire stopping, windows/doors, structural steel, perimeter scaffold, edge protection and traffic management as instructed. The ACP component is the dominant share and rests on an unreviewed QV row whose inclusions are unstated; if the rate excludes the subgirt/thermal-break layer the band moves toward the high end (QV top-hat row 9bd8f998...:t12:r23 at AKL 87/m2). Confidence low for that reason."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 556292,
+        "outputTokens": 25245,
+        "cachedTokens": 483328,
+        "modelCalls": 14,
+        "toolCalls": 30,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.027542,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 556292,
+            "outputTokens": 25245,
+            "estimatedCostUsd": 0.027542,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 180968,
+      "band": {
+        "unit": "$/m2 of net cladding face area (window and door openings deducted), GST exclusive, Auckland, no preliminaries and no margin",
+        "low": 629,
+        "high": 821,
+        "centre": null,
+        "basis": "Component build: QV Alupanel straight-panel system row 421-458/m2 widened to 421-560 (421-560) + QV ExoTec top-hat-to-steel-girts row 87/m2 adjusted x1.25-1.5 for an aluminium thermally-broken subgirt (109-131) + 266 lm of 3mm folded PVDF flashings priced off four QV aluminium/flashing rows with a stated x1.5-2.0 gauge-and-finish adjustment (74-89/m2, being 108 lm reveals, 60 lm base closure+mesh, 60 lm parapet capping, 38 lm corners) + QV diesel articulated boom day rate 267 x 30 day-shifts with a stated weekly-hire discount (13-18) + vendor-supported float allowance (1.6-3.1) + minor sundries allowance (10-20). Allowances carry only about $12-23/m2, under 3% of the total, so the band is rate-driven and not allowance-driven. All QV rows are UNREVIEWED. Confidence is LOW for two reasons: (1) the QV proprietary ACP row does not state its inclusions, so the subgirt may be a $109-131/m2 double count - deduct it if the subcontractor's system rate carries the carrier; and (2) no published NZ rate exists for 3mm folded PVDF flashings, which are unusually heavy in this scope at 0.59 lm per m2 of face area."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 321648,
+        "outputTokens": 19386,
+        "cachedTokens": 271360,
+        "modelCalls": 14,
+        "toolCalls": 26,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.019989,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 321648,
+            "outputTokens": 19386,
+            "estimatedCostUsd": 0.019989,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 189939,
+      "band": {
+        "unit": "$ per m2 of net cladding face area, 450 m2 net face over two elevations, 9.5m max height, 15 openings deducted, Auckland, GST exclusive",
+        "low": 594,
+        "high": 867,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components: ACP cassette panel system 458-650 + folded 3mm PVDF flashings 91.6-144.8 (266 lm at 155-245/m) + 6-week 14m diesel articulating boom 17.8-24.9 (QV 267/day) + machine delivery/pickup 1.1-2.0 + sundries 25-45. Total for 450 m2: low 593.5 x 450 = $267,075; high 866.7 x 450 = $390,015; mid 730/m2 = $328,545. Allowances (delivery plus sundries) are 4.4-6.0% of the total, so the band is rate-driven, not allowance-driven. Excludes GST, preliminaries, margin, design, consent fees, the rigid air barrier, window sealing, cavity fire barriers and fire-stopping, windows/doors/louvres/soffits/balustrades/roofing, structural steel and framing modification, scaffold/edge protection/traffic management/footpath cover, and PS1/PS3/weathertightness or facade-engineer producer statements, per the fixed scope. Confidence is low because the panel component (about 77% of the total) rests on a QV row published at 458-920/m2 that I have truncated to 458-650, and the flashing component is a self-derived gauge and finish adjustment off a 0.95mm flashing row. Using the untruncated Reynobond range would give roughly 594-1,135/m2, i.e. $267,000-$511,000 for the 450 m2."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 501117,
+        "outputTokens": 20597,
+        "cachedTokens": 429952,
+        "modelCalls": 12,
+        "toolCalls": 27,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.024323,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 501117,
+            "outputTokens": 20597,
+            "estimatedCostUsd": 0.024323,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

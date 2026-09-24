@@ -218,3 +218,23 @@ between runs; it is written to `29-eval/repeat/A7/` and reported beside A7, not 
 the two A7 runs; only emergency lighting passed both times. So one pass over 13 questions moves by
 two or three questions from chance alone, which is the size of every gap between arms in this eval:
 A5's 7 against A7's 5 and 3 is not, on this evidence, a difference in the arms.
+
+**Typography check (24 September).** On A7 roller doors failed a web quote both times. The page was
+fetched correctly and the text is in the retained copy, but DeepSeek quoted "$1,800–$2,300" as
+"$1,800-$2,300" and rewrote "$1.1k" as "$1,100". Shaun approved two changes ("Go"):
+
+- Checking (every runtime from now on): typographic look-alikes are equal in a quote. Every dash and
+  minus sign reads as "-", curly quotes as straight ones, "…" as "...", and soft hyphens and zero-width
+  spaces are dropped. Digits, words and every other character must still match, so "$1.1k" quoted
+  as "$1,100" still fails. Results recorded before this keep their checks.
+- Prompt (API loop only): copy figures exactly as the page writes them, including "k", dashes and
+  commas. The OpenCode prompt is unchanged, so A5 stays reproducible.
+
+The API loop with these changes is a tuning state after A7, not a scored arm. Roller doors and facade
+were each run twice (12 runs, $0.32, written to `29-eval/typography-check-1/` and `-2/`). Facade
+passed both times. Roller doors failed both times, but not on quotes: one run had every source
+checked and one had a single failed web quote. The first repetition was disputed on price, with lows
+from $9,460 to $12,902. In the second the three bands agreed ($9,240–9,750 low, $13,750–16,500 high),
+but the run was scored "different measures" because one run wrote its unit as "ea (one complete
+door, … also give x4 total)". The word "total" inside the note beat the leading "ea". That is a
+unit-parsing fault in the scorer. It is recorded here and not fixed without Shaun's go-ahead.

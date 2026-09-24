@@ -158,16 +158,29 @@ export async function verifySnapshotEvidence({ source, reference, snapshotDirect
  * Whether `excerpt` is quoted from `content`: every character the same, with whitespace
  * allowed to differ. Retained text keeps a table's cells on separate lines, and a model quoting
  * a table row joins them with spaces; that is the same quote, and rejecting it taught nothing.
- * Words, digits, currency and punctuation must still match exactly — only runs of whitespace
- * are treated as equal.
+ * Typographic look-alikes are also equal: every dash and minus sign reads as "-", curly quotes as
+ * straight ones, "…" as "...", and invisible soft hyphens and zero-width spaces are dropped. A
+ * roller-door page's "$1,800–$2,300" quoted as "$1,800-$2,300" is the same figure (A7 repeat,
+ * 24 September; Shaun approved the rule for every runtime). Words, digits, currency and every
+ * other character must still match exactly.
  */
 export function excerptAppearsIn(content, excerpt) {
   const text = String(content ?? "");
   const quote = String(excerpt ?? "");
   if (!quote.trim()) return false;
   if (text.includes(quote)) return true;
-  const collapse = (value) => value.replace(/\s+/g, " ").trim();
-  return collapse(text).includes(collapse(quote));
+  return foldForQuote(text).includes(foldForQuote(quote));
+}
+
+function foldForQuote(value) {
+  return value
+    .replace(/[\u00AD\u200B-\u200D\u2060\uFEFF]/g, "")
+    .replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, "-")
+    .replace(/[\u2018\u2019\u201A\u201B\u2032\uFF07]/g, "'")
+    .replace(/[\u201C-\u201F\u2033\uFF02]/g, '"')
+    .replace(/\u2026/g, "...")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export function renderPdfPreview(pdf, maxCharacters = 50_000) {
