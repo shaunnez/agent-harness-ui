@@ -1,0 +1,18 @@
+.git
+node_modules
+dist
+output
+.data
+.env
+.env.*
+*.log
+.tmp
+.playwright-cli
+journal-site
+meshy_output
+tests
+docs
+# The Frontier build imports one contract file from the design study (and fixture data from the
+# research spike pack, which stays in the context); nothing else in design/ ships.
+design
+!design/mission-frontier/assets/staging/colony-v2/contract.json

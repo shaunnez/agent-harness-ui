@@ -6,7 +6,7 @@ import { createCandidateWorktreeRoutes } from "./candidate-worktree-routes.mjs";
 import { createChangelogRoutes } from "./changelog-routes.mjs";
 import { createCompanionChatRoutes } from "./companion-chat.mjs";
 import { defaultWorktreeRoot, GitWorktreeManager } from "./git-worktree.mjs";
-import { assertHttpBoundary, corsHeaders } from "./http-security.mjs";
+import { assertHttpBoundary, corsHeaders, httpBoundaryFromEnvironment } from "./http-security.mjs";
 import { normalizeModelId, POLICY_IDS } from "./model-catalog.mjs";
 import { createProjectRoutes } from "./project-routes.mjs";
 import { RepositoryAuthorityService } from "./repository-authority.mjs";
@@ -201,6 +201,8 @@ export function createApiServer({
   runCompanionAgent,
   researchService = null,
   linearIntake = null,
+  httpBoundary = httpBoundaryFromEnvironment(),
+  staticUi = null,
 }) {
   // Reads resolve each entry's recorded absolute path, so this root only matters for
   // `prepare`, which the API never calls. It still uses the shared default rather than a
@@ -300,8 +302,8 @@ export function createApiServer({
     });
     if (request.method === "OPTIONS") {
       try {
-        assertHttpBoundary(request, csrfToken);
-        response.writeHead(204, corsHeaders(request.headers.origin));
+        assertHttpBoundary(request, csrfToken, httpBoundary);
+        response.writeHead(204, corsHeaders(request.headers.origin, httpBoundary));
         response.end();
       } catch (error) {
         sendError(response, error);
@@ -310,7 +312,7 @@ export function createApiServer({
     }
 
     try {
-      assertHttpBoundary(request, csrfToken);
+      assertHttpBoundary(request, csrfToken, httpBoundary);
       if (url.pathname === "/api/integrations/linear" && request.method === "GET") {
         send(response, 200, linearIntake?.status() ?? { configured: false, enabled: false, changing: false });
         return;
@@ -338,6 +340,7 @@ export function createApiServer({
       if (await taskActionRoutes(request, response, url)) return;
       if (await companionChatRoutes(request, response, url)) return;
       if (await researchRoutes(request, response, url)) return;
+      if (staticUi && (await staticUi(request, response, url))) return;
       send(response, 404, { error: "Not found." });
     } catch (error) {
       sendError(response, error);
