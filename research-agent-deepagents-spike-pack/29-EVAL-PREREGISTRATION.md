@@ -162,3 +162,23 @@ wall times are not comparable with the other arms'; pass count and cost are. One
 industrial-roller-doors run failed with "The PlanCheck rate library is unreachable" while another
 agent restarted PlanCheck; the question was set aside to `results/unassessed/A5/` and re-run once,
 as this document allows. Result: 7 of 13. Written up in `30-EVAL-RESULT.md`.
+
+## Addendum A6 (24 September, before any A6 run)
+
+Shaun: "build the thin loop now, and lets test it against the 13 questions".
+
+| Arm | Runtime | Model | Search | Keys |
+|---|---|---|---|---|
+| A6 | `api-loop` (`server/research/api-loop/`) | `opencode-go/deepseek-v4.1-flash`, no reasoning setting | Parallel, as the host's `web_search` (`fast` mode) | `OPENCODE_API_KEY`, `PARALLEL_API_KEY`, in the host only |
+
+What changes from A5 is the harness, not the model or the plan: no CLI and no child process; the
+loop calls the model's OpenAI-compatible API, runs the tools each step asks for concurrently
+through the run's host-tool socket (the same exposure check, strikes and terminal stop as the CLI
+relays), and web search is a host tool on Parallel instead of OpenCode's pinned `parallel` provider.
+The prompt is A5's recipe (Codex's, with its three rules) in plain tool names, without the Code Mode
+lines, plus "you may call several tools in one step". Same 13 questions, three runs, PlanCheck
+library, row kinds, `standard` budget, metric and leader rule. Hard cap 15 minutes; at about 50
+tool calls the model is told to answer and asked once more with no tools. Cost is the models.dev
+rate card (OpenCode Go DeepSeek 4.1 Flash: $0.15 in, $0.003 cached, $0.60 out per million), an
+API-rate estimate. The question it answers: does the thin loop keep A5's 7 of 13 at lower memory
+and no slower, so it can be the production worker (with Baseten in place of OpenCode Go).

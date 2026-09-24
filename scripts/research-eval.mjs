@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // The scope → pack eval (`research-agent-deepagents-spike-pack/29-EVAL-PREREGISTRATION.md`).
 //
-//   node scripts/research-eval.mjs --arm A0|A2|A3|A4|A5 [--only id,id] [--out <dir>]
+//   node scripts/research-eval.mjs --arm A0|A2|A3|A4|A5|A6 [--only id,id] [--out <dir>]
 //   node scripts/research-eval.mjs --rescore [--out <dir>]
 //   node scripts/research-eval.mjs --arm A4 --set <questions.json> --model <model> --out <dir>   (tuning)
 //
@@ -18,6 +18,7 @@ import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { ApiLoopResearchRuntime } from "../server/research/api-loop/runtime.mjs";
 import { ClaudeCliResearchRuntime } from "../server/research/claude-cli/runtime.mjs";
 import { CodexCliResearchRuntime } from "../server/research/codex-cli/runtime.mjs";
 import { OpenCodeCliResearchRuntime } from "../server/research/opencode-cli/runtime.mjs";
@@ -65,6 +66,14 @@ export const ARMS = {
     model: "opencode-go/deepseek-v4.1-flash",
     reasoning: null,
     make: (env) => new OpenCodeCliResearchRuntime({ env }),
+  },
+  // Doc 29 addendum A6: the same model and prompt rules as A5 through the thin API loop, with web
+  // search on Parallel through the host. Needs OPENCODE_API_KEY and PARALLEL_API_KEY in the env.
+  A6: {
+    runtime: "api-loop",
+    model: "opencode-go/deepseek-v4.1-flash",
+    reasoning: null,
+    make: (env) => new ApiLoopResearchRuntime({ env }),
   },
 };
 
