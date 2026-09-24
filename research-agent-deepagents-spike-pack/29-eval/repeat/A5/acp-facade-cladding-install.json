@@ -1,0 +1,190 @@
+{
+  "question": "acp-facade-cladding-install",
+  "kind": "pinned",
+  "arm": "A5",
+  "status": "disputed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 540,
+    "high": 925
+  },
+  "range": {
+    "min": 537,
+    "max": 1056
+  },
+  "unit": "$/m2 of net cladding face area (Auckland, NZD, GST-exclusive)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.182,
+    "highRatio": 1.65,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0694,
+  "elapsedMs": 167004,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 130746,
+      "band": {
+        "unit": "$/m2 of net cladding face area (Auckland, NZD, GST-exclusive)",
+        "low": 537,
+        "high": 640,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components added (no overlap): (1) ACP cassette system QV d522…:t1:r9 $421–458/m2 x 450 m2 = $189,450–206,100; (2) 266 lm 3mm PVDF folded flashings at $150–230/m derived from QV 528b…:t21:r25 = $39,900–61,180; (3) 6-week 14m diesel articulating boom from QV 253b…:t8:r15 = $8,610–12,714; (4) allowances $3,800–8,000. Totals $241,760–287,994 for 450 m2 = $537–640/m2, mid ≈ $588/m2. Allowances are ~2–3% of the total, so the band rests on cited rates. Amortisation is auditable from the per-unit quantities in components 1–3. Scope fixed: openings deducted (450 m2 net), 266 lm flashings, air barrier already in place and not priced, no scaffold/prelims/margin/GST/PS1-PS3/fire-stopping. Upside risk: if the QV Alupanel proprietary rate excludes the carrier/subgirt, add ~$90–110/m2 (QV t12:r23) and the top of the band rises to ~$730/m2; Attika's published $400–700/m2 aluminium-panel range supports that upside. Downside: the QV rate may already embed contractor margin, which the brief excludes."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 498428,
+        "outputTokens": 21681,
+        "cachedTokens": 430208,
+        "toolCalls": 12,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.024532,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 498428,
+            "outputTokens": 21681,
+            "estimatedCostUsd": 0.024532,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 167002,
+      "band": {
+        "unit": "$/m2 net cladding face area (openings deducted), GST-exclusive, Auckland",
+        "low": 540,
+        "high": 1056,
+        "centre": "Auckland",
+        "basis": "Sum of cited QV components + stated allowances, per m2 of the 450 m2 net face. Auckland (AKL) rates; WLG/CHC typically within about 5%. Component sum: ACP cassette system 458-920; flashings 43.0-67.3; boom lift 17.8-24.9; lift transport 1.8-3.3; other allowances 19.1-40.6 = 539.7-1056.1/m2. Totals for 450 m2: LOW approx $242,900; CENTRE approx $359,100 (798/m2); HIGH approx $475,200. All figures exclude GST, preliminaries, margin, design, consent, PS1/PS3, cavity fire-stopping, scaffold/edge protection/traffic management, substrate and RA repair, windows/doors/soffits/balustrades/roofing and structural steel (per the fixed exclusions). Confidence LOW: the main ACP driver is a broad UNREVIEWED QV brand range and QV does not disclose whether the subgirt/carrier is inside that proprietary rate, so the band is deliberately wide. Allowances are about 4% of the total, well under a third, so the band rests on cited rates not on judgement."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 167402,
+        "outputTokens": 20586,
+        "cachedTokens": 115584,
+        "toolCalls": 7,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.020471,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 167402,
+            "outputTokens": 20586,
+            "estimatedCostUsd": 0.020471,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 160053,
+      "band": {
+        "unit": "$/m2 net cladding face area",
+        "low": 635,
+        "high": 925,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components: ACP cassette system 420-580 + aluminium top-hat subgirts 95-140 + thermal-break brackets 30-60 + 3mm folded flashings 59-89 + 6-week boom lift 18-28 + shop drawings/set-out 8-15 + clean-down/waste 5-12 = $635-$925/m2 (mid ~$780/m2). For the nominal 450 m2: $285,750 (low), $415,800 (high), mid ~$351,000. GST, preliminaries, margin, design and consent fees, the rigid air barrier, cavity fire barriers/fire-stopping and C-clause verification, windows/doors/soffits/balustrades/roofing, substrate repair, perimeter scaffold and traffic management, and PS1/PS3 are excluded. Confidence low: the QV ACP row does not declare whether the proprietary carrier/subgirts are inside the rate (potential ~$95-$140/m2 double-count), the cassette premium is a judgement uplift, and three minor items are allowances (together under 10% of the total). QV rows are unreviewed. This is a cost-plan band, not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 546666,
+        "outputTokens": 17983,
+        "cachedTokens": 465024,
+        "toolCalls": 14,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.024431,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 546666,
+            "outputTokens": 17983,
+            "estimatedCostUsd": 0.024431,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

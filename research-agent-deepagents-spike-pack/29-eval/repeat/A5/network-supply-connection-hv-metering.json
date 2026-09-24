@@ -1,0 +1,178 @@
+{
+  "question": "network-supply-connection-hv-metering",
+  "kind": "pinned",
+  "arm": "A5",
+  "status": "disputed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": null,
+  "range": {
+    "min": 95301,
+    "max": 147800
+  },
+  "unit": "sum (NZD, GST exclusive, one complete new 300 kVA HV-supplied supply point, Auckland)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": null,
+    "highRatio": null,
+    "runsWithBand": 1,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1233,
+  "elapsedMs": 355982,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 260729,
+      "band": null,
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 5,
+        "webVerified": 5,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 1570646,
+        "outputTokens": 44525,
+        "cachedTokens": 1469568,
+        "toolCalls": 34,
+        "searchCalls": 19,
+        "estimatedCostUsd": 0.046285,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1570646,
+            "outputTokens": 44525,
+            "estimatedCostUsd": 0.046285,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 355980,
+      "band": {
+        "unit": "sum (NZD, GST exclusive, one complete new 300 kVA HV-supplied supply point, Auckland)",
+        "low": 95301,
+        "high": 147800,
+        "centre": "Auckland",
+        "basis": "Bottom-up sum of distinct components: Vector assessment fee $300 + Vector design fee $3,000 + Vector capital contribution proxied at 300 kVA x $176.67/kVA posted distribution-substation capacity rate ($53,001) up to 300 kVA x ~$230/kVA ($69,000) + HV cable $3,750-$7,500 + HV terminations $3,000-$6,000 + LV service main $20,250-$30,000 + metering allowance $8,000-$20,000 + coordination allowance $4,000-$12,000 = $95,301-$147,800, midpoint ~$121,600. Amortised over the 300 kVA nominal capacity: ~$318/kVA (low) to ~$493/kVA (high), midpoint ~$405/kVA. Confidence is LOW: the largest component (Vector's charge covering the network-owned 300 kVA transformer and HV protection/switchgear) is 'Priced per job' by Vector and is proxied from the published posted capacity rate, so the real Customer Works Agreement number could move the band materially; allowances (metering + coordination) are ~13-21% of the total. Excludes GST, preliminaries, margin, design/consent fees, substation site works, main switchboard and load side, road-reserve trenching/reinstatement, network reinforcement, retailer/standby/UPS/PFC and after-hours energisation."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-derived",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 1484077,
+        "outputTokens": 36129,
+        "cachedTokens": 1365248,
+        "toolCalls": 31,
+        "searchCalls": 14,
+        "estimatedCostUsd": 0.043597,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1484077,
+            "outputTokens": 36129,
+            "estimatedCostUsd": 0.043597,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 234907,
+      "band": null,
+      "checks": [
+        "web-verified",
+        "web-derived",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 4,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 897902,
+        "outputTokens": 27178,
+        "cachedTokens": 800000,
+        "toolCalls": 23,
+        "searchCalls": 11,
+        "estimatedCostUsd": 0.033392,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 897902,
+            "outputTokens": 27178,
+            "estimatedCostUsd": 0.033392,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

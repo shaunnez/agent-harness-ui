@@ -1,0 +1,206 @@
+{
+  "question": "interior-finishes-to-schedule",
+  "kind": "pinned",
+  "arm": "A5",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 141500,
+    "high": 193000
+  },
+  "range": {
+    "min": 140000,
+    "max": 196500
+  },
+  "unit": "sum (whole finishes-schedule package on one tenancy floor, 800 m2 NLA)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.057,
+    "highRatio": 1.062,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.092,
+  "elapsedMs": 293891,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 293888,
+      "band": {
+        "unit": "sum (whole finishes-schedule package on one tenancy floor, 800 m2 NLA)",
+        "low": 141500,
+        "high": 185000,
+        "centre": "Auckland",
+        "basis": "Sum of the twelve components above: low $141,572, high $185,040, midpoint $163,300 = $204/m2 over the 800 m2 NLA (GST exclusive, NZD, Auckland CBD level 4). Nine of the twelve lines are cited QV CostBuilder AKL rows or QV rows used as proxies with the adjustment stated in each caveat; three minor package lines are allowances (waste $1.5-3.0k, measure/setout $1.5-3.5k, out-of-hours $4-12k) totalling 5-10% of the band, well under a third. Not counted twice: substrate sanding/stopping/sealing is inside the QV wall-covering and paint rows; adhesive is inside the QV lay rows; the MDF batten substrate and its fixing are a single built-up line; the batten lacquer is a single built-up line. Band width is driven by carpet tile ($100-$114/m2, +/-$9k), the smoothing compound (thin to 3mm QV rows, -$12k/+$12k) and the batten-wall proxy (-$2k/+$2.3k). The scenario's own band ($148k-$196k, mid $170k) sits inside this range at the top; the scenario's carpet and vinyl wall-covering rates are above QV, and its smoothing-compound rate is below every published QV row. Add GST, preliminaries, margin and design fees separately - all excluded. QV rows are UNREVIEWED."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 9,
+        "rowsFound": 9,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 1,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 1810949,
+        "outputTokens": 34700,
+        "cachedTokens": 1678720,
+        "toolCalls": 25,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.045691,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1810949,
+            "outputTokens": 34700,
+            "estimatedCostUsd": 0.045691,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 170342,
+      "band": {
+        "unit": "sum",
+        "low": 140000,
+        "high": 193000,
+        "centre": "Auckland",
+        "basis": "Sum of cited QV CostBuilder AKL rates for all six finishes plus substrate skim and trims, plus labelled allowances for protection, disposal, site measure/set-out and out-of-hours access. All figures NZD ex GST, midpoint approx. $166,000 ($208/m2 over the 800 m2 NLA). Carpet tile (640 m2, QV $100-120/m2) is the single largest driver at about 42% of the package; latex skim ($34-50/m2) about 17%. Allowances are only ~6% (low) to ~12% (high) of the total, so the band rests on cited rates. QV rows are UNREVIEWED; the Type II vinyl-wall-covering and LVT components use stated proxies. Excludes GST, preliminaries, margin, design/consent fees, base-build linings, ceilings, joinery, glazing, signage and all removal/levelling beyond the latex skim. Not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 10,
+        "rowsFound": 10,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 273079,
+        "outputTokens": 21595,
+        "cachedTokens": 216320,
+        "toolCalls": 16,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.02212,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 273079,
+            "outputTokens": 21595,
+            "estimatedCostUsd": 0.02212,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 198668,
+      "band": {
+        "unit": "sum (whole finishes-schedule package, one 800 m2 tenancy floor)",
+        "low": 148000,
+        "high": 196500,
+        "centre": "Auckland (AKL rates)",
+        "basis": "Sum of the thirteen components above. Low = sum of component lows ($148,187); high = sum of component highs ($196,293); midpoint $172,240, i.e. $186-$246/m2 over 800 m2 NLA (mid $215/m2). Eight of the thirteen lines are priced directly from QV CostBuilder rows (all unreviewed). The batten wall is assembled from three QV rows with one proxy (decorative plywood lining used for painted MDF substrate). Two components carry stated judgement adjustments: LVT (+55% for 0.55 mm wear layer/plank format) and skirting (92x18 MUF profile used for 100x18 MDF). Allowances are $12,480-$30,160 of the band, i.e. about 12% of the midpoint, all for minor sundries (prep touch-up, trims, disposal, setout, out-of-hours loading) - they do not carry the band. Largest single line is carpet tile ($64k-$73k), then floor-levelling compound ($25k-$37k). The whole floor area is assumed to need the smoothing compound and every wall stated is measured net of no openings given in the scope. GST, preliminaries, margin, design and consent fees are excluded per the scope. Confidence medium: main cost drivers are all sourced, but the batten wall and LVT rest on proxies with stated adjustments, and two QV rows span a wide band (floor-levelling 0.5 mm vs 3 mm; carpet loose-lay tip shear vs I-Bond cut pile)."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 8,
+        "rowsFound": 8,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 242424,
+        "outputTokens": 25419,
+        "cachedTokens": 186752,
+        "toolCalls": 8,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.024162,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 242424,
+            "outputTokens": 25419,
+            "estimatedCostUsd": 0.024162,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

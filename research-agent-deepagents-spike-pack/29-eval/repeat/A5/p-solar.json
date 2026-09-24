@@ -1,0 +1,185 @@
+{
+  "question": "p-solar",
+  "kind": "pinned",
+  "arm": "A5",
+  "status": "disputed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 9150,
+    "high": 21750
+  },
+  "range": {
+    "min": 8850,
+    "max": 26650
+  },
+  "unit": "lump sum for whole 30 kWp array (NZD, GST excl., Auckland)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.536,
+    "highRatio": 1.427,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1013,
+  "elapsedMs": 266567,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 221684,
+      "band": {
+        "unit": "lump sum for whole 30 kWp array (NZD, GST excl., Auckland)",
+        "low": 13594,
+        "high": 26650,
+        "centre": "Auckland",
+        "basis": "Sum of cited QV rows (purlins, bolts, roofer labour rate) plus fetched NZ vendor hardware prices (GridFree, Lusty & Blundell) and a fetched published structural-engineer report fee range, with two labelled minor allowances (sundries/fixings). Split so a reviewer can reject one part: mounting system $9,759-$17,806; strengthening $2,335-$5,344; design/PS1 $1,500-$3,500. QV has no solar mounting rows, so the mounting system rests on vendor catalogue prices plus assumed quantities and a stated labour allowance - hence low confidence and a wide band. Excludes GST, preliminaries, margin, PV/inverter/cabling, roof sheet work, scaffolding/edge protection and consent fees as instructed. Vendor prices may be GST-inclusive, so the band is conservative on the high side."
+      },
+      "checks": [
+        "web-derived",
+        "web-derived",
+        "web-derived",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-derived"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 4,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 4,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 1457220,
+        "outputTokens": 23713,
+        "cachedTokens": 1326592,
+        "toolCalls": 27,
+        "searchCalls": 12,
+        "estimatedCostUsd": 0.037802,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1457220,
+            "outputTokens": 23713,
+            "estimatedCostUsd": 0.037802,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 266566,
+      "band": {
+        "unit": "lump sum, whole 30 kWp / ~60-panel array, GST exclusive",
+        "low": 9150,
+        "high": 18680,
+        "centre": "Auckland",
+        "basis": "Sum of six distinct components: mounting hardware (web proxy, scaled to 60 panels and ex-GST) + mounting installation labour (QV AKL roofer + labourer hourly rates x assumed 20-36 crew hours) + supplementary purlins (QV proprietary purlin supply-and-fix rate x assumed 35-58 m for one third of the 120 m2 footprint) + purlin bolts (QV bolt rate, bolts excluded from the purlin row) + cleats/sundries allowance + engineer's wind/uplift design and PS1 (engineer fee schedule). Scope follows the brief exactly: excludes PV modules, inverters, cabling/electrical, roof works, scaffolding/edge protection/access, and consent fees; no preliminaries, margin or GST. Confidence is LOW because the mounting system is a residential web proxy (QV publishes nothing for solar mounting), and the labour hours, purlin length and bolt counts are QS assumptions. Allowances carry well under a third of the total, but the largest component rests on a proxy. Round each sub-part separately: mounting~$5,310-$10,380; strengthening~$1,940-$4,300; design~$1,900-$4,000."
+      },
+      "checks": [
+        "web-derived",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-derived"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 2,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 899285,
+        "outputTokens": 28508,
+        "cachedTokens": 781696,
+        "toolCalls": 23,
+        "searchCalls": 12,
+        "estimatedCostUsd": 0.037088,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 899285,
+            "outputTokens": 28508,
+            "estimatedCostUsd": 0.037088,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 213745,
+      "band": {
+        "unit": "sum (whole array - 30 kWp / ~60 panels / ~120 m2, Auckland, GST exclusive)",
+        "low": 8850,
+        "high": 21750,
+        "centre": "Auckland",
+        "basis": "Lump sum for the array-support scope only: proprietary rails/clamps/brackets/fixings + mounting labour + supplementary purlins to one third of footprint + PS1/wind design. Excludes everything on the excluded list (PV modules, inverters, cabling/electrical, roof works, scaffolding/access, prelims, margin, GST, consent fees). Sum of five components: 3,500-8,000 mounting hardware (web proxy) + 3,600-9,600 mounting labour (allowance) + 1,000-1,950 purlins (QV) + 150-400 bolts (allowance) + 600-1,800 design/PS1 (QV % proxy). CAUTION: allowances/fee proxies carry ~45% of the band, so confidence is low and the band should be read as a cost-plan range, not a price. Biggest single uncertainty is the mounting supply-and-fix rate; get one installer quote to firm it."
+      },
+      "checks": [
+        "web-derived",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 378448,
+        "outputTokens": 23919,
+        "cachedTokens": 304128,
+        "toolCalls": 13,
+        "searchCalls": 5,
+        "estimatedCostUsd": 0.026412,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 378448,
+            "outputTokens": 23919,
+            "estimatedCostUsd": 0.026412,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

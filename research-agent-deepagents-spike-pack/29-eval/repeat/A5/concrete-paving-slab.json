@@ -1,0 +1,199 @@
+{
+  "question": "concrete-paving-slab",
+  "kind": "pinned",
+  "arm": "A5",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": false,
+  "consensus": {
+    "low": 162,
+    "high": 212
+  },
+  "range": {
+    "min": 149,
+    "max": 213
+  },
+  "unit": "NZD/m2 of finished slab, GST exclusive, Auckland Q3 2026, subcontract",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.134,
+    "highRatio": 1.133,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1035,
+  "elapsedMs": 296445,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 296443,
+      "band": {
+        "unit": "NZD/m2 of finished slab, GST exclusive, Auckland Q3 2026, subcontract",
+        "low": 169,
+        "high": 213,
+        "centre": "Auckland",
+        "basis": "Sum of the above components for the fixed scope: 150mm 25MPa SE92 slab on 150mm GAP40, broomed, sawcut at 4m both ways plus one isolation joint, trimmed subgrade at 1:100 falls, edge formwork, cure, set-out. Component sum = $168.9-$212.6/m2, rounded to $169-$213/m2; midpoint $191/m2. 300 m2 total = $50,700 (low) to $63,800 (high), midpoint $57,200. Cross-check: QV's own 'Concrete Slab on Ground 150mm, 25MPa pumped, edge formwork, Economesh, polythene vapour barrier, 150mm hardfill, 25mm sand blinding' AKL $199/m2 adjusts to ~$200-210/m2 for this scope, inside the band. Pump memo (amortisation auditable): 300 m2 x 0.15 x 1.05 = 47.25 m3; QV pump rows t3:r13 $27.80/m3 (0.5h travel, 40m3/4h) = $1,314 = $4.38/m2; range $21.20-39.00/m3 = $1,000-1,843 = $3.3-6.1/m2. This is assumed to sit inside the QV placed slab rate and is NOT added, to avoid double counting; deduct the placed rate by $3-6/m2 if the pump is charged separately. Confidence is low, not because drivers are unsourced, but because the largest line (SE92 mesh) is an unreviewed QV rate sitting well above cited market material, and the placed concrete rate's pumping inclusion is unclear."
+      },
+      "checks": [
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-derived",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 9,
+        "rowsFound": 9,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 398334,
+        "outputTokens": 38189,
+        "cachedTokens": 312064,
+        "toolCalls": 8,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.03679,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 398334,
+            "outputTokens": 38189,
+            "estimatedCostUsd": 0.03679,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 184077,
+      "band": {
+        "unit": "$/m2 of finished slab (300 m2), Auckland Q3 2026, subcontract, excl. GST",
+        "low": 162,
+        "high": 188,
+        "centre": "Auckland",
+        "basis": "Sum of distinct cited QV components plus two labelled allowances (saw-cut set-up, set-out). Build-up: subgrade trim $3.0 + GAP40 $16.8-18.5 + 150mm 25MPa slab element $77.8 + pump $4.2-5.9 + SE92 mesh $52 + sawcut $1.1-1.3 + sawcut set-up $0.8-2.0 + isolation joint $1.4-1.8 + curing $3.1-4.1 + set-out $2-4 + edge formwork (0 if included in the m3 slab rate, $15.4 if separately measured). Cross-check: QV's all-in 150mm slab-on-ground composite is $199/m2 (f0968d...t3:r3, but it also carries vapour barrier, sand blinding, heavier edge formwork and a lighter mesh), and QV's 100mm reinforced external paving with broomed finish is $175/m2 (67276db1...t1:r3). 300 m2 totals: low $48,600, high $56,400, midpoint $52,500. At 300 m2 this is a large single pour with truck access, so the band is at its tightest; below 150 m2 or with barrow/line-pump access the pump and formwork amortisation push it to roughly $180-230/m2. Exclusions per scope: GST, preliminaries, margin, design/engineering/consent fees, bulk earthworks, drainage, sealer, line marking, kerbs, thickened edges, dowelled joints, demolition, traffic management, dewatering, contaminated spoil. QV rates include the subcontractor's own OH&P but not builder's preliminaries or margin. Confidence low: the SE92 mesh row is unreviewed and roughly double the per-kg market rate, and the edge-formwork inclusion in the slab m3 rate is unstated; net plausible outcome for a sharp tender is $140-190/m2."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 9,
+        "rowsFound": 9,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 227819,
+        "outputTokens": 35811,
+        "cachedTokens": 185216,
+        "toolCalls": 8,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.028433,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 227819,
+            "outputTokens": 35811,
+            "estimatedCostUsd": 0.028433,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 223161,
+      "band": {
+        "unit": "$/m2 of finished slab, Auckland Q3 2026, subcontract, GST exclusive",
+        "low": 149,
+        "high": 212,
+        "centre": "Auckland",
+        "basis": "Sum of the ten component ranges above (148.8 - 212.3/m2), which is 300 m2 total of $44,640 - $63,690, midpoint $180.5/m2 = $54,150. Scope fixed as given: 150mm 25MPa reinforced slab, SE92 mesh on 40mm chairs, 150mm GAP40 on trimmed subgrade, broomed finish with wood-float edges and sprayed cure, 1:100 falls by subgrade profiling, sawcut control joints at 4.0m centres plus one isolation strip, 70 lm edge formwork, one 45 m3 pumped pour, 300 m2 (20m x 15m), level open site with truck access. All QV rows are unreviewed benchmarks. The largest component (concrete supply, $50.7-55.8/m2) rests on a cited QV retail row; the widest uncertainty is mesh, where QV's own SE92 row ($52/m2) sits about 75% above merchant supply ($18.84/m2, SaveBuild) plus QV fixing labour ($9.5/m2) - hence the $212 top versus the $149 low. Allowances (set out only) carry ~2% of the total, well under a third. Indicative cross-check: QV's own composite rows imply a higher figure - 'Exterior Works / Paving, in situ concrete paving on 150mm basecourse with broomed finish, 100mm reinforced' AKL $175/m2 (row 67276db1e671ba66bd024f427fb006d18440c9bece04a9ad64c65c6999708bd5:t1:r3) and 'External Works / In Situ Concrete Paving, 17.5MPa, 150mm thick' AKL $144/m2 (row f8d9cf5aa0d2fe887d830f8c558cf798e2e97ca147ce5dffa40fba65e82bb294:t6:r5) - but their inclusions are not itemised, so they are shown for comparison only and are not added. Excludes GST, preliminaries, main-contractor margin, design, engineering and consent fees, bulk earthworks, drainage/services, sealer, line marking, kerbs and thickened edges. Band widens below about 150 m2, on poor access (barrow/line-pump placement) or if mesh is priced at the full QV SE92 benchmark."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-derived",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-derived",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 8,
+        "rowsFound": 8,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 2,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 516942,
+        "outputTokens": 43907,
+        "cachedTokens": 446336,
+        "toolCalls": 12,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.038274,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 516942,
+            "outputTokens": 43907,
+            "estimatedCostUsd": 0.038274,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

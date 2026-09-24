@@ -1,0 +1,174 @@
+{
+  "question": "open-a3",
+  "kind": "open",
+  "arm": "A5",
+  "status": "disputed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 108,
+    "high": 172
+  },
+  "range": {
+    "min": 4,
+    "max": 201
+  },
+  "unit": "m2",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 30,
+    "highRatio": 2.513,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.062,
+  "elapsedMs": 205075,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 205073,
+      "band": {
+        "unit": "m2",
+        "low": 4,
+        "high": 80,
+        "centre": "Auckland",
+        "basis": "NET cost impact of switching 1200 m² of warehouse roof from long-run ColourSteel to a membrane, per m² of roof area (roof area = 1200 m²), GST exclusive, Auckland (AKL) rates — unregulated QV CostBuilder rows, unreviewed. = membrane covering $137–186/m² less ColourSteel covering $116–137/m² plus a $4–10/m² sundries allowance. Low bound pairs cheapest membrane with dearest ColourSteel; high bound pairs dearest membrane with cheapest ColourSteel. Midpoint ≈ $42/m². 1200 m² total: ≈ $4,800–$96,000 (centre ≈ $50,400). Membrane-alone rate $137–186/m²; ColourSteel-alone benchmark $116–137/m²; for 1200 m² membrane alone ≈ $164,000–$223,000 vs ColourSteel alone ≈ $139,000–$164,000. NOT INCLUDED (per pinned scope): removal/disposal of existing roofing, structural changes, insulation or ceiling work, flashings, gutters and drainage. KEY RISK: membrane normally requires a continuous substrate deck that long-run ColourSteel does not — if a new plywood deck is needed add ≈ $76–102/m² (QV rows ...t32:r2 17mm $76 and ...t32:r4 21mm $102, AKL), which would dominate the switch. CONFIDENCE LOW: QV has no TPO/PVC single-ply row (butyl proxy used); build-up and membrane type not yet decided; no NZ published TPO/PVC rate found on the web worth citing."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 334015,
+        "outputTokens": 24831,
+        "cachedTokens": 265216,
+        "toolCalls": 29,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.026014,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 334015,
+            "outputTokens": 24831,
+            "estimatedCostUsd": 0.026014,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 126457,
+      "band": {
+        "unit": "NZD per m2 of roof area (GST exclusive)",
+        "low": 120,
+        "high": 201,
+        "centre": "Auckland",
+        "basis": "Cost-plan/replacement band for a warehouse membrane roof laid in place, priced from QV CostBuilder Roof Coverings membrane rows (double-layer torch-on modified bitumen at the high end; Soprasun 4AR double-layer at the low end), plus a small minor-items allowance. 1200 m2 roof area: approx $144,000 - $241,000 GST excl. Assumes a structurally suitable substrate/falls already provided and in place, and excludes removal/disposal of existing roofing, structural changes, insulation/ceiling work, flashings, gutters and drainage per the pinned scope. Priced as the membrane roof ALONE (no credit for the omitted Coloursteel). Cited long-run Coloursteel comparator (QV Steel & Aluminium Roofing in-place sheet rates), AKL: ~$64-111/m2 across corrugate/trapezoidal/Dimondek profiles (~$87-92/m2 for standard 0.55mm trapezoidal), i.e. switching implies roughly +$30,000 to +$140,000 over 1,200 m2. Confidence LOW because the membrane type/build-up is undecided, the specified single-ply option is unpublished, the substrate is excluded, and the QV rows are unreviewed."
+      },
+      "checks": [
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 257183,
+        "outputTokens": 14469,
+        "cachedTokens": 199552,
+        "toolCalls": 8,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.017925,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 257183,
+            "outputTokens": 14469,
+            "estimatedCostUsd": 0.017925,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 117568,
+      "band": {
+        "unit": "NZ$/m2 of roof area, GST excl, net additional cost of switching from long-run Coloursteel to a membrane roof (membrane + required substrate, less displaced Coloursteel sheet)",
+        "low": 108,
+        "high": 172,
+        "centre": null,
+        "basis": "Sum of three QV-priced components: membrane (1.5mm butyl, laid to falls, incl. lapped joints) $137-152/m2 + additional plywood substrate needed for a membrane over purlins $82-97/m2 - displaced long-run prefinished Coloursteel sheet $77-111/m2 = $108-172/m2 net (centre $140/m2). Over 1,200 m2 = ~$130k-$207k, centre ~$168k. Excludes removal/disposal of existing roof, flashings, gutters, roof drainage, insulation, ceiling, fall-forming, structural work and all design/consent fees - all omitted per the pinned scope and confirmed NOT included in the rates used. Membrane type is undecided; a torch-on double-layer selection would add roughly $20-45/m2 to the band, and a single-ply TPO/PVC system is not published in QV CostBuilder and would need a supplier quote. If the roof is priced on an existing suitable deck (no new plywood), the net impact falls to roughly $26-75/m2. Confidence low because membrane type, substrate and Coloursteel profile are all assumptions that move the answer materially. QV rates are unreviewed and centre-specific (Auckland quoted)."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 362149,
+        "outputTokens": 19801,
+        "cachedTokens": 327168,
+        "toolCalls": 13,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.018109,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 362149,
+            "outputTokens": 19801,
+            "estimatedCostUsd": 0.018109,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

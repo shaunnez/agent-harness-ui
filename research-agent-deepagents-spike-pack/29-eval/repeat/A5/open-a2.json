@@ -1,0 +1,186 @@
+{
+  "question": "open-a2",
+  "kind": "open",
+  "arm": "A5",
+  "status": "disputed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 234,
+    "high": 460
+  },
+  "range": {
+    "min": 105,
+    "max": 460
+  },
+  "unit": "NZD per m2 of building floor area, GST exclusive, Christchurch",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 2.238,
+    "highRatio": 1.211,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.094,
+  "elapsedMs": 362767,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 153928,
+      "band": {
+        "unit": "NZD per m2 of building floor area, GST exclusive, Christchurch",
+        "low": 234,
+        "high": 460,
+        "centre": null,
+        "basis": "Low = shallow excavate-and-replace/geogrid build-up CHC 218.8 + allowance 15 = 233.8. High = TC3 Type 1 imported-GAP40 deeper build-up CHC 420 + allowance 40 = 460. The two QV build-ups are alternative treatment methods/depths, not additive; the band spans them. Construction only; excludes building foundations/structural work and geotechnical investigation and design (pinned exclusions), and excludes design, verification testing and construction monitoring unless confirmed in scope. Illustrative only: a 1,000 m2 footprint gives roughly $234k-$460k."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 1040571,
+        "outputTokens": 19168,
+        "cachedTokens": 919616,
+        "toolCalls": 22,
+        "searchCalls": 9,
+        "estimatedCostUsd": 0.032403,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1040571,
+            "outputTokens": 19168,
+            "estimatedCostUsd": 0.032403,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 197041,
+      "band": {
+        "unit": "NZ$/m2 of building floor area (GST exclusive)",
+        "low": 235,
+        "high": 460,
+        "centre": null,
+        "basis": "Envelope of the mainstream Christchurch liquefaction ground-improvement solutions: low = QV current Christchurch shallow reinforced gravel replacement/recompaction (~$219/m2, unwidened) plus the minor dewatering/set-out allowance ($15); high = QV current Christchurch deep imported GAP40 replacement with two geogrid layers (TC3 Type 1, $420/m2) plus the allowance ($40). Stone columns at 4 m depth (QS-measured Pilot rate $145-195/m2 of treated footprint, 2015/16 construction-cost-only dollars) sit inside this envelope for typical treatment ratios. Higher-cost methods (driven timber poles ~$240-270/m2 treated; HSM beams ~$410-522/m2 treated) are above the band and are listed for reference only. All figures GST exclusive, construction cost only, per m2 of building floor area; QV rows are unreviewed. 'How common': CCC has mapped liquefaction vulnerability across all flat land in Christchurch District and uses it to set building controls (source-4), and MBIE Module 5 notes dense granular replacement has been a common Christchurch rebuild method (source-3) — the hazard is widespread and mapped city-wide, not a rare local anomaly; a single published percentage figure could not be sourced (web search was rate-limited). For a 1,000 m2 single-storey building this is roughly $235k-$460k."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-derived",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 4,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 1070277,
+        "outputTokens": 28953,
+        "cachedTokens": 1030144,
+        "toolCalls": 31,
+        "searchCalls": 9,
+        "estimatedCostUsd": 0.026482,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1070277,
+            "outputTokens": 28953,
+            "estimatedCostUsd": 0.026482,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 362764,
+      "band": {
+        "unit": "NZD per m2 of building floor area, GST-exclusive, construction only",
+        "low": 105,
+        "high": 380,
+        "centre": "Christchurch",
+        "basis": "Sum of the six priced components (low 104.1 / high 379.3, rounded). Priced on the stated assumption of SOIL REPLACEMENT ground improvement: excavate the liquefiable crust and replace with compacted GAP65 gravel reinforced with triaxial geogrid and a separation geotextile, at 0.5-1.5 m depth (central case 1.0 m = approx. $250/m2: excavate $80 + hardfill $126 + geogrid $12.8 + geotextile $6.3 + allowances approx. $25). This is the method QV CostBuilder itself prices; the QV TC1/TC2 table describes it as 'excavate and replace upper layers of soil with compacted, well-graded gravels, geogrid'. QV rates are CHC rates, per m2 of floor area, and are UNREVIEWED (caveated per row). Rates are derived from residential/light-building guidance details, so commercial scale may soften unit rates while poor site access may harden them - the band is widened for this. By method: low = 0.5 m replacement, high = 1.5 m replacement; if the geotech specifies a deeper or structural treatment (stone columns / vibro replacement, compaction grouting, deep soil mixing, dynamic compaction) this band does NOT apply - those have no published NZ rate and must be contractor-quoted (Menard NZ, Hiway Stabilizers, Mainmark) with design by Tonkin & Taylor / WSP / Aurecon. Allowances are approx. 10% of the total, so the band is driven by the QV-priced excavate/fill, not by judgement. Excludes foundations and structural work, geotechnical investigation and design, testing and construction monitoring, and repairs to existing damage, per the pinned scope."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 1651486,
+        "outputTokens": 33731,
+        "cachedTokens": 1583744,
+        "toolCalls": 40,
+        "searchCalls": 18,
+        "estimatedCostUsd": 0.035151,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1651486,
+            "outputTokens": 33731,
+            "estimatedCostUsd": 0.035151,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

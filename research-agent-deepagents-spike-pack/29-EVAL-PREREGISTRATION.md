@@ -336,3 +336,24 @@ questions that failed, concrete paving cited a QV row that does not exist and em
 one run with no price. Only three A8 web quotes still fail, and all three are genuine: a band of
 $30–200 citing a page that says $60, a membrane at $115–186 citing $90.62, and a negative omission
 citing a thickness.
+
+**A5 repeat (25 September).** Shaun asked for A5 again ("do it") to compare with A8 on the same
+checks. Runtime, model, prompt and cap are unchanged from A5, and it runs four questions at a time as
+A5 did. It is scored with the checks of 25 September (figures, working, bracketed units). Results
+are written to `29-eval/repeat/A5/` and reported beside A5, not as a new arm.
+
+**A5 repeat result.** Four at a time, 15.5 minutes, $1.12, no errors. 5 of 13 agreed, and **4 of 13
+passed** (concrete paving, interior finishes, metering, site electrical). Three of the four had every
+figure traced; concrete paving passed on "worked from quote". Roller doors agreed but failed on one
+unsupported quote.
+
+| Arm | Runs of 13 | Passes | Traced passes |
+|---|---|---|---|
+| A5 DeepSeek, OpenCode (re-checked) | 1st | 6 | 5 |
+| A5 repeat | 2nd | 4 | 3 |
+| A8 API loop with stated working | 1st | 4 | 4 |
+
+On two runs A5 averages 5 passes (4 traced). A8's single run is 4 (4 traced). The difference is
+within the two-to-three-question swing seen between identical runs. On this evidence the API loop
+with stated working is level with OpenCode, not behind it. Most failures in both arms are now runs
+disagreeing on price (A5 repeat 8 disputed, A8 7), not sources.
