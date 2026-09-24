@@ -12,6 +12,7 @@
 // environment and never logged; Shaun chose API keys for production workers. Not in the Settings
 // picker: it is measured first, as eval arm A6.
 
+import { reviewAnswer } from "../research-answer-review.mjs";
 import {
   allowedToolName,
   QV_TOOL_DEFINITIONS,
@@ -59,6 +60,16 @@ export function apiLoopSystemPrompt(prompt) {
     "when it is fixed; a fraction such as 0.025 for one item shared across 40). The amount must then " +
     "equal rate × quantity: the host recomputes it and checks the rate against the page, and an " +
     "amount it cannot trace to the quote is marked unsupported. " +
+    "Search QV first for every component and price it from a QV row when one fits the specification. " +
+    "A web price is for what QV does not publish: proprietary equipment, network and lines-company " +
+    "charges, statutory fees and consultants' fees. A supplier's retail list price is not a substitute " +
+    "for a QV row that prices the same item, because it leaves out trade installation and margin. When " +
+    "you price a component from the web, say in its caveat which QV searches found nothing. " +
+    "A figure its source says is not a price is not a price: a worked or illustrative example, a table " +
+    'marked "for information purposes only" or "indicative only", or an item the source says is ' +
+    '"priced per job" or quoted after an assessment. Then the item is not established: name the ' +
+    "supplier or network company to ask for a quote. " +
+    "Before you answer, the host checks the answer and may send it back once with problems to fix. " +
     "Quote only from fetch_source or " +
     'read_source text, never from a web_search snippet. For a PDF, "page" is required: the physical page ' +
     "number fetch_source or read_source gave for the text you quote; a PDF quote without it cannot be checked. " +
@@ -104,6 +115,7 @@ export function apiLoopDriver({ env = process.env, fetchImpl = globalThis.fetch 
           model,
           systemPrompt: apiLoopSystemPrompt(systemPrompt),
           objective,
+          reviewAnswer: (text) => reviewAnswer({ objective, text }),
           tools: loopTools(),
           host,
           timeoutMs: Math.min(budget?.maxRuntimeMs ?? API_LOOP_MAX_RUNTIME_MS, API_LOOP_MAX_RUNTIME_MS),

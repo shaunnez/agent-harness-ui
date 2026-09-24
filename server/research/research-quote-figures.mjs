@@ -341,3 +341,50 @@ export function workingSupport(passage, { rate, quantity, low, high }) {
   );
   return { rate: rateCheck.support, figures: rateCheck.figures, arithmetic, expected };
 }
+
+// A figure its own source says is not a price (Shaun agreed, 25 September, after HV supply): A8
+// priced a Vector connection from the Electricity Authority's worked example, whose page 4 says
+// the examples "should not be relied on as a guide to actual costs", and from posted rates headed
+// "For information purposes only" on a page whose price table reads "Priced per job".
+//
+// Two reaches. A disclaimer that governs a whole document counts wherever it is; one that governs
+// a table counts only near the quoted passage, because a long page can say "indicative" about
+// something else entirely.
+const DOCUMENT_DISCLAIMERS = [
+  /should not be relied (on|upon) as a guide to actual (costs?|charges?|prices?)/i,
+  /for illustrative purposes only/i,
+  /\bhypothetical\b[^.]{0,80}\b(examples?|costs?|zones?|areas?)\b/i,
+];
+// "POA", "price on application" and "indicative only" are left out: they mark one row of a price
+// table or a supplier's standard caveat, and replayed on the recorded runs they hit a priced row
+// beside a POA one 30 times on roller doors alone.
+const LOCAL_DISCLAIMERS = [
+  /for information(al)? purposes( only)?/i,
+  /\bpriced per job\b/i,
+  /\b(quoted|priced) (on request|after (an )?assessment|case[- ]by[- ]case)\b/i,
+  /\bworked examples?\b/i,
+];
+/** How far either side of the quoted passage a table's disclaimer is looked for. At 1,500 it also
+ *  caught Vector's genuine $3,000 design fee, a paragraph from the "Priced per job" table. */
+const DISCLAIMER_REACH = 500;
+
+/**
+ * The words in `document` that say the figure quoted at `passage` is not a price, or null.
+ * `document` is the whole retained source (every page of a PDF, joined); `passage` is text found
+ * in it by `locatePassage`.
+ */
+export function disclaimerFor(document, passage) {
+  const text = String(document ?? "");
+  for (const pattern of DOCUMENT_DISCLAIMERS) {
+    const found = pattern.exec(text);
+    if (found) return found[0];
+  }
+  const at = passage ? foldDashes(text).indexOf(foldDashes(String(passage))) : -1;
+  if (at === -1) return null;
+  const near = text.slice(Math.max(0, at - DISCLAIMER_REACH), at + String(passage).length + DISCLAIMER_REACH);
+  for (const pattern of LOCAL_DISCLAIMERS) {
+    const found = pattern.exec(near);
+    if (found) return found[0];
+  }
+  return null;
+}

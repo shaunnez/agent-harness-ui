@@ -123,7 +123,7 @@ export function ProjectSetup({
               </div>
               <small>
                 {research
-                  ? "Asks costing questions, three runs each, on the engine chosen in Settings → Research agent. No repository."
+                  ? "Asks costing questions, five runs each, on the engine chosen in Settings → Research agent. No repository."
                   : researchAvailable
                     ? "Tasks run the delivery workflow against a local Git repository."
                     : "Tasks run the delivery workflow against a local Git repository. This runtime does not serve research projects."}

@@ -1,0 +1,341 @@
+{
+  "question": "interior-finishes-to-schedule",
+  "kind": "pinned",
+  "arm": "A9",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 139658,
+    "high": 182051
+  },
+  "range": {
+    "min": 137504,
+    "max": 198376
+  },
+  "unit": "sum (whole finishes-schedule package, one 800 m2 NLA tenancy floor)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.036,
+    "highRatio": 1.119,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1579,
+  "elapsedMs": 388851,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 191787,
+      "band": {
+        "unit": "sum (whole finishes-schedule package, one 800 m2 NLA tenancy floor)",
+        "low": 139658,
+        "high": 177278,
+        "centre": "Auckland",
+        "basis": "Sum of six cited finishes plus trims (QV CostBuilder rows: carpet tile is the largest line at $64,000-$72,960 and is fully sourced; latex smoothing compound $24,674-$36,500; vinyl wall covering $12,100-$15,840; MDF skirting $8,034-$9,178; feature batten wall $10,794-$11,594 built up from MDF, paint, batten and lacquer rows; wall paint $7,412-$7,786; LVT $3,834-$5,310; transitions $810), plus five named allowances totalling $8,000-$17,300 (about 9% of the midpoint, well inside one third). Midpoint $158,500 = $198 per m2 of the 800 m2 NLA. Auckland, GST exclusive, excludes preliminaries, margin, design and consent fees as scoped. Confidence medium: every main cost driver is a cited QV row, but four lines rest on close proxies rather than exact specification matches (fabric-backed vinyl for Type II wall covering; vinyl tile for LVT plank; 50x25 batten rates for 42x19 battens; MUF trim for 100x18 MDF skirting), two full lines are allowances with no published rate (out-of-hours loading, protection), and the carpet/LVT waste-inclusion question could swing the total by roughly 10% of the two flooring lines."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 11,
+        "rowsFound": 11,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 561869,
+        "outputTokens": 28011,
+        "cachedTokens": 475008,
+        "modelCalls": 11,
+        "toolCalls": 36,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.031261,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 561869,
+            "outputTokens": 28011,
+            "estimatedCostUsd": 0.031261,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 159348,
+      "band": {
+        "unit": "sum (whole finishes-schedule package, one 800 m2 NLA tenancy floor)",
+        "low": 142399,
+        "high": 182051,
+        "centre": "Auckland",
+        "basis": "Auckland CBD, GST exclusive, ex preliminaries/margin/design fees. Sum of the cited QV component lines $133,499 to $162,251 plus $8,900 to $19,800 of labelled allowances (vertical protection, transitions/nosings, waste to skip, setout drawings, out-of-hours loading). Allowances are 6-11% of the band, well under one third, so no override on confidence for allowance-dominated pricing. Largest line (carpet tile) is on cited QV rows; every design-bearing item in the schedule - vinyl wall covering, paint, carpet tile, LVT, batten wall, skirting, smoothing compound - has a QV row or a stated proxy adjustment. Midpoint $162,225 = $203/m2 of the 800 m2 NLA. Confidence is medium not high because (a) QV prices wall covering and carpet tile by generic description, not by actual product, (b) the LVT high end is a stated +40% grade adjustment on a generic vinyl tile row, and (c) three lines (lacquer to battens, vertical protection, out-of-hours loading) are judgement-based and could move the outcome by roughly +/-$8,000. Rates are linear in the six quantity lines; only the two package allowances are fixed."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 11,
+        "rowsFound": 11,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 572382,
+        "outputTokens": 32630,
+        "cachedTokens": 494464,
+        "modelCalls": 11,
+        "toolCalls": 32,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.032749,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 572382,
+            "outputTokens": 32630,
+            "estimatedCostUsd": 0.032749,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 149272,
+      "band": {
+        "unit": "sum",
+        "low": 152000,
+        "high": 198000,
+        "centre": "Auckland",
+        "basis": "Auckland CBD, GST exclusive, excludes preliminaries, margin, design/consent fees, plasterboard linings, ceilings, joinery/benchtops, glazing film, signage, floor levelling beyond latex smoothing, existing-finish removal and make-good, scaffolding/hoists and permanent lift protection, all per the fixed scope. Built by adding the six finishes line by line from QV CostBuilder Auckland rows, plus QV trim, protection and floor-smoothing rows, plus four labelled allowances (wall substrate preparation $1,120-$2,800; rubbish removal $1,500-$3,500; site measure/setout $1,200-$2,500; out-of-hours loading $8,600-$21,200). Allowances total $12,420-$30,000, i.e. 8%-15% of the band - comfortably under a third, so confidence stays at medium rather than low. Trade subtotal $143,779 low / $176,478 high; midpoint $175,000 = $219/m2 of 800 m2 NLA, against the scenario's $213/m2. QV rows are unreviewed: carpet tile, paint and vinyl wall covering gauge all match the schedule closely, but the LVT plank rate (+70% to +160% over QV's 2.5 mm flexible vinyl tile row) and the 42x19 batten rate (QV prices battens only at 300-600 mm centres) are stated proxies. Biggest single line, carpet tile at $67,200-$72,960, is cited from two QV rows, so the band is established. Confirm the specified plank brand and the batten-wall build-up with suppliers before fixing a price."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 11,
+        "rowsFound": 11,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 610157,
+        "outputTokens": 29510,
+        "cachedTokens": 522752,
+        "modelCalls": 12,
+        "toolCalls": 42,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.032385,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 610157,
+            "outputTokens": 29510,
+            "estimatedCostUsd": 0.032385,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 322656,
+      "band": {
+        "unit": "sum - whole finishes-schedule package, one 800 m2 tenancy floor, Auckland CBD (excl GST, preliminaries, margin)",
+        "low": 145480,
+        "high": 216258,
+        "centre": "Auckland",
+        "basis": "Sum of 14 priced lines, added once each: 9 QV CostBuilder lines at Auckland rates, 1 fetched NZ supplier page (LVT plank, which QV does not publish) and 4 labelled allowances. Midpoint $180,869 = $226/m2 over 800 m2 NLA (stated scenario build-up was $170,000 = $213/m2). Allowances (protection, waste, setout/measure, out-of-hours) carry 9% of the midpoint, so the QV/fetched evidence carries the band. Largest line is loose-lay carpet tile at 44% of the midpoint, taken from QV row 50ce908f...:t2:r8 (AKL $114/m2). Three QV proxies are adjusted in the caveats (Type II wall vinyl -> 440gsm fabric-backed; 42x19 battens at 60 crs -> H3.1 50x25 batten at $12/m lineal; 'latex' smoothing compound -> Nuplex Lockfast levelling rows). Confidence medium, not high: QV rows are unreviewed, tile size/pile weight and batten density are not stated in the rows, the LVT line is a general supplier range, and the transition quantity is my estimate."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 10,
+        "rowsFound": 9,
+        "rowsMissing": 1,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 424043,
+        "outputTokens": 29242,
+        "cachedTokens": 357504,
+        "modelCalls": 10,
+        "toolCalls": 30,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.028599,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 424043,
+            "outputTokens": 29242,
+            "estimatedCostUsd": 0.028599,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 388849,
+      "band": {
+        "unit": "sum (whole finishes-schedule package, one tenancy floor, 800 m2 NLA)",
+        "low": 137504,
+        "high": 198376,
+        "centre": null,
+        "basis": "QV CostBuilder rows (unreviewed) for all six finishes, the substrate preparation, the skirting and the trims, Auckland centre, GST exclusive. Five items are priced from a close QV row with a stated adjustment because QV publishes no row for the exact specification: Type II 20 oz wall vinyl (440 gsm studio vinyl row used), LVT plank (3 mm flexible vinyl tile row used), 42x19 battens at 60 mm centres (clear-finished 90x9 T&G wall lining row used, plus MDF substrate row), MDF skirting (RP FJ/MUF trim rows used) and the loose-lay Class 33 carpet tile (Heavy Duty Loose laid nylon rows used). Four minor items are stated allowances - protection, rubbish removal, site measure/setout and out-of-hours access - carrying $8,700 of the $164,800 midpoint, about 5%, well under a third. Main cost drivers in the midpoint: carpet tile $72,960 (44%), latex smoothing compound $30,587 (19%), vinyl wall covering $18,920 (11%). No preliminaries, margin, design fees or consent fees are included, and base-build linings, ceilings, joinery, grinding/self-levelling screed and removal of existing finishes are excluded per scope. Confidence is medium rather than high because three of the six finishes, and the two live-building allowances, rest on stand-ins or judgement; the widest single swing is carpet tile, where a $30/m2 range over 640 m2 moves the band by $19,200."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 11,
+        "rowsFound": 11,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 468657,
+        "outputTokens": 32767,
+        "cachedTokens": 387968,
+        "modelCalls": 13,
+        "toolCalls": 46,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.032927,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 468657,
+            "outputTokens": 32767,
+            "estimatedCostUsd": 0.032927,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

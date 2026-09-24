@@ -6,7 +6,7 @@
 // three-run agreement rule and nothing else: no model is asked whether its runs agree.
 
 import { createHash } from "node:crypto";
-import { agreementForRuns } from "./claude-cli/agreement.mjs";
+import { agreementForRuns, TIGHT_HIGH_RATIO, TIGHT_LOW_RATIO } from "./claude-cli/agreement.mjs";
 import { gradeQuestion } from "./research-question-grade.mjs";
 
 const ACTIVITY_PER_RUN = 80;
@@ -16,9 +16,18 @@ const ACTIVITY_PER_RUN = 80;
  * `runLabel` and `outcome`) in label order; `events` maps a run id to its stored events, and is
  * empty for a list read; `review` is the standing review or null.
  */
-export function questionRecord({ question, runs, events = new Map(), review = null }) {
-  const runRecords = runs.map((run) => runRecord(run, events.get(run.id) ?? []));
-  const pending = runRecords.filter((run) => run.status === "running" || run.status === "queued");
+export function questionRecord({ question, runs: allRuns, events = new Map(), review = null }) {
+  const pending = allRuns.filter(
+    (run) => runStatus(run.status) === "running" || runStatus(run.status) === "queued",
+  );
+  // With more than three runs, the three that agree best are scored; the rest stay on the record.
+  const dropped = pending.length ? new Set() : droppedRuns(allRuns);
+  const runs = allRuns.filter((run) => !dropped.has(run));
+  const runRecords = allRuns.map((run) => ({
+    ...runRecord(run, events.get(run.id) ?? []),
+    ...(dropped.has(run) ? { dropped: true } : {}),
+  }));
+  const scoredRecords = runRecords.filter((run) => !run.dropped);
   const recorded = pending.length
     ? null
     : agreementForRuns(
@@ -41,9 +50,9 @@ export function questionRecord({ question, runs, events = new Map(), review = nu
       : "queued"
     : agreement.status;
   const firstBand = runs.map((run) => run.outcome?.costBand?.band).find(Boolean) ?? null;
-  const settledAt = pending.length ? null : latest(runs.map((run) => run.updatedAt));
+  const settledAt = pending.length ? null : latest(allRuns.map((run) => run.updatedAt));
   const costs = runRecords.map((run) => run.costUsd).filter((cost) => cost != null);
-  const completed = runs.filter((run) => run.status === "completed");
+  const completed = allRuns.filter((run) => run.status === "completed");
 
   const evidence = {
     id: question.id,
@@ -61,7 +70,7 @@ export function questionRecord({ question, runs, events = new Map(), review = nu
     agreement: agreement?.agreement ?? {
       lowRatio: null,
       highRatio: null,
-      runsWithBand: runRecords.filter((run) => run.low != null).length,
+      runsWithBand: scoredRecords.filter((run) => run.low != null).length,
       runsTotal: runs.length,
     },
     // The recipe asks every run for NZD, GST exclusive, and the band finding states it.
@@ -91,7 +100,7 @@ export function questionRecord({ question, runs, events = new Map(), review = nu
     runs: runRecords,
     // What may go back to a tender, and the best band to send. Derived from the same runs as the
     // status, and outside the fingerprint so it can never make a standing review stale.
-    grading: gradeQuestion({ status, unitsDiffer, runs: runRecords }),
+    grading: gradeQuestion({ status, unitsDiffer, runs: scoredRecords }),
     // Everything a reviewer judged, and nothing about the review itself or the live activity
     // feed, so a review stays current until the evidence behind it changes.
     evidenceSha: fingerprint(evidence),
@@ -99,6 +108,45 @@ export function questionRecord({ question, runs, events = new Map(), review = nu
     provenance: "live",
     provenanceNote: provenanceNote(runs[0] ?? null, question),
   };
+}
+
+/** How many runs the agreement rule compares. */
+export const SCORED_RUNS = 3;
+
+/**
+ * The runs left out of scoring when a question has more than three (Shaun, 25 September: "5 runs,
+ * drop the outlier"). Of the runs that produced a band, the three whose lows and highs sit closest
+ * together, measured against the rule's own 1.25× and 1.35×, are scored by the unchanged three-run
+ * rule; every other run, including one that produced no band, is dropped. Nothing is dropped from
+ * three runs or fewer, from a question with a run that did not finish, or when fewer than three
+ * runs produced a band.
+ */
+function droppedRuns(runs) {
+  if (runs.length <= SCORED_RUNS || runs.some((run) => run.status !== "completed")) return new Set();
+  const banded = runs.filter((run) => {
+    const band = run.outcome?.costBand?.band;
+    return band && band.low != null && band.high != null;
+  });
+  if (banded.length < SCORED_RUNS) return new Set();
+  let best = null;
+  for (const trio of combinations(banded, SCORED_RUNS)) {
+    const lows = trio.map((run) => Number(run.outcome.costBand.band.low));
+    const highs = trio.map((run) => Number(run.outcome.costBand.band.high));
+    const spread = Math.max(
+      Math.max(...lows) / Math.min(...lows) / TIGHT_LOW_RATIO,
+      Math.max(...highs) / Math.min(...highs) / TIGHT_HIGH_RATIO,
+    );
+    if (!best || spread < best.spread) best = { trio, spread };
+  }
+  return new Set(runs.filter((run) => !best.trio.includes(run)));
+}
+
+function combinations(items, size, start = 0, chosen = []) {
+  if (chosen.length === size) return [chosen];
+  const out = [];
+  for (let index = start; index < items.length; index += 1)
+    out.push(...combinations(items, size, index + 1, [...chosen, items[index]]));
+  return out;
 }
 
 function runRecord(run, events) {

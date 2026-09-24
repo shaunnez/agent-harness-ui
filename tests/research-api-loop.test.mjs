@@ -379,3 +379,34 @@ test("a PDF quote without a page is checked on the page the host finds it on, an
   );
   assert.deepEqual(seen, [{ page: 7 }, null]);
 });
+
+test("the host checks a final answer once and hands its problems back before accepting it", async () => {
+  const answer = (band) =>
+    `\`\`\`json\n${JSON.stringify({ ...ANSWER, band: { ...ANSWER.band, ...band } })}\n\`\`\``;
+  const { fetchImpl, requests } = scriptedChat([
+    reply({ content: answer({ low: 30, high: 200 }) }),
+    reply({ content: answer({ low: 60, high: 90 }) }),
+  ]);
+  const reviewed = [];
+  const call = await runChatLoop({
+    env: { OPENCODE_API_KEY: KEY },
+    model: "opencode-go/deepseek-v4.1-flash",
+    systemPrompt: "Recipe.",
+    objective: "Price a soffit.",
+    tools: [],
+    host: { call: async () => ({ ok: true, result: "" }) },
+    timeoutMs: 60_000,
+    fetchImpl,
+    reviewAnswer: (text) => {
+      reviewed.push(text);
+      return ["Too wide."];
+    },
+  });
+  // Reviewed once; the second answer is final whatever it says.
+  assert.equal(reviewed.length, 1);
+  assert.equal(requests.length, 2);
+  const feedback = requests[1].body.messages.at(-1);
+  assert.equal(feedback.role, "user");
+  assert.match(feedback.content, /1\. Too wide\./);
+  assert.match(call.finalText, /"low":60/);
+});

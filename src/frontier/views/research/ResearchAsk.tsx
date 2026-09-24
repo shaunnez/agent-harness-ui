@@ -43,7 +43,7 @@ export function ResearchAsk({
   onClose(): void;
 }) {
   const [objective, setObjective] = useState("");
-  const [runs, setRuns] = useState<1 | 3>(3);
+  const [runs, setRuns] = useState<1 | 3 | 5>(5);
   const [busy, setBusy] = useState<"scoping" | "asking" | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   // The draft scope, once drafted. Editing the question drops it: a scope answers one question.
@@ -133,11 +133,21 @@ export function ResearchAsk({
           )}
           <fieldset className="research-ask-runs">
             <legend>Runs</legend>
+            <label className={runs === 5 ? "is-selected" : undefined}>
+              <input type="radio" name="research-runs" checked={runs === 5} onChange={() => setRuns(5)} />
+              <span>
+                <strong>Five runs</strong>
+                <small>
+                  Recommended. The three that agree best are compared, so one or two stray runs cannot split
+                  the answer.
+                </small>
+              </span>
+            </label>
             <label className={runs === 3 ? "is-selected" : undefined}>
               <input type="radio" name="research-runs" checked={runs === 3} onChange={() => setRuns(3)} />
               <span>
                 <strong>Three runs</strong>
-                <small>Recommended. Agreement between independent runs is the only check on the band.</small>
+                <small>Cheaper. Agreement between independent runs is the only check on the band.</small>
               </span>
             </label>
             <label className={runs === 1 ? "is-selected" : undefined}>
@@ -180,8 +190,8 @@ export function ResearchAsk({
           {research?.mode === "live" ? (
             <p className="sample-note">
               Scoping calls GPT-6 Luna on your ChatGPT plan and starts nothing. Asking starts{" "}
-              {runs === 3 ? "three runs" : "one run"} on your plan with the engine shown. Three Claude runs
-              measured about 2½ minutes and $4–5 of plan usage.
+              {runs === 5 ? "five runs" : runs === 3 ? "three runs" : "one run"} on your plan with the engine
+              shown. Three Claude runs measured about 2½ minutes and $4–5 of plan usage.
             </p>
           ) : (
             <p className="sample-note">
@@ -206,9 +216,11 @@ export function ResearchAsk({
               ? "Asking…"
               : !draft
                 ? "Scope it"
-                : runs === 3
-                  ? "Ask · three runs"
-                  : "Ask · one quick run"}
+                : runs === 5
+                  ? "Ask · five runs"
+                  : runs === 3
+                    ? "Ask · three runs"
+                    : "Ask · one quick run"}
           <ArrowRight size={19} />
         </button>
       </footer>

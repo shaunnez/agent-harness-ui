@@ -213,7 +213,13 @@ function checkWebCitation(component, webTools) {
       webTools.locateQuote?.(component.sourceId, component.excerpt ?? "", page)?.text ??
       evidence.excerpt ??
       component.excerpt;
-    const figures = checkFigures(component, passage);
+    const disclaimer = webTools.disclaimerFor?.(component.sourceId, passage) ?? null;
+    const figures = disclaimer
+      ? {
+          verdict: "unsupported",
+          problem: `The source says this is not a price ("${clip(disclaimer, 80)}"): the item is not established without a quote.`,
+        }
+      : checkFigures(component, passage);
     const notes = [
       relocated ? `Quoted as "${clip(component.excerpt)}"; the page reads "${clip(relocated.text)}".` : null,
       figures.problem,

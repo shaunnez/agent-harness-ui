@@ -10,7 +10,10 @@
 import { questionRecord } from "./research-question-record.mjs";
 import { scopedObjective, validateScope } from "./research-scope.mjs";
 
-const RUN_COUNTS = new Set([1, 3]);
+// Five by default: the three that agree best are scored (Shaun, 25 September: "5 is fine for now").
+// Three remains for a cheaper cross-check, and one for a Quick answer.
+const RUN_COUNTS = new Set([1, 3, 5]);
+const DEFAULT_RUNS = 5;
 const MAX_OBJECTIVE_LENGTH = 4_000;
 const MAX_NOTE_LENGTH = 2_000;
 const MAX_SOURCE_FIELD = 200;
@@ -54,9 +57,9 @@ export class ResearchQuestionService {
       throw badRequest("Provide a research question object.");
     const project = await this.#researchProject(input.projectId);
     const objective = this.#objectiveOf(input);
-    const runs = input.runs === undefined ? 3 : Number(input.runs);
+    const runs = input.runs === undefined ? DEFAULT_RUNS : Number(input.runs);
     if (!RUN_COUNTS.has(runs))
-      throw badRequest("Ask with three runs, or one for a Quick answer that cannot be cross-checked.");
+      throw badRequest("Ask with five runs, three, or one for a Quick answer that cannot be cross-checked.");
     const profile = input.profile === undefined ? "standard" : String(input.profile);
     const source = normalizeSource(input.source);
     const title = String(input.title ?? "").trim() || titleFrom(objective);

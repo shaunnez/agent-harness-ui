@@ -1,5 +1,6 @@
 /**
- * Research projects: one question, answered by three runs (or a labelled one-run Quick ask), with
+ * Research projects: one question, answered by five runs of which the three closest are scored (or
+ * three runs, or a labelled one-run Quick ask), with
  * every cited figure marked by how it was checked. The sample world serves recorded questions;
  * the live gateway serves the companion's `/api/research/questions`, in the same shape.
  */
@@ -69,6 +70,8 @@ export interface ResearchRunRecord {
   run: string;
   /** The stored run behind this label, on live questions. */
   runId?: string;
+  /** Left out of scoring: of five runs, only the three that agree best are compared. */
+  dropped?: boolean;
   status: "completed" | "failed" | "running" | "queued";
   low: number | null;
   high: number | null;
@@ -244,7 +247,7 @@ export interface ResearchGateway {
     projectId: string,
     input: {
       objective: string;
-      runs: 1 | 3;
+      runs: 1 | 3 | 5;
       engine: ResearchEngineSnapshot;
       scope?: ResearchScope | null;
       scopedBy?: ResearchScopedBy | null;

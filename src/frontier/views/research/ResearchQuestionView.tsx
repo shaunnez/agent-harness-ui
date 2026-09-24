@@ -400,6 +400,7 @@ function RunCard({
       onClick={onSelect}
     >
       <span className="research-run-id">{run.run}</span>
+      {run.dropped && <small>Not scored: furthest of the runs</small>}
       {run.status === "failed" ? (
         <>
           <strong className="tone-blocked">{runFailureCopy(run)}</strong>

@@ -275,7 +275,7 @@ export async function scopeResearchQuestion(input: { projectId: string; objectiv
 export async function askResearchQuestion(input: {
   projectId: string;
   objective: string;
-  runs: 1 | 3;
+  runs: 1 | 3 | 5;
   scope?: ResearchScope | null;
   scopedBy?: ResearchScopedBy | null;
 }) {

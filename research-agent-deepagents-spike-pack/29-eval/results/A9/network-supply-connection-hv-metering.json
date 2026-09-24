@@ -1,0 +1,303 @@
+{
+  "question": "network-supply-connection-hv-metering",
+  "kind": "pinned",
+  "arm": "A9",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": false,
+  "consensus": {
+    "low": 201680,
+    "high": 256930
+  },
+  "range": {
+    "min": 199730,
+    "max": 291580
+  },
+  "unit": "sum (one complete 300 kVA HV-supplied supply point, live and registered; $/kVA over 300 kVA stated in the basis)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.092,
+    "highRatio": 1.146,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.227,
+  "elapsedMs": 641098,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 261181,
+      "band": null,
+      "dropped": true,
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 4,
+        "webVerified": 4,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 861425,
+        "outputTokens": 28244,
+        "cachedTokens": 749696,
+        "modelCalls": 15,
+        "toolCalls": 38,
+        "searchCalls": 8,
+        "estimatedCostUsd": 0.035955,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 861425,
+            "outputTokens": 28244,
+            "estimatedCostUsd": 0.035955,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 359320,
+      "band": {
+        "unit": "sum (one complete 300 kVA HV-supplied supply point, live and registered; $/kVA over 300 kVA stated in the basis)",
+        "low": 218050,
+        "high": 291580,
+        "centre": null,
+        "basis": "Auckland urban, GST exclusive, Vector network, existing 11 kV in the berm, one Vector-owned 300 kVA ground-mount transformer in a customer-provided substation site, 30 m HV + 25 m LV cable, Category 4 CT metering, one energisation. Sum of the eight components above. Equivalent to $727/kVA (low), $972/kVA (high) and $849/kVA (centre) over the 300 kVA nominal connected capacity. The dominant component (Vector capital contribution, 68-73% of the band) is priced from a published EA P50 proxy for equivalent works, not from a Vector quote: Vector prices this tier per job through a Customer Works Agreement, so treat the band as a cost-plan allowance and replace component 4 the moment Vector issues its CWA. Allowances (Vector assessment/ICP, metering, coordination) total $15,800-$35,000, i.e. 7-12% of the band, so they do not carry the estimate. Reviewer can reject any one component: if the EA proxy already covers the connection cable, strip component 5."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 5,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 1,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 1373218,
+        "outputTokens": 38983,
+        "cachedTokens": 1223168,
+        "modelCalls": 17,
+        "toolCalls": 41,
+        "searchCalls": 14,
+        "estimatedCostUsd": 0.049567,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1373218,
+            "outputTokens": 38983,
+            "estimatedCostUsd": 0.049567,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 402359,
+      "band": {
+        "unit": "sum (one complete 300 kVA HV supply point, live and registered, Auckland)",
+        "low": 199730,
+        "high": 254400,
+        "centre": "Auckland",
+        "basis": "Sum of the eight components above (AKL, GST exclusive, no preliminaries, margin, design/consent fees or site works). Stated as $/kVA over the 300 kVA nominal capacity: LOW $666/kVA, HIGH $848/kVA, midpoint about $757/kVA (arithmetic centre $227,065, i.e. $756.9/kVA). Confidence is LOW because the largest line - Vector's capital contribution for the network-owned 300 kVA transformer and 11 kV protection/switchgear, about 80% of the total - is a proxy: Vector prices the distribution-substation tier per job and publishes no figure, so we have used the Electricity Authority's published distribution-transformer-tier worked example for a new 300 kVA transformer plus RMU, taken at the metro/urban-to-rural spread. All other lines are cited QV rows, cited Vector fees, or clearly labelled allowances, and the allowances are only 4-8% of the total, so the band is not allowance-driven. A reviewer can reject line 4 alone and replace it with Vector's Customer Works Agreement price without disturbing the rest; substituting Vector's own posted DS capacity rate ($176.67/diversified kVA = $53,001) for the proxy would take roughly $105k-$129k out of the band."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-derived",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 4,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 1210388,
+        "outputTokens": 51111,
+        "cachedTokens": 1053824,
+        "modelCalls": 15,
+        "toolCalls": 45,
+        "searchCalls": 15,
+        "estimatedCostUsd": 0.057313,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1210388,
+            "outputTokens": 51111,
+            "estimatedCostUsd": 0.057313,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 609635,
+      "band": {
+        "unit": "sum (lump sum, one complete supply point, GST excl.)",
+        "low": 201680,
+        "high": 256930,
+        "centre": "Auckland",
+        "basis": "Add of cited components: Vector design fee $3,000 + Vector site visit $170 + Vector connection works/capital contribution $159,510-$182,010 (EA published DS-tier example at 300 kVA, $531.7-$606.7/kVA) + HV cable $3,750 (QV proxy 125/m x 30m) + HV uplift/terminations/trench allowance $6,000-$14,000 + LV service $20,250-$30,000 (QV 810-1,200/m x 25m) + Cat 4 metering allowance $6,000-$16,000 + coordination/certification allowance $3,000-$8,000. Equals 672-856 $/kVA over the 300 kVA nominal capacity (midpoint 764 $/kVA). Allowances are ~5% (low) to ~15% (high) of the band, so no allowance carries a main driver. Confidence low because the largest component is an indicative EA published example used as a proxy for a Vector charge that is priced per job and not published; the HV cable rate is an LV-class QV proxy; and the EA example overlaps the separately priced cable runs. Reviewer can reject any single part without disturbing the others."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 671099,
+        "outputTokens": 27910,
+        "cachedTokens": 556544,
+        "modelCalls": 12,
+        "toolCalls": 38,
+        "searchCalls": 12,
+        "estimatedCostUsd": 0.035599,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 671099,
+            "outputTokens": 27910,
+            "estimatedCostUsd": 0.035599,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 641094,
+      "band": {
+        "unit": "sum - one complete 300 kVA HV supply point, live and registered (NZD, GST exclusive, Auckland); also stated as $/kVA over the 300 kVA nominal capacity",
+        "low": 273521,
+        "high": 332281,
+        "centre": null,
+        "basis": "Sum of the ten distinct components above, no component counted twice. Published Vector figures: $3,000 design fee, $170 first-energisation site visit, and the network capacity cost computed as Vector's own method and rate (300 kVA x $176.67 per diversified kVA for the Distribution substation tier). Vector's dedicated connection assets (Vector-owned 300 kVA ground-mount transformer + HV RMU/protection, installed) are proxied from the Electricity Authority's published Distribution-transformer-tier example ($179.6k metro / $182k urban for a 300 kVA increment including a new distribution transformer and RMU). HV and LV cable come from QV CostBuilder rows (QV has no MV cable, no substation or metering rows). Remaining items are labelled allowances totalling $16,500-$36,500, i.e. about 6-11% of the band, well under one third. GST-exclusive, Auckland urban, normal working hours. Amortisation: low $912/kVA, centre $1,010/kVA, high $1,108/kVA over 300 kVA. KEY BASIS LIMITATIONS, hence low confidence: (1) Vector prices both the connection charge for the dedicated works and the development contribution for a distribution-substation supply 'per job' via a Customer Works Agreement, so no quoted figure exists yet - the largest line is an indicative regulator-published estimate, not Vector's price, and the scenario's own transformer is a single 300 kVA unit so no size/diversity scaling has been applied; (2) if Vector also applies its published HV-feeder-tier capacity rate ($715.89 per diversified kVA) the sum would rise by up to about $215,000, which is excluded on the stated basis that no network reinforcement is required and 11kV already exists at the frontage; (3) metering, HV terminations and coordination are allowances that must be replaced with MEP and contractor quotes."
+      },
+      "dropped": true,
+      "checks": [
+        "allowance",
+        "web-verified",
+        "web-verified",
+        "web-unsupported",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 4,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 1,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 1322059,
+        "outputTokens": 41311,
+        "cachedTokens": 1187328,
+        "modelCalls": 20,
+        "toolCalls": 36,
+        "searchCalls": 7,
+        "estimatedCostUsd": 0.048558,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1322059,
+            "outputTokens": 41311,
+            "estimatedCostUsd": 0.048558,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

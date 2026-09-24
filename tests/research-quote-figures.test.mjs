@@ -3,6 +3,7 @@ import test from "node:test";
 import { checkCostBandCitations } from "../server/research/claude-cli/citations.mjs";
 import { unitMeasure } from "../server/research/research-question-record.mjs";
 import {
+  disclaimerFor,
   figuresSupport,
   locatePassage,
   parseFigures,
@@ -239,4 +240,21 @@ test("a percentage is a figure, read as written and as a multiplier", () => {
   });
   assert.equal(uplift.rate, "match");
   assert.equal(uplift.arithmetic, true);
+});
+
+test("a figure its own source says is not a price is caught, and a priced row beside a POA one is not", () => {
+  const vector =
+    "Development contribution … High voltage feeder Priced per job … Posted capacity rates ($ excl. GST per diversified kVA) For information purposes only … Distribution substation $176.67 $180.62";
+  assert.match(
+    disclaimerFor(vector, "Distribution substation $176.67"),
+    /Priced per job|For information purposes/,
+  );
+  const guide = `1.4. The illustrated examples are intended to be realistic, but are indicative and should not be relied on as a guide to actual costs or charges.${" filler".repeat(800)} Rate ($ per kVA) 598.5`;
+  assert.match(
+    disclaimerFor(guide, "Rate ($ per kVA) 598.5"),
+    /should not be relied on as a guide to actual costs/,
+  );
+  const supplier = "Large installed $9,800 $8,200 $11,000 Oversize 8 m+ turnkey POA $14,500 $17,800";
+  assert.equal(disclaimerFor(supplier, "Large installed $9,800 $8,200 $11,000"), null);
+  assert.equal(disclaimerFor("Prices are indicative only. Door from $3,000", "Door from $3,000"), null);
 });

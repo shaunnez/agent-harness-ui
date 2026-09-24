@@ -13,6 +13,7 @@
 //   and asked once more with no tools, so a run that cannot source its main cost says so rather
 //   than searching until the deadline fails it.
 
+import { reviewMessage } from "../research-answer-review.mjs";
 import { randomUUID } from "node:crypto";
 import { isFinalAnswerText } from "../claude-cli/stream.mjs";
 import { priceApiUsage, resolveApiModel } from "./providers.mjs";
@@ -53,6 +54,8 @@ export async function runChatLoop({
   onEvent = () => {},
   onRawLine = () => {},
   onCeiling = () => {},
+  // `(text) => string[]`: the host's check of a final answer. Problems go back to the model once.
+  reviewAnswer = null,
 }) {
   const { provider, remoteModel } = resolveApiModel(model);
   const apiKey = env?.[provider.keyEnv];
@@ -80,6 +83,7 @@ export async function runChatLoop({
     planLimit: false,
     sawTurnCompleted: false,
     wrappedUp: false,
+    reviewed: false,
     totals: { inputTokens: 0, cachedTokens: 0, outputTokens: 0 },
   };
   let spawnError = null;
@@ -144,6 +148,14 @@ export async function runChatLoop({
       });
       const text = String(message.content ?? "");
       if (!calls.length) {
+        const problems = text.trim() && reviewAnswer && !state.reviewed ? reviewAnswer(text) : [];
+        if (problems.length) {
+          state.reviewed = true;
+          onRawLine(JSON.stringify({ type: "host_review", problems }));
+          onEvent("log", { message: `Host review: ${problems.length} problem(s) sent back.` });
+          messages.push({ role: "user", content: reviewMessage(problems) });
+          continue;
+        }
         if (text.trim()) {
           state.finalText = text;
           state.sawTurnCompleted = true;

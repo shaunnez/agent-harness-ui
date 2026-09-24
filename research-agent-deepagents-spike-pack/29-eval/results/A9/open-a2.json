@@ -1,0 +1,291 @@
+{
+  "question": "open-a2",
+  "kind": "open",
+  "arm": "A9",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 228.8,
+    "high": 460
+  },
+  "range": {
+    "min": 225,
+    "max": 463
+  },
+  "unit": "NZD per m2 of building floor area, GST exclusive",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.018,
+    "highRatio": 1.04,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1705,
+  "elapsedMs": 474361,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 226573,
+      "band": {
+        "unit": "NZD per m2 of building floor area, GST exclusive",
+        "low": 229,
+        "high": 463,
+        "centre": null,
+        "basis": "Components summed: 80 + 126 + 12.8 + 10 = 228.8 (low) and 160 + 252 + 25.6 + 25 = 462.6 (high), so the band is the arithmetic sum of four distinct, non-overlapping items and no item is included twice. Low = QV CostBuilder 'New Foundations, TC1 and TC2 — excavate and replace upper layers of soil with compacted, well-graded gravels, geogrid', Christchurch rates, as a 1.0 m deep reinforced gravel raft/soil replacement (QV rows …t12:r3 + r4 + r5, CHC 80 + 126 + 12.8). The concrete floor slab row in the same table ($213/m2 CHC) and the table subtotal ($431.80/m2 CHC) are deliberately NOT added: the slab is a foundation item excluded from this scope and the subtotal already contains the rows used. High = the same three rows at 2 x quantity for a 2.0 m treatment depth with two geogrid layers, a stated depth adjustment. Priced per m2 of building floor area assuming the improved area equals the footprint (single storey); if the treated area extends 1-2 m beyond the footprint, cost per m2 of floor area rises by roughly 30% on a 1,000 m2 footprint and 60-70% on a 200 m2 footprint. Independent cross-check on the same measure (EQC, Report on Ground Improvement Costs for Cleared Sites in the Canterbury Area, 22 June 2015, Physical page 7, rates per m2 of treated area, 2015 tendered, GST exclusive): stone columns $146.41-$201.69, driven timber poles $208.23-$271.31, rotovated soil mixing $183.73-$209.33, reinforced gravel rafts $175.64-$204.53 - these need escalation to current dollars and bracket the lower half of the band. All QV rows are unreviewed. Excludes (per scope): building foundations and structural work; geotechnical investigation, design, consenting and construction monitoring (EQC 2015 prices these at $11,250-$19,400 per site plus a $550 Christchurch City Council building consent exemption, Physical pages 12-13); repairs to existing damage; enabling works."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 1086480,
+        "outputTokens": 23972,
+        "cachedTokens": 967808,
+        "modelCalls": 18,
+        "toolCalls": 38,
+        "searchCalls": 11,
+        "estimatedCostUsd": 0.035087,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1086480,
+            "outputTokens": 23972,
+            "estimatedCostUsd": 0.035087,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 208497,
+      "band": {
+        "unit": "$/m2 of building floor area (GST exclusive, Christchurch)",
+        "low": 349,
+        "high": 709,
+        "centre": null,
+        "basis": "Envelope (NOT the sum) of the four MBIE-endorsed cleared-site ground improvement methods, priced from tendered rates in the EQC Ground Improvement Programme costing report prepared by QS firm Kingston Partners and EQC's published Table 5.2 (Jan 2014-Jan 2015 tenders), converted from $/m2 of treated footprint to $/m2 of building floor area on the published treatment areas for a 146 m2 footprint (204 m2 for rafts, 270 m2 for stone columns/poles), then escalated x1.42 to 2026 dollars using QV CostBuilder's non-residential construction index (+42% over the decade, published Oct 2025). Central estimate $447/m2 = stone columns, 4 m deep ($381-$512), the customary light-commercial solution. No allowances were added: the published rates are construction-only and the pinned scope excludes geotechnical investigation, design and foundation/structural work. CROSS-CHECK - memo items excluded from the band but required on any real project (Kingston/EQC 2015, source-5 pp.5-6): geotechnical and engineering fees $11,250 (low complexity) to $19,400 (high) per site; Christchurch City Council building consent exemption $550 always required; resource consent $5,800-$11,000 where triggered; site-specific enabling works and reinstatement excluded because they cannot be standardised. QV CostBuilder holds no ground improvement trade whatsoever, so the entire band rests on the fetched EQC/Kingston documents."
+      },
+      "dropped": true,
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 4,
+        "webVerified": 4,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 621128,
+        "outputTokens": 23118,
+        "cachedTokens": 523008,
+        "modelCalls": 13,
+        "toolCalls": 34,
+        "searchCalls": 8,
+        "estimatedCostUsd": 0.030158,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 621128,
+            "outputTokens": 23118,
+            "estimatedCostUsd": 0.030158,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 474357,
+      "band": {
+        "unit": "m2 of building floor area",
+        "low": 228.8,
+        "high": 445,
+        "centre": "Christchurch",
+        "basis": "Built up by adding distinct components, GST exclusive, Christchurch rates. LOW column = a shallow (about 1.0 m deep) geogrid-reinforced gravel raft under the building footprint only, taken from the QV 'Substructure / New Foundations, TC1 and TC2' rows: excavate+dispose $80 + GAP65 hardfill $126 + geogrid $12.8 + allowance $10 = $228.8/m2. (The same QV table's subtotal t12:r7 of CHC $431.8/m2 also contains the 100 mm concrete floor slab, t12:r6 = $213/m2, which is excluded structural work per the pinned scope and is not counted.) HIGH column = a deeper replacement (QV's TC3 'Imported fill, GAP40' build, 3.1 m3/m2 of fill, about 2.3 m deep) using t13:r10 $90 + t13:r11 $6.8 + t13:r12 $287 + t13:r13 $36.2 (QV's own build_up total t13:r14 = CHC $420/m2 agrees) + a larger allowance $25 = $445.0/m2. The two ends are alternative method/depth extents, not additive. Allowances are about 4-6% of the band, so the band rests on cited rates, not on allowances. Assumptions priced on: (1) METHOD = excavation and replacement with compacted gravel plus geogrid reinforcement (the MBIE Module 5 'Replacement' mechanism, which describes 'removal of the in situ liquefiable soil, and replacement with a non-liquefiable material'); treatment under the building footprint only; (2) TREATMENT DEPTH varies 1.0-2.3 m, which is the whole spread of the band; (3) EXCLUDED per the pinned scope: building foundations and structural work, geotechnical investigation and design, repairs to existing damage; (4) construction-phase QA testing/dewatering carried as the small allowance above. CROSS-CHECK (web, source-4, Mike Jacka / Tonkin & Taylor, 'Engineering Approaches for Managing Liquefaction-Related Risk', May 2023, physical page 29) — for NEW development the indicative relative-cost scale row reads 'Estimate in the order of $100,000' against a '1.2m deep geogrid-reinforced crushed gravel raft, under buildings & infrastructure only', and the notes state 'All estimates are per property, assuming an average building footprint of 150m2 on a lot size of 800m2.' That is about $670/m2 of floor area and indicates that where treatment must extend beyond the building footprint (perimeter returns, under services/aprons, or lateral-spreading mitigation) the top of this band should be widened to roughly $650-$670/m2, and it also implies the QV rows (footprint only, residential-scale) may understate commercial mobilisation. CONFIDENCE LOW: method and depth are undecided, the QV rows are UNREVIEWED residential rebuild guidance detail with no commercial footprint adjustment, and the T&T cross-check is an order-of-magnitude per-property indicator uplifted 50% for 2015-2022 construction inflation."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 665418,
+        "outputTokens": 28473,
+        "cachedTokens": 564736,
+        "modelCalls": 13,
+        "toolCalls": 36,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.03388,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 665418,
+            "outputTokens": 28473,
+            "estimatedCostUsd": 0.03388,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 200556,
+      "band": {
+        "unit": "m2 of building floor area",
+        "low": 234,
+        "high": 445,
+        "centre": null,
+        "basis": "Sum of QV Christchurch component rows for the MBIE/CERA Canterbury guidance excavate-and-replace ground improvement (TC1/TC2 1 m replacement at the low end; TC3 Type 1 deep imported-fill replacement at the high end), plus a minor allowance for dewatering/platform/set-out. Excludes building foundations and structure, geotechnical investigation and design, and verification testing/monitoring. Specialist densification methods (stone columns, deep soil mixing, rigid inclusions, grouting) are not published in QV and are not in this band; if the geotechnical report specifies one of them, obtain a specialist subcontract lump sum. Rounded from 233.6-445.0. Confidence is low because the method and treatment depth are undecided and the band spans roughly a factor of two."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 791403,
+        "outputTokens": 22450,
+        "cachedTokens": 674944,
+        "modelCalls": 14,
+        "toolCalls": 37,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.032964,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 791403,
+            "outputTokens": 22450,
+            "estimatedCostUsd": 0.032964,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 465756,
+      "band": {
+        "unit": "NZD per m2 of building floor area, GST exclusive, Christchurch",
+        "low": 225,
+        "high": 460,
+        "centre": null,
+        "basis": "Sum of the four QV-priced components plus one minor allowance: low = 80+126+12.8+3.6+3 = $225.4/m2 for a 1.0 m deep reinforced compacted gravel raft (excavate-and-replace), high = 160+252+25.6+13.6+8 = $459.2/m2 for 2.0 m depth. Method assumed = MBIE/NZGS Module 5 'replacement' mechanism (dense gravel replacement, treatable 2-6 m, Table 3.1 relative cost 'Low'); MBIE Module 5 also requires the treated zone to extend laterally beyond the building footprint, and QV's quantities (1.63 m2 geogrid/m2, 1.37 m3 fill/m2) already assume a modest margin - if the geotech design extends the raft well past the building line, uplift pro-rata. WEB CROSS-CHECK (EQC/Natural Hazards Commission 'Report on Ground Improvement Costs for Cleared Sites in the Canterbury Area', 22 June 2015, source-5, physical page 7): tendered January 2014 to January 2015, GST exclusive, per m2 of treatment area - 'Stone columns 700mm diam. with 12% replacement ratio $146.41' and 'Excavate 1200mm deep, compacted hardfill 1200mm deep (work above water table) $175.64' and '(work below water table) $204.53'; the report states 'Rates were calculated from tenders received over a period from January 2014 to January 2015. An escalation factor is required to be added to these rates to allow for cost increases after these dates.' Escalated to 2026 those tender rates fall inside this QV-built band (QV rows give ~$266/m2 for an equivalent 1.2 m raft), which is why the band is not set higher or lower. Excluded per scope: geotechnical investigation and design, construction monitoring, building/resource consents - the same 2015 source prices geotechnical and engineering fees at 'TOTAL COST $11,250 $14,950 $19,400' per site and a CCC building consent exemption at $550."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 1089076,
+        "outputTokens": 25063,
+        "cachedTokens": 952576,
+        "modelCalls": 15,
+        "toolCalls": 44,
+        "searchCalls": 9,
+        "estimatedCostUsd": 0.038371,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1089076,
+            "outputTokens": 25063,
+            "estimatedCostUsd": 0.038371,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

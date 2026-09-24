@@ -176,7 +176,7 @@ export function Projects({
                   <small>{project.kind === "research" ? "Research project" : project.repositoryPath}</small>
                   {project.kind === "research" ? (
                     <span className="project-counts">
-                      <span>Costing questions, three runs each</span>
+                      <span>Costing questions, five runs each</span>
                     </span>
                   ) : (
                     <span className="project-counts">

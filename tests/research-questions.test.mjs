@@ -1,5 +1,5 @@
 // Research projects and questions (slice A of `27-RESEARCH-PROJECTS-UI-PLAN.md`): a research
-// project has no repository and refuses delivery work; a question is one or three runs whose
+// project has no repository and refuses delivery work; a question is one, three or five runs whose
 // status comes from the recorded agreement rule; a failed or plan-limited run makes a question
 // incomplete, never "not established"; a repeated external request reuses its question; and a
 // review is pinned to the evidence it was made against. Stub runtimes only: nothing here spends.
@@ -219,7 +219,12 @@ test("three agreeing runs make an agreed question, shaped like the recorded revi
     { [objective]: { r1: [727, 838], r2: [700, 820], r3: [740, 860] } },
     async ({ call, finish }) => {
       const project = await researchProject(call);
-      const asked = await call("POST", "/api/research/questions", { projectId: project.id, objective });
+      // Five is the default now; this test asks for three, the recorded review feed's shape.
+      const asked = await call("POST", "/api/research/questions", {
+        projectId: project.id,
+        objective,
+        runs: 3,
+      });
       assert.equal(asked.status, 201);
       const question = asked.body.question;
       assert.equal(question.runsPlanned, 3);
@@ -341,7 +346,7 @@ test("a repeated external request reuses its question and starts no more runs", 
     assert.equal(second.status, 200);
     assert.equal(second.body.reused, true);
     assert.equal(second.body.question.id, first.body.question.id);
-    assert.equal((await call("GET", "/api/research/runs")).body.runs.length, 3);
+    assert.equal((await call("GET", "/api/research/runs")).body.runs.length, 5);
     assert.deepEqual(first.body.question.source, {
       kind: "external",
       provider: "linear",

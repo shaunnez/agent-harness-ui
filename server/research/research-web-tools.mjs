@@ -1,6 +1,6 @@
 import path from "node:path";
 import { validateMarket } from "./research-provider-contracts.mjs";
-import { locatePassage } from "./research-quote-figures.mjs";
+import { disclaimerFor, locatePassage } from "./research-quote-figures.mjs";
 import {
   DEFAULT_SOURCE_BYTE_LIMIT,
   DEFAULT_SOURCE_TIMEOUT_MS,
@@ -562,6 +562,16 @@ export class ResearchWebTools {
    * `text` being the page's own words, or null. For a PDF the named page is tried first, then every
    * retained page. Only for the after-the-run check, which then verifies `text` word for word.
    */
+  /** The words on a retained source that say the figure quoted in `passage` is not a price, or null. */
+  disclaimerFor(sourceId, passage) {
+    const retained = this.#sources.get(String(sourceId ?? ""));
+    if (!retained) return null;
+    const document = retained.pdf
+      ? retained.pdf.pages.map((page) => page.content).join("\n\n")
+      : retained.content;
+    return disclaimerFor(document, passage);
+  }
+
   locateQuote(sourceId, excerpt, page = null) {
     const retained = this.#sources.get(String(sourceId ?? ""));
     if (!retained || typeof excerpt !== "string" || !excerpt.trim()) return null;

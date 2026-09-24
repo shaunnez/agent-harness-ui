@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // The scope → pack eval (`research-agent-deepagents-spike-pack/29-EVAL-PREREGISTRATION.md`).
 //
-//   node scripts/research-eval.mjs --arm A0|A2|A3|A4|A5|A6|A7|A8 [--only id,id] [--out <dir>]
+//   node scripts/research-eval.mjs --arm A0|A2|A3|A4|A5|A6|A7|A8|A9 [--only id,id] [--out <dir>]
 //   node scripts/research-eval.mjs --rescore [--out <dir>]
 //   node scripts/research-eval.mjs --arm A4 --set <questions.json> --model <model> --out <dir>   (tuning)
 //
@@ -94,6 +94,15 @@ export const ARMS = {
     reasoning: null,
     make: (env) => new ApiLoopResearchRuntime({ env }),
   },
+  // Doc 29 addendum A9: A8 with the host's answer check (one revision), the QV-first rule, and five
+  // runs per question of which the three closest are scored by the unchanged three-run rule.
+  A9: {
+    runtime: "api-loop",
+    model: "opencode-go/deepseek-v4.1-flash",
+    reasoning: null,
+    runs: 5,
+    make: (env) => new ApiLoopResearchRuntime({ env }),
+  },
 };
 
 /** The decision metric's passing checks: a found row, a verified quote (its figures on the page or
@@ -136,9 +145,11 @@ export function passes(record, checked = CHECKED) {
     record.status === "agreed" &&
     record.runs.every(
       (run) =>
-        run.status === "completed" &&
-        run.components.length > 0 &&
-        run.components.every((item) => checked.has(item.check)),
+        // A run left out of scoring (the two furthest of five) is shown, not scored.
+        run.dropped ||
+        (run.status === "completed" &&
+          run.components.length > 0 &&
+          run.components.every((item) => checked.has(item.check))),
     )
   );
 }
@@ -217,7 +228,7 @@ async function runQuestion(runtime, arm, question) {
   const startedAt = new Date().toISOString();
   const started = Date.now();
   const runs = await Promise.all(
-    RUNS.map(async (label) => {
+    (arm.runs ? Array.from({ length: arm.runs }, (_, index) => `r${index + 1}`) : RUNS).map(async (label) => {
       // A random tail as well as the time: two eval processes started together once gave two runs
       // the same id, and their transcripts were written into one directory.
       const id = `eval-${arm.id}-${question.id}-${label}-${Date.now().toString(36)}${randomBytes(2).toString("hex")}`;
@@ -270,6 +281,7 @@ async function runQuestion(runtime, arm, question) {
       error: run.error,
       elapsedMs: run.elapsedMs,
       band: run.outcome?.costBand?.band ?? null,
+      ...(record.runs[index].dropped ? { dropped: true } : {}),
       checks: record.runs[index].components.map((item) => item.check),
       citations: run.outcome?.citations?.summary ?? null,
       usage: run.usage,

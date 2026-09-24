@@ -357,3 +357,86 @@ On two runs A5 averages 5 passes (4 traced). A8's single run is 4 (4 traced). Th
 within the two-to-three-question swing seen between identical runs. On this evidence the API loop
 with stated working is level with OpenCode, not behind it. Most failures in both arms are now runs
 disagreeing on price (A5 repeat 8 disputed, A8 7), not sources.
+
+**Why the runs disagree (25 September).** Shaun: "if opencode is getting better results because of
+the harness, we need to figure out why and pivot … Dig in". It is not the harness. A5 and its
+unchanged repeat differ on 6 of 13 questions' agreement, and A7 and its repeat on 5. Pooled, A5
+agreed on 12 of 26 questions and the loop (A7, A7 repeat, A8) on 17 of 39. Opus (A0) agreed on 8
+of 13, with median ratios of 1.09 and 1.10 against DeepSeek's 1.18–1.37, so the inconsistency is
+DeepSeek's. A8's seven disputes had four causes:
+
+- one run of three made a mistake the others did not (3): a one-off boom-lift delivery added per m²
+  (facade), a change priced with no credit for the removed roofing (open-a3), and a $92k–292k hedge
+  against two runs at $240–273k (HV supply);
+- the main cost was taken from a retail web price instead of a QV row (1): door hardware, where two
+  runs priced the lockset at $248 and one at QV's $1,040–1,460 (Opus used QV in every run and agreed);
+- a single run's band was far too wide (1): open-a1 at $30–200 per m²;
+- the runs were just outside the rule (2): solar's highs at 1.36× and site electrical's lows at
+  1.26×. These are left alone.
+
+**Addendum A9 (25 September, registered before its run).** Shaun: "do 1 2 and then do 3. No opus
+runs yet." This is A8's runtime, model, plan, 13 questions, metric and leader rule, all 13 run at
+once. What changes from A8:
+
+1. Host answer check (`server/research/research-answer-review.mjs`, API loop only). Before a final
+   answer is accepted, code checks it and sends any problems back once, and the next answer is
+   final. The problems it looks for: a band more than 3× wide (not checked for a change question,
+   whose band is a difference); a one-off cost (delivery, mobilisation, a fixed fee) in a rate band,
+   unspread, carrying at least a quarter of the band's high end; a change question ("instead of",
+   "switching", "cost impact of") with no credit; and the largest component priced from the web
+   with no QV search named, unless it is something QV never publishes (network charges, fees,
+   certification). Replayed on the recorded answers, it would have sent back 8 of A8's 38 banded runs
+   and 7 of Opus's 34.
+2. QV-first prompt rule (API loop only). Search QV first for every component and price from a QV row
+   when one fits. A retail list price is not a substitute for a QV row pricing the same item. A web
+   component names the QV searches that found nothing.
+3. Five runs, the three closest scored (every runtime, for any question with more than three runs).
+   Of the runs that produced a band, the three whose lows and highs sit closest together, measured
+   against the rule's own 1.25× and 1.35×, are scored by the unchanged three-run rule. The other two,
+   including a run with no band, stay on the record marked "not scored". Nothing is dropped from three
+   runs, from a question with an unfinished run, or when fewer than three runs produced a band.
+   Grading uses the scored three. Questions stay at three runs unless five are asked for.
+
+Tuning: one run of the three practice scopes before the eval set. A9's pass count is reported
+beside A5's (two runs) and A8's.
+
+**A9 tuning and run (25 September).** Practice scopes: stud walls and benchtop passed; switchboard
+fault rating was disputed even on its three closest runs. The host check sent back 1 of 15 runs.
+
+A9 on the eval set, all 13 at once (65 runs): **11 agreed, 10 of 13 passed, 7 with every figure
+traced.** 10.7 minutes, $1.99, no errors. Door hardware and open-a3 were disputed, and solar
+agreed but failed one quote.
+
+How much of that is the five-run rule: A9's first three runs alone, scored by the three-run rule,
+give 6 agreed and 4 passed. That is the same as A8, so fixes 1 and 2 did not move the count on this
+run, and the five-run rule added 6 passes. That rule makes agreement easier by construction: it
+asks whether three of five runs cluster, not whether all three do. Its count is therefore not
+comparable with the three-run arms (A0–A8). What it measures is the product's answer, where a
+stray run no longer decides the question. Whether the clustered bands are closer to real prices is
+not measured.
+
+A9's HV pass is a wrong answer. Four of five runs priced the connection at about $200k–332k,
+mainly from the Electricity Authority's worked example (whose page 4 says the examples "should not
+be relied on as a guide to actual costs or charges") and from Vector's posted rates, headed "For
+information purposes only" on a page whose connection and development-contribution prices read
+"Priced per job". Read against the sources, the recorded answer, no price, is right.
+
+**Checks added after A9 (Shaun: "I agree to your fix"; every runtime).**
+
+- A web figure whose own source says it is not a price is **Quote doesn't give it**. That covers
+  anything in a document that says its examples should not be relied on as actual costs, is for
+  illustration only, or uses hypothetical zones or examples, and anything within 500 characters of
+  "for information purposes", "priced per job", "quoted on request" or "after assessment", or a
+  "worked example". "POA", "price on application" and "indicative only" are left out: replayed on
+  the recorded runs, they caught priced rows beside a POA row (30 times on roller doors). At 500
+  characters the rule catches only HV sources among 612 recorded web citations, plus one on a
+  practice scope and one $1 facade component.
+- API-loop prompt: such a figure is not a price, and the item is not established, naming who to ask.
+
+**Scope change (Shaun: "1 ok").** Open-a3's scope is pinned to the net change: the membrane roof in
+place, including its substrate, less the long-run Coloursteel it replaces. The clarification that
+left this open is removed. A9 ran before the change. Any arm compared on open-a3 from now on is
+re-run on the new scope.
+
+**Five runs by default (Shaun: "5 is fine for now").** A question in the app now starts five runs,
+of which the three closest are scored. Three runs and a one-run Quick remain available.

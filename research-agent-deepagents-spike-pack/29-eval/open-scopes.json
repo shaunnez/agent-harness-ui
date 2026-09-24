@@ -69,13 +69,14 @@
     "id": "open-a3",
     "objective": "Client wants to know the cost impact of switching the roof from long-run coloursteel to a membrane on a 1200m2 warehouse.",
     "scope": {
-      "item": "Warehouse roof membrane in place of long-run Coloursteel",
+      "item": "Net cost change of a membrane roof in place of long-run Coloursteel",
       "measure": "per m²",
-      "unitText": "m² of roof area",
+      "unitText": "m² of roof area, net change (membrane roof less the long-run Coloursteel roof it replaces)",
       "quantityBasis": "1200 m² of warehouse roof",
       "centre": "",
       "inclusions": [
-        "Membrane roofing scope needed to compare with long-run Coloursteel"
+        "Membrane roof system in place, including its substrate",
+        "Credit for the long-run Coloursteel roofing no longer needed"
       ],
       "exclusions": [
         "Removal or disposal of existing roofing",
@@ -87,7 +88,6 @@
         "The 1200 m² refers to roof area"
       ],
       "clarifications": [
-        "Specify whether the comparison should include removal of the Coloursteel option’s cost or price the membrane roof alone.",
         "State the membrane type and required build-up.",
         "State whether existing roof removal, flashings, gutters, and drainage are included."
       ]
@@ -95,7 +95,8 @@
     "scopedBy": {
       "runtime": "codex-cli",
       "model": "gpt-6-luna",
-      "reasoning": "medium"
+      "reasoning": "medium",
+      "amendedBy": "operator (Shaun approved pinning the net change, 25 September)"
     },
     "scopeMs": 6535,
     "scopeCostUsd": 0.00128
