@@ -4,9 +4,15 @@
 The build below is committed (`5daabd8`); eval results are committed as they land.
 Plan: `28-SCOPE-PACK-EVAL-PLAN.md`. Frozen eval: `29-EVAL-PREREGISTRATION.md`.
 
-Shaun resumed the eval later on 24 September ("re-run luna alone the luna with opus"). A3 is
-complete; A2 was running when this was last committed (10 of 13). The runner skips recorded
-questions, so `node scripts/research-eval-local.mjs --arm A2` finishes whatever is left.
+Shaun resumed the eval later on 24 September. A0, A2 and A3 are complete. He then asked to test
+DeepSeek 4.1 Flash through OpenCode: the `opencode-cli` runtime (`server/research/opencode-cli/`)
+runs it on the OpenCode Go plan with no provider key, QV and research tools through Code Mode,
+and everything else denied. A4 (first prompt) was stopped at 10 of 13; A5 (fixed prompt) is
+registered in doc 29 and not yet run.
+
+Open questions Shaun raised, not decided: the eval measures consistency and checked sources, not
+accuracy. The only real priced answer key found is PlanCheck's QCC81 variation packs (about 25
+unit-rate items, customer data, keep out of git); a QV hold-out set is the larger fallback.
 
 ## Built this session (`npm test` 872 pass, `test:frontier` 169, typecheck and lint clean)
 
@@ -54,9 +60,14 @@ Results: `29-eval/results/<arm>/<question>.json`. Runs hit by Luna capacity are 
 
 | Arm | Assessed | Pass | Cost / question | Wall time / question |
 |---|---|---|---|---|
-| A0 Opus 5.5 alone | 13 of 13 | 5 | $2.99 avg ($1.74–$4.80) | 140 s |
-| A3 Luna alone | 13 of 13 | 4 | $0.06 avg | 204 s |
-| A2 Luna → Opus | 10 of 13 (running) | 4 | $1.45 avg | 449 s |
+| A0 Opus 5.5 alone | 13 of 13 | 5 | $2.99 avg ($1.74–$4.80) | 2.3 min |
+| A2 Luna → Opus | 13 of 13 | 5 | $1.37 avg | 7.2 min |
+| A3 Luna alone | 13 of 13 | 4 | $0.06 avg | 3.4 min |
+| A4 DeepSeek 4.1 Flash, first prompt | 10 of 13 (stopped) | 0 | $0.10 avg | 5.4 min |
+| A5 DeepSeek 4.1 Flash, fixed prompt + 15-min cap | not run | — | ~$0.08 expected | — |
+
+Shaun runs A5 himself: `node scripts/research-eval-local.mjs --arm A5` (about an hour; OpenCode Go
+plan, workspace privacy region set to Global). No arm leads: A0 and A2 tie at 5, A3 is one behind.
 
 A0 by question: passes are facade, concrete paving, door hardware, interior finishes and roof
 (open-a3). Roller doors is disputed: only one of three runs found a band. Agreed but a component failed its check: emergency lighting

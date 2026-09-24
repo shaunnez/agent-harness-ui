@@ -1,0 +1,178 @@
+{
+  "question": "acp-facade-cladding-install",
+  "kind": "pinned",
+  "arm": "A4",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 663.9,
+    "high": 940.9
+  },
+  "range": {
+    "min": 519,
+    "max": 999
+  },
+  "unit": "$/m2 net cladding face area",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.435,
+    "highRatio": 1.304,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0775,
+  "elapsedMs": 217317,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 135389,
+      "band": {
+        "unit": "$/m2 net cladding face area",
+        "low": 519,
+        "high": 766,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components, GST-exclusive, ex-preliminaries/margin/design/consent. Panel system 421-600; flashings 266 lm x $130-225/m = $34,580-59,850 (= $76.84-133.00/m2); boom lift 30-42 days x $267 = $8,010-11,214 (= $17.80-24.92/m2); site allowances $1,500-3,700 (= $3.33-8.22/m2). 450 m2 totals: LOW 421x450=$189,450 + 34,580 + 8,010 + 1,500 = $233,540; HIGH 600x450=$270,000 + 59,850 + 11,214 + 3,700 = $344,764. Per m2: 233,540/450=$519; 344,764/450=$766. Confidence LOW: the ACP row inclusions are unstated (subgirt/carrier may be extra), the ACP row is a proxy for a routed concealed-fix cassette on a thermal-break carrier, and the 3mm flashing rate is a heavy adjustment on a 0.95mm roofing row. Excludes scaffold/edge protection/traffic management, air barrier, substrate repair, cavity fire barriers, windows/doors/louvres/soffits/roofing, structural strengthening, and PS1/PS3/weathertightness producer statements per the fixed scope."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 434444,
+        "outputTokens": 21972,
+        "cachedTokens": 357504,
+        "toolCalls": 9,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.025797,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 434444,
+            "outputTokens": 21972,
+            "estimatedCostUsd": 0.025797,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 217315,
+      "band": {
+        "unit": "$/m2 net cladding face area (GST exclusive, NZD, Auckland)",
+        "low": 745,
+        "high": 999,
+        "centre": null,
+        "basis": "Sum of the components above: low = 540+87+19+68.6+17.8+6.7+2.2+2.0 = $744.6/m2; high = 730+87+44+91.6+17.8+15.6+5.6+5.0 = $999.3/m2; centre $872/m2. TOTAL for the 450 m2 nominal net face area: low $335,250; high $449,550; centre $392,400. All QV rows used are unreviewed and the proprietary ACP rows do not itemise inclusions - if the QV ACP rate already includes the subgirt/carrier layer, deduct ~$87/m2 (add $87/m2 if it is panel-only). Allowances carry ~4-7% of the total, well under one third, so the band rests on cited rates; confidence is nonetheless low because the main driver (ACP cassette system) is a proxy with a stated 1.28-1.60x uplift. Centre: Auckland (QV rates for these rows are identical AKL/WLG/CHC except the subgirt row, WLG 84 / CHC 85). Excluded as instructed: GST, preliminaries, margin, design and consent fees, rigid air barrier, window sealing, substrate repair, cavity fire barriers/fire-stopping, windows/doors/louvres/soffits/balustrades/roofing, structural steel/framing strengthening, perimeter scaffold/edge protection/traffic management, PS1/PS3/weathertightness/facade-engineer producer statements."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 767982,
+        "outputTokens": 21572,
+        "cachedTokens": 661376,
+        "toolCalls": 15,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.030918,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 767982,
+            "outputTokens": 21572,
+            "estimatedCostUsd": 0.030918,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 152517,
+      "band": {
+        "unit": "$/m2 net cladding face area (GST-ex, Auckland NZD)",
+        "low": 663.9,
+        "high": 940.9,
+        "centre": null,
+        "basis": "Sum of distinct cited components, no double counting: panel cassette 458-650 + top-hat subgirt 85-90 + bracket allowance 20-45 + 3mm flashings 70.9-103.4 + boom lift 20.0-30.5 + site allowance 10-22 = $663.9-940.9/m2. Allowances are ~5-7% of the total, so the band rests on QV rates. 450 m2 net face total: LOW 450 x 663.9 = $298,755; CENTRE 450 x 802.4 = $361,080; HIGH 450 x 940.9 = $423,405. Auckland centre; WLG/CHC published rates for these rows are within ~2%. Working cost-plan band only - not a certified price, excludes GST, preliminaries, margin, design, consent and producer statements per the fixed scope. Principal residual risks: the ACP row's published inclusions are not stated (possible ~$85/m2 carrier overlap) and the flashings use a thin-gauge proxy with a stated gauge/finish adjustment."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 217962,
+        "outputTokens": 17158,
+        "cachedTokens": 150912,
+        "toolCalls": 6,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.020805,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 217962,
+            "outputTokens": 17158,
+            "estimatedCostUsd": 0.020805,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

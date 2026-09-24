@@ -437,6 +437,11 @@ test("units are compared by measure, with whole-job totals told apart from rates
     "NZD per assumed 30 m² job, excluding GST": "total",
     "NZD ex GST per assumed small soffit job": "total",
     "NZD excluding GST, additional construction cost": null,
+    // A rate first, with the job total alongside it: still a rate (Luna, concrete paving, 24 September).
+    "$/m2 finished slab, and total for 300 m2": "per m²",
+    "NZD/m3 placed, total for 40 m3": "per m³",
+    "$/m of channel drain": "per metre",
+    "$/each leaf": "each",
   };
   for (const [unit, measure] of Object.entries(cases)) assert.equal(unitMeasure(unit), measure, unit);
 });

@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // The scope → pack eval (`research-agent-deepagents-spike-pack/29-EVAL-PREREGISTRATION.md`).
 //
-//   node scripts/research-eval.mjs --arm A0|A2|A3 [--only id,id] [--out <dir>]
+//   node scripts/research-eval.mjs --arm A0|A2|A3|A4|A5 [--only id,id] [--out <dir>]
 //   node scripts/research-eval.mjs --rescore [--out <dir>]
+//   node scripts/research-eval.mjs --arm A4 --set <questions.json> --model <model> --out <dir>   (tuning)
 //
 // Runs every pre-registered question three times on one arm and writes one JSON file per
 // question under `<out>/<arm>/`, as soon as its three runs finish, so a stopped eval resumes
@@ -19,6 +20,7 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { ClaudeCliResearchRuntime } from "../server/research/claude-cli/runtime.mjs";
 import { CodexCliResearchRuntime } from "../server/research/codex-cli/runtime.mjs";
+import { OpenCodeCliResearchRuntime } from "../server/research/opencode-cli/runtime.mjs";
 import { PackResearchRuntime } from "../server/research/pack/runtime.mjs";
 import { questionRecord } from "../server/research/research-question-record.mjs";
 import { scopedObjective } from "../server/research/research-scope.mjs";
@@ -48,15 +50,33 @@ export const ARMS = {
     reasoning: "high",
     make: (env) => new CodexCliResearchRuntime({ env }),
   },
+  // Added after the frozen three (doc 29 addendum): DeepSeek 4.1 Flash on the OpenCode Go plan.
+  A4: {
+    runtime: "opencode-cli",
+    model: "opencode-go/deepseek-v4.1-flash",
+    reasoning: null,
+    make: (env) => new OpenCodeCliResearchRuntime({ env }),
+  },
+  // Doc 29 addendum A5: the same model after the prompt fixes (one exact continuous quote; an
+  // unsourced largest component is not established; ~50 tool calls) and a 15-minute cap. A4's
+  // recorded results were produced before these changes and stand as recorded.
+  A5: {
+    runtime: "opencode-cli",
+    model: "opencode-go/deepseek-v4.1-flash",
+    reasoning: null,
+    make: (env) => new OpenCodeCliResearchRuntime({ env }),
+  },
 };
 
 /** The decision metric's passing checks: a found row, a verified quote, or a labelled allowance. */
 const CHECKED = new Set(["qv-found", "web-verified", "allowance"]);
 
 /** The frozen question set: ten pinned scopes and the three scoped open questions. */
-export async function evalQuestions() {
-  const set = JSON.parse(await readFile(path.join(EVAL_DIRECTORY, "question-set.json"), "utf8"));
-  const open = JSON.parse(await readFile(path.join(EVAL_DIRECTORY, "open-scopes.json"), "utf8"));
+export async function evalQuestions(setPath = null) {
+  const set = JSON.parse(await readFile(setPath ?? path.join(EVAL_DIRECTORY, "question-set.json"), "utf8"));
+  const open = setPath
+    ? []
+    : JSON.parse(await readFile(path.join(EVAL_DIRECTORY, "open-scopes.json"), "utf8"));
   const pinned = [];
   for (const entry of set.pinned) {
     const objective = await readFile(path.join(PACK_DIRECTORY, "16-pinned-scopes", entry.file), "utf8");
@@ -228,13 +248,15 @@ async function main() {
   if (args.includes("--rescore")) return rescore(option("--out") ?? path.join(EVAL_DIRECTORY, "results"));
   const armId = option("--arm");
   if (!ARMS[armId]) throw new Error(`Choose --arm ${Object.keys(ARMS).join("|")}.`);
-  const arm = { id: armId, ...ARMS[armId] };
+  // `--model` and `--set` are for tuning outside the frozen eval: a different model string on an
+  // arm's runtime, and a question list other than the pre-registered one. Results go to `--out`.
+  const arm = { id: armId, ...ARMS[armId], ...(option("--model") ? { model: option("--model") } : {}) };
   const only = option("--only")?.split(",") ?? null;
   const out = path.join(option("--out") ?? path.join(EVAL_DIRECTORY, "results"), armId);
   await mkdir(out, { recursive: true });
   const env = { ...process.env, RESEARCH_QV_SOURCE: process.env.RESEARCH_QV_SOURCE ?? "plancheck" };
   const runtime = arm.make(env);
-  for (const question of await evalQuestions()) {
+  for (const question of await evalQuestions(option("--set"))) {
     if (only && !only.includes(question.id)) continue;
     const file = path.join(out, `${question.id}.json`);
     if (

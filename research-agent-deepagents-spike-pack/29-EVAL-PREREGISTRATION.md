@@ -54,6 +54,12 @@ recorded rule in `agreement.mjs` is unchanged, so the 22 September baseline stil
 banded runs that agree still count as agreed. Every recorded result was re-scored with
 `scripts/research-eval.mjs --rescore`; only that question changed.
 
+**Corrected by Shaun, 24 September, after A0–A3 finished ("yeah fix it"):** a unit that opens with
+a rate ("$/m2 finished slab, and total for 300 m2") was read as a whole-job total, because the
+total pattern matched "total for 300 m2". `unitMeasure` now reads a leading rate first. Re-scored
+with `--rescore`: only A3 concrete-paving-slab changed, disputed → agreed (low 1.12×, high 1.24×);
+it still fails the metric on a citation, so no arm's pass count moved.
+
 A leader is named only if it beats the next arm by at least 2 of 13 questions; otherwise the arms
 tie on the metric and the diagnostics are reported without a winner.
 
@@ -82,3 +88,65 @@ more evidence; tokens by stage; failed runs by cause.
 - If PlanCheck's library is down, the eval pauses. It never falls back to the local capture.
 
 Results: `30-EVAL-RESULT.md`, with the raw per-question files in `29-eval/results/<arm>/`.
+
+## Addendum A4 (24 September, before any scored A4 run)
+
+Shaun asked to test DeepSeek 4.1 Flash through OpenCode ("opencode deepseek 4.1 flash, lets test
+this", then "run it"). Registered as a fourth arm after the three frozen arms finished; it does not
+change them.
+
+| Arm | Runtime | Model | Plan |
+|---|---|---|---|
+| A4 | `opencode-cli`, one agent | `opencode-go/deepseek-v4.1-flash` (no reasoning setting) | OpenCode Go plan (workspace region: Global) |
+
+Same question set, three runs, PlanCheck library, row kinds, host tools, `standard` budget, decision
+metric and leader rule as A0–A3. The prompt is Codex's (it allows a total from stated, cited
+assumptions), rewritten into OpenCode's vocabulary: QV and research tools are called through Code
+Mode (`execute` → `tools.<server>.<tool>`), web search is OpenCode's `websearch`, and the prompt
+adds three Code Mode lines (tools load a few seconds late, so retry once; one page per
+`fetch_source` call; a page read with the sandbox's own `fetch` cannot be cited). Every action but
+`execute`, the configured servers' tools and `websearch` is denied; no provider key reaches the CLI.
+
+Known difference from the other arms: Code Mode scripts can make their own HTTP requests. Such a
+page was never retained, so a figure quoted from it fails the citation check (it can only lower the
+score). Cost is OpenCode's own per-model price from the session export, an API-rate estimate on a
+flat plan. One unscored smoke run (open-a3, results outside `29-eval/`) set these prompt lines; the
+scored A4 runs start after it.
+
+**A4 stopped by Shaun at 10 of 13** ("Stop the deepseek run... we can try tune it... just 3
+questions"). The 10 recorded questions stand as recorded: 0 pass. Open-a1..a3 were not run. Tuning
+happens on three pinned scopes outside the eval (stud partition walls, benchtop, switchboard fault
+rating); a tuned DeepSeek is a new arm, registered before it touches the eval set.
+
+## Addendum A5 (24 September, before any A5 run)
+
+Shaun: "add the soft limit to the prompt ... make it fifty, and add the ten minute cap make it
+fifteen minutes. Then ... the evaluation that both Opus and Luna and Opus plus Luna did but for
+deep seek", and "they all need to be evaluated on the same ones".
+
+| Arm | Runtime | Model | Plan |
+|---|---|---|---|
+| A5 | `opencode-cli`, one agent | `opencode-go/deepseek-v4.1-flash` (no reasoning variant) | OpenCode Go plan |
+
+Same 13 questions, three runs, PlanCheck library, row kinds, host tools, `standard` budget, decision
+metric and leader rule as A0–A3, run one question at a time. What differs from A4 is the prompt
+and one cap:
+
+- An excerpt is one continuous passage copied exactly (A4's 14 failed web citations stitched
+  passages with "..." or wrote a literal `\n`).
+- Before finishing, an unsourced largest component means not established (A4 priced the HV supply
+  question, which every other arm correctly left unpriced).
+- A soft budget of about 50 tool calls, stated in the prompt; the host does not count Code Mode's
+  inner calls.
+- A hard 15-minute cap per run, below the shared 20 minutes. Every A0 and A3 run finished inside
+  5 minutes, so the stricter cap binds only this arm. A run that hits it fails.
+
+Reasoning variant: none. On three tuning scopes outside the eval (stud partition walls, benchtop,
+switchboard fault rating) `#max` was no more consistent than the default and took about twice as
+long; `#xhigh` is not offered.
+
+**Disclosure.** The first two prompt rules were written after seeing A4's failures on eval
+questions. They are general rules, not answers, but the eval set is not unseen for this prompt.
+Shaun declined a further, more specific rule about unsourced study and engineering fees; the base
+prompt already says a professional fee with no source is not established. The tuning scopes' results
+are not reported as a score.

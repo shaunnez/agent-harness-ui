@@ -1,0 +1,273 @@
+{
+  "question": "open-a2",
+  "kind": "open",
+  "arm": "A2",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 219,
+    "high": 435
+  },
+  "range": {
+    "min": 186,
+    "max": 445
+  },
+  "unit": "NZD/m² building floor area, GST exclusive",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.263,
+    "highRatio": 1.085,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 1.1617,
+  "elapsedMs": 466354,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 264191,
+      "band": {
+        "unit": "NZD/m² building floor area, GST exclusive",
+        "low": 186,
+        "high": 435,
+        "centre": "Christchurch",
+        "basis": "Sum of the QV net 1 m soil-replacement increment (181.2), the extra-over up to the QV TC3 imported-GAP40 raft total (0–238.8) and a minor QA testing allowance (5–15). The allowance is under 4% of the total. Priced on the assumption of shallow-to-deep gravel-raft replacement treatment, with QA testing included and design excluded. Suggested cost-plan carry is about $300/m² until the geotechnical report fixes the method and depth. Confidence is low because both QV rows are residential proxies and the treatment method is undecided. Deep methods (stone columns, RIC, soil mixing) were searched for and not found; if one is specified, costs may exceed the high end. Context on how common the problem is: in 2010–11, widespread liquefaction and other ground hazards affected infrastructure over about one third of the city area (source-1), and CCC has mapped liquefaction vulnerability across all flat land in the district (source-2). No current citywide share of land needing treatment and no site probability was established."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 374110,
+        "outputTokens": 14394,
+        "cachedTokens": 377172,
+        "modelCalls": 3,
+        "toolCalls": 31,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.377008,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 374104,
+            "outputTokens": 9661,
+            "estimatedCostUsd": 0.025088,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 4733,
+            "estimatedCostUsd": 0.35192,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 286642,
+            "outputTokens": 5845,
+            "cachedTokens": 230400,
+            "estimatedCostUsd": 0.02024
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 87462,
+            "outputTokens": 3816,
+            "cachedTokens": 64512,
+            "estimatedCostUsd": 0.004848
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 4733,
+            "cachedTokens": 82260,
+            "estimatedCostUsd": 0.35192
+          }
+        ]
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 241495,
+      "band": {
+        "unit": "m² floor area",
+        "low": 219,
+        "high": 445,
+        "centre": "Christchurch",
+        "basis": "Sum of QV ground-replacement components (excavate/dispose, subgrade compaction, compacted fill, geogrid). Low = TC1/TC2 1 m replacement ($218.8). High = TC3 imported GAP40 build-up ($420) plus a dewatering allowance ($0–25). Assumes shallow excavate-and-replace; deep methods (stone columns, vibro, soil mixing) are not priced. Excludes foundations and slab, geotech investigation and design, construction testing and monitoring, and repairs. Residential QV build-ups are used as a proxy; a larger commercial footprint likely reduces the per-m² rate by about 10–15%. Allowances are under 6% of the total. NZD, GST exclusive."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 348694,
+        "outputTokens": 13498,
+        "cachedTokens": 296422,
+        "modelCalls": 1,
+        "toolCalls": 25,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.35822,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 348692,
+            "outputTokens": 8034,
+            "estimatedCostUsd": 0.024339,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 2,
+            "outputTokens": 5464,
+            "estimatedCostUsd": 0.3338812,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 348692,
+            "outputTokens": 8034,
+            "cachedTokens": 285696,
+            "estimatedCostUsd": 0.024339
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 2,
+            "outputTokens": 5464,
+            "cachedTokens": 10726,
+            "estimatedCostUsd": 0.3338812
+          }
+        ]
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 466351,
+      "band": {
+        "unit": "m² floor area",
+        "low": 235,
+        "high": 410,
+        "centre": "Christchurch",
+        "basis": "The two scenarios are alternatives and are not added together. Scenario A, a 1 m gravel raft with geogrid: QV rows $218.80 plus allowances of $15–45 gives $234–264. Scenario B, stone columns: escalated EQC tenders plus a perimeter factor, plus $5–15 testing, gives $242–410. Allowances are under 20% of the total. Confidence is low because the method and depth are undecided and the deep-treatment rates are historic residential data. GST exclusive. Excludes foundations, slab, geotech design and monitoring, and repairs."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "web-unverified",
+        "web-unverified"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 2,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 1563476,
+        "outputTokens": 19072,
+        "cachedTokens": 1456499,
+        "modelCalls": 4,
+        "toolCalls": 84,
+        "searchCalls": 10,
+        "estimatedCostUsd": 0.426459,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 1563470,
+            "outputTokens": 13119,
+            "estimatedCostUsd": 0.068109,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 5953,
+            "estimatedCostUsd": 0.35835019999999995,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 229193,
+            "outputTokens": 4509,
+            "cachedTokens": 188672,
+            "estimatedCostUsd": 0.008193
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 306151,
+            "outputTokens": 4245,
+            "cachedTokens": 251904,
+            "estimatedCostUsd": 0.019071
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 1028126,
+            "outputTokens": 4365,
+            "cachedTokens": 933632,
+            "estimatedCostUsd": 0.040845
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 5953,
+            "cachedTokens": 82291,
+            "estimatedCostUsd": 0.35835019999999995
+          }
+        ]
+      }
+    }
+  ]
+}

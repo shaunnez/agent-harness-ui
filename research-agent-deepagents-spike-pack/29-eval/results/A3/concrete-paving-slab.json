@@ -2,19 +2,21 @@
   "question": "concrete-paving-slab",
   "kind": "pinned",
   "arm": "A3",
-  "status": "disputed",
+  "status": "agreed",
   "passes": false,
-  "consensus": null,
-  "range": null,
-  "unit": null,
-  "unitsDiffer": [
-    "NZD/m2 finished slab, GST exclusive",
-    "$/m2 finished slab, and total for 300 m2",
-    "$/m2 finished slab"
-  ],
+  "consensus": {
+    "low": 235,
+    "high": 260
+  },
+  "range": {
+    "min": 216.08,
+    "max": 273
+  },
+  "unit": "NZD/m2 finished slab, GST exclusive",
+  "unitsDiffer": null,
   "agreement": {
-    "lowRatio": null,
-    "highRatio": null,
+    "lowRatio": 1.125,
+    "highRatio": 1.24,
     "runsWithBand": 3,
     "runsTotal": 3
   },

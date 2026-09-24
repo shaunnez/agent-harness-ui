@@ -1,0 +1,278 @@
+{
+  "question": "open-a1",
+  "kind": "open",
+  "arm": "A2",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 60,
+    "high": 85
+  },
+  "range": {
+    "min": 50,
+    "max": 97
+  },
+  "unit": "m² of soffit area",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.26,
+    "highRatio": 1.47,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 1.0411,
+  "elapsedMs": 428811,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 331668,
+      "band": {
+        "unit": "m² of soffit area",
+        "low": 60,
+        "high": 85,
+        "centre": "Auckland",
+        "basis": "Sum of the CARE specialist B-Class removal rate ($50–60/m²), landfill tipping converted from $250–375/t ex GST ($2–5/m²), and allowances for transport ($2–6/m²) and clearance inspection ($6–15/m²). Allowances make up about 13–24% of the total. Assumes intact non-friable AC soffit, single-storey access, no Class A containment, and a soffit area of about 30–120 m². GST exclusive. If the contractor's rate includes disposal, the band drops to about $56–75/m²."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 975956,
+        "outputTokens": 15328,
+        "cachedTokens": 936951,
+        "modelCalls": 3,
+        "toolCalls": 47,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.359999,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 975950,
+            "outputTokens": 10573,
+            "estimatedCostUsd": 0.048658999999999994,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 4755,
+            "estimatedCostUsd": 0.3113398,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 279889,
+            "outputTokens": 5605,
+            "cachedTokens": 231680,
+            "estimatedCostUsd": 0.018479
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 696061,
+            "outputTokens": 4968,
+            "cachedTokens": 626432,
+            "estimatedCostUsd": 0.03018
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 4755,
+            "cachedTokens": 78839,
+            "estimatedCostUsd": 0.3113398
+          }
+        ]
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 269673,
+      "band": {
+        "unit": "m² of soffit area",
+        "low": 63,
+        "high": 97,
+        "centre": "Auckland",
+        "basis": "Sum of removal ($55–75), disposal ($0–10) and assessor allowance ($8–12). Carry $75/m² as the single figure. Allowances are about 13–15% of the total. Assumes intact non-friable (Class B) AC sheet, single-storey eaves with no scaffold, standard containment, and an area of roughly 10–120 m². Excludes replacement soffit, scaffolding for two-storey work (Safety 1st gives $1,000–2,000+), and Class A/friable removal. Under 10 m², the $600 B-Class minimum applies per job. Web-only evidence, mostly from one supplier (CARE), so confidence is medium."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 578974,
+        "outputTokens": 11890,
+        "cachedTokens": 573660,
+        "modelCalls": 3,
+        "toolCalls": 32,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.322337,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 578968,
+            "outputTokens": 7988,
+            "estimatedCostUsd": 0.027443,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 3902,
+            "estimatedCostUsd": 0.2948936,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 425709,
+            "outputTokens": 4994,
+            "cachedTokens": 375040,
+            "estimatedCostUsd": 0.02138
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 153259,
+            "outputTokens": 2994,
+            "cachedTokens": 119552,
+            "estimatedCostUsd": 0.006063
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 3902,
+            "cachedTokens": 79068,
+            "estimatedCostUsd": 0.2948936
+          }
+        ]
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 428807,
+      "band": {
+        "unit": "m² of soffit area",
+        "low": 50,
+        "high": 66,
+        "centre": "Auckland",
+        "basis": "Specialist Class B removal of $50–60/m² from CARE's published rates (the $50 end for 200 m²+, the $60 end for typical and under-120 m² jobs), plus a disposal allowance of $0–6/m². NZD, GST exclusive. Mid-point about $58/m². Assumptions: bonded non-friable soffit in fair condition, single-storey access from ladders or a mobile scaffold, standard Class B enclosure, and disposal to a licensed landfill. Exclusions: replacement soffit, assessor or clearance certificate (a per-job lump sum), full scaffold for two-storey work, Class A (friable) work, and the $600+ minimum for jobs under 10 m². The removal rate comes from a single Auckland contractor, so confidence is medium."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 5,
+        "webVerified": 5,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 853437,
+        "outputTokens": 18229,
+        "cachedTokens": 784390,
+        "modelCalls": 4,
+        "toolCalls": 53,
+        "searchCalls": 5,
+        "estimatedCostUsd": 0.358747,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 853431,
+            "outputTokens": 13809,
+            "estimatedCostUsd": 0.045459,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 4420,
+            "estimatedCostUsd": 0.3132876,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 312846,
+            "outputTokens": 4125,
+            "cachedTokens": 256000,
+            "estimatedCostUsd": 0.019583
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 285788,
+            "outputTokens": 3986,
+            "cachedTokens": 245760,
+            "estimatedCostUsd": 0.01591
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 254797,
+            "outputTokens": 5698,
+            "cachedTokens": 204032,
+            "estimatedCostUsd": 0.009966
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 4420,
+            "cachedTokens": 78598,
+            "estimatedCostUsd": 0.3132876
+          }
+        ]
+      }
+    }
+  ]
+}

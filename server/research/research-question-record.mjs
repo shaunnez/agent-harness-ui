@@ -157,8 +157,20 @@ const UNIT_MEASURES = [
   [/\b(hour|hr|day|week)s?\b/i, "per time"],
 ];
 
+/** A unit that opens with a rate ("$/m2 finished slab, and total for 300 m2", "NZD per m² …") is
+ *  that rate, whatever it goes on to say: a run that also states the job total is still pricing
+ *  per m². Read before the total patterns, which would otherwise take "total for 300 m2". */
+const RATE_PREFIX =
+  /^\s*(?:NZD|NZ\$|\$)?\s*(?:\/|per\s+)\s*(m²|m2|sq\.?\s?m|m³|m3|lin(?:eal|ear)?\.?\s?m|lm|metre|meter|m|each|ea|item|house|dwelling|hour|hr|day|week)(?![A-Za-z0-9])/i;
+
 export function unitMeasure(unit) {
   const text = String(unit ?? "");
+  const rate = RATE_PREFIX.exec(text);
+  if (rate) {
+    const token = /^(m|metre|meter)$/i.test(rate[1]) ? "per m" : rate[1];
+    const measure = UNIT_MEASURES.find(([pattern, name]) => name !== "total" && pattern.test(token))?.[1];
+    if (measure) return measure;
+  }
   return UNIT_MEASURES.find(([pattern]) => pattern.test(text))?.[1] ?? null;
 }
 
