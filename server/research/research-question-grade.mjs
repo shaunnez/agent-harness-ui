@@ -20,7 +20,7 @@ export const WIDE_ESTIMATE_RATIO = 1.35;
 /** Above this share of a run's priced total, allowances are judgement rather than sources. */
 export const MAX_ALLOWANCE_SHARE = 1 / 3;
 
-const CHECKED = new Set(["qv-found", "web-verified", "allowance"]);
+const CHECKED = new Set(["qv-found", "web-verified", "web-derived", "allowance"]);
 
 const LABELS = {
   confident: "Confident",

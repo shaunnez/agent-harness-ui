@@ -168,7 +168,15 @@ const RATE_PREFIX =
   /^\s*(?:NZD|NZ\$|\$)?\s*(?:\/|per\s+)\s*(m²|m2|sq\.?\s?m|m³|m3|lin(?:eal|ear)?\.?\s?m|lm|metre|meter|m|each|ea|item|house|dwelling|hour|hr|day|week)(?![A-Za-z0-9])/i;
 
 export function unitMeasure(unit) {
-  const text = String(unit ?? "");
+  const full = String(unit ?? "");
+  // A note in brackets explains the unit; it does not change it. "ea (one complete door … also
+  // give x4 total)" is priced each, and the "total" in its note once made three runs that agreed
+  // read as pricing different things (typography check, 24 September; Shaun approved the fix).
+  const outside = full.replace(/\([^)]*\)?/g, " ").trim();
+  return (outside && outside !== full ? measureOf(outside) : null) ?? measureOf(full);
+}
+
+function measureOf(text) {
   const rate = RATE_PREFIX.exec(text);
   if (rate) {
     const token = /^(m|metre|meter)$/i.test(rate[1]) ? "per m" : rate[1];
@@ -239,6 +247,9 @@ function citationSummary(summary) {
     webVerified: summary.webVerified ?? 0,
     webNotFetched: summary.webNotFetched ?? 0,
     webExcerptRejected: summary.webExcerptRejected ?? 0,
+    // Only when present, so a record from before the figures check keeps its fingerprint.
+    ...(summary.webDerived ? { webDerived: summary.webDerived } : {}),
+    ...(summary.webUnsupported ? { webUnsupported: summary.webUnsupported } : {}),
     allowances: summary.allowances ?? 0,
   };
 }

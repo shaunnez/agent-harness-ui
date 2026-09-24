@@ -18,6 +18,8 @@ export type ResearchCheck =
   | "qv-found"
   | "qv-missing"
   | "web-verified"
+  | "web-derived"
+  | "web-unsupported"
   | "web-unverified"
   | "web-not-fetched"
   | "allowance"
@@ -47,6 +49,9 @@ export interface ResearchRunCitations {
   webVerified: number;
   webNotFetched: number;
   webExcerptRejected: number;
+  /** Verified quotes whose amount is worked from their figures, and those whose figures do not give it. */
+  webDerived?: number;
+  webUnsupported?: number;
   allowances: number;
 }
 
@@ -268,7 +273,17 @@ export const researchCheckCopy: Record<ResearchCheck, { label: string; tone: str
   "web-verified": {
     label: "Quote verified",
     tone: "completed",
-    detail: "The quoted words were found on the fetched page.",
+    detail: "The quote is on the fetched page and its figures give this amount.",
+  },
+  "web-derived": {
+    label: "Worked from quote",
+    tone: "answer",
+    detail: "The quote is on the page, but the amount is worked from its figures rather than stated in it.",
+  },
+  "web-unsupported": {
+    label: "Quote doesn't give it",
+    tone: "blocked",
+    detail: "The quote is on the page, but its figures do not give this amount and no working is shown.",
   },
   "web-unverified": {
     label: "Quote not on page",
@@ -381,6 +396,8 @@ export function componentCounts(question: ResearchQuestion) {
     "qv-found": 0,
     "qv-missing": 0,
     "web-verified": 0,
+    "web-derived": 0,
+    "web-unsupported": 0,
     "web-unverified": 0,
     "web-not-fetched": 0,
     allowance: 0,

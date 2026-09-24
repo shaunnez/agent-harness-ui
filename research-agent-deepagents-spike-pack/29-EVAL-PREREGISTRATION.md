@@ -238,3 +238,47 @@ from $9,460 to $12,902. In the second the three bands agreed ($9,240–9,750 low
 but the run was scored "different measures" because one run wrote its unit as "ea (one complete
 door, … also give x4 total)". The word "total" inside the note beat the leading "ea". That is a
 unit-parsing fault in the scorer. It is recorded here and not fixed without Shaun's go-ahead.
+
+**Figures check (25 September).** Shaun asked that a citation be judged on what it means, not on
+its characters, and asked who would judge that ("build it"). A model does not judge it; code
+does (`server/research/research-quote-figures.mjs`). Three rules, for every runtime from now on:
+
+- Locating: a quote that is not on the page character for character is looked for by its words.
+  The quote has to have at least three words, and at least 80% of them must sit together on the
+  page; figures are left out of that score. When it is found, the page's own words are what gets
+  verified and retained, never the model's rewording.
+- Figures: the passage's figures are read off the page and parsed. "$1.1k" is 1,100, ranges are
+  read as ranges, and entities are decoded. They are then compared with the component's low and
+  high, allowing 3% for rounding, GST (÷1.15), a quantity the component states ("4 doors", "over
+  40") and the sum of two figures. The outcomes:
+  - **Quote verified**: the figures give the amount, or it sits inside a range the page states.
+  - **Worked from quote**: one end is on the page, the band is set within 35% around one quoted
+    price, or the component shows the quantities it worked with.
+  - **Quote doesn't give it**: the page's figures are different, or there are none, and no working
+    is shown.
+  "Worked from quote" counts as checked for now; "Quote doesn't give it" does not.
+- Units: a note in brackets does not change the measure a band is priced in. "ea (… also give x4
+  total)" is priced each.
+
+These change the checks and the frozen pass metric, so every recorded arm was re-checked from its
+retained transcripts and page snapshots (408 runs, 482 web citations with page text). Of the 369
+re-checked citations that used to verify or fail on the quote: 145 are verified, 175 are worked from
+the quote, 34 don't give the amount and 15 are still not on the page. 38 citations whose page could
+not be recovered, and the facade transcripts from the two typography repetitions (which shared one
+run directory; eval run ids now carry a random tail), keep their recorded checks.
+
+| Arm | Recorded | Re-checked | If "worked from quote" did not count |
+|---|---|---|---|
+| A0 Opus | 5 | 5 | 5 |
+| A2 Luna → Opus | 5 | 4 | 3 |
+| A3 Luna | 4 | 4 | 3 |
+| A4 | 0 | 1 | 0 |
+| A5 DeepSeek, OpenCode | 7 | 6 | 5 |
+| A6 API loop | 1 | 4 | 1 |
+| A7 API loop, tuned | 5 | 5 | 2 |
+| A7 repeat | 3 | 2 | 0 |
+
+The recorded result files are left as they were scored; the table is the re-check. Most amounts
+that were "worked from quote" were quantities times a rate, or a rate spread over a count (hours ×
+$85, $39.90 over 40 fittings). The check can confirm the quoted rate but not the arithmetic,
+because the answer states the arithmetic only in prose.

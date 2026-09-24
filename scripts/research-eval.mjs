@@ -14,6 +14,7 @@
 // command and file come from the environment, never from this file. Each arm runs on the
 // operator's plans: Claude on the subscription, Codex on ChatGPT, never an API key.
 
+import { randomBytes } from "node:crypto";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
@@ -86,8 +87,9 @@ export const ARMS = {
   },
 };
 
-/** The decision metric's passing checks: a found row, a verified quote, or a labelled allowance. */
-const CHECKED = new Set(["qv-found", "web-verified", "allowance"]);
+/** The decision metric's passing checks: a found row, a verified quote (its figures on the page or
+ *  worked from them), or a labelled allowance. */
+const CHECKED = new Set(["qv-found", "web-verified", "web-derived", "allowance"]);
 
 /** The frozen question set: ten pinned scopes and the three scoped open questions. */
 export async function evalQuestions(setPath = null) {
@@ -201,7 +203,9 @@ async function runQuestion(runtime, arm, question) {
   const started = Date.now();
   const runs = await Promise.all(
     RUNS.map(async (label) => {
-      const id = `eval-${arm.id}-${question.id}-${label}-${Date.now().toString(36)}`;
+      // A random tail as well as the time: two eval processes started together once gave two runs
+      // the same id, and their transcripts were written into one directory.
+      const id = `eval-${arm.id}-${question.id}-${label}-${Date.now().toString(36)}${randomBytes(2).toString("hex")}`;
       const request = {
         id,
         objective,

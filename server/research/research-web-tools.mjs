@@ -1,5 +1,6 @@
 import path from "node:path";
 import { validateMarket } from "./research-provider-contracts.mjs";
+import { locatePassage } from "./research-quote-figures.mjs";
 import {
   DEFAULT_SOURCE_BYTE_LIMIT,
   DEFAULT_SOURCE_TIMEOUT_MS,
@@ -554,6 +555,28 @@ export class ResearchWebTools {
     const retained = this.#sources.get(String(sourceId ?? ""));
     if (!retained?.pdf || typeof excerpt !== "string" || !excerpt.trim()) return null;
     return retained.pdf.pages.find((page) => excerptAppearsIn(page.content, excerpt))?.pageNumber ?? null;
+  }
+
+  /**
+   * Where a quote sits on a retained source, found by its words (`locatePassage`): `{ page, text }`,
+   * `text` being the page's own words, or null. For a PDF the named page is tried first, then every
+   * retained page. Only for the after-the-run check, which then verifies `text` word for word.
+   */
+  locateQuote(sourceId, excerpt, page = null) {
+    const retained = this.#sources.get(String(sourceId ?? ""));
+    if (!retained || typeof excerpt !== "string" || !excerpt.trim()) return null;
+    if (!retained.pdf) {
+      const found = locatePassage(retained.content, excerpt);
+      return found ? { page: null, text: found.text } : null;
+    }
+    const pages = [...retained.pdf.pages].sort((a, b) => (b.pageNumber === page) - (a.pageNumber === page));
+    let best = null;
+    for (const candidate of pages) {
+      const found = locatePassage(candidate.content, excerpt);
+      if (found && (!best || found.coverage > best.coverage))
+        best = { page: candidate.pageNumber, text: found.text, coverage: found.coverage };
+    }
+    return best ? { page: best.page, text: best.text } : null;
   }
 
   #verifyReference(reference) {
