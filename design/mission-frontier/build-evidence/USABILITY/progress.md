@@ -1,3 +1,11 @@
+## 25 September 2026 — Goal 6 implemented and locally qualified
+
+Recorded delivery activity now persists during the exact active run. The existing refresh owner consumes bounded new workspace facts; the 3D colony shows courtyard arrivals, door-aware room and repair journeys, and task/artifact/attention notices. Watch responds to recent normalized tool events for its selected active run.
+
+Built in isolated `codex/mission-frontier-goal-6`, preserving the original worktree. Checks: 858 core, 180 Frontier, 23 API and 4 Sites tests; typing, lint, formatting and both builds passed. Browser evidence covers laptop, desktop, ten projects, repair, motion-off, reconnect, exact artifact navigation and a deterministic API investigation. See [Goal 6 handoff](goal-6/HANDOFF.md) for evidence limits, receipts and the running preview. Awaiting Shaun's visual review; no PR, merge or deployment. The historical journal-site directory is absent from current main, so this repository checkpoint is the journal update for this milestone.
+
+---
+
 ## 15 September 2026 — Goal 5 resumed and functionally qualified
 
 Recovered the preserved Goal 5 delta, integrated published main `424f8f1`, and completed normal laptop/desktop browser acceptance. Stable decision navigation, bounded return briefing and four source-scoped pins work with sample and isolated API data. Fixed stale cached forms after deletion, fixture authority drift at approval, compact failure headlines and the single-pin strip width. Browser storage writes require Web Locks; unsupported browsers report the limitation explicitly. See [Goal 5 acceptance](goal-5/acceptance.md) and [current handoff](goal-5/HANDOFF.md) for verification and delivery state.

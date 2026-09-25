@@ -1,0 +1,60 @@
+{
+  "capturedAt": "2026-09-25T07:48:08.676Z",
+  "origin": "http://127.0.0.1:4366",
+  "provider": "deterministic-api-fixture",
+  "taskId": "AH-001",
+  "status": "awaiting-grill",
+  "stage": "grill",
+  "runs": [
+    {
+      "id": "ad9337e8-d4a5-4bc2-a788-ca840f38d4ec",
+      "stage": "triage",
+      "status": "completed",
+      "activitySequence": 1
+    },
+    {
+      "id": "b0a87369-4949-463f-8171-65d89c854388",
+      "stage": "scouts",
+      "status": "completed",
+      "activitySequence": 1
+    },
+    {
+      "id": "66f966f9-57cf-4fe3-beca-1d63670247f6",
+      "stage": "scouts",
+      "status": "completed",
+      "activitySequence": 1
+    },
+    {
+      "id": "d7022d8c-2a49-4e59-99d4-9a4df9440826",
+      "stage": "grill",
+      "status": "completed",
+      "activitySequence": 1
+    }
+  ],
+  "activity": [
+    {
+      "id": "ad9337e8-d4a5-4bc2-a788-ca840f38d4ec:activity:1",
+      "runId": "ad9337e8-d4a5-4bc2-a788-ca840f38d4ec",
+      "title": "Deterministic provider fixture",
+      "detail": "No real model ran for this API scenario."
+    },
+    {
+      "id": "b0a87369-4949-463f-8171-65d89c854388:activity:1",
+      "runId": "b0a87369-4949-463f-8171-65d89c854388",
+      "title": "Deterministic provider fixture",
+      "detail": "No real model ran for this API scenario."
+    },
+    {
+      "id": "66f966f9-57cf-4fe3-beca-1d63670247f6:activity:1",
+      "runId": "66f966f9-57cf-4fe3-beca-1d63670247f6",
+      "title": "Deterministic provider fixture",
+      "detail": "No real model ran for this API scenario."
+    },
+    {
+      "id": "d7022d8c-2a49-4e59-99d4-9a4df9440826:activity:1",
+      "runId": "d7022d8c-2a49-4e59-99d4-9a4df9440826",
+      "title": "Deterministic provider fixture",
+      "detail": "No real model ran for this API scenario."
+    }
+  ]
+}
