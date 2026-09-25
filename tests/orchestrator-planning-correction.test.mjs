@@ -1,5 +1,6 @@
 import test from "node:test";
 import { withActionEligibility } from "../server/retry-admission-policy.mjs";
+import { PlanAuthorityOrchestrator } from "../server/orchestrator-plan-authority.mjs";
 import {
   assert,
   JsonTaskStore,
@@ -571,7 +572,7 @@ test("requalifies a retained package against the current plan base, not its stal
   }
 });
 
-test("refuses a baseline recheck when the repository has not advanced past the failing revision", async () => {
+test("keeps a task blocked when its pinned baseline command still fails", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-baseline-revalidate-stuck-"));
   try {
     const store = new JsonTaskStore(path.join(directory, "tasks.json"));
@@ -596,6 +597,12 @@ test("refuses a baseline recheck when the repository has not advanced past the f
         baselineVerification: { revision: stuckRevision, commandIds: ["test"] },
       };
       draft.repositoryAuthority = { id: "authority-stuck", selectedRevision: stuckRevision };
+      draft.planResult = {
+        artifactId: "implementation-plan.md",
+        disposition: "changes-required",
+        repositoryRevision: stuckRevision,
+        repositoryTargetRef: "refs/heads/main",
+      };
       draft.workPackages = [
         {
           id: "S1",
@@ -618,6 +625,15 @@ test("refuses a baseline recheck when the repository has not advanced past the f
       ];
     });
     const orchestrator = new TaskOrchestrator(store, {
+      worktreeManager: {
+        prepareEvidence: async () => ({ worktreePath: directory }),
+        removeEvidence: async () => {},
+      },
+      runVerification: async () => ({
+        status: "failed",
+        headRevision: stuckRevision,
+        rows: [{ id: "test", status: "failed" }],
+      }),
       repositoryAuthorityService: {
         capture: async () => ({
           id: "authority-still-stuck",
@@ -631,13 +647,95 @@ test("refuses a baseline recheck when the repository has not advanced past the f
       },
     });
 
-    await assert.rejects(orchestrator.revalidatePlan(task.id), /has not advanced past/i);
+    await assert.rejects(orchestrator.revalidatePlan(task.id), /baseline still fails/i);
     const unchanged = await store.get(task.id);
     assert.equal(unchanged.status, "blocked");
     assert.equal(unchanged.blocker.code, "repository-baseline-verification");
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("a passing same-revision baseline recheck retries Test on the retained candidate", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-baseline-retry-test-"));
+  try {
+    const store = new JsonTaskStore(path.join(directory, "tasks.json"));
+    await store.init();
+    const task = await store.create({
+      title: "Retest the retained candidate",
+      description: "The container now has the tool needed by the baseline command.",
+      repositoryPath: directory,
+      workflow: "implement",
+      priority: "high",
+    });
+    const baseRevision = "a".repeat(40);
+    const headRevision = "b".repeat(40);
+    await store.update(task.id, (draft) => {
+      draft.status = "blocked";
+      draft.currentStage = "test";
+      draft.attemptsByStage.test = 1;
+      draft.planResult = { repositoryRevision: baseRevision, repositoryTargetRef: "refs/heads/main" };
+      draft.candidates = [
+        { id: "C1", revisionNumber: 1, baseRevision, headRevision, status: "ready_for_test" },
+      ];
+      draft.blocker = {
+        code: "repository-baseline-verification",
+        candidateId: "C1",
+        baselineVerification: { revision: baseRevision, commandIds: ["backend-test"] },
+      };
+    });
+    const started = [];
+    const planAuthority = new PlanAuthorityOrchestrator({
+      store,
+      repositoryAuthority: {
+        capture: async () => ({
+          selectedRevision: baseRevision,
+          targetRef: "refs/heads/main",
+          upstreamRef: null,
+        }),
+      },
+      recheckBaseline: async () => ({
+        status: "passed",
+        headRevision: baseRevision,
+        rows: [{ id: "backend-test", status: "passed" }],
+      }),
+      start: async (id, stage) => {
+        started.push({ id, stage, task: await store.get(id) });
+        return true;
+      },
+    });
+
+    assert.deepEqual(await planAuthority.revalidatePlan(task.id), { started: true });
+    assert.equal(started.length, 1);
+    assert.equal(started[0].stage, "test");
+    assert.equal(started[0].task.status, "ready-for-test");
+    assert.equal(started[0].task.blocker, null);
+    assert.equal(started[0].task.attemptsByStage.test, 1);
+    assert.deepEqual(started[0].task.candidates[0].headRevision, headRevision);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("an archived baseline failure cannot be rechecked", async () => {
+  const task = {
+    status: "archived",
+    currentStage: "test",
+    blocker: { code: "repository-baseline-verification" },
+  };
+  assert.equal(withActionEligibility(task).actionEligibility.actions["revalidate-plan"].allowed, false);
+  const planAuthority = new PlanAuthorityOrchestrator({
+    store: { get: async () => task },
+    repositoryAuthority: {
+      capture: async () => {
+        throw new Error("capture must not run");
+      },
+    },
+    recheckBaseline: async () => {
+      throw new Error("recheck must not run");
+    },
+  });
+  await assert.rejects(planAuthority.revalidatePlan("AH-001"), /archived task/i);
 });
 
 test("routes an ownership-blocked package through planning and preserves its dirty slice", async () => {

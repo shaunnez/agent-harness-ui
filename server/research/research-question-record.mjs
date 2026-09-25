@@ -13,10 +13,20 @@ const ACTIVITY_PER_RUN = 80;
 
 /**
  * `question` is a `ResearchQuestionStore` record; `runs` are the question's run records (with
- * `runLabel` and `outcome`) in label order; `events` maps a run id to its stored events, and is
- * empty for a list read; `review` is the standing review or null.
+ * `runLabel` and `outcome`) in label order, latest attempt only; `events` maps a run id to its
+ * stored events, and is empty for a list read; `sources` maps a run id to its retained sources;
+ * `prior` holds the runs of earlier attempts, with `attempt`; `retryable` is true when the latest
+ * attempt failed before starting; `review` is the standing review or null.
  */
-export function questionRecord({ question, runs: allRuns, events = new Map(), review = null }) {
+export function questionRecord({
+  question,
+  runs: allRuns,
+  events = new Map(),
+  sources = new Map(),
+  prior = [],
+  retryable = false,
+  review = null,
+}) {
   const pending = allRuns.filter(
     (run) => runStatus(run.status) === "running" || runStatus(run.status) === "queued",
   );
@@ -104,6 +114,18 @@ export function questionRecord({ question, runs: allRuns, events = new Map(), re
     // Everything a reviewer judged, and nothing about the review itself or the live activity
     // feed, so a review stays current until the evidence behind it changes.
     evidenceSha: fingerprint(evidence),
+    // The rows' own description, unit and prices, read from the sources the runs retained. Outside
+    // the fingerprint: the row id already pins the row, and this is how it reads.
+    qvSources: describeQvSources(evidence.qvSources, sources),
+    retryable,
+    priorAttempts: prior.map((run) => ({
+      id: run.id,
+      attempt: run.attempt,
+      run: run.runLabel,
+      status: runStatus(run.status),
+      errorCode: run.error?.code ?? null,
+      errorMessage: run.error?.message ?? null,
+    })),
     review,
     provenance: "live",
     provenanceNote: provenanceNote(runs[0] ?? null, question),
@@ -320,6 +342,28 @@ function qvSourcesOf(runs) {
     regional: {},
     citedBy: count,
   }));
+}
+
+function describeQvSources(qvSources, sources) {
+  const described = new Map();
+  for (const retained of sources.values())
+    for (const source of retained ?? [])
+      if (source.sourceType === "internal_record" && source.metadata?.rowId)
+        described.set(source.metadata.rowId, { source, metadata: source.metadata });
+  return qvSources.map((row) => {
+    const found = described.get(row.rowId);
+    if (!found) return row;
+    const { metadata, source } = found;
+    return {
+      ...row,
+      section: metadata.section ?? null,
+      group: metadata.group ?? null,
+      desc: metadata.desc ?? null,
+      unit: metadata.unit ?? null,
+      url: source.url ?? null,
+      regional: metadata.regional ?? {},
+    };
+  });
 }
 
 function engineOf(run) {

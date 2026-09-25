@@ -144,7 +144,17 @@ async function retainRow(row, { snapshotDirectory, now, emitSource }) {
     contentSha256: snapshot.digest,
     contentBytes: snapshot.bytes,
     mediaType: "text/plain",
-    metadata: { snapshotRef: snapshot.snapshotRef, corpus: "qv", rowId: row.id, priced: row.priced },
+    metadata: {
+      snapshotRef: snapshot.snapshotRef,
+      corpus: "qv",
+      rowId: row.id,
+      priced: row.priced,
+      section: row.section,
+      group: row.group,
+      desc: row.desc,
+      unit: row.unit,
+      regional: row.regional,
+    },
   };
   emitSource({ source });
   return {

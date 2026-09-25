@@ -5,9 +5,9 @@ import os from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
-import { normalizePdfCapture, serializePdfSnapshot } from "../server/research/research-source-snapshots.mjs";
 import { createResearchRuntimeRegistry } from "../server/research/research-runtime-registry.mjs";
 import { ResearchService } from "../server/research/research-service.mjs";
+import { normalizePdfCapture, serializePdfSnapshot } from "../server/research/research-source-snapshots.mjs";
 import { ResearchStore } from "../server/research/research-store.mjs";
 import { DATABASE_SCHEMA_VERSION, migrateSqliteSchema } from "../server/sqlite-storage.mjs";
 import { SqliteTaskStore } from "../server/sqlite-store.mjs";
@@ -106,6 +106,32 @@ test("a research run round-trips through SQLite with its budget unchanged", asyn
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("startup marks interrupted CLI work failed while retaining terminal runs", async () => {
+  await withResearchStore(async ({ store }) => {
+    const budget = resolveResearchBudget("standard");
+    const interrupted = await store.createRun({
+      runtimeId: "claude-cli",
+      request: requestFor("Interrupted live question"),
+      budget,
+    });
+    const completed = await store.createRun({
+      runtimeId: "claude-cli",
+      request: requestFor("Completed live question"),
+      budget,
+    });
+    await store.updateRun(completed.id, (draft) => {
+      draft.status = "completed";
+    });
+    const service = new ResearchService({ store, registry: createResearchRuntimeRegistry([]) });
+    await service.recoverInterrupted();
+    const recovered = await store.getRun(interrupted.id);
+    assert.equal(recovered.status, "failed");
+    assert.equal(recovered.error.code, "companion_interrupted");
+    assert.equal(recovered.usage.partial, true);
+    assert.equal((await store.getRun(completed.id)).status, "completed");
+  });
 });
 
 test("run updates are guarded by revision, the way task updates are", async () => {

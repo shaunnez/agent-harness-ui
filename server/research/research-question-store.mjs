@@ -77,19 +77,23 @@ export class ResearchQuestionStore {
       .map(questionRecord);
   }
 
-  /** Binds a started run to its question. The run row already exists; only its grouping changes. */
-  attachRun(questionId, runId, label) {
+  /** Binds a started run to its question. The run row already exists; only its grouping changes.
+   *  `ordinal` counts from 1 across every attempt, so a retry's runs follow the ones it replaces. */
+  attachRun(questionId, runId, label, ordinal) {
     this.#db
-      .prepare("UPDATE research_runs SET question_id = ?, run_label = ? WHERE id = ?")
-      .run(questionId, label, runId);
+      .prepare("UPDATE research_runs SET question_id = ?, run_label = ?, question_ordinal = ? WHERE id = ?")
+      .run(questionId, label, ordinal, runId);
   }
 
-  /** The question's run ids in label order (r1, r2, r3). */
-  runIds(questionId) {
+  /** The question's run ids and ordinals in the order they were started, every attempt included. */
+  runOrder(questionId) {
     return this.#db
-      .prepare("SELECT id FROM research_runs WHERE question_id = ? ORDER BY run_label ASC, id ASC")
+      .prepare(`
+      SELECT id, question_ordinal AS ordinal FROM research_runs WHERE question_id = ?
+      ORDER BY question_ordinal ASC, run_label ASC, id ASC
+    `)
       .all(questionId)
-      .map((row) => row.id);
+      .map((row) => ({ id: row.id, ordinal: Number(row.ordinal) }));
   }
 
   addReview(questionId, { decision, note, reviewer, decidedAt, evidenceSha }) {

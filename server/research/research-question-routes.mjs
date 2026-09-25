@@ -22,7 +22,7 @@ export function createResearchQuestionRoutes({ questions, send, readJson }) {
       }
     }
 
-    const match = url.pathname.match(/^\/api\/research\/questions\/([^/]+)(?:\/(review))?$/);
+    const match = url.pathname.match(/^\/api\/research\/questions\/([^/]+)(?:\/(review|retry))?$/);
     if (!match) return false;
     const id = decodeURIComponent(match[1]);
 
@@ -38,6 +38,17 @@ export function createResearchQuestionRoutes({ questions, send, readJson }) {
 
     if (request.method === "POST" && match[2] === "review") {
       const question = await questions.review(id, await readJson(request));
+      send(
+        response,
+        question ? 200 : 404,
+        question ? { question } : { error: "Research question not found." },
+      );
+      return true;
+    }
+
+    // Runs that failed before they started (a missing login, a CLI not installed) start again.
+    if (request.method === "POST" && match[2] === "retry") {
+      const question = await questions.retry(id);
       send(
         response,
         question ? 200 : 404,

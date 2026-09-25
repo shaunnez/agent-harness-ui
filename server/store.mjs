@@ -395,6 +395,8 @@ function configuredModels(stagePolicies) {
 
 export function assertProjectIsUnique(projects, input) {
   const name = input.name.trim().toLowerCase();
+  if (input.kind && !["delivery", "research"].includes(input.kind))
+    throw new Error("Project type must be delivery or research.");
   if (projects.some((project) => project.name.trim().toLowerCase() === name)) {
     throw new Error("A project with that name already exists.");
   }

@@ -242,6 +242,34 @@ test("produces evidence the existing contract accepts, from what the harness obs
   assert.equal(verificationSummaryCommand(parsed), `${parsed.source}: lint, test`);
 });
 
+test("repository verification does not pass the companion's NODE_ENV to a command", async () => {
+  const priorNodeEnv = process.env.NODE_ENV;
+  process.env.NODE_ENV = "production";
+  try {
+    const evidence = await runRepositoryVerification({
+      worktreePath: os.tmpdir(),
+      candidate,
+      readHeadRevision: async () => candidate.headRevision,
+      manifest: manifest([
+        {
+          id: "environment",
+          command: [
+            process.execPath,
+            "-e",
+            "process.stdout.write(JSON.stringify({ nodeEnv: process.env.NODE_ENV ?? null, hasPath: Boolean(process.env.PATH) }))",
+          ],
+        },
+      ]),
+    });
+    assert.equal(evidence.status, "passed");
+    assert.deepEqual(JSON.parse(evidence.rows[0].output), { nodeEnv: null, hasPath: true });
+    assert.equal(process.env.NODE_ENV, "production");
+  } finally {
+    if (priorNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = priorNodeEnv;
+  }
+});
+
 test("selects only validated focused command ids while preserving the complete manifest", () => {
   const parsed = manifest([
     { id: "lint", command: ["npm", "run", "lint"] },

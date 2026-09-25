@@ -301,6 +301,16 @@ export async function reviewResearchQuestion(
   ).question;
 }
 
+export async function retryResearchQuestion(id: string) {
+  return (
+    await request<{ question: ResearchQuestion }>(
+      `/api/research/questions/${encodeURIComponent(id)}/retry`,
+      { method: "POST" },
+      { retryOnCsrf: false },
+    )
+  ).question;
+}
+
 export async function changeProject(
   id: string,
   change: { kind: "rename" | "archive" | "restore"; name?: string },

@@ -612,3 +612,137 @@ test("without a scoper, a draft is refused and questions are asked unscoped", as
     assert.equal(draft.status, 503);
   });
 });
+
+test("runs that failed to start can be retried, keeping the failed attempt on the record", async () => {
+  const objective = "Timber pole retaining wall, per m2.";
+  await withServer({ [objective]: { r1: [300, 380] } }, async ({ call, finish, runtime }) => {
+    const project = await researchProject(call);
+    const start = runtime.start.bind(runtime);
+    runtime.start = async () => {
+      throw new Error("Not logged in.");
+    };
+    const asked = (await call("POST", "/api/research/questions", { projectId: project.id, objective, runs: 1 }))
+      .body.question;
+    assert.equal(asked.retryable, true);
+    assert.equal(asked.runs[0].error.code, "runtime_start_failed");
+    const early = await call("POST", `/api/research/questions/${asked.id}/review`, {
+      decision: "approved",
+      note: "",
+      evidenceSha: asked.evidenceSha,
+    });
+    assert.equal(early.status, 409);
+    assert.match(early.body.error, /failed to start/);
+
+    runtime.start = start;
+    const retried = await call("POST", `/api/research/questions/${asked.id}/retry`);
+    assert.equal(retried.status, 200, JSON.stringify(retried.body));
+    assert.equal(retried.body.question.retryable, false);
+    assert.equal(retried.body.question.runs.length, 1);
+    assert.equal(retried.body.question.runs[0].run, "r1");
+    assert.deepEqual(
+      retried.body.question.priorAttempts.map((run) => [run.attempt, run.run, run.errorCode]),
+      [[1, "r1", "runtime_start_failed"]],
+    );
+    // Only a failed start is retried here; a run that is going is not.
+    assert.equal((await call("POST", `/api/research/questions/${asked.id}/retry`)).status, 409);
+
+    const done = await finish(retried.body.question);
+    assert.equal(done.status, "single_run");
+    assert.equal(done.priorAttempts.length, 1);
+  });
+});
+
+test("a research project with runs still going cannot be archived", async () => {
+  const objective = "Concrete paving slab, per m2.";
+  await withServer(
+    { [objective]: { r1: [190, 240], r2: [175, 220], r3: [210, 240] } },
+    async ({ call, finish }) => {
+      const project = await researchProject(call);
+      const question = (
+        await call("POST", "/api/research/questions", { projectId: project.id, objective, runs: 3 })
+      ).body.question;
+      const early = await call("POST", `/api/projects/${project.id}/archive`, {});
+      assert.equal(early.status, 409);
+      assert.match(early.body.error, /active research runs/);
+      await finish(question);
+      assert.equal((await call("POST", `/api/projects/${project.id}/archive`, {})).status, 200);
+      const archived = await call("POST", "/api/research/questions", {
+        projectId: project.id,
+        objective,
+        runs: 1,
+      });
+      assert.equal(archived.status, 409);
+    },
+  );
+});
+
+test("a database that ran main's earlier question table is carried over, review and runs included", async () => {
+  const { DatabaseSync } = await import("node:sqlite");
+  const { createResearchSchema } = await import("../server/research/research-schema.mjs");
+  const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-research-migrate-"));
+  try {
+    const db = new DatabaseSync(path.join(directory, "research.sqlite3"));
+    db.exec("CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)");
+    createResearchSchema(db);
+    // Put the table back in main's shape, as a companion that ran main left it.
+    db.exec(`
+      DROP TABLE research_reviews;
+      DROP TABLE research_questions;
+      CREATE TABLE research_questions (
+        id TEXT PRIMARY KEY, project_id TEXT NOT NULL, objective TEXT NOT NULL, engine_json TEXT NOT NULL,
+        runs_planned INTEGER NOT NULL, created_at TEXT NOT NULL, source_json TEXT NOT NULL,
+        source_key TEXT NOT NULL, review_json TEXT);
+      UPDATE research_runs SET question_ordinal = NULL;
+    `);
+    db.prepare("INSERT INTO research_questions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
+      "q-main",
+      "p1",
+      "What does removing an asbestos soffit cost per square metre?",
+      JSON.stringify({ runtime: "claude-cli", model: "claude-opus-5-5", reasoning: "high" }),
+      3,
+      "2026-09-24T04:00:00.000Z",
+      JSON.stringify({ kind: "manual" }),
+      "manual:abc",
+      JSON.stringify({
+        decision: "approved",
+        note: "Fine.",
+        reviewer: "Local operator",
+        decidedAt: "2026-09-24T05:00:00.000Z",
+        evidenceSha: "e".repeat(64),
+      }),
+    );
+    const store = new ResearchStore(db);
+    for (let ordinal = 1; ordinal <= 4; ordinal += 1) {
+      const run = await store.createRun({
+        runtimeId: "fake",
+        request: { objective: "x", profile: "standard" },
+        budget: {},
+      });
+      db.prepare("UPDATE research_runs SET question_id = 'q-main', question_ordinal = ? WHERE id = ?").run(
+        ordinal,
+        run.id,
+      );
+    }
+    createResearchSchema(db);
+    const questions = new ResearchQuestionStore(db);
+    const question = questions.getQuestion("q-main");
+    assert.equal(question.title, "What does removing an asbestos soffit cost per square metre?");
+    assert.equal(question.profile, "standard");
+    assert.equal(question.runsPlanned, 3);
+    assert.equal(questions.latestReview("q-main").decision, "approved");
+    assert.deepEqual(
+      db
+        .prepare("SELECT run_label FROM research_runs WHERE question_id = 'q-main' ORDER BY question_ordinal")
+        .all()
+        .map((row) => row.run_label),
+      ["r1", "r2", "r3", "r1"],
+    );
+    // The earlier table is kept for recovery, and a second start changes nothing.
+    assert.equal(db.prepare("SELECT COUNT(*) AS n FROM research_questions_main_v1").get().n, 1);
+    createResearchSchema(db);
+    assert.equal(db.prepare("SELECT COUNT(*) AS n FROM research_questions").get().n, 1);
+    db.close();
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});

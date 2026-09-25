@@ -25,6 +25,13 @@ import { ResearchCheckBadge, ResearchStatusBadge } from "./ResearchBadges";
 import { ResearchScopePanel } from "./ResearchScope";
 import { pendingPoll, useResearch } from "./use-research";
 
+/** A QV CostBuilder rowId is a long content hash plus a `:table:row` locator. Never show the raw
+ *  hash in the UI — the locator is the only human-legible part. */
+function qvRowLabel(rowId: string): string {
+  const locator = rowId.split(":").slice(1).join(":");
+  return locator ? `QV ${locator}` : "QV row";
+}
+
 const statusExplanation: Record<ResearchQuestion["status"], string> = {
   agreed: "All three runs banded within 1.25× on the low end and 1.35× on the high. Read the consensus.",
   single_run:
@@ -187,6 +194,19 @@ export function ResearchQuestionView({
         </div>
         <aside className="research-detail-aside">
           <ResearchScopePanel question={question} />
+          {Boolean(question.priorAttempts?.length) && (
+            <section className="research-panel">
+              <h3>Previous attempts</h3>
+              <ul className="research-open">
+                {question.priorAttempts?.map((attempt) => (
+                  <li key={`${attempt.attempt}-${attempt.run}`}>
+                    Attempt {attempt.attempt} · {attempt.run} · <code>{attempt.id}</code> ·{" "}
+                    {attempt.errorMessage ?? attempt.errorCode ?? attempt.status}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
           <CitationSummary question={question} />
           <QvSources question={question} />
           {question.webSources.length > 0 && (
@@ -285,6 +305,19 @@ function ReviewCommand({
       setBusy(false);
     }
   }
+  async function retryStart() {
+    if (!research.retry) return;
+    setBusy(true);
+    setProblem(null);
+    try {
+      await research.retry(question.id);
+      onReviewed();
+    } catch (reason) {
+      setProblem(errorMessage(reason));
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
     <section className={`workflow-command research-command tone-${status.tone}`} aria-label="Question review">
       <div className="workflow-command-row">
@@ -300,6 +333,16 @@ function ReviewCommand({
             {" · "}evidence <code>{question.evidenceSha}</code>
           </small>
         </span>
+        {question.retryable && research.retry && (
+          <button
+            type="button"
+            className="primary"
+            disabled={!connected || busy}
+            onClick={() => void retryStart()}
+          >
+            Retry {question.runsPlanned === 1 ? "Quick · one run" : `${question.runsPlanned} runs`}
+          </button>
+        )}
         {state !== "not-ready" && !decision && (
           <span className="inline-controls research-command-actions">
             <button type="button" disabled={!connected} onClick={() => setDecision("rejected")}>
@@ -511,7 +554,7 @@ function RunDetail({ run }: { run: ResearchRunRecord }) {
                   </td>
                   <td>
                     {component.rowId ? (
-                      <code title={component.rowId}>QV {component.rowId.split(":").slice(1).join(":")}</code>
+                      <code title={component.rowId}>{qvRowLabel(component.rowId)}</code>
                     ) : component.source ? (
                       <a href={component.source.split(" ; ")[0]} target="_blank" rel="noreferrer">
                         {component.source.replace(/^https?:\/\//, "").split(/[/?]/)[0]}
@@ -553,8 +596,9 @@ function CitationSummary({ question }: { question: ResearchQuestion }) {
       <h3>Citation checks</h3>
       {!question.citationsChecked && (
         <p className="quiet">
-          These runs were recorded before the harness checked citations. QV rows were matched against the
-          capture afterwards; web figures were never fetched.
+          {question.provenance === "live"
+            ? "No checked citations have been recorded for this question yet. Do not treat an uncited figure as verified."
+            : "These runs were recorded before the harness checked citations. QV rows were matched against the capture afterwards; web figures were never fetched."}
         </p>
       )}
       {shown.length ? (
@@ -586,13 +630,8 @@ function QvSources({ question }: { question: ResearchQuestion }) {
             <details>
               <summary>
                 <span>
-                  <strong>
-                    {row.desc ??
-                      (question.provenance === "live"
-                        ? `Row ${row.rowId}; its text stays in the local capture`
-                        : "Row text not bundled with this sample")}
-                  </strong>
-                  <small>{row.section ?? row.rowId}</small>
+                  <strong>{row.desc ?? qvRowLabel(row.rowId)}</strong>
+                  <small title={row.rowId}>{row.section ?? "Row text not bundled with this sample"}</small>
                 </span>
                 <span className="research-qv-rate">
                   {row.regional[centre] ? `$${row.regional[centre]}` : "—"}

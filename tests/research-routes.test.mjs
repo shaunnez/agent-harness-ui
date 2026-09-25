@@ -13,14 +13,15 @@ import { settle } from "./research-test-support.mjs";
 
 const CSRF_TOKEN = "research-routes-token";
 
-async function withServer(body) {
+async function withServer(body, { researchRuntimeId = "fake" } = {}) {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-research-api-"));
   const store = new SqliteTaskStore(path.join(directory, "tasks.sqlite3"));
   await store.init();
-  const runtime = new FakeResearchRuntime({ autoAdvance: false });
+  const runtime = new FakeResearchRuntime({ id: researchRuntimeId, autoAdvance: false });
   const researchService = new ResearchService({
     store: new ResearchStore(store.databaseHandle()),
     registry: createResearchRuntimeRegistry([runtime]),
+    ...(researchRuntimeId === "fake" ? {} : { settings: () => store.settings() }),
   });
   const server = createApiServer({
     store,

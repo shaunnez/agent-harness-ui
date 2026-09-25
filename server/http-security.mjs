@@ -17,12 +17,30 @@ const ALLOWED_BROWSER_ORIGINS = new Set([
 export const MISSING_ORIGIN_POLICY =
   "Allowed only for loopback non-browser clients that provide the per-process CSRF token and application/json.";
 
-export function assertHttpBoundary(request, csrfToken) {
+/**
+ * Hosts and origins beyond loopback that this companion accepts, read from the environment.
+ *
+ * Both default to empty, which is the loopback-only companion this has always been. They exist
+ * for a companion reached through something the operator controls — a container port published
+ * to the host's loopback, or `tailscale serve` on a tailnet-only name — where the browser's
+ * Host and Origin are that name rather than `127.0.0.1`. Hostnames are compared without port;
+ * origins are exact (`https://harness.example.ts.net`).
+ */
+export function httpBoundaryFromEnvironment(environment = process.env) {
+  return {
+    allowedHosts: new Set(listOf(environment.AGENT_HARNESS_ALLOWED_HOSTS).map((host) => host.toLowerCase())),
+    allowedOrigins: new Set(listOf(environment.AGENT_HARNESS_ALLOWED_ORIGINS)),
+  };
+}
+
+const LOOPBACK_ONLY = Object.freeze({ allowedHosts: new Set(), allowedOrigins: new Set() });
+
+export function assertHttpBoundary(request, csrfToken, boundary = LOOPBACK_ONLY) {
   const host = parseHost(request.headers.host);
-  if (!host || !isLoopback(host.hostname))
+  if (!host || !(isLoopback(host.hostname) || boundary.allowedHosts.has(host.hostname.toLowerCase())))
     throw httpError(403, "The local companion only accepts loopback hosts.");
   const origin = request.headers.origin;
-  if (origin && !ALLOWED_BROWSER_ORIGINS.has(origin))
+  if (origin && !originAllowed(origin, request.headers.host, boundary))
     throw httpError(403, "The request origin is not allowed.");
   if (!MUTATION_METHODS.has(request.method ?? "GET")) return;
   if (
@@ -37,14 +55,38 @@ export function assertHttpBoundary(request, csrfToken) {
   }
 }
 
-export function corsHeaders(origin) {
-  if (!ALLOWED_BROWSER_ORIGINS.has(origin)) throw httpError(403, "The request origin is not allowed.");
+export function corsHeaders(origin, boundary = LOOPBACK_ONLY) {
+  if (!ALLOWED_BROWSER_ORIGINS.has(origin) && !boundary.allowedOrigins.has(origin))
+    throw httpError(403, "The request origin is not allowed.");
   return {
     "access-control-allow-origin": origin,
     "access-control-allow-methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
     "access-control-allow-headers": "content-type,x-agent-harness-csrf",
     vary: "Origin",
   };
+}
+
+// A page the companion served itself (the built UI) sends its own origin on every mutation.
+// That request is same-origin by definition, so it is accepted whenever its Host already passed
+// the host check above — which is what stops a rebound DNS name from qualifying.
+function originAllowed(origin, hostHeader, boundary) {
+  if (ALLOWED_BROWSER_ORIGINS.has(origin) || boundary.allowedOrigins.has(origin)) return true;
+  try {
+    const parsed = new URL(origin);
+    return (
+      (parsed.protocol === "http:" || parsed.protocol === "https:") &&
+      parsed.host.toLowerCase() === String(hostHeader ?? "").toLowerCase()
+    );
+  } catch {
+    return false;
+  }
+}
+
+function listOf(value) {
+  return String(value ?? "")
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
 }
 
 function parseHost(value) {

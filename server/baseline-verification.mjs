@@ -28,6 +28,37 @@ export function failedCommandIds(verification) {
   return (verification?.rows ?? []).filter((row) => row.status !== "passed").map((row) => row.id);
 }
 
+/** Re-run only the recorded failed commands at the same pinned baseline revision. */
+export async function recheckRepositoryBaseline({
+  task,
+  baselineVerification,
+  worktrees,
+  runVerification,
+  signal,
+}) {
+  const revision = baselineVerification?.revision;
+  const commandIds = baselineVerification?.commandIds;
+  if (!revision || !Array.isArray(commandIds) || !commandIds.length) {
+    throw new Error("The recorded repository baseline has no revision-bound failed commands to recheck.");
+  }
+  const workspace = await worktrees.prepareEvidence(
+    task,
+    { selectedRevision: revision, provisionDependencies: true },
+    `baseline-recheck-${task.id}-${crypto.randomUUID()}`.slice(0, 64),
+  );
+  try {
+    return await runVerification({
+      worktreePath: workspace.worktreePath,
+      candidate: { id: `${task.id}-baseline`, revisionNumber: 1, headRevision: revision },
+      commandIds,
+      executionKind: "baseline-recheck",
+      signal,
+    });
+  } finally {
+    await worktrees.removeEvidence(workspace);
+  }
+}
+
 /**
  * Re-runs the failed commands at `baselineRevision` in a throwaway worktree.
  *

@@ -148,7 +148,6 @@ export function ProjectSetup({
                       return gateway.changeProject(project.id, { kind: "rename", name: name.trim() });
                     const savedProject = await gateway.createProject({
                       name: name.trim(),
-                      repositoryPath: "",
                       kind: "research",
                     });
                     chooseProjectAppearance(savedProject, appearance);

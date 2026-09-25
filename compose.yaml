@@ -1,0 +1,41 @@
+# Run the Harness in a Linux container on this machine:
+#
+#   docker compose up -d --build
+#   open http://localhost:4321/
+#
+# First run needs logins inside the container; see docs/hosting/container.md.
+services:
+  harness:
+    build: .
+    image: agent-harness:local
+    init: false # the image's own tini is the entrypoint
+    restart: unless-stopped
+    ports:
+      # Published to this machine's loopback only. The companion has no user accounts; the
+      # network boundary is the access control. Do not change these to 0.0.0.0.
+      - "127.0.0.1:4321:4321"
+      # Linear webhook receiver. Only reachable once AGENT_HARNESS_LINEAR_CONFIG is set; expose
+      # it publicly through a tunnel that forwards /linear/webhook only.
+      - "127.0.0.1:4311:4311"
+    env_file:
+      - path: .env.harness.local
+        required: false
+    volumes:
+      - harness-home:/home/node # claude, codex and gh logins; git identity
+      - harness-data:/app/.data # tasks.sqlite3, research captures, Linear config
+      - harness-worktrees:/w # candidate worktrees (disposable)
+      - harness-repos:/repos # the harness's own clones of the repositories it works on
+    # The Claude CLI's Linux sandbox is bubblewrap, which needs unprivileged user namespaces.
+    # Docker's default seccomp profile blocks them, so without this every Claude stage fails
+    # its sandbox check and refuses to run (fail closed). Codex stages are unaffected.
+    security_opt:
+      - seccomp=unconfined
+      - apparmor=unconfined
+    shm_size: 1gb # Chromium previews
+    stop_grace_period: 60s
+
+volumes:
+  harness-home:
+  harness-data:
+  harness-worktrees:
+  harness-repos:

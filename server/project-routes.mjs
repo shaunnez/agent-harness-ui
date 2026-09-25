@@ -1,7 +1,14 @@
 import path from "node:path";
 import { isResearchRepositoryPath, withProjectKind } from "./project-policy.mjs";
 
-export function createProjectRoutes({ store, suggestedRepository, send, readJson, validateRepository }) {
+export function createProjectRoutes({
+  store,
+  suggestedRepository,
+  send,
+  readJson,
+  validateRepository,
+  researchAvailable = false,
+}) {
   return async function handleProjectRoute(request, response, url) {
     if (request.method === "GET" && url.pathname === "/api/projects") {
       send(response, 200, {
@@ -21,6 +28,10 @@ export function createProjectRoutes({ store, suggestedRepository, send, readJson
       const kind = input.kind === undefined ? "delivery" : input.kind;
       if (kind !== "delivery" && kind !== "research")
         throw new Error("A project is a delivery project or a research project.");
+      if (kind === "research" && !researchAvailable)
+        throw Object.assign(new Error("Research projects require the SQLite research runtime."), {
+          statusCode: 409,
+        });
       // A research project asks costing questions and never touches a repository, so none is
       // chosen or validated; a repository sent with one is a client mistake, not a default.
       if (kind === "research" && input.repositoryPath)

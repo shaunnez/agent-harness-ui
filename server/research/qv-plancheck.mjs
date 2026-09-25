@@ -102,7 +102,19 @@ export class PlanCheckQvSession {
       size: this.#shown.size,
       get: (id) => {
         const row = this.#shown.get(id);
-        return row ? { id, text: citationText(row, id), priced: isPriced(row) } : null;
+        return row
+          ? {
+              id,
+              text: citationText(row, id),
+              priced: isPriced(row),
+              // What the review UI shows for the row, as the local capture's rows carry it.
+              section: [row.trade, row.section].filter(Boolean).join(" / ") || null,
+              group: row.group_label ?? null,
+              desc: row.description ?? null,
+              unit: unitText(row) || null,
+              regional: regionalPrices(row),
+            }
+          : null;
       },
     };
   }
@@ -311,6 +323,15 @@ function figuresText(row, centres) {
       return `${code} ${text === "unpriced" ? text : `${text}${suffix}`}`;
     })
     .join(centres.length > 3 ? "; " : " ");
+}
+
+function regionalPrices(row) {
+  const prices = {};
+  for (const [centre, value] of Object.entries(row.regional_values ?? {})) {
+    const text = priceText(value);
+    if (text !== "unpriced") prices[centre] = text;
+  }
+  return prices;
 }
 
 function priceText(value) {

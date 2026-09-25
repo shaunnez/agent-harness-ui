@@ -4,17 +4,15 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { cleanupOrphanAttachmentSets } from "./attachment-storage.mjs";
 import { defaultRuntimeSettings } from "./model-catalog.mjs";
-import {
-  initializeWorkspaceHistory,
-  observeWorkspaceCore,
-  observeWorkspaceRecords,
-  pageWorkspaceHistory,
-  pruneWorkspaceHistory,
-  readWatchedRun,
-  workspaceHistoryHead,
-} from "./workspace-history.mjs";
 import { changeProject } from "./project-policy.mjs";
 import { retainRunActivityEvents, TASK_STORE_SCHEMA_VERSION } from "./run-activity.mjs";
+import {
+  assertImportState,
+  canonicalJson,
+  migrateSqliteSchema,
+  querySqlitePage,
+  syncTaskCollection,
+} from "./sqlite-storage.mjs";
 import {
   assertProjectIsUnique,
   createTaskRecord,
@@ -30,12 +28,14 @@ import {
   projectTaskSummary,
 } from "./task-projections.mjs";
 import {
-  assertImportState,
-  canonicalJson,
-  migrateSqliteSchema,
-  querySqlitePage,
-  syncTaskCollection,
-} from "./sqlite-storage.mjs";
+  initializeWorkspaceHistory,
+  observeWorkspaceCore,
+  observeWorkspaceRecords,
+  pageWorkspaceHistory,
+  pruneWorkspaceHistory,
+  readWatchedRun,
+  workspaceHistoryHead,
+} from "./workspace-history.mjs";
 
 export class SqliteTaskStore {
   #filePath;
@@ -372,6 +372,28 @@ export class SqliteTaskStore {
       this.#transaction(() => {
         const settings = this.#readSettings();
         const tasks = change.kind === "archive" ? this.#readAllTasks() : [];
+        if (
+          change.kind === "archive" &&
+          settings.projects?.some((item) => item.id === id && item.kind === "research")
+        ) {
+          const active = this.#db
+            .prepare(`
+            SELECT 1 FROM research_questions AS q WHERE q.project_id = ? AND (
+              (SELECT COUNT(*) FROM research_runs AS r WHERE r.question_id = q.id) < q.runs_planned
+              OR EXISTS (
+                SELECT 1 FROM research_runs AS r WHERE r.question_id = q.id
+                AND r.status NOT IN ('completed', 'failed', 'cancelled')
+              )
+            ) LIMIT 1
+          `)
+            .get(id);
+          if (active) {
+            const error = new Error("Finish the active research runs before archiving this project.");
+            error.code = "PROJECT_HAS_ACTIVE_RESEARCH";
+            error.statusCode = 409;
+            throw error;
+          }
+        }
         const project = changeProject(settings.projects ?? [], tasks, id, change);
         if (project)
           this.#db.prepare("UPDATE settings SET payload_json = ? WHERE id = 1").run(JSON.stringify(settings));

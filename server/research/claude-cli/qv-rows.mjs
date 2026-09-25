@@ -55,9 +55,19 @@ async function readRows(indexPath) {
     } catch {
       continue;
     }
-    // Only what a citation check needs is kept: the full rows are several times the size.
+    // Only what a citation check and the review UI need is kept: the full rows are several
+    // times the size.
     if (typeof row?.id === "string")
-      rows.set(row.id, { id: row.id, text: rowText(row), priced: isPriced(row) });
+      rows.set(row.id, {
+        id: row.id,
+        text: rowText(row),
+        priced: isPriced(row),
+        section: (row.headings ?? []).map((heading) => heading.text).join(" / ") || null,
+        group: row.nearest_group ?? null,
+        desc: row.description ?? null,
+        unit: row.unit_normalised ?? null,
+        regional: regionalPrices(row),
+      });
   }
   return {
     size: rows.size,
@@ -84,6 +94,17 @@ export function rowText(row) {
   ]
     .filter((part) => part !== "")
     .join(" | ");
+}
+
+/** Every regional price on a row, as the UI's `Record<place, priceString>` shape. Rows with no
+ *  price for a region are left out rather than shown as "unpriced". */
+function regionalPrices(row) {
+  const prices = {};
+  for (const [region, value] of Object.entries(row.regional_values ?? {})) {
+    const price = priceOf(value);
+    if (price != null) prices[region] = price;
+  }
+  return prices;
 }
 
 function priceOf(value) {

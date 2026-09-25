@@ -853,7 +853,7 @@ export interface RuntimeProject {
   repositoryPath: string;
   createdAt: string | null;
   archivedAt?: string | null;
-  /** Absent means delivery. Research projects are a sample-world prototype until the backend exists. */
+  /** Absent means delivery for projects saved before project types were introduced. */
   kind?: "delivery" | "research";
 }
 

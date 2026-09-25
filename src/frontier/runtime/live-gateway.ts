@@ -10,6 +10,7 @@ const liveResearch: ResearchGateway = {
   questions: (projectId) => api.listResearchQuestions(projectId, readOptions()),
   question: (id) => api.getResearchQuestion(id, readOptions()),
   review: api.reviewResearchQuestion,
+  retry: api.retryResearchQuestion,
   scope: (projectId, objective) => api.scopeResearchQuestion({ projectId, objective }),
   // The engine is not sent: the backend snapshots the Settings choice onto each run itself.
   ask: (projectId, input) =>

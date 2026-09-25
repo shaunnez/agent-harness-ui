@@ -19,6 +19,7 @@ const filters = [
   "All",
   "Awaiting review",
   "Disputed",
+  "One run",
   "Not established",
   "Did not finish",
   "Reviewed",
@@ -40,6 +41,7 @@ function matches(question: ResearchQuestion, filter: Filter) {
   if (filter === "All") return true;
   if (filter === "Awaiting review") return review === "awaiting" || review === "out-of-date";
   if (filter === "Disputed") return question.status === "disputed";
+  if (filter === "One run") return question.status === "single_run";
   if (filter === "Not established") return question.status === "not_established";
   if (filter === "Did not finish") return question.status === "incomplete";
   return review === "approved" || review === "rejected";
@@ -122,12 +124,14 @@ export function ResearchQuestions({
             <dt>Awaiting review</dt>
             <dd>{awaiting}</dd>
           </div>
-          {(["agreed", "disputed", "not_established", "incomplete", "running"] as const).map((status) => (
-            <div key={status} className={`tone-${researchStatusCopy[status].tone}`}>
-              <dt>{researchStatusCopy[status].label}</dt>
-              <dd>{count(status)}</dd>
-            </div>
-          ))}
+          {(["agreed", "disputed", "single_run", "not_established", "incomplete", "running"] as const).map(
+            (status) => (
+              <div key={status} className={`tone-${researchStatusCopy[status].tone}`}>
+                <dt>{researchStatusCopy[status].label}</dt>
+                <dd>{count(status)}</dd>
+              </div>
+            ),
+          )}
         </dl>
         <div className="research-summary-action">
           <small>New questions run on {engineLabel}</small>

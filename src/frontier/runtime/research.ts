@@ -150,6 +150,16 @@ export interface ResearchQuestion {
   asOf: string | null;
   basis: string | null;
   runs: ResearchRunRecord[];
+  /** A retry keeps the earlier failed starts inspectable. */
+  priorAttempts?: Array<{
+    id: string;
+    attempt: number;
+    run: string;
+    status: ResearchRunRecord["status"];
+    errorCode: string | null;
+    errorMessage: string | null;
+  }>;
+  retryable?: boolean;
   qvSources: ResearchQvSource[];
   webSources: string[];
   openQuestions: string[];
@@ -253,6 +263,7 @@ export interface ResearchGateway {
       scopedBy?: ResearchScopedBy | null;
     },
   ): Promise<ResearchQuestion>;
+  retry?(id: string): Promise<ResearchQuestion>;
 }
 
 export const researchStatusCopy: Record<ResearchQuestionStatus, { label: string; tone: string }> = {
@@ -368,7 +379,7 @@ export function headlineBand(question: ResearchQuestion) {
 
 export type ResearchReviewState = "awaiting" | "approved" | "rejected" | "out-of-date" | "not-ready";
 export function reviewState(question: ResearchQuestion): ResearchReviewState {
-  if (question.status === "running" || question.status === "queued") return "not-ready";
+  if (question.status === "running" || question.status === "queued" || question.retryable) return "not-ready";
   if (!question.review) return "awaiting";
   if (question.review.evidenceSha !== question.evidenceSha) return "out-of-date";
   return question.review.decision;

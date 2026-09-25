@@ -99,6 +99,17 @@ export class ResearchService {
     return this.#store.listRuns(options);
   }
 
+  /** CLI processes are not resumable after this companion exits. Make interrupted work
+   *  inspectable as a failure instead of leaving the UI showing a worker forever. */
+  async recoverInterrupted() {
+    const interrupted = await this.#store.listInterruptedRuns();
+    for (const run of interrupted)
+      await this.#fail(run.id, {
+        code: "companion_interrupted",
+        message: "The companion stopped before this research run finished.",
+      });
+  }
+
   async listEvents(runId, options) {
     if (!(await this.#store.getRun(runId))) return null;
     return this.#store.listEvents(runId, options);

@@ -29,6 +29,7 @@ export class ResearchQuestionService {
   #projects;
   #scoper;
   #now;
+  #retrying = new Map();
 
   /** `research` starts runs; `runs` is the `ResearchStore` they are read back from; `projects`
    *  lists registered projects, so a question can only be asked of a live research project.
@@ -92,9 +93,44 @@ export class ResearchQuestionService {
         profile,
         metadata: { questionId: question.id, run: label },
       });
-      this.#questions.attachRun(question.id, run.id, label);
+      this.#questions.attachRun(question.id, run.id, label, index + 1);
     }
     return { question: await this.#record(question), reused: false };
+  }
+
+  /**
+   * Starts a question's runs again when every run of its latest attempt failed before it started
+   * (a CLI not installed, a login missing, a key not set). The failed attempt stays on the record
+   * as prior attempts. Anything else is not retried here: a run that started and failed spent
+   * money and produced evidence, and asking again is a new question.
+   */
+  async retry(id) {
+    if (this.#retrying.has(id)) return this.#retrying.get(id);
+    const work = this.#retryFailedStart(id).finally(() => this.#retrying.delete(id));
+    this.#retrying.set(id, work);
+    return work;
+  }
+
+  async #retryFailedStart(id) {
+    const question = this.#questions.getQuestion(id);
+    if (!question) return null;
+    await this.#researchProject(question.projectId);
+    const { latest } = await this.#attempts(question);
+    if (!failedToStart(latest, question.runsPlanned))
+      throw conflict("Only runs that failed before starting can be retried.");
+    const next = Math.max(...this.#questions.runOrder(id).map((entry) => entry.ordinal)) + 1;
+    for (const [index, failed] of latest.entries()) {
+      const label = `r${index + 1}`;
+      // The same request the failed run was given, on the same engine.
+      const run = await this.#research.createRun({
+        objective: failed.request.objective,
+        profile: failed.request.profile ?? question.profile,
+        runtimeId: failed.runtimeId,
+        metadata: { questionId: question.id, run: label },
+      });
+      this.#questions.attachRun(question.id, run.id, label, next + index);
+    }
+    return this.#record(question, { activity: true });
   }
 
   async list(projectId) {
@@ -119,6 +155,7 @@ export class ResearchQuestionService {
     const current = await this.#record(question);
     if (current.status === "running" || current.status === "queued")
       throw conflict("A question can be reviewed once its runs have finished.");
+    if (current.retryable) throw conflict("Retry the runs that failed to start before reviewing this question.");
     if (String(input?.evidenceSha ?? "") !== current.evidenceSha)
       throw conflict("The evidence changed while you were reviewing. Reload it and review again.");
     this.#questions.addReview(question.id, {
@@ -160,15 +197,40 @@ export class ResearchQuestionService {
   }
 
   async #record(question, { activity = false } = {}) {
-    const runs = [];
+    const { latest: runs, prior } = await this.#attempts(question);
     const events = new Map();
-    for (const runId of this.#questions.runIds(question.id)) {
-      const run = await this.#runs.getRun(runId);
-      if (!run) continue;
-      runs.push(run);
-      if (activity) events.set(runId, (await this.#runs.listEvents(runId, { limit: EVENTS_PER_RUN })).events);
+    const sources = new Map();
+    for (const run of runs) {
+      if (activity)
+        events.set(run.id, (await this.#runs.listEvents(run.id, { limit: EVENTS_PER_RUN })).events);
+      sources.set(run.id, await this.#runs.listSources(run.id));
     }
-    return questionRecord({ question, runs, events, review: this.#questions.latestReview(question.id) });
+    return questionRecord({
+      question,
+      runs,
+      events,
+      sources,
+      prior,
+      retryable: failedToStart(runs, question.runsPlanned),
+      review: this.#questions.latestReview(question.id),
+    });
+  }
+
+  /** The runs of the question's latest attempt, in label order, and every earlier run. */
+  async #attempts(question) {
+    const order = this.#questions.runOrder(question.id);
+    const size = question.runsPlanned;
+    const last = order.at(-1)?.ordinal ?? 0;
+    const first = last ? Math.floor((last - 1) / size) * size + 1 : 1;
+    const latest = [];
+    const prior = [];
+    for (const entry of order) {
+      const run = await this.#runs.getRun(entry.id);
+      if (!run) continue;
+      if (entry.ordinal >= first) latest.push(run);
+      else prior.push({ ...run, attempt: Math.floor((entry.ordinal - 1) / size) + 1 });
+    }
+    return { latest, prior };
   }
 
   async #researchProject(projectId, { allowArchived = false } = {}) {
@@ -184,6 +246,14 @@ export class ResearchQuestionService {
       throw conflict(`Restore ${project.name} before asking it another question.`);
     return project;
   }
+}
+
+/** True when every run of an attempt failed before its runtime started. */
+function failedToStart(runs, runsPlanned) {
+  return (
+    runs.length === runsPlanned &&
+    runs.every((run) => run.status === "failed" && run.error?.code === "runtime_start_failed")
+  );
 }
 
 /** Manual by default. An external request names its provider and its own id, which is what makes

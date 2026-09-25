@@ -59,6 +59,14 @@ export class ResearchStore {
     return rows.map(runRecord);
   }
 
+  /** Runs that had not finished when the companion last stopped. */
+  async listInterruptedRuns() {
+    return this.#db
+      .prepare("SELECT * FROM research_runs WHERE status NOT IN ('completed', 'failed', 'cancelled')")
+      .all()
+      .map(runRecord);
+  }
+
   /** Apply `mutate` to a mutable draft of the run's writable fields under the recorded
    *  revision, the same optimistic-concurrency shape `tasks` uses. A competing write bumps the
    *  revision and this throws rather than silently overwriting it. */
@@ -453,7 +461,13 @@ function runRecord(row) {
     cancellationRequestedAt: row.cancellation_requested_at ?? null,
     // Present only on a run that belongs to a question or reported a cost band, so a run
     // submitted on its own reads exactly as it did before questions existed.
-    ...(row.question_id ? { questionId: row.question_id, runLabel: row.run_label ?? null } : {}),
+    ...(row.question_id
+      ? {
+          questionId: row.question_id,
+          runLabel: row.run_label ?? null,
+          questionOrdinal: row.question_ordinal ?? null,
+        }
+      : {}),
     ...(row.outcome_json ? { outcome: JSON.parse(row.outcome_json) } : {}),
   };
 }
