@@ -4,6 +4,7 @@ import {
   baselineBlocker,
   classifyAgainstBaseline,
   failedCommandIds,
+  recheckRepositoryBaseline,
 } from "../server/baseline-verification.mjs";
 
 function harness({ baselineRows, prepareFails = false, verifyThrows = false } = {}) {
@@ -57,6 +58,21 @@ test("failedCommandIds names only the commands that did not pass", () => {
   assert.deepEqual(failedCommandIds(CANDIDATE_FAILURE), ["playwright-e2e"]);
   assert.deepEqual(failedCommandIds({ rows: [] }), []);
   assert.deepEqual(failedCommandIds(null), []);
+});
+
+test("a baseline recheck runs the recorded commands at the pinned revision and cleans up", async () => {
+  const context = harness({ baselineRows: [{ id: "playwright-e2e", status: "passed" }] });
+  await recheckRepositoryBaseline({
+    task: TASK,
+    baselineVerification: { revision: CANDIDATE.baseRevision, commandIds: ["playwright-e2e"] },
+    worktrees: context.worktrees,
+    runVerification: context.runVerification,
+  });
+  assert.equal(context.prepared[0].revision, CANDIDATE.baseRevision);
+  assert.deepEqual(context.verified[0].commandIds, ["playwright-e2e"]);
+  assert.equal(context.verified[0].candidate.headRevision, CANDIDATE.baseRevision);
+  assert.equal(context.verified[0].executionKind, "baseline-recheck");
+  assert.equal(context.removed.length, 1);
 });
 
 test("a command that also fails at the base revision is not the candidate's fault", async () => {

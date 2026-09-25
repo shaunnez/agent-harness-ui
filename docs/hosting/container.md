@@ -1,6 +1,6 @@
 # Running the Harness in a container
 
-One Linux image carries the companion, the built Frontier UI and the tools the harness launches (`claude`, `codex`, `gh`, `git`, Python, Chromium). The same image runs on a Mac under Docker Desktop or OrbStack and on the planned Azure VM, so what works locally is what gets deployed.
+One Linux image carries the companion, the built Frontier UI and the tools the harness launches (`claude`, `codex`, `gh`, `git`, Python, Chromium, and the Docker CLI with Compose). The same image runs on a Mac under Docker Desktop or OrbStack and on the planned Azure VM, so what works locally is what gets deployed.
 
 The UI and the API share one port. Open `http://localhost:4321/`; there is no Vite dev server in this path.
 
@@ -39,6 +39,10 @@ The subscription-only rule is unchanged: both runtimes still refuse an API-key l
 ### Repositories
 
 The container doesn't use your Mac's checkouts. It needs its own clones in the `harness-repos` volume, with dependencies installed *inside* the container. New worktrees copy `node_modules` and `.venv` from the source checkout, and macOS builds of native modules don't run on Linux.
+
+The Docker CLI and Compose plugin let repository verification run commands such as `docker compose config` inside the container. The host Docker socket is not mounted, so those commands can inspect configuration but cannot start host containers.
+
+After rebuilding the image for a previously blocked repository baseline, check the CLI with `docker compose exec harness docker compose version`, then use the task's **Recheck repository baseline** action. The Harness reruns the recorded failed command at the pinned base revision. If it passes, a task blocked in Test retries the retained candidate; the old failed evidence remains in its history.
 
 ```sh
 docker compose exec harness git clone https://github.com/<org>/<repo>.git /repos/<repo>

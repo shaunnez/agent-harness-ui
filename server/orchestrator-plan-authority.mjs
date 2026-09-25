@@ -1,17 +1,23 @@
 import { sameAuthorityTarget } from "./repository-authority.mjs";
 import { activity, now } from "./orchestrator-stage-support.mjs";
+import { stageRunLimitFor } from "./run-activity.mjs";
 
 export class PlanAuthorityOrchestrator {
-  constructor({ store, repositoryAuthority, start }) {
+  constructor({ store, repositoryAuthority, start, recheckBaseline }) {
     this._store = store;
     this._repositoryAuthority = repositoryAuthority;
     this._start = start;
+    this._recheckBaseline = recheckBaseline;
   }
 
   async revalidatePlan(id) {
     const task = await this._store.get(id);
     if (!task) throw new Error("Task not found.");
+    if (task.status === "archived") throw new Error("An archived task cannot be revalidated.");
     const recoveringBaselineFailure = task.blocker?.code === "repository-baseline-verification";
+    if (recoveringBaselineFailure && task.status !== "blocked") {
+      throw new Error("Repository baseline recheck requires a blocked task.");
+    }
     if (
       !(
         task.blocker?.code === "stale-plan" ||
@@ -29,12 +35,70 @@ export class PlanAuthorityOrchestrator {
       recoveringBaselineFailure &&
       authority.selectedRevision === task.blocker?.baselineVerification?.revision
     ) {
-      // The repository is the *reason* this blocked, so re-planning against the same
-      // broken revision would just reproduce the identical baseline failure once
-      // implementation resumes, after spending a real planning-agent run for nothing.
-      throw new Error(
-        `The repository baseline has not advanced past ${authority.selectedRevision.slice(0, 8)}; revalidate again once the baseline command is fixed there.`,
-      );
+      if (
+        !sameAuthorityTarget(task.planResult, authority) ||
+        (authority.upstreamRef && authority.remoteVerification?.status !== "verified")
+      ) {
+        throw new Error("The repository target could not be verified against the retained plan.");
+      }
+      if (typeof this._recheckBaseline !== "function") {
+        throw new Error("Repository baseline recheck is unavailable.");
+      }
+      const verification = await this._recheckBaseline(task);
+      const expectedIds = task.blocker.baselineVerification.commandIds;
+      const passed =
+        verification?.status === "passed" &&
+        verification.headRevision === authority.selectedRevision &&
+        verification.rows?.length === expectedIds.length &&
+        verification.rows.every((row, index) => row.id === expectedIds[index] && row.status === "passed");
+      if (!passed) {
+        throw new Error(
+          `The repository baseline still fails ${expectedIds.join(", ")} at ${authority.selectedRevision.slice(0, 8)}. The task remains blocked and no stage attempt was spent.`,
+        );
+      }
+      if (task.currentStage === "test") {
+        const candidate = task.candidates?.at(-1);
+        if (
+          !candidate ||
+          candidate.id !== task.blocker.candidateId ||
+          candidate.baseRevision !== authority.selectedRevision ||
+          !candidate.headRevision ||
+          (task.attemptsByStage?.test ?? 0) >= stageRunLimitFor(task, "test")
+        ) {
+          throw new Error("The retained candidate cannot start another exact-revision Test attempt.");
+        }
+        const resumed = await this._store.transition(
+          id,
+          (draft) =>
+            draft.status === "blocked" &&
+            draft.currentStage === "test" &&
+            !draft.activeRunKind &&
+            !draft.activeRunReservationId &&
+            draft.blocker?.code === "repository-baseline-verification" &&
+            draft.blocker.baselineVerification?.revision === authority.selectedRevision &&
+            draft.candidates?.at(-1)?.id === candidate.id &&
+            draft.candidates.at(-1).headRevision === candidate.headRevision,
+          (draft) => {
+            draft.status = "ready-for-test";
+            draft.error = null;
+            draft.blocker = null;
+            draft.events.push(
+              activity(
+                "test",
+                "Repository baseline recheck passed",
+                `${expectedIds.join(", ")} passed at ${authority.selectedRevision.slice(0, 8)}. Retrying Test against ${candidate.id} revision ${candidate.revisionNumber}.`,
+                "success",
+                "decision",
+              ),
+            );
+          },
+        );
+        if (!resumed) throw new Error("The task or candidate changed during repository baseline recheck.");
+        if (!(await this._start(id, "test"))) {
+          throw new Error("The retained candidate could not reserve a fresh Test attempt.");
+        }
+        return { started: true };
+      }
     }
     const priorArtifactId = task.planResult?.artifactId ?? null;
     await this._store.transition(

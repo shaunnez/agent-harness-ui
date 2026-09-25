@@ -74,6 +74,7 @@ function actionEligibilityFor(task, action) {
     Boolean(task.activeRunKind || task.activeRunReservationId || (task.activeRunIds?.length ?? 0) > 0);
   if (running) return deny("Wait for the active run to finish before starting another workflow action.");
   if (action === "revalidate-plan") {
+    if (task.status === "archived") return deny("An archived task cannot be revalidated.");
     const legacyPlan =
       task.repositoryAuthorityStatus === "legacy-unbound" &&
       (task.currentStage === "plan" ||
@@ -170,7 +171,7 @@ function actionEligibilityFor(task, action) {
     return deny("Revalidate the retained plan against the current target revision.");
   }
   if (task.status === "blocked" && task.blocker?.code === "repository-baseline-verification") {
-    return deny("Revalidate the plan once the repository baseline command is fixed there.");
+    return deny("Recheck the repository baseline after its recorded command can pass.");
   }
   if (action === "grant-retry") {
     if (task.currentStage === "approval") return deny("Human Approval never accepts a stage retry grant.");

@@ -4,8 +4,8 @@
 # locally is what gets deployed. See docs/hosting/container.md for the login steps, volumes and
 # the Azure mapping.
 #
-# The CLIs are pinned: the harness parses their stream output, so an unplanned upgrade can
-# break runs. Bump these deliberately and rerun a canary task.
+# The Claude and Codex CLIs are pinned: the harness parses their stream output, so an
+# unplanned upgrade can break runs. Bump these deliberately and rerun a canary task.
 ARG NODE_IMAGE=node:22-bookworm-slim
 
 FROM ${NODE_IMAGE} AS build
@@ -20,10 +20,10 @@ ARG CLAUDE_CODE_VERSION=2.1.281
 ARG CODEX_VERSION=0.156.1
 ARG UV_VERSION=0.8.22
 
-# git/gh/ssh: worktrees, pushes and PRs. python3: stdlib-only research helpers and target repos
-# that need Python. chromium: prototype previews. bubblewrap/socat: the Claude CLI's Linux
-# sandbox (Claude stages refuse to run without it). build-essential: native modules in the
-# repositories the harness works on.
+# git/gh/ssh: worktrees, pushes and PRs. Docker CLI/Compose: repository-owned config
+# checks, without a daemon or socket. python3: research helpers and target repos.
+# chromium: prototype previews. bubblewrap/socat: the Claude CLI's Linux sandbox.
+# build-essential: native modules in target repositories.
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
@@ -34,8 +34,12 @@ RUN set -eux; \
     curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg -o /etc/apt/keyrings/githubcli-archive-keyring.gpg; \
     chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg; \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list; \
+    curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc; \
+    chmod go+r /etc/apt/keyrings/docker.asc; \
+    . /etc/os-release; \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian ${VERSION_CODENAME} stable" > /etc/apt/sources.list.d/docker.list; \
     apt-get update; \
-    apt-get install -y --no-install-recommends gh; \
+    apt-get install -y --no-install-recommends gh docker-ce-cli docker-compose-plugin; \
     rm -rf /var/lib/apt/lists/*; \
     pip3 install --no-cache-dir --break-system-packages "uv==${UV_VERSION}"; \
     npm install -g --no-audit --no-fund "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" "@openai/codex@${CODEX_VERSION}"; \

@@ -14,6 +14,7 @@ import { RetentionOrchestrator } from "./orchestrator-retention.mjs";
 import { OrchestratorRunCoordinator } from "./orchestrator-run-coordinator.mjs";
 import { RetainedPackageOrchestrator } from "./orchestrator-retained-package.mjs";
 import { PlanAuthorityOrchestrator } from "./orchestrator-plan-authority.mjs";
+import { recheckRepositoryBaseline } from "./baseline-verification.mjs";
 import { PrototypeDesignOrchestrator } from "./orchestrator-prototype-design.mjs";
 
 export class TaskOrchestratorCore {
@@ -109,6 +110,13 @@ export class TaskOrchestratorCore {
       store: runtime._store,
       repositoryAuthority: runtime._repositoryAuthority,
       start: (...args) => taskControl.start(...args),
+      recheckBaseline: (task) =>
+        recheckRepositoryBaseline({
+          task,
+          baselineVerification: task.blocker?.baselineVerification,
+          worktrees: runtime._worktrees,
+          runVerification: runtime._runVerification,
+        }),
     });
     taskControl = new TaskControlOrchestrator({
       store: runtime._store,
