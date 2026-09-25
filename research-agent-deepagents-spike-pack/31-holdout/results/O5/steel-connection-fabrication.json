@@ -1,0 +1,343 @@
+{
+  "question": "steel-connection-fabrication",
+  "kind": "pinned",
+  "arm": "O5",
+  "status": "agreed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 239,
+    "high": 469
+  },
+  "range": {
+    "min": 234.51,
+    "max": 478.1
+  },
+  "unit": "$/ea",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.087,
+    "highRatio": 1.099,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 4.4085,
+  "elapsedMs": 280564,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 280562,
+      "band": {
+        "unit": "$/ea",
+        "low": 239,
+        "high": 469,
+        "centre": "Auckland",
+        "basis": "Sum of QV-derived components 1-9 (unreviewed rows, with stated productivity assumptions); 40-connection total $9,544-$18,768. EXCLUDES CC2 visual inspection and 10% MPI, which are not established."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "unsourced"
+      ],
+      "citations": {
+        "rowsCited": 9,
+        "rowsFound": 9,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 16,
+        "outputTokens": 11462,
+        "cachedTokens": 394921,
+        "modelCalls": 21,
+        "toolCalls": 20,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.9066021999999999,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 16,
+            "outputTokens": 11462,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.8413042,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 31208,
+            "outputTokens": 818,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.065298,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 135896,
+      "band": {
+        "unit": "ea",
+        "low": 234.51,
+        "high": 478.1,
+        "centre": "Auckland",
+        "basis": "Sum of QV components per connection, GST exclusive. 40 connections = $9,380-$19,124. EXCLUDES CC2 visual inspection and 10% MPI (not established). Detailing/CNC setup carried within plate rate build-up. QV rates embed margin, which cannot be removed."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 16,
+        "outputTokens": 9658,
+        "cachedTokens": 407142,
+        "modelCalls": 23,
+        "toolCalls": 22,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.9059414000000002,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 16,
+            "outputTokens": 9658,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.8600204000000001,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 21806,
+            "outputTokens": 823,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.045921000000000003,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 149075,
+      "band": {
+        "unit": "ea",
+        "low": 183,
+        "high": 310,
+        "centre": "Auckland",
+        "basis": "Sum of QV rows per connection excluding inspection; low = r43 plate + r9 weld path, high = r44 plate path (weld included). Total for 40: $7,304-$12,392. Excludes CC2 visual and 10% MPI (not established). Plate rates embed 15% margin."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 9,
+        "rowsFound": 9,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 16,
+        "outputTokens": 11891,
+        "cachedTokens": 372494,
+        "modelCalls": 22,
+        "toolCalls": 21,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.8987827999999999,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 16,
+            "outputTokens": 11891,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.8536388,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 21904,
+            "outputTokens": 648,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.045144000000000004,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 247920,
+      "band": {
+        "unit": "$/ea",
+        "low": 255,
+        "high": 435,
+        "centre": "Auckland",
+        "basis": "Sum of QV components, GST exclusive, excluding CC2 visual and 10% MPI (not established). Total for 40 connections: $10,187-17,378."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 9,
+        "rowsFound": 9,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 14,
+        "outputTokens": 7974,
+        "cachedTokens": 311538,
+        "modelCalls": 17,
+        "toolCalls": 16,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.7531486000000001,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 14,
+            "outputTokens": 7974,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.6873396,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 30839,
+            "outputTokens": 994,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.065809,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 171629,
+      "band": {
+        "unit": "ea",
+        "low": 215,
+        "high": 360,
+        "centre": "Auckland",
+        "basis": "Sum of QV components (unreviewed) with assumed labour productivities; 40 no. total $8,600-$14,400; EXCLUDES CC2 visual and 10% MPI (not established); QV rates embed subcontractor margin; cross-check QV t2:r44 connection plate 200hrs/t = $150/plate vs items 1-6 $114-186"
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 11,
+        "rowsFound": 11,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 18,
+        "outputTokens": 12147,
+        "cachedTokens": 481992,
+        "modelCalls": 23,
+        "toolCalls": 22,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.9439894000000001,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 18,
+            "outputTokens": 12147,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.8997704000000001,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 21594,
+            "outputTokens": 525,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.044219,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

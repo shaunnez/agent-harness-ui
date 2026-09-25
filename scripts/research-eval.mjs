@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // The scope → pack eval (`research-agent-deepagents-spike-pack/29-EVAL-PREREGISTRATION.md`).
 //
-//   node scripts/research-eval.mjs --arm A0|A2|A3|A4|A5|A6|A7|A8|A9|A10 [--only id,id] [--out <dir>]
+//   node scripts/research-eval.mjs --arm A0|A2|A3|A4|A5|A6|A7|A8|A9|A10|O5 [--only id,id] [--out <dir>]
 //   node scripts/research-eval.mjs --rescore [--out <dir>]
 //   node scripts/research-eval.mjs --arm A4 --set <questions.json> --model <model> --out <dir>   (tuning)
 //
@@ -102,6 +102,16 @@ export const ARMS = {
     reasoning: null,
     runs: 5,
     make: (env) => new ApiLoopResearchRuntime({ env }),
+  },
+  // Doc 31 (held-out suite): Opus on the Claude subscription, five runs, on its own prompt. It gets
+  // every check (figures, working, not-a-price, units) but not the API loop's prompt rules or host
+  // answer review, which exist only on that runtime.
+  O5: {
+    runtime: "claude-cli",
+    model: "claude-opus-5-5",
+    reasoning: "high",
+    runs: 5,
+    make: (env) => new ClaudeCliResearchRuntime({ env }),
   },
   // Doc 29 addendum A10: A9 with the not-a-price rule (check and prompt) and open-a3 pinned to the
   // net change.

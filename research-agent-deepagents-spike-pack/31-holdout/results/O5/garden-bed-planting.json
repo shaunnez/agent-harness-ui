@@ -1,0 +1,331 @@
+{
+  "question": "garden-bed-planting",
+  "kind": "pinned",
+  "arm": "O5",
+  "status": "agreed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 110,
+    "high": 187
+  },
+  "range": {
+    "min": 110,
+    "max": 190
+  },
+  "unit": "m2",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1,
+    "highRatio": 1.056,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 3.4292,
+  "elapsedMs": 185495,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 183887,
+      "band": {
+        "unit": "m2",
+        "low": 110,
+        "high": 187,
+        "centre": "Auckland",
+        "basis": "QV install rows (topsoil t10:r8, rotary hoe t10:r1, groundcover/shrub/tree t12:r1/r3/r5) at the stated quantities = $92-140/m2; plus 5% replacement plants on the planting lines = $2.2-4.2/m2; plus 12 visits x 4-8 assumed labour-hours x $69.90-90/hr = $16.8-43.2/m2; divided by 200 m2"
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-derived"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 16,
+        "outputTokens": 7341,
+        "cachedTokens": 326767,
+        "modelCalls": 20,
+        "toolCalls": 19,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.7648254,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 16,
+            "outputTokens": 7341,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.7009974000000001,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 28403,
+            "outputTokens": 1085,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.063828,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 99435,
+      "band": {
+        "unit": "m2",
+        "low": 105,
+        "high": 190,
+        "centre": "Auckland",
+        "basis": "Sum of QV rows t10:r8 + t10:r1 + t12:r1 x4 + t12:r3 x0.25 + t12:r5 x0.01 per m2, plus 5% replacements, plus 12 visits x 4-8 hrs x $50-90/hr over 200 m2 (≈$106-187/m2, rounded). Installed-only excluding maintenance ≈$94-144/m2. GST exclusive, NZD. Your draft of $145-215/m2 overlaps only the upper half; its replacement allowance ($8/m2) is overstated against a 5% basis (~$3-4/m2)."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "unsourced"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 14,
+        "outputTokens": 6950,
+        "cachedTokens": 274993,
+        "modelCalls": 18,
+        "toolCalls": 17,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.6936106,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 14,
+            "outputTokens": 6950,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.6470465999999999,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 22104,
+            "outputTokens": 892,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.046564,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 71372,
+      "band": {
+        "unit": "m2",
+        "low": 110,
+        "high": 180,
+        "centre": "Auckland",
+        "basis": "Sum of QV rows over 200 m2: topsoil t10:r8 + rotary hoe t10:r1 + groundcover/shrub/tree planting t12:r1/r3/r5 at the scenario quantities + maintenance at the QV landscaper rate (assumed 48-96 hrs) + 5% replacement. Gives $111-177/m2, about $94-144/m2 without maintenance. Your $145-215/m2 is above this, mainly on maintenance ($8,400 vs $3.4-6.7k), subgrade preparation ($9 vs $3.10/m2) and a separate $6/m2 for set-out and clean-up."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "unsourced"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 12,
+        "outputTokens": 5885,
+        "cachedTokens": 225769,
+        "modelCalls": 17,
+        "toolCalls": 16,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.5384298,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 12,
+            "outputTokens": 5885,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.5384298,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 185490,
+      "band": {
+        "unit": "m2",
+        "low": 110,
+        "high": 190,
+        "centre": "Auckland",
+        "basis": "Sum of QV topsoil t10:r8, rotary hoe t10:r1, planting t12:r1/r3/r5 at scope densities, 5% replacements, fertiliser tablets (Caranz), and maintenance at 4-8 hrs/visit x QV $69.90/hr (low) to web $90/hr (high); computed 111-187, rounded. Set-out, water-in and clean-up assumed within QV planting rates."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-derived",
+        "qv-found",
+        "web-derived",
+        "unsourced"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 2,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 18,
+        "outputTokens": 8026,
+        "cachedTokens": 408513,
+        "modelCalls": 23,
+        "toolCalls": 22,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.8088996000000002,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 18,
+            "outputTokens": 8026,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.7638946,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 21855,
+            "outputTokens": 630,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.045005,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 89156,
+      "band": {
+        "unit": "m2",
+        "low": 107,
+        "high": 170,
+        "centre": "Auckland",
+        "basis": "Sum of QV topsoil (t10:r8), rotary hoe (t10:r1), plant rows (t12:r1/r3/r5) at scenario quantities, Caranz fertiliser tablets, QV landscaper labour x assumed 36-72 hrs maintenance, 5% replacements; divided by 200 m2. Installed-only excluding maintenance $95-145/m2."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-derived",
+        "qv-found",
+        "unsourced"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 14,
+        "outputTokens": 7123,
+        "cachedTokens": 277816,
+        "modelCalls": 17,
+        "toolCalls": 16,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.6234381999999999,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 14,
+            "outputTokens": 7123,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.5786072,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 21131,
+            "outputTokens": 740,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.044830999999999996,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

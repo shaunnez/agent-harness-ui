@@ -60,3 +60,41 @@ agreed, DeepSeek's band is well below the recorded one on three questions: data 
 against $28k–42k, glazed vision panel $697–1,094 against $1,100–1,900, and joinery painting $52–71 per m²
 against $92.5–167.5. Agreement is not accuracy: on those three, one of the two is wrong, and only an
 Opus run on the same harness, or a priced tender, would say which.
+
+## Opus arm (registered 25 September, before its run)
+
+Shaun: "ok do run opus". Arm `O5`: the claude-cli runtime, Opus 5.5 High, on the claude.ai
+subscription (the runtime refuses any other login and strips API keys from the CLI's environment).
+Five runs per question on the same 15 questions and the same checks, scored the same three ways. It
+runs on its own recorded prompt. The API loop's prompt rules (QV first, not-a-price, stated working)
+and its host answer review are not available on this runtime, so this is Opus as built against
+DeepSeek as tuned. It runs two processes at once, each with the runtime's cap of three concurrent
+CLIs (eight at once produced empty outputs before).
+
+## Opus result (25 September)
+
+O5: 15 questions × 5 runs, two processes of three CLIs, 35 minutes, $75.27 API-rate estimate on the
+claude.ai subscription (a plan charge, not a bill), no errors. **11 agreed and 5 passed, 4 with every
+figure traced.** Its first three runs alone also pass 5. It declined to price the glazed vision panel
+and the Chorus connection (no price in all five runs), and joinery painting and solar were disputed.
+
+| | DeepSeek loop (A10) | Opus (O5) |
+|---|---|---|
+| Agreed | 14 | 11 |
+| Passed | 10 | 5 |
+| Fully traced passes | 9 | 4 |
+| Cost for the suite | $2.27 | $75.27 (API-rate estimate) |
+| Time for the suite | 9.5 min | 35 min |
+
+Why Opus fails: it agreed on price in six questions and failed the check. Every failure was a component
+with no QV row, fetched page or allowance (6), a web page it cited but never fetched (3), or a QV row
+that does not exist (1). These are gaps in how the citations are recorded. The API loop's prompt rules,
+which close them, are not on the claude-cli runtime.
+
+On price, where both agreed, the bands mostly overlap: data rack $15.1k–24.3k against $18k–22.7k,
+sprinklers $44–81 against $44–57, steel connections $219–434 against $239–469, and subgrade $219–336
+against $259–365. So of the three questions where DeepSeek was well below the 22 September runs, data
+rack and joinery painting now sit with DeepSeek. Opus prices joinery at $46–57 (disputed) against the
+22 September runs' $92.5–167.5, and it did not price the glazed vision panel. The clearest remaining
+difference is site establishment: DeepSeek $5.7k–9.4k, Opus $2.4k–3.9k, and the 22 September runs
+$3.3k–7k. Which is right is not measured here.

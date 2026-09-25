@@ -1,0 +1,326 @@
+{
+  "question": "glass-kitchen-splashback",
+  "kind": "pinned",
+  "arm": "O5",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": false,
+  "consensus": {
+    "low": 600,
+    "high": 700
+  },
+  "range": {
+    "min": 600,
+    "max": 700
+  },
+  "unit": "m2",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.1,
+    "highRatio": 1.014,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 4.3361,
+  "elapsedMs": 189774,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 189773,
+      "band": {
+        "unit": "m2",
+        "low": 600,
+        "high": 690,
+        "centre": "Auckland",
+        "basis": "Low = QV t24:r32 unadjusted; high = QV t24:r32 + QV-derived 5-to-6mm uplift ($64) + web cutout allowance ($28). Corroborated by web supply ($400+) plus install ($150-250) giving about $550-650. Total for 4.32 m2 = $2,590-$2,980. GST, margin and P&G excluded."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-derived",
+        "web-verified",
+        "web-verified",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 20,
+        "outputTokens": 7489,
+        "cachedTokens": 525531,
+        "modelCalls": 21,
+        "toolCalls": 20,
+        "searchCalls": 1,
+        "estimatedCostUsd": 1.0931802,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 20,
+            "outputTokens": 7489,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.0693582000000001,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 11777,
+            "outputTokens": 409,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.023822,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 178157,
+      "band": {
+        "unit": "m2",
+        "low": 600,
+        "high": 700,
+        "centre": "Auckland",
+        "basis": "Low = QV t24:r32 as published ($600/m2, 5mm). Mid ~ $648 = QV row + inferred 5->6mm step from t2:r3/r4. High ~ $700 = Superior Renovations low-iron supply $400/m2 x 4.32 m2 + top of $300-$1,300 install, /4.32. Total 4.32 m2 = ~$2,590-$3,020. Cutouts, template and minimum charge not separately established; supplied $460-$620 band sits largely below this."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 18,
+        "outputTokens": 7528,
+        "cachedTokens": 413443,
+        "modelCalls": 20,
+        "toolCalls": 19,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.8673216,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 18,
+            "outputTokens": 7528,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.8435046,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 11667,
+            "outputTokens": 430,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.023816999999999998,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 89896,
+      "band": {
+        "unit": "m2",
+        "low": 470,
+        "high": 650,
+        "centre": "Auckland",
+        "basis": "High: QV t24:r32 $600/m2 (5mm low-iron colourback) plus $48 6mm uplift from QV t2:r4 minus t2:r3. Low: Superior Renovations low-iron from $400/m2 supplied plus $300 minimum install spread over 4.32 m2. Excludes the 3 cutouts and any glazier minimum-job-charge effect, neither of which could be established. GST exclusive, NZD, no margin."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 18,
+        "outputTokens": 6626,
+        "cachedTokens": 439218,
+        "modelCalls": 22,
+        "toolCalls": 21,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.9051276,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 18,
+            "outputTokens": 6626,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.8812356,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 11807,
+            "outputTokens": 417,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.023892,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 88325,
+      "band": {
+        "unit": "m2",
+        "low": 600,
+        "high": 870,
+        "centre": "Auckland",
+        "basis": "Low = QV splashback row t24:r32 used as an all-in rate. High = t4:r24 637 + edges 34 + 6 glazier hr 134 + cutouts about 62 = about 867/m2. Excludes delivery, templating visit and low-iron premium, which are not established. Total for 4.32 m2 about $2,590-$3,760. The scenario's $460-620/m2 is not supported by QV: its $330/m2 glass rate and $48/hr labour are about half the QV rates."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-derived"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 20,
+        "outputTokens": 6587,
+        "cachedTokens": 461459,
+        "modelCalls": 23,
+        "toolCalls": 22,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.7540178,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 20,
+            "outputTokens": 6587,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.7306638000000001,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 11679,
+            "outputTokens": 335,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.023354,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 80982,
+      "band": {
+        "unit": "m2",
+        "low": 660,
+        "high": 700,
+        "centre": "Auckland",
+        "basis": "QV t24:r32 $600/m2 + cutouts 3 x $88.67 amortised (~$62/m2); high adds QV polished edge 18 m x $8.20 amortised (~$34/m2). Total 4.32 m2 approx $2,860-$3,010 excl GST. Excludes any 6mm uplift and any template/delivery/install not included in the QV row."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 16,
+        "outputTokens": 5916,
+        "cachedTokens": 353524,
+        "modelCalls": 22,
+        "toolCalls": 21,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.7164728,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 16,
+            "outputTokens": 5916,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.6691848,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 23478,
+            "outputTokens": 762,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.047288000000000004,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

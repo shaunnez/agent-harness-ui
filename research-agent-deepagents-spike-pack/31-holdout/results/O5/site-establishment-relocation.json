@@ -1,0 +1,311 @@
+{
+  "question": "site-establishment-relocation",
+  "kind": "pinned",
+  "arm": "O5",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 2444,
+    "high": 3900
+  },
+  "range": {
+    "min": 2400,
+    "max": 3975
+  },
+  "unit": "sum",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.083,
+    "highRatio": 1.046,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 3.9455,
+  "elapsedMs": 210187,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 109556,
+      "band": {
+        "unit": "sum",
+        "low": 2400,
+        "high": 3900,
+        "centre": "AKL",
+        "basis": "Sum of QV-derived components: low $2,444 (labourer gang, 4 hr hiab, 3 hr electrician); high $3,837 (leading-hand proxy, 5 hr hiab, 5 hr electrician, fence by hire co); median ~$2,694. Excludes GST, margin, prelims. Supplied $10.5k-16.5k draft rejected: double-counts labour and hiab, unsourced rates."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 18,
+        "outputTokens": 8468,
+        "cachedTokens": 455483,
+        "modelCalls": 24,
+        "toolCalls": 23,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.8071155999999999,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 18,
+            "outputTokens": 8468,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.7840725999999999,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 11153,
+            "outputTokens": 378,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.023043,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 104985,
+      "band": {
+        "unit": "sum",
+        "low": 2600,
+        "high": 3800,
+        "centre": "Auckland",
+        "basis": "Core QV build-up $2,618 (low) to $3,081 (high): gang of 3 for 8 h + 8t hiab 4 h + delivery + electrician 4-6 h; upper band adds $696 for a separate fence crew (QV t4:r3+r4). Fence, blocks, packers, signage and sweep labour carried in the gang day, not priced again. GST, margin and preliminaries excluded."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 14,
+        "outputTokens": 8596,
+        "cachedTokens": 292258,
+        "modelCalls": 21,
+        "toolCalls": 20,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.7232036000000001,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 14,
+            "outputTokens": 8596,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.7232036000000001,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 131234,
+      "band": {
+        "unit": "sum",
+        "low": 2444,
+        "high": 3975,
+        "centre": "Auckland",
+        "basis": "Low: gang $1,453 + hiab $740 + electrician $251 = $2,444. High: gang $1,619 + hiab $1,040 + electrician $620 + fence by hire company $696 = $3,975. Midpoint about $3,200. Pinned scope (one visit, 4 hiab hrs, one gang day), excl. GST and margin. The draft $10.5-16.5k band counted the hiab twice and labour twice, and its rates had no source."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 18,
+        "outputTokens": 10313,
+        "cachedTokens": 486009,
+        "modelCalls": 27,
+        "toolCalls": 26,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.9964847999999998,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 18,
+            "outputTokens": 10313,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.9483338,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 23741,
+            "outputTokens": 882,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.048151,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 210183,
+      "band": {
+        "unit": "sum",
+        "low": 2534,
+        "high": 3107,
+        "centre": "Auckland",
+        "basis": "One gang-day (2 labourers + leading hand) doing all manual relocation work, 4h 8t crane plus mobilisation, 3-5h electrician; QV fence install+dismantle $5.80/m x 120m = $696 is a cross-check inside gang hours, not additive; excl GST, margin, prelims"
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 8,
+        "rowsFound": 8,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 14,
+        "outputTokens": 8355,
+        "cachedTokens": 295130,
+        "modelCalls": 21,
+        "toolCalls": 20,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.7199819999999999,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 14,
+            "outputTokens": 8355,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.7199819999999999,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 188257,
+      "band": {
+        "unit": "$/sum (one relocation event)",
+        "low": 2494.15,
+        "high": 2957.45,
+        "centre": "Auckland",
+        "basis": "Gang day + hiab visit + electrician hours + tape, all from QV CostBuilder rows. QV fence install+dismantle (253b...:t4:r3 + t4:r4, $5.80/m x 120m = $696) used only as a cross-check within the gang hours, not added. Excludes GST, margin, preliminaries."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 14,
+        "outputTokens": 6998,
+        "cachedTokens": 303236,
+        "modelCalls": 21,
+        "toolCalls": 20,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.6987032,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 14,
+            "outputTokens": 6998,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.6987032,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

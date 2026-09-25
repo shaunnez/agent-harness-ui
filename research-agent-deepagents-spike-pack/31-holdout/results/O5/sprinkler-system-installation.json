@@ -1,0 +1,345 @@
+{
+  "question": "sprinkler-system-installation",
+  "kind": "pinned",
+  "arm": "O5",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 44,
+    "high": 57
+  },
+  "range": {
+    "min": 38.33,
+    "max": 59.25
+  },
+  "unit": "$/m2 sprinklered floor area",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.2,
+    "highRatio": 1.097,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 4.9054,
+  "elapsedMs": 359989,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 222961,
+      "band": {
+        "unit": "$/m2 sprinklered floor area",
+        "low": 38.33,
+        "high": 59.25,
+        "centre": "Auckland",
+        "basis": "PARTIAL SCOPE FLOOR from QV rows only: total $114,981 low / $177,757 high over 3,000 m2. Excludes alarm valve set/trim/flow switch, seismic restraint, commissioning/testing/flushing, documentation/PS3, monitoring interface and head guards, none of which is published. Full-scope price will be higher."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 11,
+        "rowsFound": 11,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 40,
+        "outputTokens": 12683,
+        "cachedTokens": 1271477,
+        "modelCalls": 32,
+        "toolCalls": 31,
+        "searchCalls": 3,
+        "estimatedCostUsd": 1.2232334,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 40,
+            "outputTokens": 12683,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.1555154,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 32678,
+            "outputTokens": 1008,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.067718,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 122738,
+      "band": {
+        "unit": "m2 sprinklered floor area",
+        "low": 36,
+        "high": 68,
+        "centre": "Auckland",
+        "basis": "Low = QV bottom-up subtotal $107,481/3,000m2 (heads+droppers+mains+tees+gate valve+lift), omits valve set, seismic bracing, flexible drops, head guards, signage, testing/commissioning, monitoring interface, documentation. High = QV dry-pipe all-in $68/m2 used as ceiling. Totals $107,481-$204,000 for 3,000m2. Warehouse Fire Services benchmark $92-97/m2 (1fc5d5633c08faf7518ce921bf3ca1f3a73236598fe054011ae5c0ef9f5db075:t0:r16) not used: scope undefined, likely broader"
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 22,
+        "outputTokens": 8467,
+        "cachedTokens": 518124,
+        "modelCalls": 20,
+        "toolCalls": 19,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.9078728,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 22,
+            "outputTokens": 8467,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.8639888,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 20969,
+            "outputTokens": 583,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.043884,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 257919,
+      "band": {
+        "unit": "m2 sprinklered floor area",
+        "low": 46,
+        "high": 57,
+        "centre": "Auckland",
+        "basis": "QV unreviewed-row build-up of heads, range/main pipework, fittings, bell and EWP only; total $138,400-$170,910 over 3,000 m2. PARTIAL: excludes alarm valve set, seismic restraint, commissioning/verification/documentation, monitoring interface, signage and head guards, which were not established. Cross-check only: QV dry pipe system t7:r1 $68/m2."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 8,
+        "rowsFound": 8,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 18,
+        "outputTokens": 9379,
+        "cachedTokens": 426353,
+        "modelCalls": 21,
+        "toolCalls": 20,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.8968726,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 18,
+            "outputTokens": 9379,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.8532346,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 20978,
+            "outputTokens": 532,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.043638,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 185611,
+      "band": {
+        "unit": "m2 sprinklered floor area",
+        "low": 44,
+        "high": 54,
+        "centre": "Auckland",
+        "basis": "PARTIAL FLOOR ONLY: QV component build-up totalling $133,449 (low) to $161,611 (high) over 3,000 m2. Excludes the alarm valve body/trim/flow switch, seismic sway bracing and flexible drops, mains fittings, block plan, signage, flushing/testing/commissioning, monitoring interface, as-builts and PS3, none of which QV or the web publishes. Sanity references (not added): QV elemental Fire Services warehouse with small office $97/m2 GFA (1fc5d5633c08faf7518ce921bf3ca1f3a73236598fe054011ae5c0ef9f5db075:t0:r16); QV dry pipe system $68/m2 (629a1a06d7d6f32e79cad3319be598c5c77b124d619f5beb9b2969d8769c2131:t7:r1)."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 12,
+        "rowsFound": 12,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 24,
+        "outputTokens": 9842,
+        "cachedTokens": 591192,
+        "modelCalls": 23,
+        "toolCalls": 22,
+        "searchCalls": 2,
+        "estimatedCostUsd": 1.0177273999999998,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 24,
+            "outputTokens": 9842,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.9500943999999999,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 33498,
+            "outputTokens": 827,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.067633,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 359984,
+      "band": {
+        "unit": "$/m2 sprinklered floor area",
+        "low": 68,
+        "high": 97,
+        "centre": "Auckland",
+        "basis": "Bracketed by QV dry-pipe system row (68/m2) and QV fire-services warehouse benchmark (97/m2); total for 3,000 m2 = $204,000-$291,000. Bottom-up heads+branches only = ~$91,500 ($30.5/m2), gap attributed to mains, valve set, seismic, commissioning, docs, EWP which QV does not price. Neither anchor matches scope; low confidence."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 20,
+        "outputTokens": 7015,
+        "cachedTokens": 465186,
+        "modelCalls": 20,
+        "toolCalls": 19,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.8597022000000001,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 20,
+            "outputTokens": 7015,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.8155132,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 20909,
+            "outputTokens": 656,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.044189000000000006,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

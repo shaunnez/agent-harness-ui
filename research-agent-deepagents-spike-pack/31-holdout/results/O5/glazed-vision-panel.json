@@ -1,0 +1,297 @@
+{
+  "question": "glazed-vision-panel",
+  "kind": "pinned",
+  "arm": "O5",
+  "status": "not_established",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": null,
+  "range": null,
+  "unit": null,
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": null,
+    "highRatio": null,
+    "runsWithBand": 0,
+    "runsTotal": 5
+  },
+  "costUsd": 4.5252,
+  "elapsedMs": 223646,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 118553,
+      "band": null,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 18,
+        "outputTokens": 8930,
+        "cachedTokens": 483488,
+        "modelCalls": 28,
+        "toolCalls": 27,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.9940506,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 18,
+            "outputTokens": 8930,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.9271456,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 31755,
+            "outputTokens": 1030,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.066905,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 223644,
+      "band": null,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 10,
+        "rowsFound": 10,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 20,
+        "outputTokens": 9918,
+        "cachedTokens": 583795,
+        "modelCalls": 31,
+        "toolCalls": 30,
+        "searchCalls": 2,
+        "estimatedCostUsd": 1.070688,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 20,
+            "outputTokens": 9918,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.026375,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 20968,
+            "outputTokens": 669,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.044313000000000005,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 184996,
+      "band": null,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 16,
+        "outputTokens": 6852,
+        "cachedTokens": 377280,
+        "modelCalls": 22,
+        "toolCalls": 21,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.813148,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 16,
+            "outputTokens": 6852,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.769296,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 20192,
+            "outputTokens": 732,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.043852,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 100503,
+      "band": null,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 16,
+        "outputTokens": 7687,
+        "cachedTokens": 371293,
+        "modelCalls": 21,
+        "toolCalls": 20,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.7859786,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 16,
+            "outputTokens": 7687,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.7381186,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 23690,
+            "outputTokens": 834,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.04786,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 100300,
+      "band": null,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 18,
+        "outputTokens": 7481,
+        "cachedTokens": 464137,
+        "modelCalls": 24,
+        "toolCalls": 23,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.8612853999999999,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 18,
+            "outputTokens": 7481,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.8167914000000001,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 20864,
+            "outputTokens": 726,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.044494,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

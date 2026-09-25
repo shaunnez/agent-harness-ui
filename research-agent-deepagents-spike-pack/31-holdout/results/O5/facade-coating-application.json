@@ -1,0 +1,339 @@
+{
+  "question": "facade-coating-application",
+  "kind": "pinned",
+  "arm": "O5",
+  "status": "agreed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 37,
+    "high": 65
+  },
+  "range": {
+    "min": 37,
+    "max": 78
+  },
+  "unit": "m2",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.027,
+    "highRatio": 1.238,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 4.1352,
+  "elapsedMs": 286337,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 160567,
+      "band": {
+        "unit": "m2",
+        "low": 37,
+        "high": 78,
+        "centre": "Auckland",
+        "basis": "Low = water blast + sealer@15% + interior masonry acrylic analogue + <=6 m loading + 12 m electric boom 15 days + 1 scaffold tower. High = prepare painted plaster (walls/ceilings weighted) + sealer@15% + Flexicote 3-coat + <=9 m loading + 15 m diesel boom 15 days + 2 towers. Excludes EWP delivery and separate masking (not in QV). The user's $52-76 falls within this band; its $52 floor is not supported by QV rows."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 8,
+        "rowsFound": 8,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 18,
+        "outputTokens": 8081,
+        "cachedTokens": 422246,
+        "modelCalls": 21,
+        "toolCalls": 20,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.7594452,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 18,
+            "outputTokens": 8081,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.7360292000000002,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 10881,
+            "outputTokens": 507,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.023416,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 167308,
+      "band": {
+        "unit": "m2",
+        "low": 46,
+        "high": 60,
+        "centre": "Auckland",
+        "basis": "QV prep (9.4 water blast to 17.5 prepare painted plaster) + QV exterior 3-coat acrylic 28.6 + QV height allowance 1.5-3.0 + EWP 4.8-7.2 (web weekly rate + delivery to QV day rate + delivery) + QV mobile scaffold 2.0-4.0. EXCLUDES masking, protection, clean-up, sundries and waste-water containment, which are not established; a 3-5/m2 allowance would give about 49-65/m2. The submitted $52-76 band's upper end is not supported."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 22,
+        "outputTokens": 9490,
+        "cachedTokens": 587307,
+        "modelCalls": 24,
+        "toolCalls": 23,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.9133504,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 22,
+            "outputTokens": 9490,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.8903734,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 10802,
+            "outputTokens": 435,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.022977,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 286334,
+      "band": {
+        "unit": "m2",
+        "low": 45,
+        "high": 60,
+        "centre": "Auckland",
+        "basis": "Sum of QV rows: prep weighted by wall/soffit ($17.48) + coating ($19.07 to $28.60) + height extra ($1.50 to $3.00) + EWP day hire x15 ($5.05 to $6.68) + mobile scaffold 1 to 2 towers x3 wk ($1.99 to $3.97) = $45.09 to $59.73/m2; $27,054 to $35,838 over 600 m2. Masking and protection assumed within QV painting rates. Wellington about $39 to $52/m2. Excludes EWP delivery and pickup, and waste-water containment."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 9,
+        "rowsFound": 9,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 18,
+        "outputTokens": 9284,
+        "cachedTokens": 470710,
+        "modelCalls": 24,
+        "toolCalls": 23,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.8887769999999999,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 18,
+            "outputTokens": 9284,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.8658539999999999,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 10723,
+            "outputTokens": 440,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.022923,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 226018,
+      "band": {
+        "unit": "m2",
+        "low": 37,
+        "high": 63,
+        "centre": "Auckland",
+        "basis": "Sum of QV component rows weighted 480 m2 wall / 120 m2 soffit, plant amortised over 600 m2; excludes masking/protection/clean-up, EWP delivery, waste-water containment and exterior elastomeric material premium. Wellington equivalent ~$32-55/m2. Scenario's $52-76 band sits at/above QV top, the gap mostly being masking (~$5) and an exterior-product finish-coat rate."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 13,
+        "rowsFound": 13,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 18,
+        "outputTokens": 8091,
+        "cachedTokens": 422482,
+        "modelCalls": 20,
+        "toolCalls": 19,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.7662214,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 18,
+            "outputTokens": 8091,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.7439084,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 10248,
+            "outputTokens": 413,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.022313,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 124779,
+      "band": {
+        "unit": "m2",
+        "low": 38,
+        "high": 65,
+        "centre": "Auckland",
+        "basis": "Sum of QV components. Low = water blast + 15% sealer + interior masonry 2-coat acrylic + <=6 m allowance + 15 m electric EWP 15 days + 1 tower. High = prepare painted plaster + seal and 2 coats rough masonry + <=9 m allowance + 15 m diesel EWP 21 days + 2 towers. Excludes the not-established items, so the true figure is higher. Total for 600 m2 about $22,700-$38,700."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-missing",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 8,
+        "rowsFound": 7,
+        "rowsMissing": 1,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 18,
+        "outputTokens": 8674,
+        "cachedTokens": 446724,
+        "modelCalls": 23,
+        "toolCalls": 22,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.8074108000000001,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 18,
+            "outputTokens": 8674,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.7844888000000001,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 10717,
+            "outputTokens": 441,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.022922,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

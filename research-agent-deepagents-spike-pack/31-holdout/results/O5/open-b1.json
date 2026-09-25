@@ -1,0 +1,312 @@
+{
+  "question": "open-b1",
+  "kind": "open",
+  "arm": "O5",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 8640,
+    "high": 9840
+  },
+  "range": {
+    "min": 8640,
+    "max": 9840
+  },
+  "unit": "total",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1,
+    "highRatio": 1,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 3.4388,
+  "elapsedMs": 129872,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 63306,
+      "band": {
+        "unit": "total (40 m job)",
+        "low": 8900,
+        "high": 11300,
+        "centre": "Auckland",
+        "basis": "QV t16:r5 $196/m x 40 m = $7,840 plus removal/disposal $26-$87/m ex GST x 40 m = $1,043-$3,478; rounded. GST exclusive, NZD."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 14,
+        "outputTokens": 4415,
+        "cachedTokens": 260702,
+        "modelCalls": 19,
+        "toolCalls": 18,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.6759214,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 14,
+            "outputTokens": 4415,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.6534004,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 11011,
+            "outputTokens": 302,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.022521,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 128157,
+      "band": {
+        "unit": "total (40 m rear boundary fence job)",
+        "low": 8880,
+        "high": 11320,
+        "centre": "Auckland",
+        "basis": "40 m x QV AKL $196/m new fence ($7,840) + 40 m x $26-$87/m removal and disposal, GST exclusive ($1,040-$3,480). Assumes standard H3 paling fence, one side, no finish, normal access, level ground, transfer-station disposal."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 16,
+        "outputTokens": 4179,
+        "cachedTokens": 300690,
+        "modelCalls": 19,
+        "toolCalls": 18,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.665037,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 16,
+            "outputTokens": 4179,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.641518,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 11474,
+            "outputTokens": 409,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.023518999999999998,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 129868,
+      "band": {
+        "unit": "total",
+        "low": 8640,
+        "high": 9840,
+        "centre": "Auckland",
+        "basis": "40 m x QV $196/m new fence ($7,840) + 40 m x $20-$50/m removal ($800-$2,000). GST exclusive. Excludes gates, stain/paint, survey, rock/concrete breakout, restricted-access surcharges."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 16,
+        "outputTokens": 4556,
+        "cachedTokens": 302212,
+        "modelCalls": 19,
+        "toolCalls": 18,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.6975094,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 16,
+            "outputTokens": 4556,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.6739303999999999,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 11844,
+            "outputTokens": 347,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.023579000000000003,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 66436,
+      "band": {
+        "unit": "total (40 m rear boundary fence job)",
+        "low": 8640,
+        "high": 9840,
+        "centre": "Auckland",
+        "basis": "40 m x QV $196/m new 1.8 m paling fence ($7,840) + 40 m x $20–$50/m old fence removal from Vision Fences ($800–$2,000). GST exclusive. Excludes gates, capping, staining, rock/concrete breakout, survey."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 16,
+        "outputTokens": 4403,
+        "cachedTokens": 296497,
+        "modelCalls": 19,
+        "toolCalls": 18,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.6556404,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 16,
+            "outputTokens": 4403,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.6320474,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 11798,
+            "outputTokens": 359,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.023593,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 70128,
+      "band": {
+        "unit": "total (40 m rear boundary)",
+        "low": 8640,
+        "high": 9840,
+        "centre": "Auckland",
+        "basis": "QV row t16:r5 at $196/m x 40 m = $7,840, plus web fence-removal allowance of $20-$50/m x 40 m = $800-$2,000. GST exclusive NZD. Excludes gates, capping, stain/paint, rock or slope extras, hand-carry access premium, surveyor, and heavy concrete/asbestos removal."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 16,
+        "outputTokens": 4597,
+        "cachedTokens": 333945,
+        "modelCalls": 17,
+        "toolCalls": 16,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.7446900000000001,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 16,
+            "outputTokens": 4597,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.6969609999999999,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 23549,
+            "outputTokens": 836,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.047729,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

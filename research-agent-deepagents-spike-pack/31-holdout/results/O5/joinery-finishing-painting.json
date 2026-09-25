@@ -1,0 +1,302 @@
+{
+  "question": "joinery-finishing-painting",
+  "kind": "pinned",
+  "arm": "O5",
+  "status": "disputed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 46.3,
+    "high": 56.9
+  },
+  "range": {
+    "min": 44,
+    "max": 94
+  },
+  "unit": "m2 of finished face area",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.295,
+    "highRatio": 1.709,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 4.2384,
+  "elapsedMs": 202804,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 92654,
+      "band": null,
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-derived"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 20,
+        "outputTokens": 5872,
+        "cachedTokens": 497956,
+        "modelCalls": 22,
+        "toolCalls": 21,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.8321582,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 20,
+            "outputTokens": 5872,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.7400392,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 45434,
+            "outputTokens": 1337,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.092119,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 202802,
+      "band": {
+        "unit": "m2 of finished face area",
+        "low": 44,
+        "high": 55,
+        "centre": "Auckland",
+        "basis": "Only NZ-published factory spray price found (The Spraypainters, flat raw MDF doors, one colour, batch of 20+), converted from per door to per m2 of faces and edges. 150 m2 batch = $6,600-$8,250 excl. GST. Probably a floor for this scope: excludes on-site touch-up and trade visit, the extra work of shaped edges, shelves and masking, and confirmation of a 2-pack pigmented sealer + 2 topcoat system. Get quotes before relying on it."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 22,
+        "outputTokens": 7553,
+        "cachedTokens": 520365,
+        "modelCalls": 27,
+        "toolCalls": 26,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.8267590000000001,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 22,
+            "outputTokens": 7553,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.7345170000000002,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 45682,
+            "outputTokens": 1312,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.092242,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 196444,
+      "band": {
+        "unit": "m2 of finished face area",
+        "low": 46.3,
+        "high": 56.9,
+        "centre": "Auckland",
+        "basis": "(150 m2 x $44.4-55.0 factory spray) + (7.5 m2 x $37.9 touch-up) = $6,941-$8,538 per 150 m2 batch, divided by 150. This is a lower-bound anchor from flat-door pricing; the uplift for joinery complexity is not established."
+      },
+      "checks": [
+        "web-derived",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 18,
+        "outputTokens": 6099,
+        "cachedTokens": 404532,
+        "modelCalls": 20,
+        "toolCalls": 19,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.8078964,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 18,
+            "outputTokens": 6099,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.7147424,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 45904,
+            "outputTokens": 1450,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.093154,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 103684,
+      "band": null,
+      "dropped": true,
+      "checks": [
+        "web-derived",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 22,
+        "outputTokens": 5658,
+        "cachedTokens": 567406,
+        "modelCalls": 26,
+        "toolCalls": 25,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.9401752000000001,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 22,
+            "outputTokens": 5658,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.8045372,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 65308,
+            "outputTokens": 2066,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.13563799999999998,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 103956,
+      "band": {
+        "unit": "m2 finished face area",
+        "low": 57,
+        "high": 94,
+        "centre": "Auckland",
+        "basis": "Factory spray $55-90/m2 (published Auckland raw-MDF flat-door spray price converted to m2, uplifted for joinery complexity) + touch-up $1.9-3.7/m2 (QV painter rate x 4-8 hrs / 150 m2). 150 m2 batch total $8,531-14,062 excl GST."
+      },
+      "checks": [
+        "web-verified",
+        "web-derived",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 20,
+        "outputTokens": 6407,
+        "cachedTokens": 503205,
+        "modelCalls": 23,
+        "toolCalls": 22,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.831364,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 20,
+            "outputTokens": 6407,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.7410129999999999,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 42946,
+            "outputTokens": 1481,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.09035100000000001,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}
