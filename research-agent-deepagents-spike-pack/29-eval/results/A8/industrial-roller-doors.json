@@ -1,0 +1,201 @@
+{
+  "question": "industrial-roller-doors",
+  "kind": "pinned",
+  "arm": "A8",
+  "status": "agreed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 9208.5,
+    "high": 15854
+  },
+  "range": {
+    "min": 9078,
+    "max": 16596
+  },
+  "unit": "$/ea (one complete motorised insulated roller shutter door, 4.0m x 4.5m opening, supplied, installed and commissioned, Auckland, GST exclusive)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.134,
+    "highRatio": 1.18,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0919,
+  "elapsedMs": 249905,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 249901,
+      "band": {
+        "unit": "$/ea (one complete motorised insulated roller shutter door, 4.0m x 4.5m opening, supplied, installed and commissioned, Auckland, GST exclusive)",
+        "low": 10295,
+        "high": 15854,
+        "centre": "Auckland",
+        "basis": "Sum of the 13 components above, each priced separately: low $10,295/ea, high $15,854/ea, mid $13,075/ea. Four identical doors on one visit = $41,180 (low) to $63,416 (high), mid $52,298 - the scissor lift and delivery lines are already divided by 4, and installation labour is per door for a single mobilisation. Equates to $572-$881 per m2 of curtain. Main driver (the insulated aluminium slat door unit, motor and controls) rests on a published NZ vendor price for a motorised 4500mm-high shutter plus published NZ uplift percentages for insulation, aluminium slat, powdercoat and three-phase drive, because QV CostBuilder holds no insulated aluminium slat roller shutter row; QV contributes the labour, electrical and platform-hire rates and the cross-check rows (...t4:r1 $344/m2 interlocking slat, ...t14:r4 $3,300 for 3600x3600 interlocking slat, ...t16:r10 $8,800 for a motorised 4000x5000 rolling grille). Allowances carry $1,150 of the low case (11%) and $2,550 of the high case (16%), so no allowance dominates. Excludes everything listed as excluded: GST, preliminaries, margin, design and consent fees, the structural opening and making good, the 3-phase supply/submain/isolator, vision panels, wicket doors, fire or cyclone rating, remote controls, loop detectors and card or PLC interface, painting to cladding, temporary closures and any service or maintenance contract."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-unsupported",
+        "web-verified",
+        "allowance",
+        "web-verified",
+        "allowance",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 6,
+        "webVerified": 5,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 1,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 519360,
+        "outputTokens": 30900,
+        "cachedTokens": 434048,
+        "modelCalls": 13,
+        "toolCalls": 40,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.032639,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 519360,
+            "outputTokens": 30900,
+            "estimatedCostUsd": 0.032639,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 240162,
+      "band": {
+        "unit": "NZD/ea, one complete motorised insulated roller shutter door (4.0m x 4.5m opening), supplied, installed and commissioned into a prepared opening, Auckland, GST exclusive",
+        "low": 9208.5,
+        "high": 14065.05,
+        "centre": "Auckland; midpoint approx $11,640/ea, i.e. approx $46,550 for the 4-door nominal quantity",
+        "basis": "Sum of the ten components above: low $4,583+$1,528+$1,146+$810+$400+$140+$180+$251+$70.50+$100 = $9,208.50/ea; high $6,192+$2,106+$2,477+$1,080+$1,100+$140+$180+$418+$122.25+$250 = $14,065.05/ea. Nominal quantity 4 identical doors on one Auckland warehouse, installed in one visit: 4 x $9,208.50 = $36,834 to 4 x $14,065.05 = $56,260. Main cost driver (door + operator, components 1 and 2) rests on cited QV rows used as proxies with the size/spec adjustment stated, uplifted by a fetched NZ page; allowances total only $100-$250 per door (1-2% of the band), so the band is established, not carried by judgement. Excluded and not priced: structural opening, lintels, jambs, framing, making good; 3-phase supply, submain, isolator, containment, switchboard; vision panels, wicket doors, fire rating, high-wind upgrades; remote controls, loops, card/PLC interface; painting/patching; service contracts; GST, prelims, margin, design and consent fees. Confidence is low because no QV row exists for an insulated aluminium slat curtain, QV's own proxies for a motorised shutter of this size span $5,445 to $8,298, and the insulated/powdercoat uplift percentages come from a supplier guide rather than a trade price schedule; NZ published installed rates for a 4.5 x 4.5 m rolling steel shutter are $5,200-$6,200 ex-GST and insulated panel doors at that size are $12,500-$15,500 ex-GST, so the true price can sit below or above this band. Multi-door tiered discounts (about -7% second door, -12% third) are not deducted - treat them as negotiation headroom."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-unsupported",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 5,
+        "webVerified": 4,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 1,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 398599,
+        "outputTokens": 29923,
+        "cachedTokens": 303616,
+        "modelCalls": 9,
+        "toolCalls": 27,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.033112,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 398599,
+            "outputTokens": 29923,
+            "estimatedCostUsd": 0.033112,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 187253,
+      "band": {
+        "unit": "$/ea (one complete motorised insulated roller shutter door, supplied, installed and commissioned into a prepared 4.0m x 4.5m opening, Auckland)",
+        "low": 9078,
+        "high": 16596,
+        "centre": "Auckland",
+        "basis": "Sum of nine distinct components above: curtain/barrel/guides/hood ($6,075-$10,530, QV 11bf7578...:t4:r8 $225/m2 x 18 m2 with a stated x1.5-x2.6 adjustment for insulated aluminium double-skin slats and powdercoating), 3-phase gear motor ($1,100-$1,440, QV 78c8fd59...:t14:r11 / :t15:r8), safety edge ($800-$2,400), photo-eye pair ($300-$800) both from fetched source-2, sundries allowance ($150-$400), 3-phase final connection ($418, QV 74581f88...:t25:r28 as an upper-bound proxy), scissor lift hire ($47-$120, QV 253b838a...:t8:r2/r4), lift transport allowance ($38-$88) and delivery/offload allowance ($150-$400). Allowances total $338-$888/ea, i.e. 3.7%-5.4% of the unit, well under one third. Nominal 4-door quantity: 4 x $9,078 = $36,312 low; 4 x $16,596 = $66,384 high. GST exclusive, Auckland centre, no preliminaries, margin, design or consent fees included (as instructed). Cross-checks: fetched page https://www.premiumgaragedoors.co.nz/blogs/guides/how-much-do-garage-doors-cost-in-nz-sizes-prices-buying-guide gives 'Installed Approximately $4,000 - $15,000+ GST' for commercial roller shutters and 'Commercial Motors: $1,500 - $5,000+ GST'; QV's motorised 4000x5000 tube rolling grille is $8,800 ea (78c8fd59...:t16:r10). The band is wide and lightly tempered because the specified curtain has no QV row, so the dominant component rests on a proxy with a stated material adjustment."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 382404,
+        "outputTokens": 23592,
+        "cachedTokens": 308736,
+        "modelCalls": 10,
+        "toolCalls": 26,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.026132,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 382404,
+            "outputTokens": 23592,
+            "estimatedCostUsd": 0.026132,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

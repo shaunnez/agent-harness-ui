@@ -1,0 +1,171 @@
+{
+  "question": "open-a1",
+  "kind": "open",
+  "arm": "A6",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 75,
+    "high": 215
+  },
+  "range": {
+    "min": 65,
+    "max": 340
+  },
+  "unit": "$/m² of soffit area",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.462,
+    "highRatio": 1.7,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0655,
+  "elapsedMs": 217188,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 120994,
+      "band": {
+        "unit": "$/m² of soffit area",
+        "low": 65,
+        "high": 215,
+        "centre": "Auckland",
+        "basis": "Sum of the three components: 60+4+0 = 64 (rounded 65) to 180+10+25 = 215, centre ~120. Price is for specialist removal AND disposal of non-friable (Class B) asbestos cement soffit sheeting by a WorkSafe-licensed removalist, on the stated assumption that the soffit is asbestos-containing and requires specialist removal; soffit area assumed ~50 m²; excludes replacement soffit, which is out of scope. Removal rate from AsbestosRNZ 2025 NZ cost guide (roof/cladding removal $60–$180/m²), corroborated at the low end by Safety 1st Removals (Class B cladding/fencing/roofing '$65 per sqm up'); clearance certificate from Safety 1st Removals ($200–$500 per job). QV CostBuilder was searched exhaustively and holds no asbestos row, so no QV rate contributes to the amounts. Not established by any source: the actual soffit area, whether the material is friable (Class A, $85–$500/m²) or non-friable, condition, containment class, and the disposal route — all of which can move the result by a factor of two or more. Confidence low. Get a firm m² rate from a licensed removalist (Chemcare, Asbestos Removal NZ, Safety 1st Removals/PropertyHelp) once the sheeting has been sampled and the area measured."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 241582,
+        "outputTokens": 11549,
+        "cachedTokens": 192128,
+        "modelCalls": 9,
+        "toolCalls": 24,
+        "searchCalls": 5,
+        "estimatedCostUsd": 0.014924,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 241582,
+            "outputTokens": 11549,
+            "estimatedCostUsd": 0.014924,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 102484,
+      "band": {
+        "unit": "m2 of soffit area (removal and disposal of asbestos-containing soffit material, excluding replacement soffit)",
+        "low": 75,
+        "high": 200,
+        "centre": "Wellington",
+        "basis": "QS working band, GST exclusive, sum of the two components above (70+5 low, 180+20 high), rounded. Main driver (licensed specialist removal) is priced from NZ removalist-published ranges because QV CostBuilder holds no asbestos/ACM rows at all; clearance is added as a separate required line. Prices the pinned assumption: non-friable bonded asbestos-cement eaves/soffit lining, reasonable condition, WorkSafe-licensed Class B contractor, containment included, single-storey/easy access, disposal included, no replacement soffit, no fascia, no testing, area assumed in the order of 100 m2 so fixed charges amortise sensibly. Small areas, two-storey/stepped eaves, occupied buildings or any friable finding move the price to and beyond the top of the band. Not a certified price - verify with three licensed removalist quotes and confirm licence class, area and disposal route before committing."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 481046,
+        "outputTokens": 14519,
+        "cachedTokens": 410496,
+        "modelCalls": 11,
+        "toolCalls": 33,
+        "searchCalls": 9,
+        "estimatedCostUsd": 0.020525,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 481046,
+            "outputTokens": 14519,
+            "estimatedCostUsd": 0.020525,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 217185,
+      "band": {
+        "unit": "m2 of soffit area",
+        "low": 95,
+        "high": 340,
+        "centre": "Auckland",
+        "basis": "Sum of the three in-scope components only (the Class A air-monitoring uplift is excluded). Low = $85 removal + $5 access + $3 clearance; high = $300 removal + $30 access + $10 clearance. Prices a non-friable asbestos cement (Class B) soffit lining, GST exclusive, Auckland, assuming a ~100 m2 soffit area so the fixed per-job clearance charge can be amortised. Worked example at 100 m2: ~$9,500-$34,000, expected ~$18,000. Excludes replacement soffit (per brief), testing/survey (the brief already treats the soffit as ACM), and make-good to framing. Allowances carry only ~10% of the band, so the band is driven by the sourced removal rate - but that rate is a wide contractor-published band with no soffit-specific NZ publication and no QV coverage, hence low confidence. Regional variation is real: QV plant hire and tipping rows differ materially between Auckland, Wellington and Christchurch, and the published removal rates are not city-specific."
+      },
+      "checks": [
+        "web-verified",
+        "allowance",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 711404,
+        "outputTokens": 21188,
+        "cachedTokens": 608128,
+        "modelCalls": 13,
+        "toolCalls": 40,
+        "searchCalls": 13,
+        "estimatedCostUsd": 0.030029,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 711404,
+            "outputTokens": 21188,
+            "estimatedCostUsd": 0.030029,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

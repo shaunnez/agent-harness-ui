@@ -1,0 +1,191 @@
+{
+  "question": "emergency-lighting-exit-signage",
+  "kind": "pinned",
+  "arm": "A7",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 320,
+    "high": 444
+  },
+  "range": {
+    "min": 317.03,
+    "max": 458.76
+  },
+  "unit": "ea (per emergency fitting, averaged across 28 downlights + 12 exit signs)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.066,
+    "highRatio": 1.079,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.074,
+  "elapsedMs": 144189,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 144186,
+      "band": {
+        "unit": "ea (per emergency fitting, averaged across 28 downlights + 12 exit signs)",
+        "low": 338,
+        "high": 444,
+        "centre": "Auckland",
+        "basis": "Auckland, NZD, GST exclusive. Sum of the nine components above, each priced per fitting and amortised over the pinned 40 fittings: 28 QV-priced 3W recessed maintained emergency downlights at $236/ea (63-49% of the band) and 12 QV-priced exit signs at $208-$347/ea, plus 480 m of 1.5mm2 2C+E TPS at QV $6.60/m, 3 QV 16A MCBs, and QV-priced scissor-lift hire and electrician labour for the discharge test; allowances cover only board terminations, the manual test facility and certification paperwork (~15% of the high end). Nominal 40 fittings = $13,520 - $17,760 (midpoint ~$391/ea, ~$15,640). Low assumes clear ceiling void, short pulls, one continuous visit and the 2.3W exit sign; high assumes the 5W-class blade sign required for 24 m viewing distance, +30% cable labour for a congested void, 4 days of platform hire and split visits in an occupied tenancy. KEY RISK: QV electrical luminaire/emergency rows are treated as supply-and-fix (QV publishes no build-ups); if they are supply-only, add ~1.0-1.5 h per fitting at QV $83.65/h (about +$84-$126/ea) and move to the top of the range. Unreviewed QV rows; not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 505112,
+        "outputTokens": 26614,
+        "cachedTokens": 444800,
+        "modelCalls": 11,
+        "toolCalls": 32,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.02635,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 505112,
+            "outputTokens": 26614,
+            "estimatedCostUsd": 0.02635,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 121642,
+      "band": {
+        "unit": "ea (per emergency fitting, averaged across 28 downlights + 12 exit signs)",
+        "low": 317.03,
+        "high": 458.76,
+        "centre": "Auckland",
+        "basis": "GST-exclusive NZD, Auckland, 800 m2 occupied single-storey commercial fitout, 40 fittings (28 maintained 3W LED emergency downlights + 12 LED exit signs), manual test, 12m avg 1.5mm2 emergency sub-circuit per fitting, 3 x 16A circuits, existing board. Built by ADDING distinct components: QV emergency-luminaire supply-and-install rows (t20, the dominant cost, ~60% of the band) + QV cable (t7:r71) + QV MCB (t29:r33) + QV EWP hire (t8) + web-sourced discharge-test, logbook and NZ CoC/ESC fees + labelled allowances for board terminations, sundries, test switch and as-built documentation. No component is counted twice; QV fitting rows are assumed to include labour and connections. 40-off total $12,680-$18,350; midpoint ~$388/fitting, ~$15,520 for 40. Not a certified price. Excluded per scope: GST, preliminaries, margin, design/consent/BWOF/IQP fees, initial IQP inspection, ongoing 6-monthly re-tests, central battery/addressable systems, new board/sub-main, ceiling grid alteration, fire alarm interface and exit hardware. Largest single driver (fittings, ~$208-$269/fitting) is fully QV-sourced, so the band is established; allowances carry ~5% (low) to ~11% (high) of the total."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 326291,
+        "outputTokens": 22953,
+        "cachedTokens": 268032,
+        "modelCalls": 11,
+        "toolCalls": 28,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.023315,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 326291,
+            "outputTokens": 22953,
+            "estimatedCostUsd": 0.023315,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 130073,
+      "band": {
+        "unit": "ea (per fitting, averaged across 28 emergency downlights and 12 exit signs), Auckland, GST exclusive",
+        "low": 320,
+        "high": 425,
+        "centre": "Auckland",
+        "basis": "Bottom-up build of 8 distinct components, no overlap: (1) 28 downlights and (2) 12 exit signs supplied and fixed off the QV 'LED Emergency Lighting' table (UNREVIEWED rows, read as supply-and-fix at a light point); (3) 480 m of 1.5 mm2 2C+E TPS from QV Cable: Copper @ $6.60/m, +0-15% for clipping/tray routing in a congested void; (4) 3 x 16 A MCB from QV Control Equipment plus a possible hour of board termination time; (5) 3-4 days of QV Elevated Platform Equipment Hire; (6) allowance of 8-14 electrician hours at the QV Labour Rate (Electrician, AKL $83.65/hr) for the witnessed 90-minute discharge test, AS/NZS 2293.2 log book, fitting schedule and as-built mark-up; (7) CoC+ESC combined certificate fee from a fetched Auckland electrical inspector's published price list ($20-$40 +GST); (8) minor sundries allowance. Totals: low $12,818 / high $16,989 for 40 fittings, i.e. $320-$425 each, midpoint ~$372/ea ($14,900). Allowances (items 6 and 8) are ~7-8% of the total, well under a third, so no allowance-based caveat on the band itself. Excluded exactly as instructed: GST, preliminaries, margin, design, consent, BWOF/IQP, ongoing re-testing, central battery/addressable monitoring, new board or sub-main, ceiling grid alterations, fire alarm interface. Confidence is medium rather than high because (a) the QV luminaire rows do not state whether installation labour is included - if they are supply-only the band is understated by roughly $1,700-$5,000 over the 40 fittings, and (b) the 12 m average cable run per fitting is unverified and the QV cable row is a roof-space proxy. Auckland (AKL) column used throughout; no location adjustment applied."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 371559,
+        "outputTokens": 21828,
+        "cachedTokens": 302976,
+        "modelCalls": 9,
+        "toolCalls": 26,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.024293,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 371559,
+            "outputTokens": 21828,
+            "estimatedCostUsd": 0.024293,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

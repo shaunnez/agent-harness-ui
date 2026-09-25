@@ -1,0 +1,167 @@
+{
+  "question": "network-supply-connection-hv-metering",
+  "kind": "pinned",
+  "arm": "A6",
+  "status": "disputed",
+  "passes": false,
+  "consensus": null,
+  "range": {
+    "min": 254317,
+    "max": 561104
+  },
+  "unit": "sum (one complete new 300 kVA supply point, GST excl.) - and $/kVA over 300 kVA",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": null,
+    "highRatio": null,
+    "runsWithBand": 1,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1484,
+  "elapsedMs": 375273,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 375270,
+      "band": {
+        "unit": "sum (one complete new 300 kVA supply point, GST excl.) - and $/kVA over 300 kVA",
+        "low": 254317,
+        "high": 561104,
+        "centre": "Auckland",
+        "basis": "LOW $254,317 = $848/kVA; CENTRAL $325,968 = $1,087/kVA; HIGH $561,104 = $1,870/kVA (all GST exclusive, Auckland, 2026 pricing). Sum of the six components above: Vector design fee $300-$3,000; Vector capital contribution $214,767-$478,104 (80-85% of the total, so the band is driven by Vector's indicative posted capacity rates, not by a quote); HV cable and terminations $10,000-$25,000; LV service $20,250-$30,000; Cat 4 metering $6,000-$16,000; coordination/commissioning $3,000-$9,000. No item is counted twice: the Vector-owned transformer and HV protection/switchgear are inside the Vector capital contribution, and the QV service-main rate is assumed to include the LV cable and its installation. The band is not a certified price - Vector's connection charge for a distribution-substation/HV-feeder connection is 'Priced per job' and its posted $/kVA rates are published 'for information purposes only', so the single largest line could move by a factor of two. All figures GST exclusive; add GST for a customer price."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 1077559,
+        "outputTokens": 38204,
+        "cachedTokens": 932480,
+        "modelCalls": 13,
+        "toolCalls": 46,
+        "searchCalls": 18,
+        "estimatedCostUsd": 0.047482,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1077559,
+            "outputTokens": 38204,
+            "estimatedCostUsd": 0.047482,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 267245,
+      "band": null,
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-unverified",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 5,
+        "webVerified": 4,
+        "webNotFetched": 0,
+        "webExcerptRejected": 1,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 921555,
+        "outputTokens": 27478,
+        "cachedTokens": 789504,
+        "modelCalls": 14,
+        "toolCalls": 45,
+        "searchCalls": 19,
+        "estimatedCostUsd": 0.038663,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 921555,
+            "outputTokens": 27478,
+            "estimatedCostUsd": 0.038663,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 205258,
+      "band": null,
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 1247770,
+        "outputTokens": 29816,
+        "cachedTokens": 971264,
+        "modelCalls": 15,
+        "toolCalls": 50,
+        "searchCalls": 25,
+        "estimatedCostUsd": 0.062279,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1247770,
+            "outputTokens": 29816,
+            "estimatedCostUsd": 0.062279,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,194 @@
+{
+  "question": "door-hardware-sets",
+  "kind": "pinned",
+  "arm": "A8",
+  "status": "disputed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 714.52,
+    "high": 1133.54
+  },
+  "range": {
+    "min": 702,
+    "max": 3067
+  },
+  "unit": "ea (per door leaf, one complete hardware set supplied and fitted, GST exclusive)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 3.209,
+    "highRatio": 2.731,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0957,
+  "elapsedMs": 271994,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 268471,
+      "band": {
+        "unit": "ea (per door leaf, one complete hardware set supplied and fitted, GST exclusive)",
+        "low": 702,
+        "high": 1123,
+        "centre": "Auckland",
+        "basis": "Sum of the nine components above: 248.52 + 35 + 172.14 + 30.25 + 43.17 + 20.50 + 121.95 + 25 + 5 = $702 (low); 448.09 + 95 + 172.14 + 30.25 + 43.17 + 51 + 203.25 + 60 + 20 = $1,123 (high). QV CostBuilder rows used for the door stop (t22:r4, t22:r6) and the fitting labour rate (Labour Rates t0:r5, Carpenter AKL $81.30/hr); fetched NZ vendor pages for proprietary hardware (mortice lockset kit, restricted keying, EN 1154 size 3 closer, closer mounting plate, ball-bearing SS hinges). Allowances are items 8 and 9 only - about 4-7% of the total, so the band stands on sourced rates. Excludes GST, preliminaries, margin, design/consent; excludes the leaf, frame, hanging and all machining (given as already prepped); excludes access control, fire/smoke hardware, panic hardware and access equipment, per the fixed scope. Nominal 25 leaves: $17,500 - $28,100. Alternative upper build using QV's designer/institutional Hardware-trade rows (t2:r6 mortice combination lock with furniture AKL $1,040; t24:r2 LCN 1461 REG closer AKL $800, both replacing components 1-4 and the labour split) gives roughly $1,950 - $2,500 per leaf - that is a grade choice, not a second scope. Auckland 2026, rates not indexed for other centres."
+      },
+      "checks": [
+        "web-unsupported",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 5,
+        "webVerified": 4,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 1,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 592248,
+        "outputTokens": 28429,
+        "cachedTokens": 505984,
+        "modelCalls": 12,
+        "toolCalls": 37,
+        "searchCalls": 7,
+        "estimatedCostUsd": 0.031515,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 592248,
+            "outputTokens": 28429,
+            "estimatedCostUsd": 0.031515,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 271990,
+      "band": {
+        "unit": "ea (per door leaf, one complete hardware set fitted)",
+        "low": 2253,
+        "high": 3067,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components, no overlap: mortice lockset and lever furniture (QV t2:r6) + restricted cylinder/keying allowance + overhead closer (QV t24:r2, sibling row for the premium cover variant) + 3 no. SS 100x75 hinges (QV t0:r11 supply-only, x3) + floor-mounted SS stop (QV t22:r4) + fitting labour (QV Labour Rates carpenter AKL 81.30/hr x 1.75-2.25 hr, hours by judgement) + key cutting 3 keys/cylinder (web, LockSmart Auckland) + one-off master-key/set-up/handover allowance amortised over 25 leaves. NZD, GST-exclusive, Auckland 2026, excluding preliminaries, margin, design, consent and all excluded scope. Allowances carry only ~4-6% of the total, so the band rests on cited QV rows and a fetched page. Band is wide because the QV lockset row's inclusions are not published (lockset line spans 1,040-1,460) and because QV publishes only a premium LCN closer. Nominal 25 leaves: 56,322 - 76,663 (mid ~66,500). This is a working estimate band for a cost plan, not a certified price. Compare with the brief's own 620-880/leaf: the brief's line prices for the lockset/furniture and the SSS closer are below NZ published rates for commercial-duty product, which is the whole of the difference."
+      },
+      "checks": [
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 534417,
+        "outputTokens": 32346,
+        "cachedTokens": 451712,
+        "modelCalls": 13,
+        "toolCalls": 33,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.033168,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 534417,
+            "outputTokens": 32346,
+            "estimatedCostUsd": 0.033168,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 231397,
+      "band": {
+        "unit": "per door leaf (complete set fitted)",
+        "low": 714.52,
+        "high": 1133.54,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components, one leaf each, GST exclusive, Auckland, 2026: mortice lockset kit 248.52-335.38 + restricted-keyway cylinder 35-95 + key cutting 3 keys 30-60 + EN 1154 size 2-4 closer 210.38-320.54 + 3 ball-bearing SSS hinges 43.17-97.02 + door stop 20.50-51.00 + installation labour 121.95-162.60 (1.5-2.0 hr at QV carpenter $81.30/hr) + amortised setup/handover 5-12. Mid ~$925/leaf; nominal 25 leaves ~$17,860-$28,340. Low bound = cheapest cited options that still meet the spec intent; high bound = premium finish/grade and heavier-duty variants priced on the same fetched pages, with no trade discount and no margin or preliminaries (excluded by scope). Allowances are ~2% of the total, so the band rests on cited rates and fetched vendor prices, not judgement. Confidence low: two of the largest lines are 'from' prices on a single online trade list with function/finish variants, QV hardware rows are unreviewed, and the restricted-cylinder figure may overlap the key-cutting line."
+      },
+      "checks": [
+        "web-unsupported",
+        "web-verified",
+        "web-verified",
+        "web-unsupported",
+        "web-unsupported",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 5,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 3,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 597844,
+        "outputTokens": 27086,
+        "cachedTokens": 509824,
+        "modelCalls": 13,
+        "toolCalls": 37,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.030984,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 597844,
+            "outputTokens": 27086,
+            "estimatedCostUsd": 0.030984,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

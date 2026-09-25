@@ -1,0 +1,195 @@
+{
+  "question": "interior-finishes-to-schedule",
+  "kind": "pinned",
+  "arm": "A3",
+  "status": "agreed",
+  "passes": false,
+  "consensus": {
+    "low": 148560,
+    "high": 193000
+  },
+  "range": {
+    "min": 147000,
+    "max": 206000
+  },
+  "unit": "NZD excl GST, whole package",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.014,
+    "highRatio": 1.146,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0893,
+  "elapsedMs": 291234,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 291232,
+      "band": {
+        "unit": "NZD excl GST, whole package",
+        "low": 149000,
+        "high": 206000,
+        "centre": "177500",
+        "basis": "Auckland CBD rates, summing the six scheduled finish quantities, floor smoothing over 730 m2, and stated accessory and package allowances. Rounded sum of component ranges; midpoint is approximately $222/m2 over 800 m2 NLA. Excludes GST, preliminaries, margin, design fees, consent fees, and the other stated exclusions. Allowances are minor items only; confidence is low because several QV rows are proxies and row inclusions are unreviewed."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 9,
+        "rowsFound": 9,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 436779,
+        "outputTokens": 10298,
+        "cachedTokens": 364032,
+        "toolCalls": 44,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.029554,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 436779,
+            "outputTokens": 10298,
+            "estimatedCostUsd": 0.029554,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 284262,
+      "band": {
+        "unit": "sum",
+        "low": 148560,
+        "high": 179700,
+        "centre": "164130",
+        "basis": "GST-exclusive NZD for the whole 800m2 tenancy-floor finishes package. Built by adding the listed component ranges; centre is the midpoint. Auckland QV rates and close proxies are used where available; minor allowances total $11,576–$21,300, under one third of the band. Low confidence reflects product and access uncertainty, especially LVT, close-spaced battens, vinyl wallcovering and out-of-hours loading. Not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 10,
+        "rowsFound": 10,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 433142,
+        "outputTokens": 12943,
+        "cachedTokens": 339712,
+        "toolCalls": 58,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.035187,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 433142,
+            "outputTokens": 12943,
+            "estimatedCostUsd": 0.035187,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 191480,
+      "band": {
+        "unit": "sum for the whole finishes-schedule package",
+        "low": 147000,
+        "high": 193000,
+        "centre": "Auckland CBD",
+        "basis": "GST-exclusive NZD cost-plan estimate; component ranges are added, with minor allowances of $12,000–$20,000. Floor smoothing is applied to the stated 800 m² tenancy area. Midpoint is approximately $170,000. Low confidence reflects unreviewed QV rows and adjustments needed for several specified products."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-missing",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 8,
+        "rowsFound": 7,
+        "rowsMissing": 1,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 311991,
+        "outputTokens": 9510,
+        "cachedTokens": 249600,
+        "toolCalls": 35,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.024603,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 311991,
+            "outputTokens": 9510,
+            "estimatedCostUsd": 0.024603,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

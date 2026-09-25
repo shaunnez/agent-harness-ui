@@ -1,0 +1,189 @@
+{
+  "question": "emergency-lighting-exit-signage",
+  "kind": "pinned",
+  "arm": "A4",
+  "status": "agreed",
+  "passes": false,
+  "consensus": {
+    "low": 347,
+    "high": 435
+  },
+  "range": {
+    "min": 315,
+    "max": 459
+  },
+  "unit": "ea (per emergency fitting, averaged across the 28 luminaires + 12 exit signs; 40-off scope)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.181,
+    "highRatio": 1.12,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0908,
+  "elapsedMs": 287357,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 276210,
+      "band": {
+        "unit": "ea (per emergency fitting, averaged across the 28 luminaires + 12 exit signs; 40-off scope)",
+        "low": 347,
+        "high": 435,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components, ex-GST, NZD, Auckland. Cited QV CostBuilder AKL supply-and-fix rows carry the main drivers - emergency luminaires and exit signs (rows t20:r6/r7/r11/r12), 1.5mm2 TPS cable (t7:r71), test switches (t22:r2) and MCBs (t29:r33) - plus a fetched Auckland scissor-lift rate, a fetched NZ CoC/ESC fee and one electrician-labour allowance (priced off the QV electrician rate) for the initial discharge test and documentation. 40-off total approx $13,900 (low) to $17,400 (high), midpoint approx $390/ea / $15,650. The low end uses the smaller QV proxy rows (3W recessed without mounting kit, 2.3W blade sign) and 2 days access with 5 h testing; the high end uses the scope-matched rows (with mounting kit, 5W sign), 3 days access plus delivery, and 12 h testing. Allowances total roughly 5-9% of the band, well under one third. QV rows are unreviewed, and the assumption that the electrical 'each' rows are supply-and-fix (rather than supply-only) is inferred, not published - if they were supply-only the band would need a separate installation-labour line and would rise materially. This is a cost-plan working estimate, not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 621078,
+        "outputTokens": 28431,
+        "cachedTokens": 546944,
+        "toolCalls": 20,
+        "searchCalls": 7,
+        "estimatedCostUsd": 0.02982,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 621078,
+            "outputTokens": 28431,
+            "estimatedCostUsd": 0.02982,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 287355,
+      "band": {
+        "unit": "ea (per emergency fitting, averaged across the 40 mixed luminaire/exit-sign count)",
+        "low": 315,
+        "high": 410,
+        "centre": "Auckland",
+        "basis": "Working estimate band, GST-exclusive, Auckland, built bottom-up from QV CostBuilder rows (UNREVIEWED) plus stated allowances. Fitting supply+install from QV LED Emergency Lighting rows (28 × 3W recessed downlight; 12 × 24 m exit sign); cable from QV 1.5 mm² 2C+E TPS at 12 m/fitting; 3 × 16A MCBs; QV scissor-platform hire; commissioning/documentation at the QV electrician labour rate; CoC/ESC included in the install rate (cited). 40 fittings = $12,600–$16,400 (centre ~$362.50/ea = ~$14,500). The 12 m average cable run is the largest single drift item; the high end assumes a congested ceiling void and split visits at normal hours. Allowances carry ~8% of the total. Excludes GST, preliminaries, margin, design/consent, BWOF/IQP and ongoing testing; out-of-hours access in the occupied tenancy would add a labour premium beyond this band."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "web-unverified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 1,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 664101,
+        "outputTokens": 31024,
+        "cachedTokens": 582784,
+        "toolCalls": 21,
+        "searchCalls": 11,
+        "estimatedCostUsd": 0.03256,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 664101,
+            "outputTokens": 31024,
+            "estimatedCostUsd": 0.03256,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 231091,
+      "band": {
+        "unit": "per emergency fitting (ea), averaged across 28 downlights + 12 exit signs",
+        "low": 372,
+        "high": 459,
+        "centre": null,
+        "basis": "Auckland, GST-exclusive, 40 fittings total. Sum of installed QV rates (28 x $236 downlight; 12 x $208-347 exit sign; 480m x $6.60/m TPS; 40 x $38.60 test switch; 3 x $53 MCB) plus labelled allowances for board terminations, access, the witnessed 90-min discharge test (QV electrician rate x 4-7 hr), log book/schedule and CoC/ESC. 40-off totals: low $14,860, high $18,369, centre ~$16,615. Confidence medium: the fitting and cable drivers are cited QV rows, but (a) QV publishes no 24m-viewing-distance exit sign, so the exit sign is a $208-$347 proxy and drives most of the spread; (b) QV electrical rates are unreviewed and assumed to be supply-and-fix; (c) if AS/NZS 2293.1 circuit-integrity protection is required, fire-rated 1.5mm2 cable at $36.40/m (QV t8:r20) would add roughly $14,000 on 480m and the band would not hold. Allowances are ~4% of the low total and ~12% of the high total, well under one third."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 8,
+        "rowsFound": 8,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 515034,
+        "outputTokens": 23642,
+        "cachedTokens": 428416,
+        "toolCalls": 14,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.028463,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 515034,
+            "outputTokens": 23642,
+            "estimatedCostUsd": 0.028463,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

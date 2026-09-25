@@ -1,0 +1,180 @@
+{
+  "question": "network-supply-connection-hv-metering",
+  "kind": "pinned",
+  "arm": "A7",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 99760.5,
+    "high": 225285
+  },
+  "range": {
+    "min": 87000,
+    "max": 283570
+  },
+  "unit": "sum for one complete 300 kVA supply point, live and registered",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.293,
+    "highRatio": 1.698,
+    "runsWithBand": 2,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1101,
+  "elapsedMs": 217701,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 200323,
+      "band": null,
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 966871,
+        "outputTokens": 29443,
+        "cachedTokens": 865280,
+        "modelCalls": 18,
+        "toolCalls": 32,
+        "searchCalls": 8,
+        "estimatedCostUsd": 0.0355,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 966871,
+            "outputTokens": 29443,
+            "estimatedCostUsd": 0.0355,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 217697,
+      "band": {
+        "unit": "sum for one complete 300 kVA supply point, live and registered",
+        "low": 112521,
+        "high": 283570,
+        "centre": "Auckland",
+        "basis": "Additive build-up of the eight components above, all NZD and GST-exclusive, Auckland urban, for the fixed scope only. Midpoint $198,046. Amortised over the 300 kVA nominal capacity: $375/kVA low, $945/kVA high, $660/kVA midpoint. Dominant uncertainty is the Vector capital contribution (row 4), which Vector prices per job under a Customer Works Agreement; the range there spans Vector's own published posted capacity rate for the distribution substation tier (300 x $176.67 = $53,001) and the EA's published worked-example cost for a new 300 kVA ground-mounted transformer plus RMU ($182,000 urban). Excluded exactly as instructed: GST, preliminaries, margin, design/consent fees, substation site works (slab, enclosure, bollards, fencing, access crossing), the main switchboard and load side, trenching/ducting/reinstatement in the road reserve, network reinforcement, second feed, retailer contract, standby generation, UPS, power factor correction, after-hours energisation and third-party outage management. Excluding row 4 the remaining sourced scope is $59,520-$101,570, so a reviewer can reject the capital contribution alone. Not a certified price - a cost-plan band."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 993767,
+        "outputTokens": 37091,
+        "cachedTokens": 889088,
+        "modelCalls": 15,
+        "toolCalls": 39,
+        "searchCalls": 10,
+        "estimatedCostUsd": 0.040624,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 993767,
+            "outputTokens": 37091,
+            "estimatedCostUsd": 0.040624,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 203618,
+      "band": {
+        "unit": "sum - one complete new supply point, 300 kVA, live and registered (Auckland, GST exclusive)",
+        "low": 87000,
+        "high": 167000,
+        "centre": "114000",
+        "basis": "Sum of the components above, rounded: low $86,700 and high $166,560 computed from the stated QV rows, fetched Vector/ESC figures and labelled allowances; centre $113,706 taken as design fee $3,000 + capital contribution $53,001 (300 kVA x $176.67/kVA) + 1.5 site visits $255 + HV cable $10,350 + HV terminations $4,000 + LV cable $29,000 + metering cubicle and CTs $6,000 + interval meter and comms $4,500 + ESC $600 + coordination $3,000. Amortised over the 300 kVA nominal capacity: $290-$555/kVA, centre approx. $379/kVA. Allowances (HV terminations, CT cubicle and CTs, interval meter and comms, coordination) total $11,500-$24,000, roughly 13% of the sum, so the band is not allowance-driven; the dominant uncertainty is Vector's per-job connection charge and development contribution, which are published only as 'Priced per job'. Excludes GST, preliminaries, margin, design and consent fees, substation site works (slab, enclosure, bollards, fencing, access crossing), the main switchboard and its load side, road-reserve trenching and reinstatement, network reinforcement, second feed, retailer contract, standby generation, UPS, power factor correction, and after-hours energisation. Auckland centre used throughout; QV AKL rates."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "web-unverified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 4,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 1,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 957079,
+        "outputTokens": 29656,
+        "cachedTokens": 866304,
+        "modelCalls": 16,
+        "toolCalls": 37,
+        "searchCalls": 13,
+        "estimatedCostUsd": 0.034009,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 957079,
+            "outputTokens": 29656,
+            "estimatedCostUsd": 0.034009,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+{
+  "question": "network-supply-connection-hv-metering",
+  "kind": "pinned",
+  "arm": "A4",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 138720,
+    "high": 276610
+  },
+  "range": {
+    "min": 109841,
+    "max": 278000
+  },
+  "unit": "sum (one complete new 300 kVA HV-supplied supply point, live and registered, Auckland)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.693,
+    "highRatio": 1.434,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1368,
+  "elapsedMs": 537221,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 537220,
+      "band": {
+        "unit": "sum (one complete new 300 kVA HV-supplied supply point, live and registered, Auckland)",
+        "low": 109841,
+        "high": 276610,
+        "centre": null,
+        "basis": "Working estimate band, GST-exclusive, NZD, Auckland (Vector network), at 1 April 2026 pricing; not a certified price. Sum of seven distinct components: Vector design fee $3,000 (cited); Vector application/ICP allowance $300–$1,500; Vector capital contribution (Vector-owned 300 kVA transformer + HV protection/switchgear + network capacity) $53,001–$181,500, bracketed by Vector's posted distribution-substation capacity rate ($176.67/kVA) and RETA's recorded Vector all-in connection cost (~$605/kVA incl. full DC); 30 m HV cable $20,790–$38,610 (QV proxy); 25 m LV service $24,750–$30,000 (QV proxy); metering $4,000–$10,000 (allowance); coordination/testing/certification $4,000–$12,000 (allowance). Allowances are ~8% of the total. Amortised over the 300 kVA nominal capacity: LOW $366/kVA, HIGH $922/kVA, CENTRE $644/kVA. Confidence LOW: the dominant Vector capital-contribution line is quote-based, the dedicated transformer/switchgear works are not published, and Vector's network-tier classification (distribution substation vs high voltage feeder) is material. RETA's stated ceiling for a minor-connection Auckland site ('indicative connection costs are under $300,000') is consistent with the high end."
+      },
+      "checks": [
+        "web-verified",
+        "allowance",
+        "web-unverified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 1,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 2233669,
+        "outputTokens": 51423,
+        "cachedTokens": 2107392,
+        "toolCalls": 42,
+        "searchCalls": 19,
+        "estimatedCostUsd": 0.056118,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 2233669,
+            "outputTokens": 51423,
+            "estimatedCostUsd": 0.056118,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 242298,
+      "band": {
+        "unit": "sum (one complete 300 kVA HV supply point, live and registered, GST exclusive)",
+        "low": 138720,
+        "high": 193865,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components, GST exclusive, Auckland (AKL) QV rates plus cited Vector/Aurora figures. Vector fees + capital contribution $89,670–$96,505 (assessment $261 + design $3,000 + transformer $17,901 + HV switchgear $15,337–$22,172 + posted development contribution $176.67/kVA x 300 kVA = $53,001 + site visit $170); HV cabling $18,300–$41,360 (cable $13,800–$30,360 + terminations $3,000–$7,000 + on-site trench $1,500–$4,000); LV cable $20,250–$30,000; metering installation $8,000–$20,000; coordination/commissioning $2,500–$6,000. Amortised over the 300 kVA nominal capacity: $462/kVA low, $646/kVA high, $554/kVA midpoint. No aggregate row is added alongside its components. Allowances are $15,000–$37,000, about 11%–19% of the band, so the band is not allowance-led. Confidence is LOW because (1) the development-contribution line is Vector's own 'for information only' posted rate, not a quoted price, and it is ~38% of the band; (2) the transformer and HV switchgear are published NZ EDB asset replacement values, not Vector's quoted project cost; (3) the 11kV cable has no QV row and uses a stated proxy adjustment; (4) metering is wholly an allowance."
+      },
+      "checks": [
+        "web-verified",
+        "web-unverified",
+        "web-unverified",
+        "web-unverified",
+        "web-unverified",
+        "web-unverified",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 6,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 5,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 1471584,
+        "outputTokens": 37759,
+        "cachedTokens": 1389056,
+        "toolCalls": 32,
+        "searchCalls": 12,
+        "estimatedCostUsd": 0.039202,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1471584,
+            "outputTokens": 37759,
+            "estimatedCostUsd": 0.039202,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 254320,
+      "band": {
+        "unit": "sum (one complete 300 kVA supply point, GST-exclusive, Auckland)",
+        "low": 186000,
+        "high": 278000,
+        "centre": null,
+        "basis": "Bottom-up sum of distinct components: Vector fees and capital contribution (design fee $3,000 + assessment fee proxy $261 + transformer/HV switchgear capital contribution $150,000-$210,000 = $154k-$214k); HV and LV cabling including terminations and site sundries ($19k-$37k); Category 4 CT metering installation ($8k-$16k); coordination and commissioning ($5k-$12k). Over the 300 kVA nominal capacity this is approx. $620/kVA low, $773/kVA centre, $927/kVA high. GST-exclusive, NZD, Auckland centre, QV rates unreviewed and dated to the library edition. Confidence is low: the dominant item (Vector's charge for a dedicated Vector-owned transformer and HV switchgear) is priced per Customer Works Agreement and has no published NZ rate, so it is carried at the Electricity Authority's published DS-tier transformer+RMU project cost, widened for scope differences. Allowances are ~18% of the total, below the one-third trigger, so the band is established rather than null."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-unverified",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 1,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 2010426,
+        "outputTokens": 39488,
+        "cachedTokens": 1930240,
+        "toolCalls": 40,
+        "searchCalls": 19,
+        "estimatedCostUsd": 0.041511,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 2010426,
+            "outputTokens": 39488,
+            "estimatedCostUsd": 0.041511,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

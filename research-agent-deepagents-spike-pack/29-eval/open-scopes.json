@@ -1,0 +1,104 @@
+[
+  {
+    "id": "open-a1",
+    "objective": "how come you couldn't price the asbestos soffit removal on our tender? What does that actually cost?",
+    "scope": {
+      "item": "Asbestos soffit removal",
+      "measure": "per m²",
+      "unitText": "m² of soffit area",
+      "quantityBasis": "",
+      "centre": "",
+      "inclusions": [
+        "Removal and disposal of asbestos-containing soffit material"
+      ],
+      "exclusions": [
+        "Replacement soffit"
+      ],
+      "assumptions": [
+        "Treating the soffit as asbestos-containing material requiring specialist removal"
+      ],
+      "clarifications": [
+        "Soffit area, asbestos type and condition, access and height, containment requirements, and disposal arrangements"
+      ]
+    },
+    "scopedBy": {
+      "runtime": "codex-cli",
+      "model": "gpt-6-luna",
+      "reasoning": "medium"
+    },
+    "scopeMs": 6006,
+    "scopeCostUsd": 0.00125
+  },
+  {
+    "id": "open-a2",
+    "objective": "Our tender flagged liquefaction-prone ground. What does ground improvement cost for a single-storey light commercial building in Christchurch, and how common is this problem?",
+    "scope": {
+      "item": "Ground improvement for a single-storey light commercial building on liquefaction-prone ground",
+      "measure": "per m²",
+      "unitText": "m² of building floor area",
+      "quantityBasis": "",
+      "centre": "Christchurch",
+      "inclusions": [
+        "Ground improvement work required to address liquefaction-related ground conditions"
+      ],
+      "exclusions": [
+        "Building foundations and structural work",
+        "Geotechnical investigation and design",
+        "Repairs to existing damage"
+      ],
+      "assumptions": [
+        "Treating this as a request for a ground-improvement rate per unit area, since no building size or total quantity was given.",
+        "Scope is limited to ground improvement for a new light commercial building."
+      ],
+      "clarifications": [
+        "Ground improvement method and treatment depth",
+        "Whether the price should include design, testing, and construction monitoring",
+        "Building footprint and site-specific ground conditions",
+        "Meaning of “how common” (for example, citywide prevalence or likelihood at this site)"
+      ]
+    },
+    "scopedBy": {
+      "runtime": "codex-cli",
+      "model": "gpt-6-luna",
+      "reasoning": "medium"
+    },
+    "scopeMs": 8471,
+    "scopeCostUsd": 0.001041
+  },
+  {
+    "id": "open-a3",
+    "objective": "Client wants to know the cost impact of switching the roof from long-run coloursteel to a membrane on a 1200m2 warehouse.",
+    "scope": {
+      "item": "Net cost change of a membrane roof in place of long-run Coloursteel",
+      "measure": "per m²",
+      "unitText": "m² of roof area, net change (membrane roof less the long-run Coloursteel roof it replaces)",
+      "quantityBasis": "1200 m² of warehouse roof",
+      "centre": "",
+      "inclusions": [
+        "Membrane roof system in place, including its substrate",
+        "Credit for the long-run Coloursteel roofing no longer needed"
+      ],
+      "exclusions": [
+        "Removal or disposal of existing roofing",
+        "Structural changes",
+        "Insulation or ceiling work",
+        "Flashings, gutters, and drainage"
+      ],
+      "assumptions": [
+        "The 1200 m² refers to roof area"
+      ],
+      "clarifications": [
+        "State the membrane type and required build-up.",
+        "State whether existing roof removal, flashings, gutters, and drainage are included."
+      ]
+    },
+    "scopedBy": {
+      "runtime": "codex-cli",
+      "model": "gpt-6-luna",
+      "reasoning": "medium",
+      "amendedBy": "operator (Shaun approved pinning the net change, 25 September)"
+    },
+    "scopeMs": 6535,
+    "scopeCostUsd": 0.00128
+  }
+]

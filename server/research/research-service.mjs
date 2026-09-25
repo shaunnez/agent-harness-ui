@@ -46,7 +46,7 @@ export class ResearchService {
     return this.#registry.ids();
   }
 
-  async createRun(input, { questionId = null, questionOrdinal = null } = {}) {
+  async createRun(input) {
     const request = this.#validate(input);
     const policies = this.#settings ? researchPoliciesOf(await this.#settings()) : null;
     // A request that names a runtime still wins; one that names none gets the Settings choice.
@@ -60,8 +60,6 @@ export class ResearchService {
       runtimeId,
       request,
       budget: request.budget,
-      questionId,
-      questionOrdinal,
       now: this.#now(),
     });
     let handle;
@@ -234,11 +232,10 @@ export class ResearchService {
     if (!record) return null;
     const status = await runtime.status(runId).catch(() => null);
     const result = await runtime.result(runId).catch(() => null);
-    if (result) {
-      const costBand = typeof runtime.costBand === "function" ? runtime.costBand(runId) : null;
-      const citations = typeof runtime.citationSummary === "function" ? runtime.citationSummary(runId) : null;
-      await this.#store.recordResult(runId, { ...result, costBand, citations }, { now: this.#now() });
-    }
+    if (result) await this.#store.recordResult(runId, result, { now: this.#now() });
+    // A research question compares its runs' bands, which only a cost-band runtime reports.
+    const outcome = typeof runtime.outcome === "function" ? safely(() => runtime.outcome(runId)) : null;
+    if (outcome) await this.#store.recordOutcome(runId, outcome);
     const terminal = status?.status && isTerminal(status.status) ? status.status : "failed";
     const usage = normalizeUsage(status?.usage ?? result?.usage, terminal);
     const overruns = researchSoftOverruns(record.budget, usage);
@@ -295,6 +292,14 @@ function snapshotResearchPolicy(runtimeId, policies, named) {
       reasoning: policies.agent.reasoning,
     };
   return null;
+}
+
+function safely(read) {
+  try {
+    return read() ?? null;
+  } catch {
+    return null;
+  }
 }
 
 function isTerminal(state) {

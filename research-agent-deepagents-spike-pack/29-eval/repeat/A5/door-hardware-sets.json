@@ -1,0 +1,187 @@
+{
+  "question": "door-hardware-sets",
+  "kind": "pinned",
+  "arm": "A5",
+  "status": "disputed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 1057,
+    "high": 1577
+  },
+  "range": {
+    "min": 728,
+    "max": 2570
+  },
+  "unit": "ea (per door leaf, complete hardware set supplied and fitted)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 2.72,
+    "highRatio": 2.185,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0834,
+  "elapsedMs": 271961,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 271959,
+      "band": {
+        "unit": "ea (per door leaf, complete hardware set supplied and fitted)",
+        "low": 1057,
+        "high": 1577,
+        "centre": "Auckland",
+        "basis": "Per-leaf sum: lockset kit $248.52-$373.61 + restricted keying $35-$95 + overhead closer $526.75-$723.69 + 3 hinges $94-$141 + door stop $21-$51 + installation labour $122-$163 + setup allowance $10-$30 = $1,057-$1,577/leaf, mid ~$1,317. Nominal 25 leaves = $26,425-$39,425, mid ~$32,900. Excludes GST, preliminaries, margin, design/consent fees, the leaf/frame/hanging/morticing, access control, fire/smoke hardware and access equipment per the fixed scope. Basis is cited QV CostBuilder rows (unreviewed) plus fetched NZ vendor pages; allowances are under 5% of the total, so the band rests on cited rates. Main divergence from the scenario's $620-$880/leaf is the satin-stainless overhead closer (NZ vendor evidence $526-$724 ex GST vs the scenario's $150-$230) and the hinge/stop line; QV's LCN closer row ($800) and Legge mortice-lock rows ($890-$1,040) sit above this band and bound it upward. Confidence medium: QV hardware rows are unreviewed list-level and their inclusion of installation is unclear — treated as supply-only, consistent with QV's 'Supply Only' labels on its hinge and door-furniture sections; if those rows already include fixing, remove the labour line."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 562053,
+        "outputTokens": 30142,
+        "cachedTokens": 485760,
+        "toolCalls": 15,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.030986,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 562053,
+            "outputTokens": 30142,
+            "estimatedCostUsd": 0.030986,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 150571,
+      "band": {
+        "unit": "per door leaf - complete hardware set supplied and installed, Auckland, GST excl, 2026",
+        "low": 728,
+        "high": 1176,
+        "centre": "Auckland",
+        "basis": "25 leaves, one building, one floor, one visit. Sum of distinct components: MNC commercial mortice lockset kit + lever furniture ($248.52-335.38, web/JH Auckland); Dormakaba TS68 EN2-4 size-3 closer ($159.16-250, web/JH Auckland, SSS-cover allowed at high end); 3 no. SS butt hinges at QV supply rate ($117.60-176.40, qv t0:r11); door stop ($20.50-51.00, qv t22:r4/r6); installation labour at QV carpenter rate $81.30/hr x 1.5-2.5 hr ($121.95-203.25, qv t0:r5); keying/setup allowance ($60-160). No leaf, frame, hanging, machining, fire or access-control work included. Nominal 25 leaves: $18,200-$29,400 (mid ~$23,800). QV hardware rows are supply-only and unreviewed; the LCN/Legge architectural rows in QV overstate Grade 2 commercial duty, so mid-range Auckland vendor prices are used for the lockset and closer and the QV premium rows are cited only for comparison. Highest-uncertainty items are the closer finish (silver vs SSS) and the ball-bearing hinge premium - widen the band if SSS-cover closer and 316-grade BB hinges are insisted on."
+      },
+      "checks": [
+        "web-verified",
+        "web-derived",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 481507,
+        "outputTokens": 24905,
+        "cachedTokens": 422400,
+        "toolCalls": 15,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.025076,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 481507,
+            "outputTokens": 24905,
+            "estimatedCostUsd": 0.025076,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 208551,
+      "band": {
+        "unit": "per door leaf (each), one complete hardware set fitted",
+        "low": 1980,
+        "high": 2570,
+        "centre": "Auckland",
+        "basis": "Sum of 8 distinct components (no double counting): QV supply rows for the mortice lockset with furniture, overhead closer, 3 hinges and door stop; QV Carpenter labour for fitting/adjustment; a fetched NZ vendor rate for the restricted-keyway cylinder and master-system keying; and two minor allowances (master keys/registered key cutting, and site setup/handover) amortised over 25 leaves. Nominal 25 leaves: $49,500–$64,250 excl. GST. QV rows are UNREVIEWED and several unlabelled as to supply-only vs supply-and-fix, so the labour line is deliberately ranged. QV's hardware library is architectural-grade and sits above the specified ANSI/BHMA Grade-2 commercial duty (trade-priced Grade-2 product would be roughly 30–50% below the QV supply lines), so treat this as an upper/mid working range; the client's $620–880/leaf assumption reflects mid-range commercial trade product not modelled in QV. Allowances are under ~8% of the total. Confidence low."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 395833,
+        "outputTokens": 23963,
+        "cachedTokens": 315904,
+        "toolCalls": 10,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.027315,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 395833,
+            "outputTokens": 23963,
+            "estimatedCostUsd": 0.027315,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

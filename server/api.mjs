@@ -8,11 +8,10 @@ import { createCompanionChatRoutes } from "./companion-chat.mjs";
 import { defaultWorktreeRoot, GitWorktreeManager } from "./git-worktree.mjs";
 import { assertHttpBoundary, corsHeaders, httpBoundaryFromEnvironment } from "./http-security.mjs";
 import { normalizeModelId, POLICY_IDS } from "./model-catalog.mjs";
+import { isResearchRepositoryPath } from "./project-policy.mjs";
 import { createProjectRoutes } from "./project-routes.mjs";
 import { RepositoryAuthorityService } from "./repository-authority.mjs";
-import { ResearchQuestionService } from "./research/research-questions.mjs";
 import { createResearchRoutes } from "./research/research-routes.mjs";
-import { ResearchStore } from "./research/research-store.mjs";
 import { createRetainedEvidenceRoutes } from "./retained-evidence-routes.mjs";
 import { withActionEligibility } from "./retry-admission-policy.mjs";
 import { createRuntimeSettingsRoutes } from "./runtime-settings-routes.mjs";
@@ -94,6 +93,10 @@ async function readJson(request) {
 }
 
 async function validateRepository(repositoryPath) {
+  // Every delivery route (new task, onboarding, Linear intake) validates its repository here, so
+  // a research project's sentinel path is refused once, with a reason, for all of them.
+  if (isResearchRepositoryPath(repositoryPath))
+    throw new Error("A research project has no repository. It takes research questions, not delivery tasks.");
   if (!repositoryPath || !path.isAbsolute(repositoryPath))
     throw new Error("Choose an absolute local repository path.");
   const info = await stat(repositoryPath).catch(() => null);
@@ -200,6 +203,7 @@ export function createApiServer({
   repositoryAuthorityService = orchestrator?._repositoryAuthority ?? new RepositoryAuthorityService(),
   runCompanionAgent,
   researchService = null,
+  researchQuestions = null,
   linearIntake = null,
   httpBoundary = httpBoundaryFromEnvironment(),
   staticUi = null,
@@ -273,17 +277,7 @@ export function createApiServer({
   // The research plane is optional: without a service the paths simply do not exist, which is
   // what keeps the JSON-store companion and the existing API tests unaffected by it.
   const researchRoutes = researchService
-    ? createResearchRoutes({
-        researchService,
-        questionService: new ResearchQuestionService({
-          store: new ResearchStore(store.databaseHandle()),
-          projects: store,
-          runs: researchService,
-          settings: () => store.settings(),
-        }),
-        send,
-        readJson,
-      })
+    ? createResearchRoutes({ researchService, researchQuestions, send, readJson })
     : () => false;
   const companionChatRoutes = createCompanionChatRoutes({
     store,

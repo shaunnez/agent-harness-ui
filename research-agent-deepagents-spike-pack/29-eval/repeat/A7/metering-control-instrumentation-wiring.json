@@ -1,0 +1,185 @@
+{
+  "question": "metering-control-instrumentation-wiring",
+  "kind": "pinned",
+  "arm": "A7",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 51.78,
+    "high": 93.3
+  },
+  "range": {
+    "min": 51.56,
+    "max": 101.95
+  },
+  "unit": "$/m of installed cable route (Auckland, GST exclusive)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.117,
+    "highRatio": 1.145,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.08,
+  "elapsedMs": 171340,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 133997,
+      "band": {
+        "unit": "$/m of installed cable route (Auckland, GST exclusive)",
+        "low": 51.56,
+        "high": 89.05,
+        "centre": "Auckland (midpoint $70.31/m)",
+        "basis": "Sum of the eight components above: QV CostBuilder installed rates for the 20mm surface conduit (the largest single item) and for mobile scaffold hire, a fetched supplier list price for the specified 2-pair 0.5mm2 overall-screened 300/500V instrument cable, and allowances for cable draw-in/labelling, 16 terminations, testing and the BMS cabinet interface priced from the QV Auckland electrician rate of $83.65/hour with stated hour ranges. 200m nominal quantity: LOW $10,312, HIGH $17,810, midpoint about $14,060 (i.e. $51.56-$89.05/m). Allowances carry 27-29% of the total, which is why confidence is low rather than medium. The single largest uncertainty is the duplicated QV conduit row (AKL 34.7 vs 60.0 for the same 20mm 'fixed to concrete masonry' description, a 1.7x spread); if the lower row is correct, the band narrows to roughly $52-$72/m. GST, preliminaries, margin, design and consent fees, the field devices, the BMS controller/software/point mapping, new panels or power supplies, trenching/core drilling and after-hours/live-site work are all excluded per the fixed scope. Centre: Auckland. QV rows are unreviewed; figures are a cost-plan band, not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 536814,
+        "outputTokens": 21053,
+        "cachedTokens": 458240,
+        "modelCalls": 12,
+        "toolCalls": 33,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.025793,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 536814,
+            "outputTokens": 21053,
+            "estimatedCostUsd": 0.025793,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 171336,
+      "band": {
+        "unit": "NZD per lineal metre of installed control/instrumentation cable route (incl. containment), GST exclusive, Auckland",
+        "low": 57.6,
+        "high": 101.95,
+        "centre": "Auckland",
+        "basis": "Sum of the seven distinct components above: low 8.50+34.70+4.40+2.00+4.50+1.50+1.99 = $57.59/m; high 14.90+60.00+7.60+4.50+8.50+2.50+3.97 = $101.97/m; mid rates give $74.60/m. For the 200 m nominal quantity: $11,520 low, $20,390 high, $14,920 mid. Main cost drivers are the conduit rate (QV shows two identically worded 20mm rows at $34.70/m and $60.00/m - the single largest source of spread) and the instrument cable rate (no QV row exists; two QV installed-cable rows used as low/high anchors, cross-checked against ASI Automation's $3.03/m list price for the equivalent 2-pair 0.5mm2 overall-screened cable, source-6). Allowances (terminations, testing, BMS interface labour, labelling) total $12.40-$23.10/m, about 21-23% of the band - under one third, but a material share, so confidence is set low. Excludes everything in the scenario's EXCLUDED list (GST, preliminaries, margin, design, consent, field devices, BMS controller/software/point mapping/graphics/commissioning, new switchboards/panels/230V supply, trenching, core drilling, after-hours/live-site permits, work above 3m). This is a cost-plan band built from cited rates and stated allowances, not a certified price."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 711253,
+        "outputTokens": 26421,
+        "cachedTokens": 654336,
+        "modelCalls": 20,
+        "toolCalls": 36,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.026353,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 711253,
+            "outputTokens": 26421,
+            "estimatedCostUsd": 0.026353,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 138892,
+      "band": {
+        "unit": "NZD per lineal metre of installed control/instrumentation cable route, GST exclusive, Auckland",
+        "low": 51.78,
+        "high": 93.3,
+        "centre": "Auckland",
+        "basis": "Additive build over a nominal 200m (8 field runs averaging 25m) in Auckland, GST exclusive, excluding preliminaries, margin, design and consent fees per the fixed scope. Low = 2.60 + 3.35 + 34.70 + 4.15 + 2.40 + 2.09 + 1.99 + 0.50 = 51.78/m, i.e. NZ$10,356 for 200m. High = 3.60 + 8.37 + 60.00 + 6.96 + 4.72 + 4.18 + 3.97 + 1.50 = 93.30/m, i.e. NZ$18,660 for 200m. Mid-band approximately 72.55/m = NZ$14,510 for 200m. Containment (20mm HD orange PVC conduit, fixed to masonry/steel, with fixing labour) is 62-64% of the total - the QV library holds two unreviewed 20mm masonry-fixed conduit rows 73% apart (34.70/m and 60.00/m) and does not state whether saddles, bends, couplings and glands are included, so that single item swings the answer by roughly 25%; it is the reason confidence is low and the band is 1.8x wide. Allowances are under 5% of the total, so the band is not allowance-led. All labour-derived components use QV's published Auckland electrician rate of 83.65/hr with my stated hours; QV publishes no instrumentation cable, termination, ELV testing or BMS-interface rate."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 831216,
+        "outputTokens": 21066,
+        "cachedTokens": 744576,
+        "modelCalls": 16,
+        "toolCalls": 35,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.027869,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 831216,
+            "outputTokens": 21066,
+            "estimatedCostUsd": 0.027869,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

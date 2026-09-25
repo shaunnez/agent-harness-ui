@@ -1,0 +1,175 @@
+{
+  "question": "p-solar",
+  "kind": "pinned",
+  "arm": "A4",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 9900,
+    "high": 18900
+  },
+  "range": {
+    "min": 8100,
+    "max": 24000
+  },
+  "unit": "NZD lump sum, ex-GST, ex-preliminaries, ex-margin, for the whole 30 kWp array",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.309,
+    "highRatio": 1.29,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0987,
+  "elapsedMs": 302477,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 150544,
+      "band": {
+        "unit": "NZD lump sum, ex-GST, ex-preliminaries, ex-margin, for the whole 30 kWp array",
+        "low": 10600,
+        "high": 18900,
+        "centre": "Auckland",
+        "basis": "Sub-total mounting system $5,900-$9,300 (rails/clamps/brackets supply + fixings allowance + installation labour); strengthening $1,300-$2,800 (QV purlins + bolt allowance); structural design & PS1 $3,400-$6,800 (Proconsult rates x assumed hours). Summed, not averaged: $10,617-$18,865, rounded to $10,600-$18,900 (about $353-$630 per kWp). Cross-checked against Nova/NREL 2026 racking hardware of $0.08-$0.15/W, which puts 30 kWp hardware alone at roughly $2,400-$4,500 - consistent with the supply component. Confidence low: the rail brand/spec is not nominated, layout/quantities are assumed, and the fee is hours-based rather than a quote."
+      },
+      "checks": [
+        "web-unverified",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-unverified"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 2,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 714185,
+        "outputTokens": 21885,
+        "cachedTokens": 651264,
+        "toolCalls": 24,
+        "searchCalls": 10,
+        "estimatedCostUsd": 0.024523,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 714185,
+            "outputTokens": 21885,
+            "estimatedCostUsd": 0.024523,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 247882,
+      "band": {
+        "unit": "sum",
+        "low": 9900,
+        "high": 24000,
+        "centre": "Auckland",
+        "basis": "Working estimate band (not a certified price), GST exclusive, excluding preliminaries and margin, Auckland, for the fixed scope only: mounting system supply + mounting-only labour + supplementary purlins to one third of footprint + engineer design/PS1. Built from QV CostBuilder rows (purlins t7:r25/r26, bolts t8:r2/r3, labour t0:r27/r31), fetched vendor/consultant pages (mounting hardware source-2, engineer fees source-3) and two minor allowances (fixings/sealant; engineer fee). Component sum: 3,000-10,000 + 3,000-6,000 + 2,100-3,100 + 300-900 + 1,500-4,000 = $9,900-$24,000, midpoint ~$16,950. Band is wide and confidence low because mounting-hardware pricing spans retail-vs-commercial benchmarks and the mounting labour hours are assumed. A reviewer can reject any one component without disturbing the others."
+      },
+      "checks": [
+        "web-unverified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-unverified"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 2,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 1181715,
+        "outputTokens": 22693,
+        "cachedTokens": 1113216,
+        "toolCalls": 31,
+        "searchCalls": 12,
+        "estimatedCostUsd": 0.02723,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1181715,
+            "outputTokens": 22693,
+            "estimatedCostUsd": 0.02723,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 302476,
+      "band": {
+        "unit": "sum (whole 30 kWp array)",
+        "low": 8100,
+        "high": 18600,
+        "centre": "Auckland",
+        "basis": "Sum of five separately priced components, all GST-exclusive, Auckland rates: (1) proprietary mounting hardware $2,500-$6,000; (2) mounting installation labour $2,600-$5,600 (QV roofer rate x assumed hours); (3) supplementary purlins $1,200-$2,250 (QV); (4) purlin bolts $330-$770 (QV); (5) structural design + PS1 $1,500-$4,000. Component mid-points sum to approx $13,400. QV publishes no solar/PV mounting rate, so the mounting system - roughly 60% of the total - is a residential aggregate scaled to 60 panels plus a wholesale Clenergy component build-up; the labour hours, purlin quantity and PS1 fee involve QS judgement. Confidence is therefore LOW and the band is deliberately wide. Scope excludes GST, preliminaries, margin, PV modules, inverters, cabling/electrical work, roof sheet replacement/repair/recoating, scaffolding/edge protection/roof access, and consent fees."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 1677051,
+        "outputTokens": 29831,
+        "cachedTokens": 1513344,
+        "toolCalls": 26,
+        "searchCalls": 10,
+        "estimatedCostUsd": 0.046995,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1677051,
+            "outputTokens": 29831,
+            "estimatedCostUsd": 0.046995,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

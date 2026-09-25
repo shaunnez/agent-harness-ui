@@ -1,4 +1,5 @@
 import path from "node:path";
+import { isResearchRepositoryPath, withProjectKind } from "./project-policy.mjs";
 
 export function createProjectRoutes({
   store,
@@ -11,7 +12,10 @@ export function createProjectRoutes({
   return async function handleProjectRoute(request, response, url) {
     if (request.method === "GET" && url.pathname === "/api/projects") {
       send(response, 200, {
-        projects: withSuggestedRepository(await store.listProjects(), suggestedRepository),
+        projects: withSuggestedRepository(
+          (await store.listProjects()).map(withProjectKind),
+          suggestedRepository,
+        ),
       });
       return true;
     }
@@ -21,16 +25,26 @@ export function createProjectRoutes({
       const name = String(input.name ?? "").trim();
       if (!name) throw new Error("Project name is required.");
       if (name.length > 120) throw new Error("Project name must be 120 characters or fewer.");
-      const kind = input.kind ?? "delivery";
+      const kind = input.kind === undefined ? "delivery" : input.kind;
       if (kind !== "delivery" && kind !== "research")
-        throw new Error("Project type must be delivery or research.");
+        throw new Error("A project is a delivery project or a research project.");
       if (kind === "research" && !researchAvailable)
         throw Object.assign(new Error("Research projects require the SQLite research runtime."), {
           statusCode: 409,
         });
-      const repositoryPath = kind === "research" ? "" : await validateRepository(input.repositoryPath);
-      const project = await store.createProject({ name, repositoryPath, kind });
-      send(response, 201, { project });
+      // A research project asks costing questions and never touches a repository, so none is
+      // chosen or validated; a repository sent with one is a client mistake, not a default.
+      if (kind === "research" && input.repositoryPath)
+        throw new Error("A research project has no repository; leave the repository out.");
+      const project =
+        kind === "research"
+          ? await store.createProject({ name, kind })
+          : await store.createProject({
+              name,
+              kind,
+              repositoryPath: await validateRepository(input.repositoryPath),
+            });
+      send(response, 201, { project: withProjectKind(project) });
       return true;
     }
 
@@ -46,7 +60,11 @@ export function createProjectRoutes({
         kind: match[2] ?? "rename",
         name: input.name,
       });
-      send(response, project ? 200 : 404, project ? { project } : { error: "Registered project not found." });
+      send(
+        response,
+        project ? 200 : 404,
+        project ? { project: withProjectKind(project) } : { error: "Registered project not found." },
+      );
       return true;
     }
 
@@ -55,9 +73,10 @@ export function createProjectRoutes({
 }
 
 function withSuggestedRepository(projects, suggestedRepository) {
+  const research = projects.filter((project) => isResearchRepositoryPath(project.repositoryPath));
   const byPath = new Map(
     projects
-      .filter((project) => project.kind !== "research")
+      .filter((project) => !isResearchRepositoryPath(project.repositoryPath))
       .map((project) => [path.resolve(project.repositoryPath), project]),
   );
   if (suggestedRepository && path.isAbsolute(suggestedRepository)) {
@@ -67,11 +86,10 @@ function withSuggestedRepository(projects, suggestedRepository) {
         id: `suggested:${repositoryPath}`,
         name: path.basename(repositoryPath),
         repositoryPath,
+        kind: "delivery",
         createdAt: null,
       });
     }
   }
-  return [...projects.filter((project) => project.kind === "research"), ...byPath.values()].sort(
-    (left, right) => left.name.localeCompare(right.name),
-  );
+  return [...byPath.values(), ...research].sort((left, right) => left.name.localeCompare(right.name));
 }

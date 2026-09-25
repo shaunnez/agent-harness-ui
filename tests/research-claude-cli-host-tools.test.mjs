@@ -218,6 +218,8 @@ test("a fetched web figure verifies, an unfetched one is marked unchecked, and t
       webVerified: 1,
       webNotFetched: 1,
       webExcerptRejected: 0,
+      webDerived: 0,
+      webUnsupported: 0,
       allowances: 0,
     });
   });
@@ -458,7 +460,7 @@ function defaultAnswer(sourceId) {
         source: PAGE_URL,
         source_id: sourceId,
         excerpt: "$310 per metre installed",
-        amount: { low: 280, high: 340 },
+        amount: { low: 310, high: 310 },
       },
       {
         role: "Traffic management",
@@ -531,6 +533,7 @@ async function withRuntime(
     env: {
       PATH: process.env.PATH,
       HOME: directory,
+      RESEARCH_QV_SOURCE: "local",
       RESEARCH_QV_INDEX: path.join(directory, "capture.jsonl"),
     },
     transcriptDirectory: path.join(directory, "transcripts"),

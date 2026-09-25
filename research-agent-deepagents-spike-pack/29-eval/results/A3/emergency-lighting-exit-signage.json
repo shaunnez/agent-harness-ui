@@ -1,0 +1,185 @@
+{
+  "question": "emergency-lighting-exit-signage",
+  "kind": "pinned",
+  "arm": "A3",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 346,
+    "high": 409
+  },
+  "range": {
+    "min": 345,
+    "max": 420
+  },
+  "unit": "NZD per fitting (ea), GST exclusive; 40 fittings",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.061,
+    "highRatio": 1.058,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0595,
+  "elapsedMs": 244823,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 181032,
+      "band": {
+        "unit": "NZD per fitting (ea), GST exclusive; 40 fittings",
+        "low": 346,
+        "high": 409,
+        "centre": "NZD 377 per fitting; approximately NZD 15,080 total",
+        "basis": "Sum of the distinct component ranges, rounded to whole dollars per fitting: approximately NZD 345.80–408.80 each, or NZD 13,832–16,352 for 40 (rounded band totals NZD 13,840–16,360). Auckland basis. Fitting rates are treated as supply-and-install rates, so no separate fitting labour is added; the cable rate covers installed roof-space cable, so cable labour is not added again. Confidence is low because QV rows are unreviewed and do not fully specify the exit-sign configuration, battery duration, or breaker compatibility; test labour hours are estimated. No GST, preliminaries, margin, design, consent, BWOF/IQP work, or ongoing tests included."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 342756,
+        "outputTokens": 8594,
+        "cachedTokens": 285696,
+        "toolCalls": 23,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.023571,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 342756,
+            "outputTokens": 8594,
+            "estimatedCostUsd": 0.023571,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 89772,
+      "band": {
+        "unit": "NZD per emergency fitting, GST exclusive",
+        "low": 366,
+        "high": 397,
+        "centre": "Auckland",
+        "basis": "Additive build-up of QV emergency-light fitting rates, installed roof-space cable and MCBs, plus stated allowances for connections, terminations, access and commissioning records. Rounded from $365.775–$396.775 per fitting, or $14,631–$15,871 for 40. Allowances are a minority of the total. Low confidence reflects unreviewed QV rows and the proxy for exit-sign configuration."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 93184,
+        "outputTokens": 4469,
+        "cachedTokens": 57344,
+        "toolCalls": 17,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.006392,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 93184,
+            "outputTokens": 4469,
+            "estimatedCostUsd": 0.006392,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 244815,
+      "band": {
+        "unit": "NZD per fitting, GST exclusive",
+        "low": 345,
+        "high": 420,
+        "centre": null,
+        "basis": "Auckland QV rates plus fetched Auckland electrician rates and stated minor allowances; sum of distinct components is approximately $13,800–$16,800 for 40 fittings, centre approximately $15,300. Allowances are a small share of the total. Confidence is low because the QV fitting rows do not specify the required battery runtime, exit-sign configuration or all inclusions, and the testing/documentation time is assumed."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 366231,
+        "outputTokens": 11998,
+        "cachedTokens": 292864,
+        "toolCalls": 28,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.029529,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 366231,
+            "outputTokens": 11998,
+            "estimatedCostUsd": 0.029529,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

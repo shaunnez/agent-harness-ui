@@ -1,0 +1,267 @@
+{
+  "question": "open-a3",
+  "kind": "open",
+  "arm": "A2",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 215,
+    "high": 241
+  },
+  "range": {
+    "min": 200,
+    "max": 251
+  },
+  "unit": "m2 of roof area",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.13,
+    "highRatio": 1.068,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 1.0869,
+  "elapsedMs": 240299,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 240298,
+      "band": {
+        "unit": "m2 of roof area",
+        "low": 200,
+        "high": 235,
+        "centre": "NZ main centres (Palmerston North/Dunedin low end – Auckland high end)",
+        "basis": "Membrane roof alone, GST exclusive, NZD: double-layer torch-on (115–129) + 17mm H3.2 ply deck (70–76) + batten/fixing allowance (15–30). About $240k–282k on 1200 m2. For the client's cost impact: long-run painted 0.55mm steel proxy (QV row 05507449e3aed084cd6a9d8c1d66d530536ce71004098595e4ca04ee74122a26:t0:r47, 118–134/m2, which includes netting, underlay and 0.1m flashing/m2) makes the membrane option about +$65–115/m2, or about +$80k–140k over 1200 m2. Excludes removal, structure, insulation, flashings, gutters and drainage. The allowance is under a third of the total."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 311698,
+        "outputTokens": 12937,
+        "cachedTokens": 341218,
+        "modelCalls": 3,
+        "toolCalls": 37,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.380528,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 311692,
+            "outputTokens": 8234,
+            "estimatedCostUsd": 0.012522,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 4703,
+            "estimatedCostUsd": 0.368006,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 162162,
+            "outputTokens": 5083,
+            "cachedTokens": 129536,
+            "estimatedCostUsd": 0.007099
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 149530,
+            "outputTokens": 3151,
+            "cachedTokens": 123392,
+            "estimatedCostUsd": 0.005423
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 4703,
+            "cachedTokens": 88290,
+            "estimatedCostUsd": 0.368006
+          }
+        ]
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 207843,
+      "band": {
+        "unit": "m2 of roof area",
+        "low": 226,
+        "high": 251,
+        "centre": "Auckland ~244 (Wellington ~226–240, Christchurch ~232–247)",
+        "basis": "Sum of 1.5mm black butyl membrane (QV) + 17mm H3 plywood deck (QV proxy) + a minor allowance for edge blocking and access. Membrane roof priced alone, GST exclusive, NZD. 1,200 m² gives about $271k–$301k. For comparison, 0.55mm high-rib long-run metal is 131–138/m² (row 05507449e3aed084cd6a9d8c1d66d530536ce71004098595e4ca04ee74122a26:t0:r51, which includes 0.1 m of flashing per m²), so the switch adds about $88–$120/m², or roughly $105k–$145k. Allowances are under 10% of the total."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 391230,
+        "outputTokens": 11536,
+        "cachedTokens": 393119,
+        "modelCalls": 3,
+        "toolCalls": 38,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.348445,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 391224,
+            "outputTokens": 7608,
+            "estimatedCostUsd": 0.022807,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 3928,
+            "estimatedCostUsd": 0.3256382,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 278160,
+            "outputTokens": 4558,
+            "cachedTokens": 234752,
+            "estimatedCostUsd": 0.016795
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 113064,
+            "outputTokens": 3050,
+            "cachedTokens": 75776,
+            "estimatedCostUsd": 0.006012
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 3928,
+            "cachedTokens": 82591,
+            "estimatedCostUsd": 0.3256382
+          }
+        ]
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 201254,
+      "band": {
+        "unit": "m2 of roof area",
+        "low": 215,
+        "high": 241,
+        "centre": "Wellington 226",
+        "basis": "Sum of 1.5mm butyl membrane (E1) + 17mm H3 plywood deck (E11) + minor roof-fixing allowance; low/high span Dunedin to Auckland rates. Membrane roof priced alone (gross), not net of Coloursteel. 1200 m² gives about $258k–$289k, centre $271k. For reference only (not added): the QV painted high-rib Zincalume roof row (E10, 05507449e3aed084cd6a9d8c1d66d530536ce71004098595e4ca04ee74122a26:t0:r36) is WLG 121 / AKL 134 / DUN 117, implying a membrane premium of about +$98–107/m² (about +$118k–128k); E10 includes netting, underlay and 0.1 m/m² flashing, so the delta is indicative. Excludes removal/disposal, structural changes including added purlins, insulation/ceiling, flashings, gutters and drainage. Allowances are about 4% of the total. GST exclusive NZD."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 249486,
+        "outputTokens": 10870,
+        "cachedTokens": 285988,
+        "modelCalls": 3,
+        "toolCalls": 30,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.357901,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 249480,
+            "outputTokens": 6692,
+            "estimatedCostUsd": 0.010369,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 4178,
+            "estimatedCostUsd": 0.34753199999999995,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 131186,
+            "outputTokens": 4058,
+            "cachedTokens": 100096,
+            "estimatedCostUsd": 0.006139
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 118294,
+            "outputTokens": 2634,
+            "cachedTokens": 99072,
+            "estimatedCostUsd": 0.00423
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 4178,
+            "cachedTokens": 86820,
+            "estimatedCostUsd": 0.34753199999999995
+          }
+        ]
+      }
+    }
+  ]
+}

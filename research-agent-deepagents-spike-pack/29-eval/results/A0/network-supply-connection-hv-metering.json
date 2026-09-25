@@ -1,0 +1,178 @@
+{
+  "question": "network-supply-connection-hv-metering",
+  "kind": "pinned",
+  "arm": "A0",
+  "status": "not_established",
+  "passes": false,
+  "consensus": null,
+  "range": null,
+  "unit": null,
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": null,
+    "highRatio": null,
+    "runsWithBand": 0,
+    "runsTotal": 3
+  },
+  "costUsd": 3.8705,
+  "elapsedMs": 176546,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 138886,
+      "band": null,
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "unsourced",
+        "unsourced"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 26,
+        "outputTokens": 9590,
+        "cachedTokens": 812026,
+        "modelCalls": 25,
+        "toolCalls": 24,
+        "searchCalls": 5,
+        "estimatedCostUsd": 1.1439522,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 26,
+            "outputTokens": 9590,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.0312052,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 52737,
+            "outputTokens": 2002,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.112747,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 176545,
+      "band": null,
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "unsourced",
+        "unsourced",
+        "unsourced"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 4,
+        "webVerified": 4,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 38,
+        "outputTokens": 11277,
+        "cachedTokens": 1353113,
+        "modelCalls": 36,
+        "toolCalls": 35,
+        "searchCalls": 5,
+        "estimatedCostUsd": 1.4802756,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 38,
+            "outputTokens": 11277,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.2354266,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 143449,
+            "outputTokens": 2280,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.24484899999999998,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 144906,
+      "band": null,
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 32,
+        "outputTokens": 9871,
+        "cachedTokens": 1023951,
+        "modelCalls": 29,
+        "toolCalls": 28,
+        "searchCalls": 6,
+        "estimatedCostUsd": 1.2463092,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 32,
+            "outputTokens": 9871,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.1145862,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 60213,
+            "outputTokens": 2302,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.13172299999999998,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

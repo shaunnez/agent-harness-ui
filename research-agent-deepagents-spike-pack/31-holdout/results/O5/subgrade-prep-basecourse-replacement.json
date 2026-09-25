@@ -1,0 +1,338 @@
+{
+  "question": "subgrade-prep-basecourse-replacement",
+  "kind": "pinned",
+  "arm": "O5",
+  "status": "agreed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 259,
+    "high": 365
+  },
+  "range": {
+    "min": 255,
+    "max": 365
+  },
+  "unit": "m3 in-situ undercut",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.039,
+    "highRatio": 1.031,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 5.9985,
+  "elapsedMs": 346732,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 141426,
+      "band": {
+        "unit": "m3 in-situ undercut",
+        "low": 265,
+        "high": 365,
+        "centre": "Auckland",
+        "basis": "Sum of QV excavation, cartage, geotextile, placed AP40 and subgrade compaction rows plus Urban Quarry published cleanfill gate fee converted at assumed 1.7-1.9 t/m3. Excludes testing and mobilisation (not established). About $39,750-$54,750 for 150 m3. User's $185-255 band understates it: AP40 line arithmetic error ($99 not $62 at their own inputs, before cartage) and cleanfill priced per m3 loose rather than per tonne."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-derived",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "unsourced",
+        "unsourced"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 20,
+        "outputTokens": 10505,
+        "cachedTokens": 567767,
+        "modelCalls": 28,
+        "toolCalls": 27,
+        "searchCalls": 5,
+        "estimatedCostUsd": 1.1524604,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 20,
+            "outputTokens": 10505,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.0387734,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 53602,
+            "outputTokens": 2017,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.11368700000000001,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 176711,
+      "band": {
+        "unit": "m3 in-situ undercut volume",
+        "low": 259,
+        "high": 354,
+        "centre": "Auckland",
+        "basis": "Sum of component lows and highs: QV rows for excavation, cartage, geotextile and basecourse; web gate rates for cleanfill and transporter hourly rate for mobilisation. Excludes proof roll and Scala/plate-bearing testing (not established). Total for 150 m3 about $38,800-$53,100 excl GST. Contractor pricing from hourly rates could land about $30/m3 lower."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-derived",
+        "qv-found",
+        "qv-found",
+        "web-derived"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 2,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 24,
+        "outputTokens": 14198,
+        "cachedTokens": 752772,
+        "modelCalls": 35,
+        "toolCalls": 34,
+        "searchCalls": 4,
+        "estimatedCostUsd": 1.3436034000000001,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 24,
+            "outputTokens": 14198,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.2523704000000002,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 43443,
+            "outputTokens": 1558,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.091233,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 169028,
+      "band": {
+        "unit": "m3 in-situ undercut volume",
+        "low": 235,
+        "high": 330,
+        "centre": "Auckland",
+        "basis": "Sum of components (low about 237, high about 328), rounded. Excludes Scala / plate-bearing testing (not established). 150 m3 total about $35,250–$49,500 excl GST. The brief's $185–255 band understates AP40: 44 x 2.15 x 1.05 = $99/m3, not $62, and $44.50/t is ex-gate, not delivered."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-derived"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 20,
+        "outputTokens": 13876,
+        "cachedTokens": 562275,
+        "modelCalls": 30,
+        "toolCalls": 29,
+        "searchCalls": 3,
+        "estimatedCostUsd": 1.178806,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 20,
+            "outputTokens": 13876,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.111551,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 32035,
+            "outputTokens": 1044,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.06725500000000001,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 346727,
+      "band": {
+        "unit": "m3 in-situ undercut volume",
+        "low": 225,
+        "high": 310,
+        "centre": "Auckland",
+        "basis": "Sum of components excluding cross-check rows and excluding testing. One gate-fee row used at each end (Hambly $43 low, Urban Quarry $53 high). Total for 150 m3 about $33,800-$46,300 ex GST. Testing not included."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-derived"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 4,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 20,
+        "outputTokens": 15180,
+        "cachedTokens": 566585,
+        "modelCalls": 32,
+        "toolCalls": 31,
+        "searchCalls": 3,
+        "estimatedCostUsd": 1.241291,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 20,
+            "outputTokens": 15180,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.172437,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 32444,
+            "outputTokens": 1282,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.068854,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 272231,
+      "band": {
+        "unit": "m3 in-situ undercut volume",
+        "low": 255,
+        "high": 365,
+        "centre": "Auckland",
+        "basis": "Sum of components (257 to 364, rounded). Excludes excavator/roller mobilisation and plate-bearing test cost, neither of which is published. GST exclusive NZD. 150 m3 total approx $38,500 to $54,600 before mobilisation."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 18,
+        "outputTokens": 10580,
+        "cachedTokens": 475803,
+        "modelCalls": 29,
+        "toolCalls": 28,
+        "searchCalls": 3,
+        "estimatedCostUsd": 1.0823185999999998,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 18,
+            "outputTokens": 10580,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.0146566,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 31432,
+            "outputTokens": 1246,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.067662,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

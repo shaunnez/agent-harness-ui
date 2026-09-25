@@ -1,0 +1,171 @@
+{
+  "question": "interior-finishes-to-schedule",
+  "kind": "pinned",
+  "arm": "A7",
+  "status": "agreed",
+  "passes": false,
+  "consensus": {
+    "low": 142730.5,
+    "high": 192756
+  },
+  "range": {
+    "min": 138000,
+    "max": 195512
+  },
+  "unit": "sum for the whole finishes-schedule package on one tenancy floor (800 m2 NLA)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.069,
+    "highRatio": 1.029,
+    "runsWithBand": 2,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0934,
+  "elapsedMs": 161135,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 161131,
+      "band": {
+        "unit": "sum for the whole finishes-schedule package on one tenancy floor (800 m2 NLA)",
+        "low": 147461,
+        "high": 195512,
+        "centre": "Auckland",
+        "basis": "Bottom-up sum of published QV CostBuilder Auckland rates for each of the six specified finishes plus the amortised items, with three stated proxies (Type II wall covering weight, plank-format LVT wear layer, 60mm-centre batten line) and four labelled allowances (offcut waste/rubbish removal; site measure, setout drawings and out-of-hours access loading; wall substrate sanding/stopping; and within the components, the transition-strip and floor-protection quantities which the schedule does not state). Allowances are about 7% of the midpoint, so they do not drive the result. QV rates are GST-exclusive, reviewed for Auckland, and UNREVIEWED by QV. Excludes GST, preliminaries, margin, design and consent fees, base-build linings, ceilings, joinery, and floor levelling beyond a latex smoothing compound, as per the fixed scope. Midpoint is $171,487, or $214/m2 over 800 m2 NLA; low end $184/m2, high end $244/m2. Confidence reduced to medium by the LVT, Type II wall-covering and batten proxies, and by the unpublished out-of-hours loading, which is the largest single swing item not resting on a QV row."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 12,
+        "rowsFound": 12,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 587475,
+        "outputTokens": 33738,
+        "cachedTokens": 507520,
+        "modelCalls": 11,
+        "toolCalls": 35,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.033759,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 587475,
+            "outputTokens": 33738,
+            "estimatedCostUsd": 0.033759,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 114449,
+      "band": null,
+      "checks": [],
+      "citations": null,
+      "usage": {
+        "inputTokens": 410713,
+        "outputTokens": 20336,
+        "cachedTokens": 297728,
+        "modelCalls": 11,
+        "toolCalls": 51,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.030043,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 410713,
+            "outputTokens": 20336,
+            "estimatedCostUsd": 0.030043,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 134816,
+      "band": {
+        "unit": "sum (whole finishes-schedule package, one 800 m2 NLA tenancy floor)",
+        "low": 138000,
+        "high": 190000,
+        "centre": "Auckland",
+        "basis": "Additive build-up of QV CostBuilder Auckland rows for all six finishes plus floor levelling, transitions and protection, with two labelled allowances (site measure/setout; out-of-hours access loading) and one estimated tonnage against a cited QV tipping rate. Midpoint $163,000 = $203/m2 over 800 m2 NLA; low $173/m2, high $238/m2. Main drivers: carpet tile 640 m2 ($64,000-72,960, QV loose-lay heavy-duty nylon $100-114/m2 - market quotations for SDN tile start lower, from $49/sqm installed, so the low end is a downward risk), latex smoothing compound 730 m2 ($24,674-36,500, QV $33.80-50/m2, materially above the $22/m2 used in the brief), vinyl wall covering ($61-72/m2) and 340 m2 of acrylic painting. The timber batten wall is the widest single line (24 m2, $264-670/m2) because '60mm centres' may mean pitch or gap. Substrate sanding/sealing is treated as inside the cited paint and wall-covering rates and is NOT added again; if the plasterboard is not already at Level 4, add QV 'Stopping To Level 4 Finish To walls' (AKL 17.2-22.6/m2) over the wall area. Excluded as instructed: GST, preliminaries, margin, design/consent fees, linings, ceilings, joinery, existing-finish removal, scaffolding and permanent lift protection. All QV rows are unreviewed."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 9,
+        "rowsFound": 9,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 651001,
+        "outputTokens": 25692,
+        "cachedTokens": 567552,
+        "modelCalls": 12,
+        "toolCalls": 40,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.029635,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 651001,
+            "outputTokens": 25692,
+            "estimatedCostUsd": 0.029635,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

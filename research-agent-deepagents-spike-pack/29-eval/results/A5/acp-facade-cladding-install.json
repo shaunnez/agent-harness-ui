@@ -1,0 +1,181 @@
+{
+  "question": "acp-facade-cladding-install",
+  "kind": "pinned",
+  "arm": "A5",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 670,
+    "high": 918
+  },
+  "range": {
+    "min": 645,
+    "max": 970
+  },
+  "unit": "$/m2 of net cladding face area (openings deducted)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.054,
+    "highRatio": 1.234,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0687,
+  "elapsedMs": 211622,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 188119,
+      "band": {
+        "unit": "$/m2 of net cladding face area (openings deducted)",
+        "low": 645,
+        "high": 918,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components: ACP cassette panel system (QV t1:r9, FR/PVDF/cassette adjusted, cross-checked against fetched Paneltec NZ page) + aluminium subgirt/top-hat (QV t12:r23 + aluminium uplift) + thermally-broken brackets + EPDM joint baffle + 266 lm of 3mm folded aluminium flashings (QV t21 rows +3mm uplift) + 6-week 14m diesel boom (QV t8:r15) + sundry allowances. Total for 450 m2: low $290,250, high $413,100, midpoint $351,900. Allowances carry only ~6-9% of the total. GST-exclusive, no prelims/margin/design (excluded by scope). Confidence low because (a) QV system-rate inclusions are unstated, (b) flashing thickness uplift is judgement, and (c) the QV rows are unreviewed."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 223078,
+        "outputTokens": 20993,
+        "cachedTokens": 161536,
+        "toolCalls": 13,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.022312,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 223078,
+            "outputTokens": 20993,
+            "estimatedCostUsd": 0.022312,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 211620,
+      "band": {
+        "unit": "$/m2 net cladding face area (openings deducted)",
+        "low": 680,
+        "high": 970,
+        "centre": "Auckland",
+        "basis": "Sum of cited QV components: ACP cassette system 480-700 + aluminium subgirts/thermal-break brackets 115-155 + 3mm folded PVDF flashings 50-65 + 6-week diesel boom lift 16-22 + sundries allowance 18-32. Total for 450 m2 = $306,000-$436,500 (low 680 x 450 = 306,000; high 970 x 450 = 436,500). Excludes GST, preliminaries, margin, design, consent fees, rigid air barrier, fire stopping, scaffold/edge protection, and PS1/PS3. Low confidence: wide QV Reynobond range (458-920) and proxy adjustments for subgirts and flashings; allowances carry only about 3% of the total. Centre is Auckland (AKL QV rates, the highest of the three centres)."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 251549,
+        "outputTokens": 23429,
+        "cachedTokens": 192512,
+        "toolCalls": 14,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.02349,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 251549,
+            "outputTokens": 23429,
+            "estimatedCostUsd": 0.02349,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 176798,
+      "band": {
+        "unit": "$/m2 of net cladding face area (450 m2, openings deducted)",
+        "low": 670,
+        "high": 786,
+        "centre": "Auckland",
+        "basis": "Sum of cited QV rows plus stated gauge/proxy adjustments plus four minor allowances. Panel system $421-458/m2 (QV Alupanel straight, corroborated by Paneltec NZ $400-450/m2 supply/fabricate/install); subgirt top-hats $87-104/m2 (QV ExoTec top-hat proxy, +20% for aluminium); thermally broken brackets $8-16/m2 (allowance); 266 lm of 3mm PVDF flashings $118-151/m2 (QV 0.95mm straight-flashing row x1.75-2.25); 6-week 15m diesel boom lift $18-20/m2 (QV day rate x30 days + delivery); openings $5-10, drawings/numbering $9-18, clean/waste $4-9 (allowances). Allowances are ~5% of the total. GST exclusive; excludes preliminaries, margin, design, consent, and all items listed as excluded. Total for 450 m2 = $301,500 (low) to $353,700 (high). Main uncertainty: whether the QV ACP row already includes the subgirt/carrier - if so, deduct ~$87-104/m2. QV rows are unreviewed."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 322155,
+        "outputTokens": 17735,
+        "cachedTokens": 245120,
+        "toolCalls": 8,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.022932,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 322155,
+            "outputTokens": 17735,
+            "estimatedCostUsd": 0.022932,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

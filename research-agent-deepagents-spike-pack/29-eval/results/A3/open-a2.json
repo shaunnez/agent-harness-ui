@@ -1,0 +1,171 @@
+{
+  "question": "open-a2",
+  "kind": "open",
+  "arm": "A3",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 182.8,
+    "high": 365
+  },
+  "range": {
+    "min": 167.3,
+    "max": 443
+  },
+  "unit": "NZD/m² building floor area, GST exclusive",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.369,
+    "highRatio": 1.377,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0434,
+  "elapsedMs": 182845,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 182843,
+      "band": {
+        "unit": "NZD/m² building floor area, GST exclusive",
+        "low": 229,
+        "high": 443,
+        "centre": null,
+        "basis": "Sum of distinct ground-treatment components: shallow 1 m replacement proxy ($80 + $126 + $12.80) through deeper TC3 imported-fill proxy ($90 + $287 + $36.20), plus a minor setup allowance of $10–$30/m². Physical ground improvement only; assumes treatment across the building footprint. Foundations and structural work, geotechnical investigation and design, formal testing and construction monitoring, and repairs to existing damage are excluded. Not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 395801,
+        "outputTokens": 5731,
+        "cachedTokens": 322304,
+        "toolCalls": 23,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.025444,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 395801,
+            "outputTokens": 5731,
+            "estimatedCostUsd": 0.025444,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 109426,
+      "band": {
+        "unit": "NZD/m² of building floor area, GST exclusive",
+        "low": 182.8,
+        "high": 365,
+        "centre": null,
+        "basis": "Sum of the distinct excavation, replacement fill, geogrid and minor allowance components. Cost-plan proxy assumes 0.75–1.5m-deep excavate-and-replace treatment with one geogrid layer. Assumes construction-only ground improvement; excludes foundations and structural work, geotechnical investigation and design, repairs, construction testing and monitoring. The allowance is a minor share of the total; low confidence reflects unknown method, depth, footprint and site conditions."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 214883,
+        "outputTokens": 4908,
+        "cachedTokens": 160256,
+        "toolCalls": 19,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.009519,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 214883,
+            "outputTokens": 4908,
+            "estimatedCostUsd": 0.009519,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 109432,
+      "band": {
+        "unit": "NZD/m² of building floor area, GST exclusive",
+        "low": 167.3,
+        "high": 321.8,
+        "centre": null,
+        "basis": "Sum of the three distinct QV ground-replacement components above. Assumes shallow excavation and replacement with compacted GAP65 and geogrid, with treatment depth varied from 0.75 m to 1.5 m. The centre is the midpoint of the resulting range. Excludes foundations, structural work, geotechnical investigation and design, and repairs. Also assumes testing and construction monitoring are excluded. This is a working cost-plan rate, not a certified price. Liquefaction vulnerability is mapped across Christchurch, but it varies by location and ground conditions; the city map divides Christchurch into 600 areas with similar ground conditions. The viewer states: “Providing coverage of the entire Christchurch City territorial land area.” Source: source-2, https://apps.canterburymaps.govt.nz/ChristchurchLiquefactionViewer/"
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 199214,
+        "outputTokens": 4739,
+        "cachedTokens": 154112,
+        "toolCalls": 21,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.008421,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 199214,
+            "outputTokens": 4739,
+            "estimatedCostUsd": 0.008421,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

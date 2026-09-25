@@ -1,0 +1,277 @@
+{
+  "question": "open-a1",
+  "kind": "open",
+  "arm": "A9",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": false,
+  "consensus": {
+    "low": 72,
+    "high": 106
+  },
+  "range": {
+    "min": 71,
+    "max": 107
+  },
+  "unit": "NZD per m2 of soffit area, GST exclusive",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.014,
+    "highRatio": 1.305,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1173,
+  "elapsedMs": 347699,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 139546,
+      "band": {
+        "unit": "NZD per m² of soffit area, GST exclusive",
+        "low": 34.96,
+        "high": 109.93,
+        "centre": "Auckland",
+        "basis": "Two components added: published non-friable asbestos-cement sheet removal-and-disposal rate $30-$100/m² + QV-anchored scaffold hire spread over weekly production $4.96-$9.93/m² = $34.96-$109.93/m², midpoint $72.4/m². Priced on the specification the scope pins: non-friable (Class B) asbestos-cement soffit sheeting, single-storey eaves not exceeding about 6 m, sound painted or unpainted sheet that has not crumbled, soffit area of 20 m² or more, and disposal at a licensed facility within the local region. Span 3.1x, which is as tight as the published evidence allows — the underlying published rate span for this material is itself 3.3x and QV holds no row for the work. Excluded and to be quoted separately: replacement soffit, framing and fascia, asbestos surveys and lab testing (roughly $50-$150 per sample), independent clearance certification (a legal requirement before reoccupying the area, and All Clear NZ lists Class B clearance as 'Call for Price' rather than a published figure), remedial work if sheets are found broken or weathered, and long-distance cartage. If testing shows friable material this band does not apply: that is Class A work with full enclosure, negative air and independent air monitoring, and must be priced from a contractor's quote. For soffit areas under about 20 m², a minimum job charge governs rather than this per-m² rate — Chemcare (Auckland) puts a 10 m² soffit or cladding job at $2,000 and up — so quote small areas as a lump-sum item. Confidence low: no QV row exists, the main rate is a single removalist's published cladding figure used as a proxy for soffit sheeting, and the access line rests on an unreviewed QV plant-hire row."
+      },
+      "dropped": true,
+      "checks": [
+        "web-verified",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 239636,
+        "outputTokens": 18309,
+        "cachedTokens": 184320,
+        "modelCalls": 8,
+        "toolCalls": 20,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.019836,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 239636,
+            "outputTokens": 18309,
+            "estimatedCostUsd": 0.019836,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 165251,
+      "band": {
+        "unit": "NZD per m2 of soffit area (GST exclusive)",
+        "low": 80,
+        "high": 200,
+        "centre": null,
+        "basis": "Per m2 of asbestos-containing soffit: licensed B-Class removal incl. containment and disposal, $60-$180/m2 (source-3 'Roof or Cladding Removal', corroborated by CARE's '$60/m2 (B-Class: Everything)' and by Revolve's cladding $30-$100 / roofing $50-$150), plus pro-rata assessor/clearance certification $400 per B-Class job spread over an assumed 20 m2 = +$20/m2. Centre is a weighted mid (typical intact non-friable single-storey AC soffit, ~20 m2, ladder/low-platform access) rather than the arithmetic mean, because the high end assumes poor access or small staged areas. Confidence LOW: no QV row or close QV proxy exists for ACM removal (QV CostBuilder contains no asbestos rows at all), so the whole band rests on contractor-published NZ price guides, not on a priced rate library; and soffit area, friability/condition, access/height, containment scope and disposal route are all undecided. Excludes replacement soffit (per pinned scope). Assumed: intact non-friable (B-Class) AC soffit sheeting confirmed by test, licensed removalist, WorkSafe notification, clearance inspection, disposal at a licensed landfill. If the soffit board proves friable or is backed with AIB/insulation board it becomes A-Class work and this band does not apply."
+      },
+      "dropped": true,
+      "checks": [
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 336643,
+        "outputTokens": 17820,
+        "cachedTokens": 273408,
+        "modelCalls": 11,
+        "toolCalls": 23,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.020997,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 336643,
+            "outputTokens": 17820,
+            "estimatedCostUsd": 0.020997,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 205827,
+      "band": {
+        "unit": "NZD per m2 of soffit area, GST exclusive",
+        "low": 72,
+        "high": 107,
+        "centre": "Auckland",
+        "basis": "Sum of the two distinct components (71.63-106.63, rounded to 72-107): Class B non-friable asbestos-cement soffit sheet removal and disposal $65-$100/m2 (web, licensed removalist's Class B rate as the floor, published ACM cladding ceiling as the top), plus one week of mobile scaffold access $6.63/m2 (QV row 253b838a...t10:r46 spread over 60 m2). Spread is 1.5x, about +/-20% around a mid of roughly $90/m2. Pinned configuration: Class B (non-friable) fibre-cement soffit lining, sound and intact but removed for renovation; 60 m2 of soffit (a single-storey dwelling, roughly 100 lm of eaves at 600 mm); eaves under about 4 m worked from ladders and a mobile tower with no full perimeter scaffold; wet removal sheet by sheet with an exclusion zone; disposal at the contractor's licensed landfill included in the removal rate along with the independent clearance certificate. A QV anchor exists only for the access element - QV CostBuilder carries no asbestos or hazardous-materials row at all (searches listed in qv_queries_tried), so the main driver rests on published NZ contractor rates, not on an independent or statutory schedule. On small areas (under about 30 m2) contractors' minimum charges push the effective rate above the top of this band: Chemcare (fetched) puts soffit, cladding and external-material jobs 'from $2,000 and up' for around 10 m2, i.e. $200/m2+. Confidence is low because the main driver rests on two contractor websites with a broad published spread and unstated GST treatment, and because the scope itself leaves the four biggest swing factors open (soffit area, asbestos type and condition, access and height, containment and disposal arrangements) - this band is priced on the specific assumptions above, and each of those four, if different, moves it outside this range."
+      },
+      "checks": [
+        "web-derived",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 422664,
+        "outputTokens": 24492,
+        "cachedTokens": 350720,
+        "modelCalls": 11,
+        "toolCalls": 23,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.026539,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 422664,
+            "outputTokens": 24492,
+            "estimatedCostUsd": 0.026539,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 347697,
+      "band": {
+        "unit": "NZD per m2 of soffit area (removal and disposal of asbestos-containing soffit material; replacement soffit excluded)",
+        "low": 71,
+        "high": 106,
+        "centre": "Auckland",
+        "basis": "Sum of two components: Class B asbestos soffit removal and disposal ($65-$99/m2, being CARE's published large-area B-Class soffit rates of $50-$55/m2 adjusted x1.3-x1.8 to the assumed ~60 m2 single-storey residential/light-commercial eaves job) plus the independent Class B assessor clearance inspection spread over the same 60 m2 ($5.8-$6.7/m2); components sum to $70.8-$105.7/m2, rounded to $71-$106/m2. Central estimate $88/m2 is the midpoint. GST exclusive, NZD, Auckland. The band is deliberately narrowed to the specification the scope pins: the previously published extremes of about $50/m2 (200 m2+ commercial runs) and about $200/m2 (a ~10 m2 patch where the $600 minimum charge dominates) are outside the assumed job size and are excluded, with indicative figures given in the component caveat if the actual area differs materially. QV CostBuilder holds no asbestos, ACM removal or assessor row of any kind (asbestos, asbestos removal, asbestos soffit, hazardous material removal, decontamination/air monitoring all returned no rows); its Demolition and Alterations section covers only general demolition, partial demolition, preparatory work and tipping fees, and its soffit rows price installation of new fibre cement lining. Confidence is medium, not low, because the main driver is sourced to a NZ removalist that explicitly classifies soffits as B-Class and publishes square-metre rates, and the remaining variation is a stated job-size adjustment rather than unsourced guesswork. The band is a working cost-plan estimate, not a certified price; obtain a removalist quotation for tender."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 236144,
+        "outputTokens": 21890,
+        "cachedTokens": 179840,
+        "modelCalls": 8,
+        "toolCalls": 20,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.022119,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 236144,
+            "outputTokens": 21890,
+            "estimatedCostUsd": 0.022119,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 340373,
+      "band": {
+        "unit": "m2 of soffit area",
+        "low": 72,
+        "high": 82,
+        "centre": "Auckland",
+        "basis": "Sum of the four distinct components, each priced once and none overlapping: licensed Class B removal 60.00 + assessor/clearance certificate 8.00 + asbestos waste disposal allowance 4.00-6.00 + eaves access allowance 0.00-8.00. GST exclusive, NZD, Auckland centre. Pinned specification this band holds to: non-friable (Class B) asbestos cement soffit sheet, intact and undamaged, removed by a licensed removalist, one independent Class B clearance inspection, waste pre-arranged to a licensed landfill, on an assumed 50 m2 reference soffit area with normal single or low two-storey eaves access. Band width is 1.14x, reflecting that the main cost driver is a published contractor rate for exactly this class of material rather than a spread of proxies. Mid-band about $77/m2. Evidence quality: the removal rate and the assessor cost are quoted from a fetched NZ licensed removalist's published pricing (source-1), the landfill gate fee behind the disposal allowance is quoted from a fetched NZ council schedule (source-5), and the access upper bound is a QV row cross-check - the two allowances together carry only $4-$14 of the $72-$82, well under a third of the total. Confidence is medium, not high, because the removal rate is one contractor's published typical figure and CARE publishes the assessor cost only as a floor. Out of band - do not read this as covering them: degraded, crumbly or friable material, or asbestos insulating board rather than cement sheet, which becomes a Class A enclosure job (CARE's A-Class typical is $100/m2 before enclosures, negative air pressure and air monitoring); soffits under 10 m2, which price at CARE's $600 B-Class minimum; two-storey or restricted-verge access needing a second tower (about $8/m2 more); a soffit area well below 50 m2, where the fixed assessor and landfill minimum charges lift the rate. Excluded: replacement soffit (QV reinstatement rows such as 9bd8f998e94fb5e52699ed2b20902f0ecc410fad78bb9c156213c3ff5b2a2711:t55:r1, HardieFlex eaves lining 4.5mm at AKL 70/m2, are the new lining only), painting, fascia and gutter replacement, and any structural repair revealed by the removal."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 383498,
+        "outputTokens": 24991,
+        "cachedTokens": 303872,
+        "modelCalls": 10,
+        "toolCalls": 29,
+        "searchCalls": 5,
+        "estimatedCostUsd": 0.02785,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 383498,
+            "outputTokens": 24991,
+            "estimatedCostUsd": 0.02785,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

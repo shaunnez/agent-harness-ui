@@ -150,3 +150,14 @@ test("a quote matches across whitespace differences and nothing else", () => {
   assert.equal(excerptAppearsIn(table, "Residential0 - 14kVA"), false);
   assert.equal(excerptAppearsIn(table, "   "), false);
 });
+
+test("a quote matches across typographic look-alikes and nothing else", () => {
+  const page = "Three\u2011phase high\u2011cycle $1,800\u2013$2,300 \u2014 add $400\u2013$1.1k per door, \u201Cinstalled\u201D\u00A0price\u2026";
+  assert.equal(excerptAppearsIn(page, "Three-phase high-cycle $1,800-$2,300 - add $400-$1.1k per door"), true);
+  assert.equal(excerptAppearsIn(page, '"installed" price...'), true);
+  // A figure rewritten in another form is still a different quote.
+  assert.equal(excerptAppearsIn(page, "add $400-$1,100 per door"), false);
+  assert.equal(excerptAppearsIn(page, "$1,800-$2,400"), false);
+  // Folding runs one way only when the quote itself uses the look-alike.
+  assert.equal(excerptAppearsIn("$1,800-$2,300", "$1,800\u2013$2,300"), true);
+});

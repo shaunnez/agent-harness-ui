@@ -33,6 +33,9 @@ import {
 } from "./research-claude-cli/benchmark.mjs";
 import { comparePhases } from "./research-claude-cli/phase-comparison.mjs";
 
+// Measured against the recorded baseline, which was run on the local capture.
+process.env.RESEARCH_QV_SOURCE ??= "local";
+
 if (process.env.RUN_CLAUDE_CLI_BENCHMARK !== "1")
   throw new Error(
     "Set RUN_CLAUDE_CLI_BENCHMARK=1 to confirm live runs on the Claude subscription. " +

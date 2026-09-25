@@ -1,0 +1,306 @@
+{
+  "question": "facade-coating-application",
+  "kind": "pinned",
+  "arm": "A10",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 56.3,
+    "high": 82.8
+  },
+  "range": {
+    "min": 55.5,
+    "max": 90.57
+  },
+  "unit": "m2",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.047,
+    "highRatio": 1.109,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1309,
+  "elapsedMs": 314561,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 109517,
+      "band": {
+        "unit": "m2",
+        "low": 55.5,
+        "high": 82.8,
+        "centre": null,
+        "basis": "Sum of eight distinct components, every one expressed per m2 of coated face area so the components add directly: 9.40 + 2.00-4.00 + 28.60-45.80 + 3.00 + 5.05-6.68 + 0.50-1.00 + 3.97-7.94 + 3.00-5.00 = 55.5 low / 82.8 high, midpoint 69.2. Totals over the 600 m2 nominal quantity: $33,312 low, $49,689 high, midpoint $41,500. The one-off EWP float and the hire items are amortised across the 600 m2 (1/600 item per m2; 15 days/600 m2; 6-12 tower-weeks/600 m2), so no component is a standalone lump. All figures NZD, GST exclusive, Auckland rates, no preliminaries, margin, design or consent fees (excluded by the scope). Allowances carry about 10-12% of the total, so the band is rate-driven rather than allowance-driven. The coating component is the largest at about half the band and rests on two cited QV rows (28.6 and 45.8/m2), so the band is established; it is wider and higher than a notional $52-76 because the published QV exterior acrylic lines bracket the specified X-200-grade system at 28.6 to 45.8/m2 rather than the ~33/m2 implied by the stated audit, with a small overlap risk at the top end if the high-build system row already embeds preparation."
+      },
+      "checks": [
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 174999,
+        "outputTokens": 22236,
+        "cachedTokens": 128768,
+        "modelCalls": 7,
+        "toolCalls": 20,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.020663,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 174999,
+            "outputTokens": 22236,
+            "estimatedCostUsd": 0.020663,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 188281,
+      "band": {
+        "unit": "NZD per m2 of coated face area (measured flat, no deduction under 0.5 m2), GST exclusive",
+        "low": 47,
+        "high": 71,
+        "centre": "Auckland",
+        "basis": "Sum of the nine distinct components above over the nominal 600 m2, every component reduced to the same denominator (per m2 of coated face area): prep blast 9.40/m2; make-good allowance 2.00-4.50/m2; sealer 1.53/m2; two finish coats to the 480 m2 wall face 22.00-36.00/m2 of wall; two finish coats to the 120 m2 soffit 27.50-45.00/m2 of soffit; EWP 5.05-6.68/m2 (15 days at 202-267/day); plant delivery/pickup 0.50-1.17/m2 (300-700 shared over 600 m2); mobile scaffold 1.99-3.97/m2; masking/protection/containment 3.00-6.00/m2. Totals $27,939 low and $42,625 high, i.e. $46.6-71.0/m2, midpoint $58.8/m2 ($35,300 over 600 m2). No component is counted twice: the water-blast row prices the washing, so QV's 'Prepare Painted Plaster Including washing surfaces' rows are not added on top; the 2-coat acrylic rows are paint only, so the sealer is priced separately on its 15% extent; QV's 'Working Off Scaffolding, not exceeding 9 metres' row (AKL 3.00/m2, $1,800 over 600 m2) has not been added because it appears to be a labour-time adjustment rather than the plant hire the brief names. Allowances (make-good, plant transport, masking/protection) carry 11.8% of the low total and 16.4% of the high total, under a third. This band sits below the catalogue's indicative $52-76/m2 mainly because QV's published access-plant hire (about $7/m2 for EWP plus $2-4/m2 for the tower, against the indicative $12/m2) and its published exterior 2-coat acrylic rates (about $23-38/m2 against the indicative $33/m2 for sealer plus finish coats) are both lower than the indicative audit assumed. If the X-200-grade system is instead priced on QV's high-build specialist row ('Flexicote High build acrylic 3 coat system, to concrete, plaster or blockwork, plain finish', AKL 45.8/m2), the top of the band rises to roughly $80/m2. Centre is Auckland; the same QV rows are 10-15% lower in Wellington and within 1% of Auckland in Christchurch for the painting work."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 450977,
+        "outputTokens": 37730,
+        "cachedTokens": 390784,
+        "modelCalls": 13,
+        "toolCalls": 21,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.032839,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 450977,
+            "outputTokens": 37730,
+            "estimatedCostUsd": 0.032839,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 314557,
+      "band": {
+        "unit": "m2 of coated face area",
+        "low": 52.85,
+        "high": 83.39,
+        "centre": "Auckland",
+        "basis": "Every component is stated per m2 of coated face, so the band is the direct sum of nine distinct components (no item counted twice): preparation 14.40-17.48; coating system 24.50-45.80; scaffolding access labour 2.16-2.70; EWP hire 5.05-6.675; EWP delivery/pickup 0.50-1.00 (one-off 300-600 spread as 1/600 job per m2); mobile scaffold hire 3.97-5.955; scaffold delivery/set-up 0.25-0.50 (one-off 150-300 spread as 1/600 job per m2); masking/protection 1.02-1.275; clean-up and containment 1.00-2.00. Total for the scoped 600 m2 = 31,710-50,031, midpoint 40,871 (68.12/m2); the per-m2 high is 50,031/600 = 83.385, rounded to 83.39. GST exclusive, NZD. No centre is named in the scenario, so the low end takes the Wellington column of the same QV rows and the high end the Auckland column, at the leaner and fuller method assumptions respectively; on Auckland rates alone the band is 60.6-83.4/m2. Allowances are 1.75/m2 of the 52.85 low (3.3%) and 3.50/m2 of the 83.39 high (4.2%), so the band is rate-driven. Excluded per scope: GST, preliminaries, margin, design and consent fees, lead or asbestos work, plaster repair, fixed or shrink-wrapped scaffold, traffic and pedestrian management, steel/joinery/handrail/downpipe coating, anti-graffiti and third and subsequent coats. Compared with the audited band of 52-76 (midpoint 62): the low end agrees, but the midpoint is about 6/m2 light and the top end is thin - preparation is under-sourced against QV's 16.0/23.4 per m2, and two coats of the specified X-200 grade sit between QV's 28.6/m2 generic exterior three-coat rate and the 45.8/m2 high-build acrylic analogue."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 294227,
+        "outputTokens": 45103,
+        "cachedTokens": 248448,
+        "modelCalls": 8,
+        "toolCalls": 24,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.034674,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 294227,
+            "outputTokens": 45103,
+            "estimatedCostUsd": 0.034674,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 132585,
+      "band": {
+        "unit": "m2 of coated face area (600 m2 nominal: 480 m2 wall + 120 m2 soffit)",
+        "low": 56.3,
+        "high": 81.7,
+        "centre": "Auckland",
+        "basis": "Sum of the nine components above, per m2 of coated face, Auckland rates, GST exclusive. Band low = sum of component lows ($56.34), band high = sum of component highs ($81.74); totals for 600 m2 are $33,800-$49,000, midpoint about $41,400 ($69.00/m2). Roll-ups per m2: preparation 18.15-19.48, coating 28.60-45.80, access plant 7.62-12.15, masking/protection/clean-up 1.97-4.31. Allowances (items 3, 6, 9) carry only 4% of the low band and 7% of the high band, so the band is rate-driven, not allowance-driven. The width is driven almost entirely by the coating component: QV publishes no Resene X-200 or elastomeric row, so the specified system is bracketed between two published 3-coat systems ($28.60 and $45.80/m2). Main cost drivers - preparation, coating and height access - all rest on cited QV rows, so the band is established; it is a working estimate band for a cost plan, not a certified price. Centre is Auckland; Wellington and Christchurch are 5-15% lower on the painting and preparation rows and identical on plant hire."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 371934,
+        "outputTokens": 24030,
+        "cachedTokens": 312448,
+        "modelCalls": 10,
+        "toolCalls": 25,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.024278,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 371934,
+            "outputTokens": 24030,
+            "estimatedCostUsd": 0.024278,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 248326,
+      "band": {
+        "unit": "$/m2 of coated face area (480 m2 wall + 120 m2 soffit)",
+        "low": 58.1,
+        "high": 90.57,
+        "centre": "Auckland",
+        "basis": "Sum of the six components in Auckland figures (QV AKL rates), GST exclusive, no preliminaries, margin, design or consent fees (per brief). Totals for the 600 m2 nominal quantity: $34,860 - $54,336, midpoint $44,599. All priced work comes from QV CostBuilder rows (unreviewed) except two allowances (EWP float, masking/protection) worth $2,700 of the $44,599 midpoint, i.e. about 6% - allowances are well under a third of the total. No web price was used: QV covers the preparation, the coating and both access plants, and the Resene page was fetched only to identify the product, not to price it. Scope as fixed by the brief: excludes lead/asbestos work, plaster repair or re-rendering, sealant replacement, fixed scaffold/gantries/TMP, coating of metalwork, anti-graffiti or anti-carbonation systems and third coats. The band is wide because two specification questions dominate it: (a) whether the named X-200-grade product at 35 microns DFT is priced as a standard exterior acrylic 3-coat ($28.60/m2) or as a high-build acrylic membrane system ($45.80/m2), and (b) whether the 3000 psi water blast is priced inside QV's prepare-painted-plaster allowance or as its own operation (+$9.40/m2). Soffit-heavy and sub-300 m2 jobs sit at the top of the band because the access plant cannot be amortised. QV rates are commercial average rates and may already carry the trade's own overhead and profit; the brief excludes margin, so treat this as a cost band, not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 199239,
+        "outputTokens": 21623,
+        "cachedTokens": 166144,
+        "modelCalls": 8,
+        "toolCalls": 20,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.018436,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 199239,
+            "outputTokens": 21623,
+            "estimatedCostUsd": 0.018436,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

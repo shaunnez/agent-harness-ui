@@ -1,0 +1,187 @@
+{
+  "question": "open-a2",
+  "kind": "open",
+  "arm": "A8",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 233.8,
+    "high": 465
+  },
+  "range": {
+    "min": 229,
+    "max": 500
+  },
+  "unit": "$/m2 of building floor area, Christchurch, GST-exclusive, construction only",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.092,
+    "highRatio": 1.124,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1133,
+  "elapsedMs": 340577,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 340570,
+      "band": {
+        "unit": "$/m2 of building floor area, Christchurch, GST-exclusive, construction only",
+        "low": 233.8,
+        "high": 465,
+        "centre": null,
+        "basis": "Additive: QV CHC 1.0 m undercut-and-replace build-up 218.80 (rows t12:r3, t12:r4, t12:r5) + extension to the full QV/MBIE TC3 Type 1 extent 0 to 51.20 (t13:r8 less 218.80) + imported GAP40 fill upgrade 0 to 150.00 (t13:r14 less t13:r8) + minor sundries allowance 15 to 45. Low end 233.80 = minimum footprint-only 1.0 m replacement plus sundries; high end 465.00 = the full QV TC3 Type 1 imported-GAP40 build-up (420/m2) plus sundries. Centre 340 (not the arithmetic midpoint of 349.40) assumes the replacement method to roughly the Type 1 extent with part-imported fill. Method and treatment depth are geotechnical outcomes and QV publishes no stone column / CMC / jet grout / deep soil mixing rate, so the band is wide and confidence is low; cross-checked against EQC/Tonkin & Taylor's 2015 Christchurch trial rates per m2 of treated footprint ($176 to $225 gravel raft; $145 to $195 4 m stone columns), which escalated sit inside this band. Excludes building foundations and structural work, geotechnical investigation and design, and repairs to existing damage."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 1042234,
+        "outputTokens": 36395,
+        "cachedTokens": 911104,
+        "modelCalls": 14,
+        "toolCalls": 41,
+        "searchCalls": 9,
+        "estimatedCostUsd": 0.04424,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1042234,
+            "outputTokens": 36395,
+            "estimatedCostUsd": 0.04424,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 275343,
+      "band": {
+        "unit": "m2 of building floor area",
+        "low": 229,
+        "high": 445,
+        "centre": "Christchurch",
+        "basis": "Construction-only ground improvement for a single-storey light commercial building on liquefaction-prone Christchurch ground, per m2 of building floor area, NZD, GST exclusive. LOW = QV excavate-and-replace build-up for 1.0 m depth (CHC 80 + 126 + 12.8 = 218.8/m2, rows t12:r3-r5) + 10/m2 allowance = 229. HIGH = QV TC3 'Type 1' deep replacement build-up total (CHC 420/m2, row t13:r14, ~3.1 m3/m2 replaced, ~2.3 m deep) + 25/m2 allowance = 445. The band spans METHOD AND DEPTH, so the method components are alternatives and are deliberately not summed; the band is not the arithmetic total of the rows listed. Independently corroborated by the 2015 EQC/Tonkin + Taylor Pilot tendered rates, which convert to ~246-322/m2 (rafts) and ~268-361/m2 (4 m stone columns) of building floor area. Excluded by the pinned scope and not priced: building foundations and structural work, geotechnical investigation and design, verification testing and construction monitoring, and repairs to existing damage. A band set by method/depth uncertainty, and by 2015-vintage column/raft pricing, so confidence is low rather than medium."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 1018616,
+        "outputTokens": 24552,
+        "cachedTokens": 910464,
+        "modelCalls": 20,
+        "toolCalls": 39,
+        "searchCalls": 8,
+        "estimatedCostUsd": 0.033685,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1018616,
+            "outputTokens": 24552,
+            "estimatedCostUsd": 0.033685,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 272262,
+      "band": {
+        "unit": "$/m2 of building floor area (Christchurch, NZD, GST exclusive, construction cost only)",
+        "low": 250,
+        "high": 500,
+        "centre": null,
+        "basis": "Band envelope of two sourced alternatives, not a sum of both. LOW $250/m2 = sum of the QV CostBuilder Christchurch rows for a ~1 m deep reinforced replacement crust plus a minor dewatering/platform allowance ($80 + $126 + $36.2 + $10-40), which is the cheapest MBIE-style solution; the EQC 2015 published low ($36,000/146 m2 = $247/m2) cross-checks this closely, so current-day shallow-crust work is anchored around $250/m2. HIGH $500/m2 = the top of the EQC/Tonkin & Taylor published range for the four MBIE-endorsed cleared-site methods ($73,000/146 m2, excl GST, construction only, 2015 rates, unescalated), i.e. a deep-inclusion scheme such as 4 m stone columns or driven timber poles; treat this as conservative in 2026 dollars. CENTRE $375/m2 reflects a mid-range scheme (partial-depth replacement plus inclusions/stone columns) at roughly a 270 m2 treated area for a 146 m2 footprint. Confidence is LOW because: the method and treatment depth are not decided and move the answer by about 2x; the upper half rests on 2015 construction-only rates rather than a current contractor price; QV rows used are unreviewed and come from residential foundation tables; and the upper end of the band is not escalated to 2026. Excludes geotechnical investigation, design, consenting, construction monitoring and verification testing per the pinned scope."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 682370,
+        "outputTokens": 30819,
+        "cachedTokens": 581504,
+        "modelCalls": 13,
+        "toolCalls": 33,
+        "searchCalls": 7,
+        "estimatedCostUsd": 0.035366,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 682370,
+            "outputTokens": 30819,
+            "estimatedCostUsd": 0.035366,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

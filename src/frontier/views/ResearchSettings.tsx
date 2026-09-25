@@ -2,6 +2,7 @@ import type { RuntimeStatus } from "../../domain";
 import type { ResearchRole } from "../../domain/research";
 import {
   DEFAULT_RESEARCH_POLICIES,
+  OPENCODE_RESEARCH_MODELS,
   RESEARCH_ENGINES,
   RESEARCH_ROLE_IDS,
   type ResearchEngineId,
@@ -14,7 +15,11 @@ import { PolicyChoice } from "./PolicyMatrix";
 const ENGINE_DEFAULTS: Record<ResearchEngineId, { model: string; reasoning: string }> = {
   "claude-cli": { model: "claude-opus-5-5", reasoning: "high" },
   "codex-cli": { model: "gpt-6-sol", reasoning: "high" },
+  "opencode-cli": { model: "opencode-go/deepseek-v4.1-flash", reasoning: "default" },
 };
+
+/** OpenCode's models are research-only and not in the runtime's delivery catalogue. */
+const isOpenCode = (runtime: ResearchEngineId) => RESEARCH_ENGINES[runtime].provider === "opencode";
 
 const ROLE_COPY: Record<ResearchRole, { label: string; detail: string }> = {
   planner: { label: "Planner", detail: "Surveys the QV catalogue; no web access" },
@@ -51,6 +56,10 @@ export function ResearchSettings({
   function chooseEngine(runtime: ResearchEngineId) {
     if (runtime === agent.runtime) return;
     const provider = RESEARCH_ENGINES[runtime].provider;
+    if (provider === "opencode") {
+      onChange({ ...value, agent: { runtime, provider, ...ENGINE_DEFAULTS[runtime] } });
+      return;
+    }
     const offered = selectableModels(status, provider);
     const preferred = offered.find((model) => model.id === ENGINE_DEFAULTS[runtime].model) ?? offered[0];
     const reasoning =
@@ -86,7 +95,11 @@ export function ResearchSettings({
                   name="research-engine"
                   aria-label={`${RESEARCH_ENGINES[id].label} on the ${RESEARCH_ENGINES[id].plan}`}
                   checked={agent.runtime === id}
-                  disabled={busy || !selectableModels(status, RESEARCH_ENGINES[id].provider).length}
+                  disabled={
+                    busy ||
+                    (!isOpenCode(id) &&
+                      !selectableModels(status, RESEARCH_ENGINES[id].provider as "claude" | "codex").length)
+                  }
                   onChange={() => chooseEngine(id)}
                 />
                 <span>{RESEARCH_ENGINES[id].label}</span>
@@ -95,29 +108,55 @@ export function ResearchSettings({
           </div>
           <small>
             Runs on the operator's {engine.plan}, never on an API key.{" "}
-            {signInLabel(status.providers?.find((provider) => provider.id === engine.provider))}
+            {isOpenCode(agent.runtime)
+              ? "Each run checks the OpenCode Go sign-in when it starts."
+              : signInLabel(status.providers?.find((provider) => provider.id === engine.provider))}
           </small>
         </div>
         <div className="design-policy-default">
           <h4>Model & reasoning</h4>
           <div className="policy-selects">
-            <PolicyChoice
-              label="Research agent"
-              provider={engine.provider}
-              value={{ model: agent.model, reasoning: agent.reasoning }}
-              status={status}
-              disabled={busy}
-              onChange={(policy) => onChange({ ...value, agent: { ...agent, ...policy } })}
-            />
+            {isOpenCode(agent.runtime) ? (
+              <label>
+                <span>Research agent</span>
+                <select
+                  aria-label="Research agent model"
+                  value={agent.model}
+                  disabled={busy}
+                  onChange={(event) => onChange({ ...value, agent: { ...agent, model: event.target.value } })}
+                >
+                  {OPENCODE_RESEARCH_MODELS.map((model) => (
+                    <option key={model.id} value={model.id}>
+                      {model.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <PolicyChoice
+                label="Research agent"
+                provider={engine.provider as "claude" | "codex"}
+                value={{ model: agent.model, reasoning: agent.reasoning }}
+                status={status}
+                disabled={busy}
+                onChange={(policy) => onChange({ ...value, agent: { ...agent, ...policy } })}
+              />
+            )}
           </div>
-          {agent.runtime === "codex-cli" ? (
+          {isOpenCode(agent.runtime) ? (
+            <small>
+              Default: DeepSeek 4.1 Flash, which passed 7 of 13 eval questions against Claude Opus 5.5's 5, at
+              about $0.09 a question. It sometimes prices an item that should have no price, so read Review
+              answers. Dollar figures are API-rate estimates; the Go plan bills nothing per call.
+            </small>
+          ) : agent.runtime === "codex-cli" ? (
             <small>
               The recorded research results were produced by Claude Opus, so Codex has no baseline of its own
               yet. Token counts are real; dollar figures are API-rate estimates, because the ChatGPT plan
               bills nothing per call.
             </small>
           ) : (
-            <small>Default: Claude Opus 5.5, high. No cheaper model has been measured on this work.</small>
+            <small>Claude Opus 5.5 passed 5 of 13 eval questions, at about $2.99 a question.</small>
           )}
         </div>
       </section>

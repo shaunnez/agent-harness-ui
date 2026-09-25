@@ -1,0 +1,281 @@
+{
+  "question": "open-b1",
+  "kind": "open",
+  "arm": "A10",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 9040,
+    "high": 12375
+  },
+  "range": {
+    "min": 8309,
+    "max": 13200
+  },
+  "unit": "total complete fence job (supply and install 1.8 m timber paling fence plus take down and removal of old fence) along 40 m of rear boundary, GST exclusive",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.094,
+    "highRatio": 1.203,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.077,
+  "elapsedMs": 288728,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 288721,
+      "band": {
+        "unit": "total complete fence job (supply and install 1.8 m timber paling fence plus take down and removal of old fence) along 40 m of rear boundary, GST exclusive",
+        "low": 8309,
+        "high": 12375,
+        "centre": "Auckland",
+        "basis": "Sum of component lows (7,056 + 320 + 783 + 150) and highs (9,800 + 800 + 1,325 + 450) = $8,309 to $12,375, midpoint ~$10,300 (~$208-309/m over the 40 m). Main cost driver (71-79% of the band) is the cited QV rate for the 1.8 m paling fence at AKL $196/m; the written range around it is the undecided paling profile, post/rail spec and finish. Allowances are only 6-10% of the total, so they do not carry the band. Priced on the assumption of a standard 1.8 m paling fence with 150 x 25 mm H3 palings, H4 posts at ~2.4 m centres set in concrete, three rails, no cap and no stain; domestic hand access; existing fence of similar height with concrete footings broken out and carted as mixed debris. No consent, design, engineering, legal or survey fee is included. QV rates are unreviewed trade rates and this is a cost-plan band, not a certified price or a builder's quotation; convert to a fixed price only against firm specifications and a site inspection."
+      },
+      "checks": [
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 470825,
+        "outputTokens": 16858,
+        "cachedTokens": 416000,
+        "modelCalls": 15,
+        "toolCalls": 24,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.019587,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 470825,
+            "outputTokens": 16858,
+            "estimatedCostUsd": 0.019587,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 126982,
+      "band": {
+        "unit": "job (complete 1.8 m paling fence plus old fence removal, 40 m rear boundary)",
+        "low": 9681,
+        "high": 13283,
+        "centre": "Auckland",
+        "basis": "Sum of four priced components, GST exclusive: QV External Works/Fences Timber row at AKL 196/m x 40 m ($7,840-$9,400 with a stated +20% specification uplift, since timber and post/rail spec are undecided) + take-down labour at the QV AKL General Labourer rate 60.55/hour x 16-32 estimated hours ($969-$1,938) + disposal at the QV AKL mixed debris tipping fee 602/tonne x 1.2-2.4 estimated tonnes ($722-$1,445) + a $150-$500 access/sundries allowance. Equivalent to about $242-$332 per lineal metre. Main cost driver (fence supply and install, ~80% of the low band) is a cited QV row; the removal is built from two cited QV rates with QS-estimated hours and tonnage, which is why confidence is medium and the removal range is wide. Allowances carry under 5% of the total. Assumes straight run over the full 40 m, H3 radiata pine, standard QV post and rail build, reasonable ground and vehicle access to the rear boundary, and an existing non-asbestos timber fence. Excludes GST, gates, retaining, drainage, ground works and consent."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 202793,
+        "outputTokens": 13313,
+        "cachedTokens": 159744,
+        "modelCalls": 10,
+        "toolCalls": 24,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.014924,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 202793,
+            "outputTokens": 13313,
+            "estimatedCostUsd": 0.014924,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 139502,
+      "band": {
+        "unit": "total, complete job over 40 m of rear boundary (new 1.8 m timber paling fence plus old fence taken down and removed), NZD excl GST, Auckland",
+        "low": 9040,
+        "high": 13200,
+        "centre": null,
+        "basis": "Sum of three distinct components with no double counting: (1) new fence from QV row t16:r5 at AKL 196/m as cited = 7,840 (40 m), adjusted up to 10,600 for the undecided paling/post/rail/finish specification; (2) take-down and removal at the only published removal rate found (25-50 per lineal metre) = 1,000-2,000 for 40 m; (3) a minor allowance of 200-600 for access, set-out and making good. Low = 7,840 + 1,000 + 200; High = 10,600 + 2,000 + 600. Mid-point shown as centre. Excludes GST, gates, painting/staining, retaining, consent or survey. Removal is roughly 10-15% of the total, so the band is not allowance-dominated. Prices assume the fence follows the full 40 m rear boundary on accessible ground."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 425352,
+        "outputTokens": 13601,
+        "cachedTokens": 361984,
+        "modelCalls": 12,
+        "toolCalls": 30,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.018752,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 425352,
+            "outputTokens": 13601,
+            "estimatedCostUsd": 0.018752,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 137903,
+      "band": {
+        "unit": "complete job (40 m rear boundary, 1.8 m high timber paling fence supplied, installed and old fence removed)",
+        "low": 9090,
+        "high": 10970,
+        "centre": "Auckland",
+        "basis": "Sum of the three components above (no item added twice, no separate post/rail/footing row, no duplication of cart away and tip fees): fence 7840-8640 + removal 1097-1829 + allowances 150-500 = 9087-10969, rounded to 9090-10970; centre ~10030, i.e. roughly 227-274 per metre of fence. GST exclusive, NZD, Auckland centre (Christchurch/Wellington would be similar within about 2%, Wellington about 5% lower). Main cost driver (supply and install) is a cited QV row; removal is a cited QV proxy adjusted -40% at the low end; allowances are under 5% of the total, so confidence is not reduced on that account. Confidence reduced to medium because the QV fence row's inclusions are not itemised, the removal is a proxy, and the QV fence rate sits at the top of published market guides. Excludes GST, gates, staining or painting, retaining, consent, and any neighbour cost-share under the Fencing Act 1978."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 195203,
+        "outputTokens": 15437,
+        "cachedTokens": 160640,
+        "modelCalls": 13,
+        "toolCalls": 23,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.014929,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 195203,
+            "outputTokens": 15437,
+            "estimatedCostUsd": 0.014929,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 212843,
+      "band": {
+        "unit": "total for the complete job along 40 m of rear boundary (1.8 m high timber paling fence plus removal of the old fence)",
+        "low": 8640,
+        "high": 10216,
+        "centre": "Auckland",
+        "basis": "Sum of two separately priced components: 40 m x AKL 196/m QV pale-fence rate (QV row t16:r5, low; +15% high for heavier/premium palings) = 7,840-9,016, plus 40 m x $20-$30/m old-fence take-down and disposal (Kiwi Fencing Co, fetched) = 800-1,200. Equivalent to about $216-$255 per linear metre. GST exclusive, NZD, Auckland. Assumes standard 150x25 H3 palings, level ground, normal domestic rear-boundary access, no rock, natural finish, and the old fence stripped out and carted as mixed debris. If a styled paling profile is chosen, re-price from QV rows t16:r9-r11 (AKL 358-370/m), giving roughly $14,700-$16,000 including removal."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 142804,
+        "outputTokens": 7299,
+        "cachedTokens": 115840,
+        "modelCalls": 11,
+        "toolCalls": 20,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.008772,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 142804,
+            "outputTokens": 7299,
+            "estimatedCostUsd": 0.008772,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,273 @@
+{
+  "question": "p-solar",
+  "kind": "pinned",
+  "arm": "A10",
+  "status": "disputed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 10948,
+    "high": 19278
+  },
+  "range": {
+    "min": 8273,
+    "max": 22414
+  },
+  "unit": "sum for the whole array (30 kWp, 60 panels, ~120 m2)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.363,
+    "highRatio": 1.221,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1867,
+  "elapsedMs": 614514,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 367821,
+      "band": null,
+      "dropped": true,
+      "checks": [],
+      "citations": null,
+      "usage": {
+        "inputTokens": 889761,
+        "outputTokens": 39220,
+        "cachedTokens": 793216,
+        "modelCalls": 18,
+        "toolCalls": 44,
+        "searchCalls": 11,
+        "estimatedCostUsd": 0.040393,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 889761,
+            "outputTokens": 39220,
+            "estimatedCostUsd": 0.040393,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 240607,
+      "band": {
+        "unit": "sum for the whole array (30 kWp, 60 panels, ~120 m2)",
+        "low": 11277,
+        "high": 22414,
+        "centre": "Auckland",
+        "basis": "Working cost-plan band, GST exclusive, Auckland, for the fixed scope only: proprietary rail/clamp mounting system supplied + installed, supplementary purlins to one third of the footprint, and structural design/PS1. Excludes preliminaries and margin (per brief), scaffolding/edge protection, roof sheet work, PV modules, inverters, cabling/electrical, and consent fees. Low = mounting hardware $3,000 + mount labour $3,715 + purlins $1,384 + bolts $418 + design $2,760 = $11,277. High = $6,000 + $7,430 + $2,768 + $696 + $5,520 = $22,414. The two largest components (mounting hardware and its installation labour) both rest on non-NZ-published or estimated quantities: no QV CostBuilder row exists for any PV mounting item (9,816-row local index searched repeatedly), so the band is indicative only - it is NOT a certified or quoted price. Ring Clenergy/Smiths NZ or Ideal (racking supply), S-5!/Protea (clamped brackets), and a CPEng structural engineer (design + PS1) for three firm numbers before this band is committed."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 863565,
+        "outputTokens": 20653,
+        "cachedTokens": 652416,
+        "modelCalls": 16,
+        "toolCalls": 50,
+        "searchCalls": 19,
+        "estimatedCostUsd": 0.046021,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 863565,
+            "outputTokens": 20653,
+            "estimatedCostUsd": 0.046021,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 468600,
+      "band": {
+        "unit": "sum for the whole array (30 kWp, 60 panels, ~120 m2, Auckland, GS",
+        "low": 10948,
+        "high": 18352.72,
+        "centre": "Auckland",
+        "basis": "QS working band: mounting supply from NZ supplier list prices fetched (no QV solar racking row exists) with QV AKL installation labour added separately; strengthening from QV proprietary purlin and bolt rows plus allowances only for quantity assumptions; PS1 from a published CPEng hourly schedule. Broken into mounting system (6,390-10,489), strengthening (2,718-4,184) and design fee (1,840-3,680) so any one part can be rejected. Excludes GST, preliminaries, margin, modules, inverters, cabling, electrical work, roof sheet works, scaffolding/edge protection and consent fees. GST exclusive. Low confidence: 5 of 10 components rest on supplier list prices (GST status unstated, no trade installation margin tested) and rail/bracket/purlin quantities follow an assumed layout that the structural design has not yet fixed."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 6,
+        "webVerified": 6,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 408525,
+        "outputTokens": 27562,
+        "cachedTokens": 343552,
+        "modelCalls": 13,
+        "toolCalls": 33,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.027314,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 408525,
+            "outputTokens": 27562,
+            "estimatedCostUsd": 0.027314,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 302714,
+      "band": {
+        "unit": "sum for the whole array (30 kWp, 60 panels, 120 m², Auckland, GST exclusive)",
+        "low": 8273,
+        "high": 19278,
+        "centre": "Auckland",
+        "basis": "Sum of four distinct components - (1) proprietary rail mounting system supplied and fixed, priced by weight from QV's small-section support-framing supply-and-fix row as a stated stand-in for a PV rail system, 160-200 kg = 5,408-10,800; (2) supplementary purlins to one third of the footprint, QV HST 200/15 purlin rate x 35-65 m = 1,145-2,126; (3) purlin bolts, QV bolt row x 20-32 = 220-352; (4) structural engineer's AS/NZS 1170 design and PS1 = 1,500-6,000. Depth 8,273; top 19,278; mid 13,776, i.e. about $115/m² of panel area and $460/kWp for this scope only. No aggregate QV row has been added alongside its components and no part is counted twice: the QV framing and purlin rates both include fixing labour and the purlin rate expressly excludes bolts, which are added once. No allowances are used for any main item; every figure is a cited QV row, a fetched published range, or arithmetic on a stated take-off. Confidence is low because QV has no PV racking row (the largest component is a proxy with a 60% rate spread of its own) and no NZ-published engineering/PS1 fee exists, so the design line is taken from a US commercial benchmark; the two components together are about 85% of the band. GST, preliminaries, margin, modules, inverters, cabling, electrical work, roof sheet work, scaffolding and edge protection, and consent fees are all excluded as instructed."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 676987,
+        "outputTokens": 32593,
+        "cachedTokens": 563072,
+        "modelCalls": 13,
+        "toolCalls": 42,
+        "searchCalls": 11,
+        "estimatedCostUsd": 0.038332,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 676987,
+            "outputTokens": 32593,
+            "estimatedCostUsd": 0.038332,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 614510,
+      "band": {
+        "unit": "sum for the 30 kWp / 60 module / 120 m2 array (Auckland, GST-exclusive)",
+        "low": 7575,
+        "high": 12432,
+        "centre": "Auckland",
+        "basis": "Sum of the eight distinct components, no work counted twice: net-of-GST web hardware 2,473.00-3,369.22 (H1+H2+H3) + mounting labour 2,674.80-4,458.00 (H4) + sundries allowance 300-700 (H5) + purlins 1,158-1,930 (H6, supply and fix) + bolts 474-948 (H7) = construction cost 7,079.80-11,405.22, plus the QV fee percentage at 7.0% of the low and 9.0% of the high = 495.59-1,026.47 (H8); total 7,575-12,432, i.e. approx $253-414 per kWp. Fazcorp hardware is published GST-inclusive and has been divided by 1.15 to reach the GST-exclusive band; all QV rates are already GST-exclusive. Only one component (sundries, $300-700) is an allowance, about 4-6% of the band, so the band is not allowance-driven. Spread is 1.6x, deliberately wide because the rail is a light retail extrusion standing in for engineered racking and because the labour hours are estimated. Design fee, preliminaries, margin, GST, PV/inverter/cabling, roof sheet work, scaffolding and consent fees are excluded as instructed. Confidence is low, not because the components are unpriced but because the proprietary system that will actually be specified is not the one whose price list I could fetch."
+      },
+      "dropped": true,
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-missing",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 3,
+        "rowsMissing": 1,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 910271,
+        "outputTokens": 30845,
+        "cachedTokens": 819328,
+        "modelCalls": 23,
+        "toolCalls": 44,
+        "searchCalls": 11,
+        "estimatedCostUsd": 0.034606,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 910271,
+            "outputTokens": 30845,
+            "estimatedCostUsd": 0.034606,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

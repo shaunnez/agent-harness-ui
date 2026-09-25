@@ -1,0 +1,302 @@
+{
+  "question": "p-solar",
+  "kind": "pinned",
+  "arm": "A2",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 12805,
+    "high": 20800
+  },
+  "range": {
+    "min": 12500,
+    "max": 21100
+  },
+  "unit": "sum (whole array)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.049,
+    "highRatio": 1.029,
+    "runsWithBand": 2,
+    "runsTotal": 3
+  },
+  "costUsd": 1.4453,
+  "elapsedMs": 491431,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 401818,
+      "band": {
+        "unit": "sum (whole array)",
+        "low": 12500,
+        "high": 20500,
+        "centre": "Auckland",
+        "basis": "Sum of the components, GST exclusive, NZD, rounded. Part A mounting $7,700-11,600; Part B strengthening $2,300-4,400; Part C design/PS1 $2,500-4,500. Allowances carry ~21-26% of the total, under one third. Confidence is low because all quantities are measured by me from an assumed layout, the mounting materials are retail web proxies of uncertain GST status and rib-clamp suitability, labour productivity is judgement, and most of the design fee is an allowance. Cross-check: EECA's commercial benchmark of $1,500-2,000/kW (E16) gives $45-60k for a whole 30 kW system; Part A is ~15-20% of that, which fits a mounting-only price. The benchmark is not added to the total."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 6,
+        "webVerified": 6,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 884093,
+        "outputTokens": 22003,
+        "cachedTokens": 818235,
+        "modelCalls": 4,
+        "toolCalls": 68,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.492046,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 884087,
+            "outputTokens": 12561,
+            "estimatedCostUsd": 0.046632999999999994,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 9442,
+            "estimatedCostUsd": 0.44541339999999996,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 316000,
+            "outputTokens": 5865,
+            "cachedTokens": 268032,
+            "estimatedCostUsd": 0.019353
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 249388,
+            "outputTokens": 3209,
+            "cachedTokens": 200704,
+            "estimatedCostUsd": 0.00848
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 318699,
+            "outputTokens": 3487,
+            "cachedTokens": 264192,
+            "estimatedCostUsd": 0.0188
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 9442,
+            "cachedTokens": 85307,
+            "estimatedCostUsd": 0.44541339999999996
+          }
+        ]
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 491427,
+      "band": null,
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 4,
+        "webVerified": 4,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 1223272,
+        "outputTokens": 24409,
+        "cachedTokens": 1131139,
+        "modelCalls": 4,
+        "toolCalls": 67,
+        "searchCalls": 5,
+        "estimatedCostUsd": 0.510508,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 1223266,
+            "outputTokens": 15022,
+            "estimatedCostUsd": 0.060802999999999996,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 9387,
+            "estimatedCostUsd": 0.44970540000000003,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 536499,
+            "outputTokens": 6873,
+            "cachedTokens": 474112,
+            "estimatedCostUsd": 0.027114
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 178221,
+            "outputTokens": 4427,
+            "cachedTokens": 142592,
+            "estimatedCostUsd": 0.007202
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 508546,
+            "outputTokens": 3722,
+            "cachedTokens": 433408,
+            "estimatedCostUsd": 0.026487
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 9387,
+            "cachedTokens": 81027,
+            "estimatedCostUsd": 0.44970540000000003
+          }
+        ]
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 259590,
+      "band": {
+        "unit": "sum",
+        "low": 13110,
+        "high": 21100,
+        "centre": "Auckland",
+        "basis": "Sum of three separable parts: mounting system $6,890-10,220 (retail rail/bracket/clamp listings ex GST + QV roofer labour), strengthening $3,090-6,180 (QV purlin rates + QV steel erector retrofit labour), design/PS1 $3,130-4,700 (published commercial design fee ex GST). Allowances carry $1,000-2,300 (~8-11%). Mid-point ~$17,000. Low confidence: mounting materials are retail proxies of unconfirmed high-wind suitability, labour hours and purlin quantities are judgement, and the design fee proxy doesn't confirm PS1 scope."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 5,
+        "webVerified": 5,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 491937,
+        "outputTokens": 16215,
+        "cachedTokens": 462800,
+        "modelCalls": 3,
+        "toolCalls": 39,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.442737,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 491931,
+            "outputTokens": 7866,
+            "estimatedCostUsd": 0.030602,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 8349,
+            "estimatedCostUsd": 0.41213520000000003,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 323381,
+            "outputTokens": 5421,
+            "cachedTokens": 246016,
+            "estimatedCostUsd": 0.024459
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 168550,
+            "outputTokens": 2445,
+            "cachedTokens": 132608,
+            "estimatedCostUsd": 0.006143
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 8349,
+            "cachedTokens": 84176,
+            "estimatedCostUsd": 0.41213520000000003
+          }
+        ]
+      }
+    }
+  ]
+}

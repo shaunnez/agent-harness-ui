@@ -1,0 +1,215 @@
+{
+  "question": "site-electrical-reticulation",
+  "kind": "pinned",
+  "arm": "A0",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 87220,
+    "high": 130666
+  },
+  "range": {
+    "min": 70964,
+    "max": 137022
+  },
+  "unit": "sum",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.334,
+    "highRatio": 1.312,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 4.8048,
+  "elapsedMs": 221590,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 184735,
+      "band": {
+        "unit": "sum",
+        "low": 70964,
+        "high": 104451,
+        "centre": "Auckland",
+        "basis": "PARTIAL: sum of A + B1 + B2 + D1 only; EXCLUDES pits (C), distribution board and plinth (D2), terminations, glands, testing/CoC/as-builts. Implied $284-418 per lineal metre over the 250m route. QV aggregate cross-check t0:r20 ($227/m underground 3-phase 100A main) suggests the component conduit rates run high; not added to components"
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-unverified",
+        "qv-found",
+        "web-unverified"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 2,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 26,
+        "outputTokens": 14683,
+        "cachedTokens": 938370,
+        "modelCalls": 35,
+        "toolCalls": 34,
+        "searchCalls": 3,
+        "estimatedCostUsd": 1.3947640000000003,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 26,
+            "outputTokens": 14683,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.328278,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 30876,
+            "outputTokens": 1122,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.066486,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 182485,
+      "band": {
+        "unit": "sum",
+        "low": 87220,
+        "high": 130666,
+        "centre": "Auckland",
+        "basis": "Sum of QV-derived parts: trenching/reinstatement 11,324-21,372; conduit and cable 58,580-78,320; pits (proxy) 14,740-26,220; board and spurs 2,576-4,754. Equals $349-$523 per lm over 250m. Excludes the not-established items below, so the full-scope cost is likely higher. GST exclusive, unreviewed rows."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 11,
+        "rowsFound": 11,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 30,
+        "outputTokens": 13872,
+        "cachedTokens": 1149310,
+        "modelCalls": 42,
+        "toolCalls": 41,
+        "searchCalls": 4,
+        "estimatedCostUsd": 1.4983969999999998,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 30,
+            "outputTokens": 13872,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.4070859999999998,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 44211,
+            "outputTokens": 1420,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.091311,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 221586,
+      "band": {
+        "unit": "sum",
+        "low": 94684,
+        "high": 137022,
+        "centre": "Auckland",
+        "basis": "Sum of components A-D, GST exclusive. Implied $379-548/lm over 250m. Excludes items in not_established. Pits are a drainage proxy. Conduit rates are single-conduit QV rates and likely high."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 11,
+        "rowsFound": 11,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 34,
+        "outputTokens": 17159,
+        "cachedTokens": 1508024,
+        "modelCalls": 43,
+        "toolCalls": 42,
+        "searchCalls": 4,
+        "estimatedCostUsd": 1.9116288000000001,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 34,
+            "outputTokens": 17159,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.8226648,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 41784,
+            "outputTokens": 1436,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.08896399999999999,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

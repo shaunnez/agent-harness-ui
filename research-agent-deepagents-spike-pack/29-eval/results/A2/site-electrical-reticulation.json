@@ -1,0 +1,343 @@
+{
+  "question": "site-electrical-reticulation",
+  "kind": "pinned",
+  "arm": "A2",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 89000,
+    "high": 137000
+  },
+  "range": {
+    "min": 80449,
+    "max": 149771
+  },
+  "unit": "sum",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.289,
+    "highRatio": 1.29,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 1.8995,
+  "elapsedMs": 566086,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 566084,
+      "band": {
+        "unit": "sum",
+        "low": 80449,
+        "high": 116126,
+        "centre": "Auckland",
+        "basis": "Lump sum for the pinned scope, GST exclusive, no preliminaries or margin, found by adding the components. Trenching and reinstatement $13,338-19,955. Conduit and cable $53,078-71,088. Pits $6,400-11,200 (allowance). Board, spurs and testing $7,633-13,883. That is $322-464/lm over the 250m route, centre about $98,300 or $393/lm. Allowances are $16.1k (20%) at the low end and $31.6k (27%) at the high end. Conduit is about 45% of the total and uses QV stand-in rates that don't rise with size (no 63mm row), so confidence is low."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-verified",
+        "allowance",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-verified",
+        "allowance",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 9,
+        "rowsFound": 9,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 10
+      },
+      "usage": {
+        "inputTokens": 1662330,
+        "outputTokens": 30193,
+        "cachedTokens": 1523187,
+        "modelCalls": 4,
+        "toolCalls": 97,
+        "searchCalls": 10,
+        "estimatedCostUsd": 0.635823,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 1662324,
+            "outputTokens": 18053,
+            "estimatedCostUsd": 0.088694,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 12140,
+            "estimatedCostUsd": 0.5471286,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 890943,
+            "outputTokens": 10760,
+            "cachedTokens": 775936,
+            "estimatedCostUsd": 0.04659
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 333038,
+            "outputTokens": 1775,
+            "cachedTokens": 281344,
+            "estimatedCostUsd": 0.017297
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 438343,
+            "outputTokens": 5518,
+            "cachedTokens": 372224,
+            "estimatedCostUsd": 0.024807
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 12140,
+            "cachedTokens": 93683,
+            "estimatedCostUsd": 0.5471286
+          }
+        ]
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 544034,
+      "band": {
+        "unit": "sum (one site, 250 m nominal route)",
+        "low": 89000,
+        "high": 137000,
+        "centre": "Auckland",
+        "basis": "Sum of components, GST exclusive NZD. Trenching and reinstatement $15.5–24.5k; conduit and cable $57.5–84.8k; pits $7.8–13.0k (allowance); board and spurs $7.2–11.6k; testing $1.5–3.0k. Implied $358–548 per lineal metre over 250m. Allowances total $17.3–31.0k (19–23%), under one third. Confidence is low because the main drivers are proxies: 63mm conduit is bracketed by the 50mm and 100mm QV rows, and the sub-main uses a fire-rated tray-cable row. Pits and the board upgrade have no published rate."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 10,
+        "rowsFound": 10,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 7
+      },
+      "usage": {
+        "inputTokens": 1132473,
+        "outputTokens": 31640,
+        "cachedTokens": 1034421,
+        "modelCalls": 4,
+        "toolCalls": 89,
+        "searchCalls": 5,
+        "estimatedCostUsd": 0.618993,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 1132467,
+            "outputTokens": 19656,
+            "estimatedCostUsd": 0.06125799999999999,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 11984,
+            "estimatedCostUsd": 0.5577354,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 516801,
+            "outputTokens": 8605,
+            "cachedTokens": 455168,
+            "estimatedCostUsd": 0.027884
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 271516,
+            "outputTokens": 5720,
+            "cachedTokens": 209152,
+            "estimatedCostUsd": 0.011188
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 344150,
+            "outputTokens": 5331,
+            "cachedTokens": 281344,
+            "estimatedCostUsd": 0.022186
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 11984,
+            "cachedTokens": 88757,
+            "estimatedCostUsd": 0.5577354
+          }
+        ]
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 557823,
+      "band": {
+        "unit": "sum",
+        "low": 103687,
+        "high": 149771,
+        "centre": "Auckland",
+        "basis": "Sum of components, NZD, GST excl, Auckland. Parts: trenching/reinstatement $16,624-24,786; conduit and cable $62,380-87,020; pits $17,632-25,660; board and spurs $5,551-9,305; testing/CoC $1,500-3,000. Implied $415-599/lm over 250m (centre about $507/lm). Allowances are about 8-13% of the total. Confidence is low because every main driver (conduit, cable, pits, board) is priced from a different item and adjusted. Conduit rates run backwards by size and pits are drainage-pit stand-ins; both lean high."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 14,
+        "rowsFound": 14,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 9
+      },
+      "usage": {
+        "inputTokens": 1485345,
+        "outputTokens": 30699,
+        "cachedTokens": 1355302,
+        "modelCalls": 4,
+        "toolCalls": 95,
+        "searchCalls": 8,
+        "estimatedCostUsd": 0.64471,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 1485339,
+            "outputTokens": 18625,
+            "estimatedCostUsd": 0.083678,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 12074,
+            "estimatedCostUsd": 0.5610316,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 687918,
+            "outputTokens": 9523,
+            "cachedTokens": 582144,
+            "estimatedCostUsd": 0.03994
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 424335,
+            "outputTokens": 4397,
+            "cachedTokens": 364032,
+            "estimatedCostUsd": 0.022639
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 373086,
+            "outputTokens": 4705,
+            "cachedTokens": 316928,
+            "estimatedCostUsd": 0.021099
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 12074,
+            "cachedTokens": 92198,
+            "estimatedCostUsd": 0.5610316
+          }
+        ]
+      }
+    }
+  ]
+}

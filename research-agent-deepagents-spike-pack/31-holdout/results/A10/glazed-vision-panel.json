@@ -1,0 +1,310 @@
+{
+  "question": "glazed-vision-panel",
+  "kind": "pinned",
+  "arm": "A10",
+  "status": "agreed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 697,
+    "high": 1094
+  },
+  "range": {
+    "min": 682,
+    "max": 1225
+  },
+  "unit": "ea (one vision panel, cut, framed and glazed into one door leaf)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.045,
+    "highRatio": 1.152,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1681,
+  "elapsedMs": 496161,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 243927,
+      "band": {
+        "unit": "ea (one 300 x 900mm glazed vision panel, site-cut into one hung 44mm -/30/30 leaf)",
+        "low": 805,
+        "high": 1430,
+        "centre": "Auckland",
+        "basis": "GST-exclusive, Auckland (AKL) column rates, one trade visit, 12 panels inflated over one mobilisation and one installer certificate. Built by adding distinct components: QV proxied fire glass ($203-432) + QV proxied aperture cut/lipping ($155-248) + QV bead and intumescent seal rows ($178-262) + QV glazier rate x 1.5-2.5 hr ($145-241) + three allowances (dust/extraction $45-85, mobilisation /12 $50-100, installer certificate /12 $30-60). No component is counted twice and no factory option, leaf, frame, hardware, paint or consent fee is priced. Point estimate I would carry to the cost plan: $1,100/panel ($13,200 for 12). Allowances are 16% of the low end and 17% of the high end, under the one-third test. Confidence is LOW, not because the rates are missing but because the specified clear monolithic fire glass (Pyrostop/Contraflam class) is proprietary with no published NZ rate, so the largest single line rests on a QV wired-glass proxy uplifted by judgement; the labour hours are also judgement. QV rows are UNREVIEWED."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 752269,
+        "outputTokens": 24022,
+        "cachedTokens": 664064,
+        "modelCalls": 15,
+        "toolCalls": 44,
+        "searchCalls": 8,
+        "estimatedCostUsd": 0.029636,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 752269,
+            "outputTokens": 24022,
+            "estimatedCostUsd": 0.029636,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 272277,
+      "band": {
+        "unit": "ea (one vision panel, cut, framed and glazed into one door leaf)",
+        "low": 682,
+        "high": 1225,
+        "centre": "Auckland",
+        "basis": "Sum of 8 distinct components, no double counting: QV proxy rates with stated adjustments for fire-rated glass, fire-rated hardwood beads, intumescent rebate seal and lipping; QV labour rates x a stated hour build-up for the site cut, rout, glaze and rehang; QV screens/protection rows for dust control and clean-up; a QV technician-attendance proxy for the installer certificate; and one labelled allowance for mobilisation (about 5-7% of the total). Allowances are well under a third of the total, but confidence is LOW because the largest component (fire-rated glass, $177-$354 of $682-$1,225) rests on a product-class substitution - 6mm wired fire-protective glass used for 6mm monolithic fire-resistive clear glazing - because QV publishes no such row and no NZ supplier publishes a price; and because the labour hours are a build-up with no published row behind them. GST, preliminaries, margin, design, consent and BCA inspection fees, paint/finish, the door leaf, frame, hardware and closer, test evidence and PS4, after-hours work, and factory-cut variants are all excluded as instructed. This is a cost-plan band, not a certified price. Point estimate $955/panel; 12 panels: point $11,450 (band $8,180 - $14,700)."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 1041860,
+        "outputTokens": 31608,
+        "cachedTokens": 928128,
+        "modelCalls": 17,
+        "toolCalls": 49,
+        "searchCalls": 5,
+        "estimatedCostUsd": 0.038809,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1041860,
+            "outputTokens": 31608,
+            "estimatedCostUsd": 0.038809,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 496159,
+      "band": {
+        "unit": "ea (one vision panel, cut framed and glazed into one hung leaf)",
+        "low": 697,
+        "high": 1063,
+        "centre": "Auckland, NZD, GST exclusive",
+        "basis": "Sum of 11 distinct components, none double-counted: QV Glazing/Wired Glass Pyroshield 6mm row used as the fire-rated 6mm glazed-in proxy with a stated +20% to +100% adjustment for the Pyrostop/Contraflam class (0.27 m2); QV Doors glazing bead row 4.8 m with +30% to +60% for fire-rated hardwood; QV Rimu door stop row as the lipping proxy; QV Glazier labour rate ($96.4/hr AKL) x a QS-judged 2.5-3.5 hr per panel; QV floor protection, masking film and polythene temporary screen rows; and three minor allowances (intumescent glazing seal, extraction/clean-up, mobilisation) worth $75-$165/panel, about 12% of the band, so the band does not lean on allowances. Point estimate $880/panel; nominal 12 panels $8,364 - $12,756. WELLINGTON and CHRISTCHURCH run roughly $25-$40/panel lower, entirely on the labour line (glazier WLG $85.45, CHC $84.25); the bead, protection, masking and screen rows are centre-neutral and the glass base is WLG $454 / CHC $453 per m2. Excluded as instructed: GST, preliminaries, margin, design, consent and BCA fees, painting, the leaf, frame, hardware, closer, lab test evidence, third-party fire engineer review and PS4, after-hours work, and factory glazing. Web step used for context only - Soteria Doors' NZ guide gives 'Single 30-minute fire door: $450 - $1,500' (source-2), a whole leaf rather than any part of this scope, and no NZ supplier publishes a Pyrostop/Contraflam per-pane price; no web figure is used in the arithmetic. Confidence low: the ceramic-glass uplift is my adjustment on a wired-glass row, the labour hours are QS judgement, and the retrofit depends on the leaf manufacturer's approval."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 8,
+        "rowsFound": 8,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 787409,
+        "outputTokens": 29391,
+        "cachedTokens": 700672,
+        "modelCalls": 17,
+        "toolCalls": 35,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.032747,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 787409,
+            "outputTokens": 29391,
+            "estimatedCostUsd": 0.032747,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 234219,
+      "band": {
+        "unit": "ea (one vision panel, cut framed and glazed into one door leaf)",
+        "low": 727,
+        "high": 1443,
+        "centre": "Auckland",
+        "basis": "Sum of eight distinct components per panel (glass 255-590, beads 109-133, intumescent seal 15-45, lipping material 25-60, site joinery labour 203-325, mobilisation 50-100, dust control 30-70, certificate 40-120) = $727-$1,443 per panel, i.e. $8,724-$17,316 for the 12 panels. GST exclusive, Auckland, QV CostBuilder rates plus stated allowances; QV rows are UNREVIEWED. The band is wide and confidence low because the dominant component - 6mm clear insulating fire glass, roughly a third of the low end and 40% of the high end - has no QV row for the specified product and is a proxy (QV wired-glass rate plus a QV-derived clear-fire-glass uplift, corroborated in order of magnitude by a fetched US price at $100/sq ft for ceramic fire-protective glass, source-1). Allowances carry 19% of the low end and 24% of the high end, under the one-third limit. Excluded as instructed: GST, preliminaries, margin, design/consent/BCA fees, paint or clear finish, door leaf, frame, hardware, closer, failed-leaf replacement, laboratory test evidence, third-party fire engineering and PS4, after-hours work, decanting, temporary doors, non-rated/laminated acoustic/wired/georgian variants, and factory-cut panels. For context the brief's own point of $820/ea sits between my low end and midpoint; a factory preglazed panel on the same spec is a separate id."
+      },
+      "dropped": true,
+      "checks": [
+        "web-derived",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 629069,
+        "outputTokens": 25351,
+        "cachedTokens": 524672,
+        "modelCalls": 12,
+        "toolCalls": 44,
+        "searchCalls": 11,
+        "estimatedCostUsd": 0.032444,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 629069,
+            "outputTokens": 25351,
+            "estimatedCostUsd": 0.032444,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 465559,
+      "band": {
+        "unit": "ea (one vision panel cut, framed and glazed into one hung 44mm fire leaf)",
+        "low": 713,
+        "high": 1094,
+        "centre": "Auckland",
+        "basis": "Per panel, GST exclusive, Auckland, one trade visit, 12 leaves in one building. Sum of sourced components and labelled allowances: glass 189-270, FR beads 133, intumescent seal 28-39, lipping allowance 25-50, carpenter labour 163-244, glazier labour 48-96, dust/extraction allowance 40-80, mobilisation allowance 60-120, certificate 27-62 = $713-$1,094/ea; point estimate $900/ea. 12 panels = $8,556-$13,128, point $10,800. Allowances (lipping, dust, mobilisation) total $125-$250, about 18-23% of each end, so every main cost driver is rate-priced: the largest component is site labour ($211-$340) priced from QV Labour Rates with estimated hours, and the glass ($189-$270) from a QV row with a stated x1.5 adjustment. Confidence medium, not high: the glass uplift and the certificate percentage are stated adjustments on QV rows rather than direct rates, and the labour hours are an estimate. Upper end also absorbs a possible step up to an insulated fire glass build-up if -/30/30 insulation (not just integrity) is enforced. Excludes GST, preliminaries, margin, design/consent/BCA fees, painting, the leaf and hardware, test evidence and third-party fire engineering, after-hours work, and factory-cut panels."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "unsourced"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 814519,
+        "outputTokens": 26388,
+        "cachedTokens": 704128,
+        "modelCalls": 14,
+        "toolCalls": 45,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.034504,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 814519,
+            "outputTokens": 26388,
+            "estimatedCostUsd": 0.034504,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

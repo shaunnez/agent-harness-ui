@@ -1,0 +1,210 @@
+{
+  "question": "site-electrical-reticulation",
+  "kind": "pinned",
+  "arm": "A4",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 97400,
+    "high": 146088
+  },
+  "range": {
+    "min": 78511,
+    "max": 148973
+  },
+  "unit": "sum",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.409,
+    "highRatio": 1.069,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1313,
+  "elapsedMs": 438826,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 198068,
+      "band": {
+        "unit": "sum",
+        "low": 78511,
+        "high": 148973,
+        "centre": "Auckland",
+        "basis": "Lump sum for the fixed scope, GST-exclusive, Auckland, 2025/26. Sum of the components above: low $78,511, high $148,973, midpoint ~$113,700. Implied rate over the 250m nominal route: low $314/m, high $596/m, midpoint ~$455/m. Built from QV CostBuilder rows (unreviewed, caveated) plus two fetched NZ supplier prices and stated allowances. Confidence is LOW: the QV buried-conduit subsection is internally inconsistent (50mm $77/m vs 100mm $45.80/m) and the conduit line alone is ~37-46% of the band; the pits and the 4-core 25mm2 sub-main are priced from proxies with stated adjustments because QV publishes no matching rows. Component subtotals (low-high): trenching and reinstatement ~$10,900-$27,700; conduit and cable ~$49,300-$89,000; pits ~$13,100-$19,700; board and spurs ~$5,200-$12,600."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-unverified",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "web-unverified",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 11,
+        "rowsFound": 11,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 2,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 1564745,
+        "outputTokens": 31447,
+        "cachedTokens": 1466368,
+        "toolCalls": 24,
+        "searchCalls": 7,
+        "estimatedCostUsd": 0.038024,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1564745,
+            "outputTokens": 31447,
+            "estimatedCostUsd": 0.038024,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 438823,
+      "band": {
+        "unit": "sum (whole external reticulation installation, one site, 250 m nominal route)",
+        "low": 110656,
+        "high": 146088,
+        "centre": "Auckland",
+        "basis": "Working cost-plan band, GST exclusive, NZD, Auckland, for the fixed scope only (incoming supply, network connection, transformer, main switchboard, metering, poles/luminaires, comms/CCTV, rock/contaminated spoil, dewatering, traffic management, EV/generator provisions and paving beyond the trench line excluded). Built from QV CostBuilder (PlanCheck) published rates - all rows UNREVIEWED - plus labelled allowances for minor items with no published rate. Part subtotals: trenching & reinstatement $20,532-30,047; conduit & cable $74,180-92,625; pits $9,872-12,972; board & spurs $4,572-7,444; testing/CoC allowance $1,500-3,000. Allowances carry about 5-8% of the total, well under a third. Implied rate over the 250 m nominal route: $443/m (low) to $584/m (high), central ~$513/m; central lump sum ~$128,000. Confidence is LOW because (a) QV's buried-conduit section is internally inconsistent and its rates sit far above material cost (web cross-check: 63 mm HD AS/NZS 2053 conduit supply is about AUD 8.8/m), and the conduit + sub-main sections carry ~60% of the total; (b) the sub-main is proxied between a fire-rated 4-core row and a single-core copper row; (c) QV rates include commercial overheads and margin that cannot be stripped out. A competitively tendered price could fall below the low end. QV rates exclude GST; preliminaries and margin are not added separately."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-unverified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 12,
+        "rowsFound": 12,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 1,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 838129,
+        "outputTokens": 51029,
+        "cachedTokens": 681088,
+        "toolCalls": 19,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.056217,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 838129,
+            "outputTokens": 51029,
+            "estimatedCostUsd": 0.056217,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 301174,
+      "band": {
+        "unit": "sum (lump sum for the whole external reticulation installation, one 3,000 m2 site)",
+        "low": 97400,
+        "high": 139400,
+        "centre": "Auckland",
+        "basis": "Sum of the priced components above. GST-exclusive, NZD, Auckland rates. Excludes preliminaries, margin, design and consent fees, the incoming supply/network connection/transformer/main switchboard/metering, lighting poles/footings/luminaires/controls, CCTV/comms active equipment, rock, contaminated spoil, dewatering, traffic management, a second sub-main, generator or EV provision, and paving/kerbing/landscaping beyond the trench line. Implied rate over the 250 m nominal route: approx. $390/m (low) to $558/m (high), centre approx. $474/m — so the amortisation is auditable. Component shares of the centre: trenching & reinstatement ~15%, conduit & cable ~60%, pits ~8%, board & spurs ~5%, testing/CoC/as-built ~2%. Allowances (not published rates) carry roughly 11–14% of the total, well under one third. Confidence is LOW: the largest component (conduit) rests on an unreviewed QV row with no 63 mm equivalent and an inconsistent 100 mm sibling; the sub-main uses a fire-rated 4-core proxy discounted by judgement; the pits and board plinth are allowances because no NZ supplier price was published. Note the QV buried-conduit rates look high against typical trade rates for 63/32 mm orange PVC; if a reviewer rejects that component the band falls materially."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 10,
+        "rowsFound": 10,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 2,
+        "allowances": 8
+      },
+      "usage": {
+        "inputTokens": 845859,
+        "outputTokens": 31610,
+        "cachedTokens": 739968,
+        "toolCalls": 19,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.03707,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 845859,
+            "outputTokens": 31610,
+            "estimatedCostUsd": 0.03707,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,186 @@
+{
+  "question": "emergency-lighting-exit-signage",
+  "kind": "pinned",
+  "arm": "A5",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 339,
+    "high": 457
+  },
+  "range": {
+    "min": 313,
+    "max": 543
+  },
+  "unit": "ea (per emergency fitting, averaged over 40 mixed luminaire/exit-sign fittings)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.198,
+    "highRatio": 1.188,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0877,
+  "elapsedMs": 262355,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 238618,
+      "band": {
+        "unit": "ea (per emergency fitting, averaged over 40 mixed luminaire/exit-sign fittings)",
+        "low": 313,
+        "high": 457,
+        "centre": "Auckland",
+        "basis": "Sum of seven priced components for 40 fittings (Auckland, GST-exclusive): 28 installed emergency downlights + 12 installed exit signs + 480m installed 1.5mm2 TPS + 3 MCBs + test switches + scaffold access + a testing/certification allowance = $12,532-$18,265, i.e. $313-$457/ea. Fitting, cable, MCB, switch and access rates are QV CostBuilder Detailed rates (UNREVIEWED); QV builds them 'from first principles' including 'labour to install, based on time multiplied by cost' and contractors' margin and they exclude GST (source-1, https://costbuilder.qv.co.nz/faq/), so no separate installation labour is added. Only one component is an allowance (testing/certification, ~7% of the band, below the one-third threshold). Low assumes the smaller published proxy rates, 10m average cable runs, one key switch per circuit and 1 week of access; high assumes the larger proxy rates, 14m runs, a test switch per fitting and 2 weeks of access. Excluding the per-fitting test-switch reading the band is about $313-$418/ea. Note: QV rates inherently include a contractors' margin, so the scope's 'margin excluded' is read as 'no separate margin line added'. Excludes GST, preliminaries, design, consent/BWOF/IQP, ongoing re-testing and central-battery/addressable/self-test systems per scope. This is a cost-plan band, not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 360450,
+        "outputTokens": 27188,
+        "cachedTokens": 292480,
+        "toolCalls": 31,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.027386,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 360450,
+            "outputTokens": 27188,
+            "estimatedCostUsd": 0.027386,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 241588,
+      "band": {
+        "unit": "ea (per emergency fitting, averaged across the 28 downlights + 12 exit signs)",
+        "low": 339,
+        "high": 457,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components, each priced once. QV rows (Auckland, GST-exclusive): downlight $208-$236 (t20:r6/r7), exit sign $208-$347 (t20:r11/r12), 1.5 mm2 2C+E TPS installed $6.60/m (t7:r71) x 10-14 m, one-gang test switch $38.60 (t22:r2), 16 A MCB $53 x 3 (t29:r33), scissor-lift day hire $94 (t8:r2). QV rates are unreviewed and are taken as supply-and-install composites (QV's $129 subcircuit light-point row corroborates the cable+switch build-up). Add stated allowances: board terminations $150-$400, access delivery $120-$300, witnessed 90-min discharge test + 2293.2 log book + as-built $400-$1,100; plus a cited CoC/ESC admin fee of $20-$40. Low = clear void, 10 m pulls, small exit sign, single continuous visit; high = congested void, 14 m pulls, larger 24 m blade sign, split visits, trestle-to-lift access. Allowances are ~5-10% of the band. Midpoint $398/ea; 40 fittings = $13,541-$18,293 (mid $15,920). GST-exclusive, excludes preliminaries, margin, design, consent, BWOF/IQP, initial IQP inspection, ongoing 6-monthly/annual re-testing, central battery/inverter/addressable systems, new DB/sub-main, ceiling grid alteration, and fire alarm interface. Not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 771227,
+        "outputTokens": 22914,
+        "cachedTokens": 687744,
+        "toolCalls": 16,
+        "searchCalls": 5,
+        "estimatedCostUsd": 0.028334,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 771227,
+            "outputTokens": 22914,
+            "estimatedCostUsd": 0.028334,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 262351,
+      "band": {
+        "unit": "per fitting (ea), nominal 40 fittings",
+        "low": 375,
+        "high": 543,
+        "centre": "Auckland",
+        "basis": "Sum of cited QV rates (emergency downlight and exit-sign supply & install, 1.5 mm2 TPS sub-circuit cable installed, per-fitting test switch, 3 x 16A MCB, scissor-lift hire, electrician labour for the witnessed 90-minute discharge test) plus a web-cited CoC/ESC admin fee and two small allowances (board terminations; sundries). QV rows are unreviewed and are treated as installed rates. Low end: 2C+E cable, 2.3W exit sign, 2 lift days, 6 test hours = $14,985 total ($375/ea). High end: 3C+E cable, 5W exit sign, 5 lift days, 12 test hours = $21,705 total ($543/ea). Midpoint ~$18,345 ($459/ea). GST-exclusive, Auckland. Not a certified price; allowances are minor (well under one-third of the total)."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 303585,
+        "outputTokens": 32012,
+        "cachedTokens": 222848,
+        "toolCalls": 8,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.031986,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 303585,
+            "outputTokens": 32012,
+            "estimatedCostUsd": 0.031986,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

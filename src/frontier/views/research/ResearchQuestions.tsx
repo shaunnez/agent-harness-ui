@@ -7,6 +7,7 @@ import {
   type ResearchQuestion,
   type ResearchQuestionStatus,
   researchEngineLabel,
+  researchEngineName,
   researchStatusCopy,
   reviewState,
   reviewStateCopy,
@@ -18,7 +19,7 @@ const filters = [
   "All",
   "Awaiting review",
   "Disputed",
-  "Quick · unverified",
+  "One run",
   "Not established",
   "Did not finish",
   "Reviewed",
@@ -30,8 +31,8 @@ const statusOrder: ResearchQuestionStatus[] = [
   "queued",
   "incomplete",
   "disputed",
-  "unverified",
   "not_established",
+  "single_run",
   "agreed",
 ];
 
@@ -40,7 +41,7 @@ function matches(question: ResearchQuestion, filter: Filter) {
   if (filter === "All") return true;
   if (filter === "Awaiting review") return review === "awaiting" || review === "out-of-date";
   if (filter === "Disputed") return question.status === "disputed";
-  if (filter === "Quick · unverified") return question.status === "unverified";
+  if (filter === "One run") return question.status === "single_run";
   if (filter === "Not established") return question.status === "not_established";
   if (filter === "Did not finish") return question.status === "incomplete";
   return review === "approved" || review === "rejected";
@@ -81,7 +82,7 @@ export function ResearchQuestions({
   if (!research)
     return (
       <div className="overlay-body">
-        <p className="empty-state">The research backend is unavailable in this runtime.</p>
+        <p className="empty-state">This runtime does not serve research questions.</p>
       </div>
     );
   const all = questions ?? [];
@@ -123,7 +124,7 @@ export function ResearchQuestions({
             <dt>Awaiting review</dt>
             <dd>{awaiting}</dd>
           </div>
-          {(["agreed", "disputed", "unverified", "not_established", "incomplete", "running"] as const).map(
+          {(["agreed", "disputed", "single_run", "not_established", "incomplete", "running"] as const).map(
             (status) => (
               <div key={status} className={`tone-${researchStatusCopy[status].tone}`}>
                 <dt>{researchStatusCopy[status].label}</dt>
@@ -207,12 +208,7 @@ export function ResearchQuestions({
                         <strong>{question.title}</strong>
                         <span>
                           {[question.family, question.unit].filter(Boolean).join(" · ") ||
-                            {
-                              recorded: "Recorded question",
-                              "sample-activity": "Sample activity",
-                              "prototype-ask": "Asked in this tab",
-                              live: "Live research",
-                            }[question.provenance]}
+                            provenanceLabel(question)}
                         </span>
                       </button>
                     </td>
@@ -245,9 +241,7 @@ export function ResearchQuestions({
                       <span className="research-engine" title={researchEngineLabel(question.engine)}>
                         {researchEngineLabel(question.engine).split(" · ")[0]}
                       </span>
-                      <small className="research-cell-note">
-                        {question.engine.runtime === "codex-cli" ? "Codex CLI" : "Claude CLI"}
-                      </small>
+                      <small className="research-cell-note">{researchEngineName(question.engine)}</small>
                     </td>
                     <td>
                       <span className={`state-badge tone-${review.tone}`}>{review.label}</span>
@@ -271,4 +265,14 @@ export function ResearchQuestions({
       )}
     </div>
   );
+}
+
+function provenanceLabel(question: ResearchQuestion) {
+  if (question.provenance === "live")
+    return question.source?.kind === "external" ? `From ${question.source.provider}` : "Asked here";
+  return {
+    recorded: "Recorded question",
+    "sample-activity": "Sample activity",
+    "prototype-ask": "Asked in this tab",
+  }[question.provenance];
 }

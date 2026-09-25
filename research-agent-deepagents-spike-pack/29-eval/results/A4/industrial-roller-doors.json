@@ -1,0 +1,181 @@
+{
+  "question": "industrial-roller-doors",
+  "kind": "pinned",
+  "arm": "A4",
+  "status": "agreed",
+  "passes": false,
+  "consensus": {
+    "low": 7619,
+    "high": 11500
+  },
+  "range": {
+    "min": 7530,
+    "max": 13808
+  },
+  "unit": "ea",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.028,
+    "highRatio": 1.236,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0984,
+  "elapsedMs": 291559,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 291534,
+      "band": {
+        "unit": "ea",
+        "low": 7530,
+        "high": 11500,
+        "centre": "Auckland",
+        "basis": "Auckland, GST-exclusive, one complete motorised insulated roller shutter door (4.0 x 4.5 m, 18.0 m2) supplied, installed and commissioned into a prepared opening, including scissor-lift hire and delivery amortised over the 4-door visit. Components sum to $7,530 (low) and $11,500 (high); mid about $9,500/ea. NOMINAL 4-DOOR TOTAL: about $30,120 (low) to $46,000 (high), mid about $38,000 - auditable as 4 x the per-door band. Cross-check: a retail supply-only 4,500 mm-high motorised roller shutter is listed at $5,399 (DoorsNZ, source-2, https://www.doorsnz.co.nz/products/4200mm-high-x-flexible-width-roller-shutter-door, excerpt: 'Price: Sale price $5,399.00'), which is a steel shutter before installation and before the insulated-aluminium premium. Multi-door tiered discounts (source-1: second door minus 7%, third minus 12%) are NOT deducted, so the band is conservative on the downside. The main cost driver (the curtain) is a steel-slat QV proxy plus a cited premium, not a quoted insulated-aluminium door - hence LOW confidence and a wide band."
+      },
+      "checks": [
+        "qv-found",
+        "web-unverified",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 1,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 533818,
+        "outputTokens": 30090,
+        "cachedTokens": 449024,
+        "toolCalls": 13,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.03212,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 533818,
+            "outputTokens": 30090,
+            "estimatedCostUsd": 0.03212,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 255463,
+      "band": {
+        "unit": "$/ea (one complete motorised door unit, supplied, installed and commissioned into a prepared 4.0m x 4.5m opening, GST-exclusive)",
+        "low": 7740,
+        "high": 11170,
+        "centre": "Auckland",
+        "basis": "Sum of the six components above. QV CostBuilder rows (unreviewed) for the roller shutter door unit (t14:r4 scaled 3.6x3.6m to 18m2 with a +30% to +77% insulated-aluminium uplift), the three-phase mechanism (t14:r11, upper bound t17:r6/t16:r21 $1,350), the final electrical connection (t25:r28) and scissor lift hire (t8:r3/r7); fetched NZ market rate NZ$330-450/m2 for a new insulated commercial door (source-1, doorsnz.co.nz) and Attika's installed $7,000-$11,000 for a 5x5m steel roller shutter (source-2) used to bound the door unit; labelled allowances for the safety edge/photo-eye/control station (source-3 confirms the 4.0x4.5m insulated product is a standard Ulti Group NZ catalogue size, max 5x4.5m) and delivery. Allowances are 5.9% of the low total and 10.1% of the high total, so the band is not allowance-led. 4-door nominal quantity total: $30,960 (low) to $44,680 (high); midpoint $9,455/ea = $37,820 for 4 doors. Excludes GST, preliminaries, margin, design/consent fees, the structural opening and all building-electrical work, per the brief. Confidence medium: the door unit is a cross-material proxy whose uplift is calibrated by a fetched NZ market rate, and the QV rows' installation inclusions are not stated."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 779848,
+        "outputTokens": 25417,
+        "cachedTokens": 655872,
+        "toolCalls": 17,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.035814,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 779848,
+            "outputTokens": 25417,
+            "estimatedCostUsd": 0.035814,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 291558,
+      "band": {
+        "unit": "$/ea (one complete motorised insulated roller shutter door, supplied, installed and commissioned into a prepared opening)",
+        "low": 7619,
+        "high": 13808,
+        "centre": "Auckland",
+        "basis": "Per door (AKL, GST exclusive), sum of the components above: QV roller-shutter proxy for the door unit ($3,825-$6,192) + NZ web insulation uplift ($1,620-$2,520) + powdercoat ($200-$600) + QV 3-phase motor row ($1,100-$2,300) + controls ($400-$1,000) + final electrical connection ($200-$500) + commissioning ($150-$400) + QV scissor-lift hire ($24-$71) + delivery ($100-$225). LOW = $7,619/ea; HIGH = $13,808/ea. TOTAL FOR THE 4-DOOR NOMINAL QUANTITY = $30,476 (low) to $55,232 (high). Amortisation: the only pooled items are scissor lift ($94-$282 total / 4) and delivery ($400-$900 total / 4); every other component is priced per unit. Allowances (powdercoat, controls, electrical connection, commissioning, delivery) total ~$1,050-$2,725/ea, i.e. well under one third of the total, so the band is established rather than null. The width is driven by the material substitution the QV library does not cover - uninsulated zincalume steel (the only published proxy) to a proprietary insulated ALUMINIUM 77mm-pitch slat - and by the two QV proxies that differ ~60%; hence LOW confidence. Excludes GST, preliminaries, margin, design/consent fees, the structural opening, the 3-phase supply/submain/isolator, and all other listed exclusions. Not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "allowance",
+        "web-verified",
+        "allowance",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 6,
+        "webVerified": 6,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 464289,
+        "outputTokens": 31595,
+        "cachedTokens": 395392,
+        "toolCalls": 16,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.030478,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 464289,
+            "outputTokens": 31595,
+            "estimatedCostUsd": 0.030478,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

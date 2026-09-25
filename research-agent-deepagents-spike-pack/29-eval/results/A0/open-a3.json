@@ -1,0 +1,179 @@
+{
+  "question": "open-a3",
+  "kind": "open",
+  "arm": "A0",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 158,
+    "high": 241
+  },
+  "range": {
+    "min": 145,
+    "max": 254
+  },
+  "unit": "m2 of roof area",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.193,
+    "highRatio": 1.067,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 1.7405,
+  "elapsedMs": 72839,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 72839,
+      "band": {
+        "unit": "m2 of roof area",
+        "low": 158,
+        "high": 238,
+        "centre": "Auckland",
+        "basis": "Membrane roof alone = QV membrane rate (Soprasun 4AR single $69 to Polibit double $149) + QV 17mm H3 plywood deck $89. Excludes removal, flashings, gutters, drainage, insulation, structural/sub-framing. Premium over Coloursteel sheet ($67-$108) approx $50-$171/m2; 1200 m2 = $189,600-$285,600 membrane, $60,000-$205,200 premium. GST excl."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 14,
+        "outputTokens": 5715,
+        "cachedTokens": 285132,
+        "modelCalls": 17,
+        "toolCalls": 16,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.6056784,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 14,
+            "outputTokens": 5715,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.6056784,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 66318,
+      "band": {
+        "unit": "m2 of roof area",
+        "low": 173,
+        "high": 241,
+        "centre": "Auckland",
+        "basis": "Membrane roof alone (membrane 97-152 + 17mm ply deck 76-89), GST excl. Net cost impact vs long-run pre-painted steel (80-125/m2) is +48 to +161/m2, about +$58k to +$194k on 1200 m2; gross membrane ~$208k-$289k."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 12,
+        "outputTokens": 5623,
+        "cachedTokens": 232113,
+        "modelCalls": 14,
+        "toolCalls": 13,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.5696825999999999,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 12,
+            "outputTokens": 5623,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.5696825999999999,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 67971,
+      "band": {
+        "unit": "m2 of roof area",
+        "low": 145,
+        "high": 254,
+        "centre": "Auckland",
+        "basis": "Membrane roof alone = membrane ($69–152) + plywood substrate ($76–102). Net cost impact vs long-run Coloursteel system ($80–106/m2 incl. netting + underlay) = +$39 to +$174/m2, i.e. approx +$47k to +$209k over 1,200 m2. Excludes removal, structure/support framing, insulation, flashings, gutters, drainage. GST exclusive."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 12,
+        "outputTokens": 5845,
+        "cachedTokens": 228864,
+        "modelCalls": 13,
+        "toolCalls": 12,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.5651848,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 12,
+            "outputTokens": 5845,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.5651848,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

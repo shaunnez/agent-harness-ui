@@ -1,0 +1,194 @@
+{
+  "question": "acp-facade-cladding-install",
+  "kind": "pinned",
+  "arm": "A0",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 476,
+    "high": 994
+  },
+  "range": {
+    "min": 474,
+    "max": 996
+  },
+  "unit": "m2 net cladding face area",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.084,
+    "highRatio": 1.054,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 2.3379,
+  "elapsedMs": 105822,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 88504,
+      "band": {
+        "unit": "m2 net cladding face area",
+        "low": 474,
+        "high": 996,
+        "centre": "Auckland",
+        "basis": "QV ACP row ($421-$920/m2) + 266 lm flashings at 0.95mm proxy ($59-$86/m, $15,694-$22,876) + 15m diesel boom $267/day x 30-42 days ($8,010-$11,214), divided by 450 m2. Totals $213,154-$448,090. Panel scope match unverified; flashings understated; boom delivery excluded."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 18,
+        "outputTokens": 6826,
+        "cachedTokens": 427863,
+        "modelCalls": 20,
+        "toolCalls": 19,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.7612595999999999,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 18,
+            "outputTokens": 6826,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.7152046,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 21835,
+            "outputTokens": 844,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.046055,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 105052,
+      "band": {
+        "unit": "m2 net cladding face area",
+        "low": 476,
+        "high": 945,
+        "centre": "Auckland",
+        "basis": "QV t1:r7 ACP system $458-920/m2 plus QV t8:r15 boom hire $8,010-11,214 over 450 m2 ($17.80-24.92/m2) plus $0 delivery. Total $214,110-425,214 for 450 m2. EXCLUDES the 266 lm of 3mm PVDF aluminium flashings (not established). A QV 0.95mm aluminium flashing floor of $59-114/m (t21:r17/r19) would add at least $15,694-30,324 ($35-67/m2)."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 16,
+        "outputTokens": 7928,
+        "cachedTokens": 368315,
+        "modelCalls": 20,
+        "toolCalls": 19,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.8102999999999999,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 16,
+            "outputTokens": 7928,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.7656949999999999,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 20525,
+            "outputTokens": 816,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.044605,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 105819,
+      "band": {
+        "unit": "m2 net cladding face area",
+        "low": 514,
+        "high": 994,
+        "centre": "Auckland",
+        "basis": "Sum of QV rows: ACP 458-920 + flashings floor 38.5-48.7 + boom lift 17.8-24.9 per m2. Total for 450 m2 = 231,424-447,124 excl GST. Excludes lift transport and the 3mm flashing premium; ACP row's inclusions unverified."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 16,
+        "outputTokens": 6912,
+        "cachedTokens": 373718,
+        "modelCalls": 21,
+        "toolCalls": 20,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.7663606,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 16,
+            "outputTokens": 6912,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.7206636,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 21917,
+            "outputTokens": 756,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.045697,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

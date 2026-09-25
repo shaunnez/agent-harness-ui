@@ -1,0 +1,180 @@
+{
+  "question": "open-a3",
+  "kind": "open",
+  "arm": "A8",
+  "status": "disputed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 52,
+    "high": 174
+  },
+  "range": {
+    "min": 37,
+    "max": 283
+  },
+  "unit": "$/m2 of roof area (net switching impact = membrane build-up less deleted long-run Coloursteel)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 6,
+    "highRatio": 1.685,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.075,
+  "elapsedMs": 159506,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 126347,
+      "band": {
+        "unit": "$/m2 of roof area (net switching impact = membrane build-up less deleted long-run Coloursteel)",
+        "low": 37,
+        "high": 174,
+        "centre": null,
+        "basis": "Net cost impact of switching a 1,200 m2 warehouse roof from long-run Coloursteel to a membrane, priced per m2 of roof area, Auckland, GST exclusive. Sum of components: low = 97 + 76 + 5 - 141 = 37/m2; high = 186 + 89 + 15 - 116 = 174/m2; centre = arithmetic midpoint 105/m2. On 1,200 m2 this is about $44,000 to $209,000, midpoint about $126,000. Gross membrane build-up in place (membrane + new substrate deck + sundries) is $178-290/m2; the deleted long-run Coloursteel is $116-141/m2. If the membrane is laid on a deck that is already provided (no new substrate), the net impact is about -$39 to +$85/m2, i.e. the switch is roughly cost-neutral. Because the membrane type, build-up and the substrate question are undecided, and because all QV membrane/deck rows are unreviewed national rates with no single-ply option published, confidence is LOW and the band is wide: it is appropriate for a cost plan allowance, not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 228521,
+        "outputTokens": 22005,
+        "cachedTokens": 171904,
+        "modelCalls": 7,
+        "toolCalls": 22,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.022211,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 228521,
+            "outputTokens": 22005,
+            "estimatedCostUsd": 0.022211,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 159503,
+      "band": {
+        "unit": "m2 of roof area",
+        "low": 52,
+        "high": 168,
+        "centre": "Auckland",
+        "basis": "Net cost impact per m2 of replacing long-run Coloursteel with a membrane roof on a 1,200 m2 warehouse, Auckland, GST exclusive, new-build equivalent. Band = membrane 115-186 + ply substrate 76-88 + sundries 6-12 - omitted Coloursteel incl. underlay 118-145 = 52-168/m2 (mid 110/m2; x1,200m2 = about $62k to $202k). If a continuous substrate already exists (concrete deck or retained decking), omit the ply component: differential becomes -24 to +80/m2 (mid +28/m2; about -$29k to +$96k over 1,200m2). Excluded as instructed: removal/disposal of existing roofing, structural changes (incl. purlin re-spacing to set falls), insulation/ceiling, flashings, gutters and drainage. Not priced: lifecycle/roof traffic maintenance comparison. Band is wide and confidence low because QV's membrane rows span four different systems, membrane type and substrate/purlin spacing are undecided, and two components (single-ply membrane, roof deck) rest on QV rows used as stated proxies. This is a cost-plan band built from cited QV rows plus labelled allowances, not a certified price."
+      },
+      "checks": [
+        "web-unsupported",
+        "qv-found",
+        "web-unsupported",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 2,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 356653,
+        "outputTokens": 28858,
+        "cachedTokens": 295424,
+        "modelCalls": 9,
+        "toolCalls": 23,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.027385,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 356653,
+            "outputTokens": 28858,
+            "estimatedCostUsd": 0.027385,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 148270,
+      "band": {
+        "unit": "m2 of roof area (membrane roof in place; Coloursteel option shown as a stated credit, not netted off)",
+        "low": 222,
+        "high": 283,
+        "centre": "252.5 (Auckland, QV AKL rates; 1,200m2 = approx. $266,400 - $339,600)",
+        "basis": "NEW-BUILD/DESIGN SWITCH, Auckland, GST exclusive. Item priced = membrane roof alone: QV 1.5mm butyl-bearing membrane 137-186/m2 + new 19mm plywood substrate deck 77/m2 + allowance 8-20/m2 = $222-$283/m2 of roof area ($266,400-$339,600 on 1,200m2; midpoint $252.5/m2 = $303,000). ASSUMPTIONS: (1) comparison basis - membrane roof priced alone, the long-run Coloursteel option is NOT removed from the band but is stated as a credit; (2) membrane type - 1.5mm butyl rubber (Butynol-type) fully adhered, cold roof, laid to a new continuous plywood deck over existing purlins, with the range widened to a 2-layer torch-on SBS membrane because the type is undecided; (3) existing roof removal/disposal, insulation/ceiling, flashings, gutters, drainage and any structural change are excluded; falls are assumed formed. COST IMPACT OF THE SWITCH (memo, not netted into the band): the displaced long-run Coloursteel roof is QV Roof Covering & Associated Flashings, sheet roofing trapezoidal high-rib BB900/Steelspan/Topspan with wire netting, underlay and 0.1m of flashing per m2 of roof, MAXAM Matte 0.55mm (Colorsteel matte finish class), AKL $137/m2 (05507449...t0:r40); bare sheet without netting/underlay is AKL $108/m2 (...t1:r38) and a ZINCALUME 0.55mm high-rib LT7 with netting/underlay is AKL $96/m2 (...t0:r46). Net additional cost therefore approx +$85-$175/m2, i.e. approx +$102,000-$210,000 over 1,200m2. Excluded from that memo: the token 0.1m of flashing/m2 in the steel row (roughly $3-5/m2, slightly overstates the credit) and any demolition of an existing steel roof (excluded by scope). CONFIDENCE LOW: membrane type and substrate are the client's undecided design points, both QV membrane rows are unreviewed and neither is a TPO/PVC single-ply row, and the substrate rate is a flooring-panel proxy. Allowances are 5-8% of the band, so they are not carrying the estimate - the unpriced design decision is."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 369463,
+        "outputTokens": 27033,
+        "cachedTokens": 314752,
+        "modelCalls": 10,
+        "toolCalls": 23,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.025371,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 369463,
+            "outputTokens": 27033,
+            "estimatedCostUsd": 0.025371,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

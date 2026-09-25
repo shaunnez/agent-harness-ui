@@ -1,0 +1,153 @@
+{
+  "question": "industrial-roller-doors",
+  "kind": "pinned",
+  "arm": "A5",
+  "status": "incomplete",
+  "passes": false,
+  "consensus": null,
+  "range": null,
+  "unit": "$/ea",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": null,
+    "highRatio": null,
+    "runsWithBand": 2,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0664,
+  "elapsedMs": 292616,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 292615,
+      "band": {
+        "unit": "$/ea",
+        "low": 9040,
+        "high": 13960,
+        "centre": "Auckland",
+        "basis": "Working cost-plan band for one complete motorised insulated roller-shutter door, supplied, installed and commissioned into a prepared opening, GST-exclusive, NZD, Auckland. Sum of the components: low $9,040/ea, high $13,960/ea (approx $9,000–$14,000/ea). Nominal 4 identical doors on one visit, one mobilisation: TOTAL 4 doors = $36,160 low / $55,840 high (approx $36,000–$56,000), i.e. amortised access and delivery are ~$240–$460 of each door. The main cost drivers (door unit and motor) are sourced from QV CostBuilder rows with stated adjustments; the controls/safety, commissioning and delivery components are labelled allowances and together carry only about 13–16% of the total, so the band is not allowance-driven. Confidence is LOW: the door unit is a proxy (steel chain-operated slat shutter adjusted to insulated aluminium and a larger size), the two QV derivations differ, and the QV rows are unreviewed. Real NZ comparables (Attika, source-1, a 2022 guide) put a motorised 5.0 x 5.0 m steel roller shutter at $7,000–$11,000 installed, which is consistent with the order of magnitude once the insulated-aluminium premium and the smaller (18 m²) opening are allowed for."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "web-unverified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 1,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 1165494,
+        "outputTokens": 29073,
+        "cachedTokens": 1047680,
+        "toolCalls": 19,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.038259,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1165494,
+            "outputTokens": 29073,
+            "estimatedCostUsd": 0.038259,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 219769,
+      "band": {
+        "unit": "$/ea",
+        "low": 9900,
+        "high": 15900,
+        "centre": "Auckland",
+        "basis": "Working cost-plan band (not a certified price) for ONE complete motorised insulated roller shutter door, 4.0m W x 4.5m H, 77mm double-skin foam-insulated aluminium slat powdercoated both faces, steel guides and full hood, 3-phase 0.75kW motor, IP54 station, safety edge and photo-eye pair, supplied, installed and commissioned into a prepared opening at an Auckland warehouse. Sum of components A-G above: low $9,900/ea, high $15,900/ea. Total for the 4-door nominal quantity = 4 x band = $39,600 to $63,600. Amortisation is auditable: the two shared items are the scissor lift (component E: $200-$800 total for the visit / 4 = $50-$200/door) and delivery/offload (component F: $600-$1,400 total / 4 = $150-$350/door); all other components are per-door. GST-exclusive, NZD, Auckland. Excludes preliminaries, margin, design, consent fees, the structural opening, the 3-phase supply/submain/isolator, and all other items listed as excluded in the scope. Confidence is LOW because the main cost driver (the insulated aluminium slat door unit) rests on a supplier 'from' price plus stated percentage adjustments for the insulated-slat and powdercoat spec rather than a published rate for that exact product, and because the QV rows used are UNREVIEWED. The band is deliberately widened; a firm supplier quote from an NZ industrial-door maker is required to close it."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 295299,
+        "outputTokens": 21852,
+        "cachedTokens": 222336,
+        "toolCalls": 10,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.024723,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 295299,
+            "outputTokens": 21852,
+            "estimatedCostUsd": 0.024723,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "failed",
+      "error": {
+        "code": "provider_unavailable",
+        "message": "The PlanCheck rate library is unreachable: The operation was aborted due to timeout"
+      },
+      "elapsedMs": 77725,
+      "band": null,
+      "checks": [],
+      "citations": null,
+      "usage": {
+        "inputTokens": 37965,
+        "outputTokens": 1900,
+        "cachedTokens": 23040,
+        "toolCalls": 4,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.003448,
+        "costBasis": "api_rate_estimate",
+        "partial": true,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 37965,
+            "outputTokens": 1900,
+            "estimatedCostUsd": 0.003448,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

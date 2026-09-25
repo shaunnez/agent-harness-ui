@@ -1,0 +1,187 @@
+{
+  "question": "industrial-roller-doors",
+  "kind": "pinned",
+  "arm": "A7",
+  "status": "disputed",
+  "passes": false,
+  "consensus": null,
+  "range": null,
+  "unit": null,
+  "unitsDiffer": [
+    "$/ea",
+    "ea (one complete door, supplied, installed, commissioned; also give x4 total)",
+    "$/ea (one complete motorised door, supplied, installed and commissioned into a prepared opening)"
+  ],
+  "agreement": {
+    "lowRatio": null,
+    "highRatio": null,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0926,
+  "elapsedMs": 264603,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 210946,
+      "band": {
+        "unit": "$/ea",
+        "low": 9250,
+        "high": 15650,
+        "centre": "Auckland",
+        "basis": "Sum of the ten components above for ONE complete motorised insulated roller shutter, 4.0m W x 4.5m H, supplied, installed, connected, commissioned and handed over: $9,243 to $15,648 per door, shown rounded as $9,250-$15,650. Nominal quantity of 4 identical doors on one Auckland warehouse, one installation visit: TOTAL $36,972 to $62,592, i.e. $37,000-$62,600; mid-point $12,445/door and $49,782 for the four doors. Amortised items are scissor lift ($160-$240/ea of 4-6 days) and delivery/offload ($105-$185/ea of one visit), $265-$425 of each per-door figure. GST exclusive, ex-preliminaries, ex-margin, design and consent fees, structural opening, 3-phase supply/isolator/containment, vision panels, wicket doors, fire rating, high-wind upgrade, remote controls beyond the fixed station, loop detectors, card/PLC interface, painting/patching and maintenance contracts — all excluded as instructed. Confidence is LOW: the curtain product specified (double-skin foam-insulated aluminium slat, powdercoated) has no QV row and is priced as a published uplift on a proxy rate rather than a direct quote; both door-price sources are silent on whether they are supply-only or installed; and the control station plus safety edge is an allowance. If the supplier's price is supply-only, or the door must be certified for a high wind zone beyond standard wind-lock guides, expect the top of the band or above. The underlying cost is a single email to a supplier: two of the three big drivers would firm up inside a day."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 5,
+        "webVerified": 5,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 527931,
+        "outputTokens": 24068,
+        "cachedTokens": 397952,
+        "modelCalls": 12,
+        "toolCalls": 31,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.035132,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 527931,
+            "outputTokens": 24068,
+            "estimatedCostUsd": 0.035132,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 264601,
+      "band": {
+        "unit": "ea (one complete door, supplied, installed, commissioned; also give x4 total)",
+        "low": 9240,
+        "high": 16500,
+        "centre": "Auckland",
+        "basis": "Sum of seven distinct components (door unit, motorisation, safety/controls, installation labour and commissioning, final electrical connection, delivery/offload, scissor lift), each priced either from a QV CostBuilder row (unreviewed) or a fetched published source, with two labelled allowances (part of the controls line, and delivery). No aggregate QV row is added together with its own components. Per door $9,240-$16,500; centre of band ~$12,870/ea. x4 nominal doors: $36,960 low, $66,000 high (~$51,500 centre). GST-exclusive, Auckland, Q4 2026 rates; excludes preliminaries, margin, design, consent fees, the structural opening, the 3-phase supply/isolator/containment, vision panels, wicket doors, fire or high-wind upgrades and any maintenance contract. Cross-check: the AU guide (source-7, fetched) states 'Insulated PU-core commercial doors are $280&ndash;$380/m&sup2; supplied.', i.e. roughly 18m2 x that band, consistent with the low end of our door-unit component. Confidence is LOW: the specified insulated aluminium slat curtain is not published by QV or by any NZ supplier page we could fetch, QV's own proxy steel-slat rows disagree with each other by ~35%, and the door-unit component carries a 1.6:1 spread. A vendor quote from Ulti Group, Glideaway, AceDoors/Windsor, Garador or DoorsNZ would narrow it."
+      },
+      "checks": [
+        "web-unverified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 5,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 2,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 726083,
+        "outputTokens": 29283,
+        "cachedTokens": 616192,
+        "modelCalls": 15,
+        "toolCalls": 33,
+        "searchCalls": 5,
+        "estimatedCostUsd": 0.035902,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 726083,
+            "outputTokens": 29283,
+            "estimatedCostUsd": 0.035902,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 156361,
+      "band": {
+        "unit": "$/ea (one complete motorised door, supplied, installed and commissioned into a prepared opening)",
+        "low": 9750,
+        "high": 13750,
+        "centre": null,
+        "basis": "Sum of the ten components above, Auckland, GST exclusive, excluding preliminaries, margin, design and consent. Low = 6,192 + 620 + 810 + 1,100 + 320 + 120 + 250 + 200 + 82 + 60 = $9,754/ea. High = 7,121 + 1,280 + 1,080 + 2,300 + 450 + 250 + 418 + 400 + 245 + 200 = $13,744/ea. Centre = $11,750/ea, rounded. Total for the 4-door nominal quantity: $39,000 low / $55,000 high, centre about $47,000 (amortised scissor lift and delivery are already inside the per-door rates, so the 4-door total is simply 4 x the rate). Cross-check: the fetched price guide puts a medium (3-5m) commercial roller door turnkey at $5,000-$7,200 ex-GST for a typical 9m2 door - about $550-$800/m2 - which at our 18m2 lands at $10,000-$14,400/ea, consistent with this band; a 4x4m high-speed PVC door with light curtain is $10k-$14k installed on the same page, an upper context for a taller motorised opening. Allowances total $380-$850/ea, about 6% of the high band, so they are not carrying the estimate; the main cost driver rests on a cited QV row plus stated adjusters from a fetched NZ price guide. A firm vendor quote for the 77mm insulated aluminium curtain would convert 'medium' to 'high'."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 5,
+        "webVerified": 5,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 337016,
+        "outputTokens": 17375,
+        "cachedTokens": 268160,
+        "modelCalls": 11,
+        "toolCalls": 35,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.021558,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 337016,
+            "outputTokens": 17375,
+            "estimatedCostUsd": 0.021558,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

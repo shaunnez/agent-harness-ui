@@ -1,0 +1,344 @@
+{
+  "question": "data-rack-and-network-hardware",
+  "kind": "pinned",
+  "arm": "O5",
+  "status": "agreed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 18000,
+    "high": 22700
+  },
+  "range": {
+    "min": 17300,
+    "max": 27500
+  },
+  "unit": "ea (per completed rack, 96 links)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.165,
+    "highRatio": 1.335,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 11.8332,
+  "elapsedMs": 452832,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 163622,
+      "band": {
+        "unit": "ea (per completed rack, 96 links)",
+        "low": 18000,
+        "high": 20600,
+        "centre": "Auckland",
+        "basis": "Sum of fetched retail equipment prices + published test rate + $75/hr x 34-48 hr assumed labour; excludes plinth, horizontal managers, blanking, earth kit/bond and contractor equipment margin (not established). Equals about $187-$215 per link"
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-derived",
+        "web-verified",
+        "web-not-fetched",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 8,
+        "webVerified": 6,
+        "webNotFetched": 1,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 22,
+        "outputTokens": 10727,
+        "cachedTokens": 807113,
+        "modelCalls": 38,
+        "toolCalls": 37,
+        "searchCalls": 11,
+        "estimatedCostUsd": 2.0442066,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 22,
+            "outputTokens": 10727,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.7985066,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 118845,
+            "outputTokens": 3371,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.2457,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 188205,
+      "band": {
+        "unit": "ea (per completed rack, 96 certified links)",
+        "low": 20160,
+        "high": 22700,
+        "centre": "Auckland",
+        "basis": "Sum of fetched PB Tech/Rubber Monkey ex-GST retail prices plus QV Auckland electrician rate x 44-69 assumed hours; excludes unestablished items listed; excl GST, prelims, margin"
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-derived",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 7,
+        "webVerified": 6,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 36,
+        "outputTokens": 13412,
+        "cachedTokens": 1826763,
+        "modelCalls": 50,
+        "toolCalls": 49,
+        "searchCalls": 12,
+        "estimatedCostUsd": 2.2601696000000002,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 36,
+            "outputTokens": 13412,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.9862726000000002,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 134607,
+            "outputTokens": 3858,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.27389699999999995,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 452825,
+      "band": {
+        "unit": "ea (per completed comms rack, 96 links)",
+        "low": 17300,
+        "high": 27500,
+        "centre": "Auckland",
+        "basis": "Sum of retail list hardware (PB Tech/PriceMe, excl GST) plus 43-60 hr at $75-$83.65/hr; the switch pair drives most of the spread ($7,106 to $15,515); excludes the unpriced items listed"
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "unsourced"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 10,
+        "webVerified": 10,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 34,
+        "outputTokens": 16243,
+        "cachedTokens": 1956133,
+        "modelCalls": 59,
+        "toolCalls": 58,
+        "searchCalls": 17,
+        "estimatedCostUsd": 3.3072586000000004,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 34,
+            "outputTokens": 16243,
+            "modelCalls": 0,
+            "estimatedCostUsd": 2.8673346,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 236729,
+            "outputTokens": 6639,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.4399239999999999,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 357360,
+      "band": {
+        "unit": "ea (per completed rack)",
+        "low": 22100,
+        "high": 29000,
+        "centre": "Auckland",
+        "basis": "Sum of PB Tech retail supply prices (fetched 25-09-2026) plus QV electrician rate x 42-60 assumed hours. Low uses the Ubiquiti switch pair; high and most-likely (~$28,200) use the HPE/Aruba 2930F JL558A pair. Excludes unpriced plinth, earth kit, blanking panels, labels and tester plant, so treat the band as a floor. No contingency added (scope excludes margin)."
+      },
+      "dropped": true,
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-derived",
+        "web-verified",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 7,
+        "webVerified": 6,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 26,
+        "outputTokens": 12152,
+        "cachedTokens": 1128763,
+        "modelCalls": 37,
+        "toolCalls": 36,
+        "searchCalls": 13,
+        "estimatedCostUsd": 2.1467656,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 26,
+            "outputTokens": 12152,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.8488645999999997,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 146906,
+            "outputTokens": 4199,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.297901,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 207186,
+      "band": {
+        "unit": "ea (per completed comms rack)",
+        "low": 15978,
+        "high": 17898,
+        "centre": "Auckland",
+        "basis": "Sum of established components only, excl GST, prelims, margin; excludes unpriced plinth, 4x1RU cable managers, blanking panels, rack-to-MEB earth bond, label stock, DSX tester cost"
+      },
+      "dropped": true,
+      "checks": [
+        "web-verified",
+        "web-derived",
+        "web-verified",
+        "web-derived",
+        "web-verified",
+        "qv-found",
+        "web-verified",
+        "web-derived"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 7,
+        "webVerified": 4,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 3,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 32,
+        "outputTokens": 12802,
+        "cachedTokens": 1379623,
+        "modelCalls": 54,
+        "toolCalls": 53,
+        "searchCalls": 15,
+        "estimatedCostUsd": 2.0748306,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 32,
+            "outputTokens": 12802,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.7359885999999998,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 162027,
+            "outputTokens": 5363,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.3388420000000001,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

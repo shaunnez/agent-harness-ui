@@ -1,0 +1,161 @@
+{
+  "question": "industrial-roller-doors",
+  "kind": "pinned",
+  "arm": "A6",
+  "status": "agreed",
+  "passes": false,
+  "consensus": {
+    "low": 11165,
+    "high": 17800
+  },
+  "range": {
+    "min": 10760,
+    "max": 18730
+  },
+  "unit": "$/ea (one complete motorised door unit, supplied, installed and commissioned into a prepared opening, 4.0 x 4.5 m)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.075,
+    "highRatio": 1.11,
+    "runsWithBand": 2,
+    "runsTotal": 3
+  },
+  "costUsd": 0.09,
+  "elapsedMs": 226568,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 226018,
+      "band": {
+        "unit": "$/ea (one complete motorised door unit, supplied, installed and commissioned into a prepared opening, 4.0 x 4.5 m)",
+        "low": 10760,
+        "high": 16870,
+        "centre": "Auckland",
+        "basis": "Sum of the nine components above, Auckland, GST exclusive, margin and preliminaries excluded. Nominal quantity 4 identical doors installed in one visit: total $43,040 low / $67,480 high (midpoint $55,240); scissor lift and delivery are amortised across the four doors, all other components are per door. Largest line is the door unit plus its insulated-aluminium upgrade ($8,360–$11,520, ~78–68% of the low/high totals), which rests on a cited QV row with a stated percentage adjustment, so the band is established. Allowances (controls, delivery, commissioning) carry 9–14% of the total, under a third. Band is wide because the material upgrade is a percentage from a retail source and the controls have no published NZ rate. Installation labour, fixings and packers are assumed already inside the QV door rate and have NOT been added again — if that rate proves to be supply-only, add $450–$900/door."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 481740,
+        "outputTokens": 24809,
+        "cachedTokens": 384128,
+        "modelCalls": 10,
+        "toolCalls": 29,
+        "searchCalls": 8,
+        "estimatedCostUsd": 0.03068,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 481740,
+            "outputTokens": 24809,
+            "estimatedCostUsd": 0.03068,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 143055,
+      "band": null,
+      "checks": [],
+      "citations": null,
+      "usage": {
+        "inputTokens": 639417,
+        "outputTokens": 23878,
+        "cachedTokens": 551168,
+        "modelCalls": 12,
+        "toolCalls": 34,
+        "searchCalls": 7,
+        "estimatedCostUsd": 0.029218,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 639417,
+            "outputTokens": 23878,
+            "estimatedCostUsd": 0.029218,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 226564,
+      "band": {
+        "unit": "ea",
+        "low": 11570,
+        "high": 18730,
+        "centre": "Auckland",
+        "basis": "Per-door rate for one complete motorised insulated roller shutter, 4.0m x 4.5m (18 m2) structural opening, supplied, installed and commissioned into a prepared reinforced opening, on a nominal quantity of 4 identical doors in one Auckland visit. Sum of the seven components above (low column = $11,570; high column = $18,730); midpoint $15,150/ea. Four-door total: $46,280 low, $74,920 high, approximately $60,600 at the midpoint - the scissor-lift and delivery components are already divided by 4 so this total is auditable. Primary basis is QV CostBuilder: a steel interlocking-slat roller shutter row used as a proxy for the insulated aluminium slat with a stated +35% to +100% adjustment, QV three-phase mechanism and motorised-control rows, and a QV scissor-lift row. Corroborating fetched pages: NZ supply price for a 4.5m-high steel shutter (DoorsNZ, source-2) and an Australian insulated-door / installed-roller-shutter band (whatsthedamage, source-3). Allowances are about 10-13% of the band, so the band is not allowance-driven; the risk sits in the insulated-slat premium on the QV steel proxy. GST exclusive; preliminaries, margin, design and consent fees, the structural opening, the 3-phase supply/isolator/submain, vision panels, wicket doors, fire or cyclone rating, remote controls, loop detectors, painting and any service contract are excluded per the fixed scope. Not a certified price - confirm with two door suppliers and one installer before committing."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 424493,
+        "outputTokens": 26855,
+        "cachedTokens": 338304,
+        "modelCalls": 10,
+        "toolCalls": 29,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.030056,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 424493,
+            "outputTokens": 26855,
+            "estimatedCostUsd": 0.030056,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

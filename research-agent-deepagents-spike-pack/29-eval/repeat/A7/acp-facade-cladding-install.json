@@ -1,0 +1,185 @@
+{
+  "question": "acp-facade-cladding-install",
+  "kind": "pinned",
+  "arm": "A7",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 519,
+    "high": 717
+  },
+  "range": {
+    "min": 508,
+    "max": 1074
+  },
+  "unit": "$/m2 of net cladding face area (openings deducted)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.096,
+    "highRatio": 1.676,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0636,
+  "elapsedMs": 155797,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 93339,
+      "band": {
+        "unit": "$/m2 of net cladding face area (openings deducted)",
+        "low": 557,
+        "high": 1074,
+        "centre": null,
+        "basis": "Sum of four distinct components over 450m2 net face: ACP cassette system 458-920/m2 (QV d522ac53...:t1:r7) + 266 lm of 3mm PVDF folded flashings at 130-185/m (QV 528b0345...:t21:r18 as the 0.95mm proxy, adjusted for gauge and finish) + 6 weeks of 14m diesel articulated boom lift (QV 253b838a...:t8:r15, 267/day) + 8-20/m2 minor allowances. Totals: low 250,700, high 483,400, centre 367,000 (centre is the arithmetic mid-point of the band). GST exclusive, NZD, Auckland. Allowances are under 2% of the total, so the band is carried by cited QV rows, not by judgement. The band is wide (roughly 2:1) because the single row carrying about 80% of the cost is itself a 2:1 span over thickness and finish, and because it is unconfirmed whether that row includes the proprietary carrier/subgirt. A QS point estimate for this exact 4mm FR / 2-coat PVDF cassette spec is nearer 730-900/m2 (about 330,000-405,000) — the specified FR core and PVDF finish are the dearest variables in the row, so the answer is expected in the upper half of the band, not at the low end. Unreviewed rates caveated above; not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 203476,
+        "outputTokens": 17314,
+        "cachedTokens": 164352,
+        "modelCalls": 8,
+        "toolCalls": 20,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.01675,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 203476,
+            "outputTokens": 17314,
+            "estimatedCostUsd": 0.01675,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 126235,
+      "band": {
+        "unit": "$/m2 of net cladding face area (window/door openings deducted), GST exclusive, NZD",
+        "low": 508,
+        "high": 641,
+        "centre": null,
+        "basis": "Sum of the seven priced components for 450 m2 net face over two elevations, 9.5m maximum height, 15 openings deducted, one 14m diesel boom lift for 6 weeks, 266 lm of 3mm folded PVDF aluminium flashings. Totals for the auditable 450 m2: LOW 228,600 / CENTRE 258,500 / HIGH 288,600. Main driver is the ACP cassette system (421-520/m2, ~83% of the band) resting on the unreviewed QV 'Alupanel, straight panels' proprietary-system row; flashings are 58.86-73.35/m2; lift 19.13-28.03/m2; the two allowances are 9-20/m2. The band spans the ambiguity in the QV system row (a full system including cavity layer vs panel-and-carrier only): if the subgirt/thermal-bracket layer must be added, the band becomes approx 608-753/m2. Confidence is low for that reason and because the flashings and lift rest on stated proxy adjustments; both main drivers are nonetheless sourced, so the band is established rather than null. Excludes GST, preliminaries, margin, design/consent, substrate and air barrier, cavity fire barriers, windows/doors, structural strengthening, perimeter scaffold/traffic management and all producer statements, per the fixed scope."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 511354,
+        "outputTokens": 21231,
+        "cachedTokens": 447232,
+        "modelCalls": 12,
+        "toolCalls": 33,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.023699,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 511354,
+            "outputTokens": 21231,
+            "estimatedCostUsd": 0.023699,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 155794,
+      "band": {
+        "unit": "$/m2 net cladding face area, GST exclusive, margin and preliminaries excluded",
+        "low": 519,
+        "high": 717,
+        "centre": "Auckland",
+        "basis": "Sum of the distinct components above, all in Auckland. LOW BOUND $519/m2 ($233,550 for 450 m2) = QV Alupanel straight-panel proprietary ACP system rate taken from the bottom of its range ($421/m2) and read as including the panel carrier and the 40mm cavity framing, + 3mm flashings at the bottom of the QV aluminium flashing proxies (+30-40% stated gauge/finish adjustment), + QV diesel articulated boom at 30 days, + the three allowances at their lows. HIGH BOUND $717/m2 ($322,650 for 450 m2) = top of the QV ACP range ($458/m2) + the QV ExoTec top-hat cavity-framing row at 600mm crs ($87/m2) + the thermally broken bracket allowance ($25/m2) priced separately because QV's ACP row wording does not state whether the cavity framing is included, + flashings at the top of their ranges, + 42-day lift hire, + allowances at their highs. The ~$198/m2 spread is dominated by that single $86-112/m2 inclusion question on the cavity framing and brackets, plus the up-spec from QV's generic ACP baseline to the specified 4mm FR mineral-core PVDF cassette. Allowances carry only ~$14-48/m2 of either bound (about 3-7%), so the band is not allowance-driven. The flashing quantities total 266 lm (108 reveal/head/sill + 60 base closure + 60 parapet + 38 corners) over 450 m2. The 6-week lift hire is amortised across the 450 m2 in the lift and transport components. Confidence is LOW: the main cost driver rests on a QV proprietary-system row with no published build-up, corroborated only by a supplier's indicative installed range; QV rows are unreviewed. Not a certified price."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 393273,
+        "outputTokens": 25239,
+        "cachedTokens": 346880,
+        "modelCalls": 13,
+        "toolCalls": 24,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.023143,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 393273,
+            "outputTokens": 25239,
+            "estimatedCostUsd": 0.023143,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

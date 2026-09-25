@@ -1,0 +1,175 @@
+{
+  "question": "open-a3",
+  "kind": "open",
+  "arm": "A7",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 93,
+    "high": 149
+  },
+  "range": {
+    "min": 80,
+    "max": 313
+  },
+  "unit": "NZD per m2 of roof area (Auckland centre, GST exclusive)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 2.513,
+    "highRatio": 2.115,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0784,
+  "elapsedMs": 148165,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 143822,
+      "band": {
+        "unit": "NZD per m2 of roof area (Auckland centre, GST exclusive)",
+        "low": 201,
+        "high": 313,
+        "centre": null,
+        "basis": "MEMBRANE ROOF IN PLACE, per m2 of roof area, at the Auckland centre, GST exclusive. Sum of three distinct components only, no double counting: (1) membrane covering laid to falls, supply and fix, QV 115-186/m2; (2) required plywood substrate deck over the existing purlins, QV 76-102/m2 (or ~92/m2 if a Dimondek 400 liner tray is used instead - not added); (3) minor sundries/access allowance 10-25/m2. Band 201-313/m2; centre 257/m2 (midpoint). Over the stated 1,200 m2: $241,000 - $376,000 (centre about $308,000). COST IMPACT OF THE SWITCH: the displaced long-run pre-painted steel roof (Coloursteel-class) prices at $115-138/m2 AKL from QV 05507449...:t0:r31 (Styleline/Veedek MAXAM Matte 0.55, 115), r40 (BB900 MAXAM Matte 0.55, 137), r51 (LT7 MAXAM Matte 0.55, 138) and r36 (ZINCALUME 0.55 degreased and painted BB900, 134) - all 'with wire netting, underlay and 0.1m of flashing per m2 of roof'. Premium of membrane over steel = about $63-198/m2, i.e. +$76,000 to +$238,000 over 1,200 m2, centre about +$131/m2 / +$157,000. Note where the premium sits: the membrane covering by itself ($125-211/m2 with sundries) straddles the steel rate; it is the $76-102/m2 substrate deck that a long-run steel roof does not need which creates almost all of the premium, together with the underlay/0.1m-flashing content already inside the steel comparator rows. Assumptions priced, per the items left undecided: (a) priced as a NEW roof on both sides - no removal or disposal of an existing covering is included and no credit for the Coloursteel option's removal cost is taken; (b) membrane assumed to be a two-layer torch-applied bituminous (Soprema Soprasun 4AR / Sopralene Flam) or 1.5mm butyl / 2mm glass-reinforced acrylic system, over a 17-21mm H3.2 plywood deck fixed to existing purlins, with falls following the existing roof slope; TPO/PVC single-ply (Sika Sarnafil/Sikaplan, Protan) is a likely alternative and needs an installer quote - QV has no single-ply row; (c) existing roof removal, flashings, gutters and drainage are EXCLUDED per the pinned scope, as are insulation, ceiling work and all structural changes. Other centres: membrane rows are identical in WLG/CHC, plywood 74-100 CHC / 73-99 WLG, steel within about 2-6% below AKL, so the band is not centre-sensitive. Confidence LOW: membrane type undecided (60% spread across the QV membrane rows), substrate is an assumption worth about 40% of the band, QV rows are unreviewed, and the steel comparator profile choice alone moves the premium by about $23/m2."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 437717,
+        "outputTokens": 24887,
+        "cachedTokens": 378368,
+        "modelCalls": 11,
+        "toolCalls": 26,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.02497,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 437717,
+            "outputTokens": 24887,
+            "estimatedCostUsd": 0.02497,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 137650,
+      "band": {
+        "unit": "m2 of roof area",
+        "low": 80,
+        "high": 148,
+        "centre": "Auckland",
+        "basis": "Auckland, NZD, GST exclusive, per m2 of the 1200 m2 warehouse roof, 2026 rates. STATED ASSUMPTION: the membrane is priced alone and the long-run pre-painted steel covering it displaces is credited back, so this band is the NET cost impact of the switch = membrane covering (137-186) + 19mm plywood substrate over existing purlins (77-88) + minor access/sundries allowance (3-8) - Coloursteel-class trapezoidal 0.55mm covering credit (134-137). Gross figures: membrane roof system in place 217-282/m2; long-run pre-painted steel roof in place 134-137/m2. On 1200 m2 the switch costs about +80 to +148/m2, i.e. +$96,000 to +$178,000, mid about +$114/m2 (+$137,000). If the membrane is laid direct to an existing concrete deck or steel liner tray (no new plywood deck), delete the 77-88/m2 component and the impact falls to +0 to +52/m2 (+$0 to +$62,000); at the low end the membrane covering alone ($137/m2 butynol) is cost-neutral against long-run steel ($134-137/m2), so essentially all of the impact is the substrate deck and the choice of a 2-ply torch-on system. Cross-check: QV elemental Roof benchmark for an Auckland warehouse under 20m clear span with Colorsteel cladding is 323.35/m2 of floor area (row cd70564ef8ec5355f54ac2526672ff834c8ae5424dd8a9ce5036fd1cbeae8ab7:t0:r8, includes roof structure and roof plumbing), so covering-plus-deck figures of 217-282/m2 are consistent with that element. Excludes, per the pinned scope: removal and disposal of existing roofing, structural changes, insulation and ceiling work, flashings, gutters and drainage; falls/ponding design and any structural upgrading for the added dead load are also excluded and unpriced."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 655767,
+        "outputTokens": 22957,
+        "cachedTokens": 575360,
+        "modelCalls": 14,
+        "toolCalls": 28,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.027561,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 655767,
+            "outputTokens": 22957,
+            "estimatedCostUsd": 0.027561,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 148162,
+      "band": {
+        "unit": "per m² of warehouse roof area (net cost impact of substituting a membrane roof for long-run Coloursteel)",
+        "low": 93,
+        "high": 149,
+        "centre": "Auckland",
+        "basis": "Membrane roof in place $227–$264/m² (1.5mm single-ply membrane laid to falls $137–$152 + 17mm H3.2 structural plywood substrate deck $82–$97 + sundries/access allowance $8–$15), less the long-run Coloursteel roof displaced $115–$134/m² = net switch impact +$93 to +$149/m². Mid-point ≈ +$121/m², i.e. ≈ +$145,000 on the 1,200 m² roof (range +$112,000 to +$179,000). ASSUMPTIONS PRICED ON: (1) membrane = 1.5mm single-ply (QV butyl row as published proxy; NZ equivalent 1.5mm TPO/PVC, e.g. GAF EverGuard 60 mil, Sika Sarnafil S 327-20 L), fully adhered/mechanically fixed over a NEW 17mm H3.2 structural plywood deck on the existing purlins, falls provided by the structure; (2) the comparison is the net switch cost, i.e. the membrane build-up less the Coloursteel roof it replaces - existing roof removal and disposal is NOT included; (3) existing roof removal, flashings, gutters, drainage, insulation/ceiling and structural changes are all excluded per the pinned scope; (4) the 1,200 m² is roof area, not plan area. VARIANT: if the membrane is applied to an existing sound substrate (concrete or existing plywood), delete the $82–$97/m² deck, giving membrane-only in place of $145–$167/m² and a net impact of only +$11 to +$52/m². OUT-OF-SCOPE RISKS that are not in the band: forming falls, and purlin re-spacing/additional purlins to carry a plywood deck on a steel-portal warehouse. Allowances are a small share of the total (about 5%), so the band rests on cited QV rows, not on judgement."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 569373,
+        "outputTokens": 18771,
+        "cachedTokens": 481792,
+        "modelCalls": 13,
+        "toolCalls": 24,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.025845,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 569373,
+            "outputTokens": 18771,
+            "estimatedCostUsd": 0.025845,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

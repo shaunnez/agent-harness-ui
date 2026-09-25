@@ -1,0 +1,275 @@
+{
+  "question": "open-b3",
+  "kind": "open",
+  "arm": "A10",
+  "status": "disputed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 5400,
+    "high": 12100
+  },
+  "range": {
+    "min": 1663.73,
+    "max": 28340
+  },
+  "unit": "total, one new six-unit light industrial building, building-level Chorus fibre connection, extension/non-standard case (NZD, GST exclusive)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 8.956,
+    "highRatio": 6.955,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.2217,
+  "elapsedMs": 571865,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 183219,
+      "band": {
+        "unit": "total, one new six-unit light industrial building, building-level Chorus fibre connection, extension/non-standard case (NZD, GST exclusive)",
+        "low": 1663.73,
+        "high": 4074.5,
+        "centre": null,
+        "basis": "Narrowed to the pinned specification: one building-level connection, one premises share, not six tenant connections. Assumption priced on (the 'not decided' standard-service question): the new building is not already passed by Chorus fibre or the lead-in is non-standard, so Chorus recovers a build contribution; the band is bracketed by Chorus's own two cost-recovery figures for that contribution - $1,600 per connection (its 2022 New Property Development quote for 216 Wellington lots) to $4,000 per premises (its own $40m/10,000 premises extension build) - plus the building-level business new-connection fee of $63.73-$74.50, giving $1,663.73 to $4,074.50, a span of about 2.4x. If instead the building fronts a fibre-served street within Chorus's standard-install limits, the build charge falls away and the Chorus charge collapses to the connection fee alone ($63.73-$74.50) - that is a different specification from the one priced here and is therefore not the low end of this band. Excluded from the band and to be confirmed in writing with Chorus: whether it counts the six units as six premises (that would multiply the contribution share by up to six), and whether permits, traffic management and reinstatement sit inside its price. Internal cabling, building fit-out, in-building backbone and ONT distribution are excluded per the pinned scope. This is a cost plan band, not a certified price; the binding figure is Chorus's design-based New Property Development quote."
+      },
+      "checks": [
+        "web-unsupported",
+        "web-derived"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 1,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 424380,
+        "outputTokens": 31970,
+        "cachedTokens": 377856,
+        "modelCalls": 11,
+        "toolCalls": 28,
+        "searchCalls": 7,
+        "estimatedCostUsd": 0.027294,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 424380,
+            "outputTokens": 31970,
+            "estimatedCostUsd": 0.027294,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 309594,
+      "band": {
+        "unit": "total for the building connection (six-unit light industrial building), GST exclusive",
+        "low": 14900,
+        "high": 28340,
+        "centre": null,
+        "basis": "Cost-plan envelope built by adding four distinct components; it is not a Chorus price. Chorus publishes no rate for bringing fibre to a specific building - its New Property Development charge is set by development type and quoted on application - so the envelope rests on one real Chorus NPD quote scaled per connection, the published excess-over-allowance range for multi-unit buildings, Chorus's published time-and-materials hourly rates for a non-standard/MDU install, and one materials allowance (allowances are about 3-9% of the total). Assumption on charging: one building-level development charge for the building, the six tenancies counted once (an MDU lead-in with a common distribution point/MDU TER, 50mm lead-in per Chorus New Property Technical Requirements Vol 3 April 2025, source-11 page 12); six separate tenant connections are not priced - each would instead attract the price list's business new-connection charge of one month's recurring fee (source-3, item 1.2) plus any per-unit non-standard install. Civil assumption: per the same technical requirements, the developer provides the trench, installs the lead-in pipe and performs all reinstatement, while Chorus supplies the pipe and installs the cable and first terminal - so no civil or reinstatement cost is included. Excluded: internal cabling and fit-out; Chorus's Fibre Project Management service if the retail provider buys it ($264.92 simple / $463.61 complex per location, source-5 page 12). Chorus's site-specific New Property Development quote is the figure to rely on, not this band."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-unverified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 1,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 1235901,
+        "outputTokens": 31996,
+        "cachedTokens": 1086848,
+        "modelCalls": 16,
+        "toolCalls": 36,
+        "searchCalls": 8,
+        "estimatedCostUsd": 0.044816,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1235901,
+            "outputTokens": 31996,
+            "estimatedCostUsd": 0.044816,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 404165,
+      "band": {
+        "unit": "total for the building connection (one new six-unit light industrial building; GST exclusive NZD)",
+        "low": 0,
+        "high": 8430,
+        "centre": "Auckland",
+        "basis": "Built up from published Chorus/CIP price material only: MDU non-standard install design at $108.65/hr (4–16 hrs) + installation at $92.25/hr (8–40 hrs) + a materials allowance of $500–$3,000, less the published $1,000-per-tenancy standard contribution for six tenancies ($6,000). Low = nil Chorus charge (contribution offsets a straightforward lead-in; the credit cannot take the charge below zero). High = heavy non-standard lead-in (16 design hrs + 40 field hrs + $3,000 materials) with no tenancy credit applied. Labour-only subtotal if the credit is not applied is about $1,670–$8,430. Rates are the 1 July 2020 CIP price caps for row 1.3; Chorus's current price list carries the same items at higher rates (the current price-list appendix pages were beyond the retrievable range), so price toward the top of each hour range. QV CostBuilder has no lines-company/UFB row, so the labour is priced from the operator's own regulated T&M rate (installation labour and margin included) rather than a QV building-trade rate or a retail price. Assumptions priced on: fibre is available in the street/passed to the boundary and NO network extension is required; the connection is the one building-level MDU lead-in and first terminal serving six premises, not six tenant services; the developer provides trench and lead-in pipe (Chorus's own requirement); civil works and reinstatement are NOT in Chorus's charge. Not in the band: per-service connection fees for each tenant (a standard business connection is charged at one month's recurring fee for the chosen plan) and any network extension. Allowances (materials) are about one third of the high band, so the band rests mainly on the cited hourly rates. Chorus's UFB charges are national, not regionally rated; the centre is named as Auckland."
+      },
+      "dropped": true,
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "web-unsupported",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 4,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 1,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 1369399,
+        "outputTokens": 49179,
+        "cachedTokens": 1220224,
+        "modelCalls": 19,
+        "toolCalls": 42,
+        "searchCalls": 10,
+        "estimatedCostUsd": 0.055544,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1369399,
+            "outputTokens": 49179,
+            "estimatedCostUsd": 0.055544,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 449073,
+      "band": null,
+      "dropped": true,
+      "checks": [
+        "web-unsupported",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 1,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 1385362,
+        "outputTokens": 39686,
+        "cachedTokens": 1260671,
+        "modelCalls": 17,
+        "toolCalls": 47,
+        "searchCalls": 15,
+        "estimatedCostUsd": 0.046297,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1385362,
+            "outputTokens": 39686,
+            "estimatedCostUsd": 0.046297,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 571863,
+      "band": {
+        "unit": "total for the building connection (one new six-unit light industrial building, building-level connection only)",
+        "low": 5400,
+        "high": 12100,
+        "centre": "National - Chorus standard charge, not centre-rated",
+        "basis": "Low $5,400 = six premises x Chorus's published standard development fee of $900 + GST per lot in Chorus contracted UFB areas, with the standard lead-in at no charge and nil non-standard work. High $12,100 = six premises x Chorus's published $1600 + GST per lot standard fee (outside Chorus UFB areas / non-standard), plus $2,500 allowance for non-standard work recovered at time-and-materials. Centre is the mid-point of the band. Assumptions: (1) the building-level charge is applied per premises to one development contribution paid by the building owner/developer, not six separate tenant connections; (2) civil works, the lead-in trench, the 20mm green lead-in pipe and reinstatement are the developer's scope and are excluded from this band; (3) the site is inside a Chorus feature/UFB area needing a standard connection for the low end, and outside it or non-standard (or priced on application) for the high end. Excluded: internal cabling and fit-out beyond the first termination box, the six tenant service connections (a Chorus business new connection is one month's recurring fee for the relevant service), RSP/ISP charges and any connection incentives, and GST (all figures GST exclusive, matching Chorus's price lists, which exclude GST). QV CostBuilder holds no network-operator rows, so the whole band is priced from Chorus's published rates plus one allowance; QV's only related row is the excluded internal reticulation rate (Electrical Services / Telephone/Data Reticulation Cabling, row ac5fef027b3b97701b4e6d5f0228aeef6bc2088d99f06141256ba95cd2e107b0:t32:r1 at $11/m2 Auckland), which is not added because internal cabling is outside the pinned scope. Confidence is low: the main rate is Chorus's last published standard development fee (2015) rather than a current priced row, and Chorus quotes the building case individually, with price-on-application where the works are atypical."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 1808340,
+        "outputTokens": 33652,
+        "cachedTokens": 1657727,
+        "modelCalls": 20,
+        "toolCalls": 45,
+        "searchCalls": 18,
+        "estimatedCostUsd": 0.047756,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1808340,
+            "outputTokens": 33652,
+            "estimatedCostUsd": 0.047756,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

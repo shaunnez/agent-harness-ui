@@ -1,0 +1,186 @@
+{
+  "question": "acp-facade-cladding-install",
+  "kind": "pinned",
+  "arm": "A7",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 575,
+    "high": 768
+  },
+  "range": {
+    "min": 509,
+    "max": 813
+  },
+  "unit": "$/m2 of net cladding face area (window and door openings deducted)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.214,
+    "highRatio": 1.115,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0651,
+  "elapsedMs": 226440,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 226437,
+      "band": {
+        "unit": "$/m2 of net cladding face area (window and door openings deducted)",
+        "low": 509,
+        "high": 729,
+        "centre": null,
+        "basis": "Sum of the nine components above, no part counted twice: 421-600 (ACP system, per the stated inclusion assumption) + 21.2-26.9 + 7.3-10.0 + 17.2-21.8 + 7.3-9.1 (flashings) + 19.8-28.9 (lift) + 15-32 (allowances, 2.9-4.4% of the band). Total for the nominal 450 m2: $229,050 low, $328,050 high, centre about $279,000. Auckland rates, NZD, GST exclusive, margin, preliminaries, design, consent fees, producer statements, air barrier, fire stopping and scaffold excluded exactly as the scope lists. The band's width is one question - whether the QV proprietary-wall-cladding-system row carries the 40mm drained cavity layer (top hats and thermally broken brackets) or not; at the low end it does, at the high end it does not."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 488614,
+        "outputTokens": 25093,
+        "cachedTokens": 420352,
+        "modelCalls": 13,
+        "toolCalls": 23,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.026556,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 488614,
+            "outputTokens": 25093,
+            "estimatedCostUsd": 0.026556,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 124181,
+      "band": {
+        "unit": "$/m2 of net cladding face area",
+        "low": 575,
+        "high": 768,
+        "centre": "Auckland",
+        "basis": "Sum of the seven components per m2, Auckland, GST exclusive, QV CostBuilder rows with stated adjustments plus minor allowances: 472+76.3+15.1+0.9+3.3+5.0+2.0 = 574.6 low; 618+109.4+17.8+2.0+6.7+10.0+4.0 = 767.9 high. Allowances carry only ~2-3% of the band, so the band is driven by cited rows. Total for the nominal 450 m2: low 574.6 x 450 = 258,570 (~259,000); high 767.9 x 450 = 345,555 (~346,000); midpoint 671.3/m2 x 450 = ~302,000. Scope is exactly as pinned: openings deducted, 266 lm flashings included, 6-week boom lift amortised, no prelims, margin, design, consent fees, substrate works, fire-stopping, windows or perimeter scaffold. QV rows are UNREVIEWED so the band is deliberately wide, and it is a cost-plan band, not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 199518,
+        "outputTokens": 14266,
+        "cachedTokens": 146048,
+        "modelCalls": 8,
+        "toolCalls": 17,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.017018,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 199518,
+            "outputTokens": 14266,
+            "estimatedCostUsd": 0.017018,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 165815,
+      "band": {
+        "unit": "$/m2 of net cladding face area (450 m2, openings deducted)",
+        "low": 618,
+        "high": 813,
+        "centre": "$715/m2 and $322,000 total for 450 m2 (Auckland, GST exclusive)",
+        "basis": "Sum of distinct components, no double counting. ACP cassette system 227,250 (low) to 298,800 (high) from QV row d522ac53...:t1:r9 with a stated +20%/+45% specification adjustment and Paneltec NZ web corroboration. Flashings 35,743 to 41,190 from QV aluminium flashing rows 528b0345...:t21:r17/r18/r19 with stated +50% to +100% gauge adjustments for 3mm. Boom lift 8,010 to 11,214 from QV row 253b838a...:t8:r15. Lift delivery/fuel 900 to 1,800 allowance. Drawings/set-out/clean/waste 6,300 to 12,600 allowance. Low total 278,203 (= 618/m2); high total 365,606 (= 813/m2). Allowances are about 3% of the total, well under one third, and both main drivers (panel system, access) and the flashings rest on cited QV rows or a fetched page. Band is wide because QV's own ACP family spread is 421-920/m2 and the QV ACP attributes are undeclared. Excludes GST, preliminaries, margin, design, consent, rigid air barrier, substrate repair, cavity fire barriers, windows/doors/louvres/soffits/balustrades/roofing, structural steel, scaffold and edge protection, traffic management, and PS1/PS3/facade-engineer producer statements."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 404507,
+        "outputTokens": 17845,
+        "cachedTokens": 339200,
+        "modelCalls": 12,
+        "toolCalls": 29,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.021521,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 404507,
+            "outputTokens": 17845,
+            "estimatedCostUsd": 0.021521,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

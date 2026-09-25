@@ -1,7 +1,27 @@
 import * as api from "../../api.ts";
 import type { FrontierGateway } from "./contracts.ts";
+import type { ResearchGateway } from "./research.ts";
 
 const readOptions = () => ({ signal: AbortSignal.timeout(12_000) });
+
+const liveResearch: ResearchGateway = {
+  mode: "live",
+  available: () => api.researchAvailable(readOptions()),
+  questions: (projectId) => api.listResearchQuestions(projectId, readOptions()),
+  question: (id) => api.getResearchQuestion(id, readOptions()),
+  review: api.reviewResearchQuestion,
+  retry: api.retryResearchQuestion,
+  scope: (projectId, objective) => api.scopeResearchQuestion({ projectId, objective }),
+  // The engine is not sent: the backend snapshots the Settings choice onto each run itself.
+  ask: (projectId, input) =>
+    api.askResearchQuestion({
+      projectId,
+      objective: input.objective,
+      runs: input.runs,
+      scope: input.scope ?? null,
+      scopedBy: input.scopedBy ?? null,
+    }),
+};
 
 export const liveGateway: FrontierGateway = {
   mode: "live",
@@ -16,19 +36,12 @@ export const liveGateway: FrontierGateway = {
   worktrees: async (id) => (await api.getRuntimeWorktreeInventory(id)).rows,
   removeWorktree: async (id, row) => (await api.removeRuntimeWorktree(id, row)).rows,
   projects: () => api.listProjects(readOptions()),
-  research: {
-    live: true,
-    questions: (projectId) => api.listResearchQuestions(projectId, readOptions()),
-    question: (id) => api.getResearchQuestion(id, readOptions()),
-    ask: api.askResearchQuestion,
-    retry: api.retryResearchQuestion,
-    review: api.reviewResearchQuestion,
-  },
   createProject: api.createProject,
   changeProject: api.changeProject,
   repository: api.getRepositoryContract,
   proposeSetup: api.proposeRepositorySetup,
   approveSetup: api.approveRepositorySetup,
+  research: liveResearch,
   updateRole: (id, role, policy) => api.updateTaskRolePolicy(id, { role, ...policy }),
   cancel: api.cancelTask,
   closeTask: (id, input) => api.closeTask(id, input.reason, input.note, input.supersededBy),

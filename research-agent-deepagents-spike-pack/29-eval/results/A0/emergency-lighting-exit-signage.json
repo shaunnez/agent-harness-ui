@@ -1,0 +1,197 @@
+{
+  "question": "emergency-lighting-exit-signage",
+  "kind": "pinned",
+  "arm": "A0",
+  "status": "agreed",
+  "passes": false,
+  "consensus": {
+    "low": 309,
+    "high": 385
+  },
+  "range": {
+    "min": 298,
+    "max": 421
+  },
+  "unit": "ea",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.037,
+    "highRatio": 1.157,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 1.9438,
+  "elapsedMs": 96201,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 96201,
+      "band": {
+        "unit": "ea",
+        "low": 309,
+        "high": 385,
+        "centre": "Auckland",
+        "basis": "Weighted 28 downlights + 12 exit signs (QV installed rates) + 12m QV TPS + QV MCB and lift hire amortised + web-sourced test/cert labour. 40-off total $12,370-$15,390. No out-of-hours or congested-void premium (scope pins normal-hours access)."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 16,
+        "outputTokens": 7165,
+        "cachedTokens": 351338,
+        "modelCalls": 18,
+        "toolCalls": 17,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.7091036000000002,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 16,
+            "outputTokens": 7165,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.6627276,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 22626,
+            "outputTokens": 750,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.046376,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 72460,
+      "band": {
+        "unit": "ea",
+        "low": 309,
+        "high": 421,
+        "centre": "Auckland",
+        "basis": "Sum of QV installed fitting rate (weighted 28 downlights/12 exit signs) + 12m installed 1.5mm2 TPS + amortised MCBs, scissor lift and test/cert labour. 40 fittings = $12,350-$16,830 GST excl. Corroborates the stated $315-$430."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "unsourced",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 12,
+        "outputTokens": 6810,
+        "cachedTokens": 223662,
+        "modelCalls": 15,
+        "toolCalls": 14,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.6019243999999999,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 12,
+            "outputTokens": 6810,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.6019243999999999,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 87406,
+      "band": {
+        "unit": "each",
+        "low": 298,
+        "high": 364,
+        "centre": "Auckland",
+        "basis": "Sum of QV rows: weighted fittings $208-269 + cable $79 + MCB $4 + lift $7-12. Excludes discharge test, log book and CoC/ESC (not established). 40 fittings = approx $11,930-$14,570, GST exclusive."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "unsourced",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 14,
+        "outputTokens": 7096,
+        "cachedTokens": 285807,
+        "modelCalls": 15,
+        "toolCalls": 14,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.6327454,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 14,
+            "outputTokens": 7096,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.6091214,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 11979,
+            "outputTokens": 329,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.023624,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

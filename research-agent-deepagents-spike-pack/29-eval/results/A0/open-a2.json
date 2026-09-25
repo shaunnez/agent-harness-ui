@@ -1,0 +1,196 @@
+{
+  "question": "open-a2",
+  "kind": "open",
+  "arm": "A0",
+  "status": "agreed",
+  "passes": false,
+  "consensus": {
+    "low": 270,
+    "high": 420
+  },
+  "range": {
+    "min": 270,
+    "max": 420
+  },
+  "unit": "m2 of floor area",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1,
+    "highRatio": 1,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 3.2941,
+  "elapsedMs": 122707,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 110883,
+      "band": {
+        "unit": "m2 of floor area",
+        "low": 270,
+        "high": 420,
+        "centre": "Christchurch",
+        "basis": "QV TC3 Type 1 shallow ground improvement (geogrid-reinforced gravel raft) build-up totals, re-used material (270) to imported GAP40 (420); corroborated by EQC 2015 tendered Christchurch rates of $146-271/m2 of treatment area before escalation. Applies to shallow treatment only; excludes foundations, geotech investigation/design, testing, monitoring and dewatering."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-unverified",
+        "web-unverified"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 2,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 24,
+        "outputTokens": 7334,
+        "cachedTokens": 743347,
+        "modelCalls": 25,
+        "toolCalls": 24,
+        "searchCalls": 3,
+        "estimatedCostUsd": 1.1606694,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 24,
+            "outputTokens": 7334,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.0942934,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 30616,
+            "outputTokens": 1152,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.06637599999999999,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 99406,
+      "band": {
+        "unit": "m2 of floor area",
+        "low": 270,
+        "high": 420,
+        "centre": "Christchurch",
+        "basis": "QV CostBuilder TC3 Type 1 shallow reinforced-crust ground improvement build_up totals: r8 (re-used material, CHC 270) to r14 (imported GAP40, CHC 420). Assumes shallow crust improvement suits a single-storey light commercial building. Excludes design, testing, construction monitoring, foundations and deep ground improvement. EQC 2015 tender rates ($146-$271 per m2 of treated area, not escalated) cross-check the band without adding to it."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 26,
+        "outputTokens": 7406,
+        "cachedTokens": 726548,
+        "modelCalls": 28,
+        "toolCalls": 27,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.9272216,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 26,
+            "outputTokens": 7406,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.8813816,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 22200,
+            "outputTokens": 728,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.045840000000000006,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 122704,
+      "band": {
+        "unit": "m2 of building floor area",
+        "low": 270,
+        "high": 420,
+        "centre": "Christchurch",
+        "basis": "Priced on a shallow densified-crust method, the MBIE TC3 Type 1 detail: excavate, compact and backfill with geogrid. The low end re-uses the excavated material (QV t13:r8); the high end imports GAP40 (QV t13:r14). Unreviewed QV rows taken from residential guidance. The 2015 EQC tender rates for stone columns, timber poles and rafts are the same order of cost but are not escalated. Excludes design, testing and monitoring, consents, foundations and deep methods."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 26,
+        "outputTokens": 7480,
+        "cachedTokens": 808583,
+        "modelCalls": 25,
+        "toolCalls": 24,
+        "searchCalls": 3,
+        "estimatedCostUsd": 1.2061856000000002,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 26,
+            "outputTokens": 7480,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.0475086000000002,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 90712,
+            "outputTokens": 1593,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.158677,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,190 @@
+{
+  "question": "industrial-roller-doors",
+  "kind": "pinned",
+  "arm": "A5",
+  "status": "agreed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 8641,
+    "high": 14086
+  },
+  "range": {
+    "min": 8550,
+    "max": 16700
+  },
+  "unit": "$/ea (one complete motorised insulated roller-shutter door, supplied, installed and commissioned into a prepared opening)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.061,
+    "highRatio": 1.307,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0819,
+  "elapsedMs": 176958,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 152191,
+      "band": {
+        "unit": "$/ea (one complete motorised insulated roller-shutter door, supplied, installed and commissioned into a prepared opening)",
+        "low": 8550,
+        "high": 14086,
+        "centre": "Auckland",
+        "basis": "Sum of components 1-8, per door, GST exclusive, ex preliminaries, margin, design and consent. Component totals: low 4580+1100+1740+700+150+100+80+100 = $8,550; high 6190+1440+3776+1600+350+300+180+250 = $14,086. TOTAL FOR THE 4-DOOR NOMINAL QUANTITY: low $34,200; high $56,344 (ex GST). Amortised items are components 7 (scissor lift) and 8 (delivery/offload). Confidence is LOW: the main driver is a QV steel-shutter proxy with a sourced +38% to +61% insulated-aluminium grade adjustment, QV rows are unreviewed, and components 4-6 and 8 are allowances. Allowances total $1,030 (12% of low) to $2,500 (18% of high), under one third, so the band is led by cited/derived rates. Sanity checks: QV's size-matched motorised 19mm tube rolling grille 4.0 x 5.0m is AKL $8,800 installed (t16:r10) - an open grille, so a solid insulated shutter should sit at or above it, meaning the low end is optimistic; an independent AU 2026 commercial-door guide puts an industrial roller shutter at A$2,850-$12,000 installed and insulated PU-core doors at A$280-$380/m2 supplied (= ~A$5,000-$6,800 for 18 m2 supply only), consistent with the band once motor, controls, safety devices and install are added. Materials/labour price movement and any wind-rating upgrade would move the band."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-derived",
+        "allowance",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 1,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 500095,
+        "outputTokens": 26970,
+        "cachedTokens": 419072,
+        "toolCalls": 14,
+        "searchCalls": 5,
+        "estimatedCostUsd": 0.029593,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 500095,
+            "outputTokens": 26970,
+            "estimatedCostUsd": 0.029593,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 176956,
+      "band": {
+        "unit": "$/ea",
+        "low": 9070,
+        "high": 16700,
+        "centre": "Auckland",
+        "basis": "Concept cost-plan band, GST-exclusive, NZD, Auckland, excluding preliminaries, margin, design and consent fees, for ONE complete insulated motorised roller shutter in a prepared 4.0m x 4.5m opening, supplied, installed and commissioned, with the 4-door visit costs amortised. Sum of the 8 components above: low $6,400+$1,000+$700+$300+$250+$150+$150+$120 = $9,070/ea; high $11,150+$1,600+$1,500+$700+$600+$400+$400+$350 = $16,700/ea. Midpoint ~$12,885/ea. For the 4-door nominal quantity: LOW ~$36,280, HIGH ~$66,800, MIDPOINT ~$51,540. Allowances total $1,670-$3,950/ea, i.e. ~18-24% of the total (under one third). Confidence is LOW because the dominant component (the door unit) is a QV steel interlocking-slat row adjusted +40-80% to the specified insulated aluminium powdercoated product, and because the QV library prices only steel chain-operated shutters, not insulated aluminium motorised units. Main drivers ARE sourced (door via QV proxy + web calibration, motorisation via QV row), so the band is established, not null. Do not treat as a certified price."
+      },
+      "checks": [
+        "web-derived",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 6
+      },
+      "usage": {
+        "inputTokens": 150245,
+        "outputTokens": 21581,
+        "cachedTokens": 108288,
+        "toolCalls": 8,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.019567,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 150245,
+            "outputTokens": 21581,
+            "estimatedCostUsd": 0.019567,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 169756,
+      "band": {
+        "unit": "$/ea",
+        "low": 8641,
+        "high": 12779,
+        "centre": "Auckland",
+        "basis": "Working estimate band for ONE complete motorised insulated roller shutter door, supplied, installed and commissioned into a prepared 4.0 m x 4.5 m opening, Auckland, ex-GST NZD. Built by adding distinct components only: insulated door unit supply ($4,950-$6,800) + 3-phase operator/control panel supply ($1,560-$2,300) + safety edge and photo-eyes ($320-$500) + IP54 3-button station allowance ($200-$500) + install labour/fixings ($1,154-$1,730) + electrical connection/commissioning ($335-$669) + scissor lift amortised ($47-$80) + delivery amortised ($75-$200). These sum to $8,641-$12,779/ea. NOMINAL 4-DOOR TOTAL = $34,564-$51,116 ex-GST. GST, preliminaries, margin, design and consent fees are excluded per scope. Main uncertainty sits in the insulated aluminium-slat door supply, which QV does not publish and which is proxied from an AUD insulated-door $/m2 rate cross-checked against two NZ vendor anchors; the motor is priced from an Australian trade price and the install hours are professional judgement. Allowances are minor (station, delivery) and do not carry the band. Treat as an early cost-plan band, not a certified price; obtain firm quotes from Windsor Doors/Garador (via DoorsNZ), Glideaway (Feilding) or Ulti Group NZ for the insulated curtain before committing."
+      },
+      "checks": [
+        "web-verified",
+        "web-derived",
+        "web-unsupported",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 1,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 644354,
+        "outputTokens": 29181,
+        "cachedTokens": 553600,
+        "toolCalls": 14,
+        "searchCalls": 5,
+        "estimatedCostUsd": 0.032783,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 644354,
+            "outputTokens": 29181,
+            "estimatedCostUsd": 0.032783,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

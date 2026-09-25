@@ -1,0 +1,180 @@
+{
+  "question": "metering-control-instrumentation-wiring",
+  "kind": "pinned",
+  "arm": "A5",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 50.47,
+    "high": 94.81
+  },
+  "range": {
+    "min": 47.57,
+    "max": 97
+  },
+  "unit": "$/m of installed cable route",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.114,
+    "highRatio": 1.071,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0973,
+  "elapsedMs": 325500,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 278431,
+      "band": {
+        "unit": "$/m of installed cable route",
+        "low": 47.57,
+        "high": 94.81,
+        "centre": "Auckland",
+        "basis": "Sum of the components above. Total for the 200m nominal quantity: $9,514 (low) to $18,962 (high), i.e. the per-metre figures are the audited amortisation of 200m. Containment (the dominant cost, ~70% at the low end) is a cited QV row; cable material is a cited NZ vendor price; the remaining cable-draw labour, terminations, BMS interface, testing and access are labelled allowances totalling ~19% (low) to ~24% (high) of the band, i.e. under one third. The band width is driven almost entirely by the two unexplained QV conduit tiers (34.7 vs 60.0/m), not by the allowances. GST-exclusive, NZD, Auckland. Not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 799426,
+        "outputTokens": 26386,
+        "cachedTokens": 701440,
+        "toolCalls": 16,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.032634,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 799426,
+            "outputTokens": 26386,
+            "estimatedCostUsd": 0.032634,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 170666,
+      "band": {
+        "unit": "$/m of installed cable route",
+        "low": 50.47,
+        "high": 90.57,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components: QV conduit installed rate (dominant item, AKL 34.7-60.0/m) + NZ vendor cable material (ASI $2.98/m) + labelled allowances for drawing-in, 16 terminations, testing/labelling, BMS interface and QV scaffold hire. 200m nominal total = $10,094-$18,114 (say $10,100-$18,100; mid ~$70.5/m, ~$14,100). Allowances are ~21-24% of the band, i.e. under one third, so the band is establishable. GST, preliminaries, margin, design, consent fees and all listed exclusions excluded. Low confidence because: QV conduit rows are unreviewed and ambiguous on duty/inclusions; cable price is a single vendor list; termination/testing/interface are judgement allowances; wide 1.7x spread in the QV conduit pair. Not a certified price - confirm with the wholesaler and contractor before use."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 454936,
+        "outputTokens": 15291,
+        "cachedTokens": 371584,
+        "toolCalls": 13,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.022792,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 454936,
+            "outputTokens": 15291,
+            "estimatedCostUsd": 0.022792,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 325497,
+      "band": {
+        "unit": "NZD/m of installed cable route (GST exclusive)",
+        "low": 53,
+        "high": 97,
+        "centre": "Auckland",
+        "basis": "Working cost-plan band, NOT a certified price. Sum of the seven components above (QV conduit tiers + web cable material + labelled allowances for draw-in, terminations and BMS interface + QV test proxy + QV scaffold hire), then x 200 m nominal: low $10,600, high $19,400, midpoint ~$75/m (~$15,000). Dominant component is the 20 mm conduit, sourced from QV, but QV publishes two identical-worded tiers at $34.7/m and $60.0/m which the row text does not explain - that alone drives most of the band width, and the low tier is corroborated by QV's conduited-circuit row at ~$32.5/m. Allowances (draw-in, terminations, BMS interface) are ~21-24% of the total, i.e. under a third, so the band is carried by sourced rates. Excludes GST, preliminaries, margin, design/consent, field devices, BMS hardware/software/commissioning, 230V supply, trenching/core drilling and after-hours or >3 m work. Recommend confirming: (a) which QV conduit tier applies to heavy-duty orange PVC, (b) a firm NZ wholesale price for 2-pair 0.5 mm2 overall-screened cable, and (c) scaffold need at 2.5 m."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 1302732,
+        "outputTokens": 33553,
+        "cachedTokens": 1181184,
+        "toolCalls": 21,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.041908,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1302732,
+            "outputTokens": 33553,
+            "estimatedCostUsd": 0.041908,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

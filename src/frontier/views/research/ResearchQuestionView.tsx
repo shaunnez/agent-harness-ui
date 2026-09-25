@@ -8,6 +8,7 @@ import {
   formatNzd,
   type ResearchCheck,
   type ResearchGateway,
+  type ResearchGrading,
   type ResearchQuestion,
   type ResearchRunRecord,
   researchCheckCopy,
@@ -21,7 +22,8 @@ import {
 } from "../../runtime/research";
 import { CollapsibleText } from "../../ui/CollapsibleText";
 import { ResearchCheckBadge, ResearchStatusBadge } from "./ResearchBadges";
-import { useResearch } from "./use-research";
+import { ResearchScopePanel } from "./ResearchScope";
+import { pendingPoll, useResearch } from "./use-research";
 
 /** A QV CostBuilder rowId is a long content hash plus a `:table:row` locator. Never show the raw
  *  hash in the UI — the locator is the only human-legible part. */
@@ -32,11 +34,12 @@ function qvRowLabel(rowId: string): string {
 
 const statusExplanation: Record<ResearchQuestion["status"], string> = {
   agreed: "All three runs banded within 1.25× on the low end and 1.35× on the high. Read the consensus.",
+  single_run:
+    "A Quick question: one run priced it, and no second run checked the band. Ask again with three runs before relying on it.",
   disputed:
     "The runs disagree by more than 1.25× low or 1.35× high. The disagreement is the finding: compare the runs to see which part of the scope is still open.",
   not_established:
     "No run could price the main cost drivers. That is an answer, not an error: the open questions say who to ask.",
-  unverified: "Quick uses one run. Its band or lack of a band cannot show whether another run would agree.",
   incomplete:
     "A run did not finish, so agreement cannot be judged. A run that did not finish is not a run that found nothing.",
   running: "The runs are still working. The answer appears when all of them finish.",
@@ -56,7 +59,7 @@ export function ResearchQuestionView({
     value: question,
     error,
     reload,
-  } = useResearch(research, (gateway) => gateway.question(questionId), questionId);
+  } = useResearch(research, (gateway) => gateway.question(questionId), questionId, pendingPoll);
   const [runId, setRunId] = useState<string | null>(null);
   if (!research)
     return (
@@ -95,6 +98,22 @@ export function ResearchQuestionView({
               <ResearchStatusBadge question={question} />
             </header>
             <p className="quiet">{statusExplanation[question.status]}</p>
+            {question.status === "disputed" &&
+              question.agreement.runsWithBand === 1 &&
+              question.agreement.runsTotal > 1 && (
+                <p className="research-units-differ" role="note">
+                  Only one of the {question.agreement.runsTotal} runs found a band; the others could not price
+                  it. One band cannot agree with itself.
+                </p>
+              )}
+            {question.unitsDiffer && (
+              <p className="research-units-differ" role="note">
+                {question.scope
+                  ? `The scope asks for a price ${question.scope.measure}, and the runs priced it as: ${question.unitsDiffer.join("; ")}. A band in another measure answers a different question, so there is no consensus.`
+                  : `The runs priced this in different units (${question.unitsDiffer.join("; ")}), so their bands cannot be compared and there is no consensus.`}
+              </p>
+            )}
+            {question.grading && <GradingNote grading={question.grading} />}
             {finished && (
               <>
                 <div className="research-answer-bands">
@@ -174,6 +193,7 @@ export function ResearchQuestionView({
           </section>
         </div>
         <aside className="research-detail-aside">
+          <ResearchScopePanel question={question} />
           {Boolean(question.priorAttempts?.length) && (
             <section className="research-panel">
               <h3>Previous attempts</h3>
@@ -423,6 +443,7 @@ function RunCard({
       onClick={onSelect}
     >
       <span className="research-run-id">{run.run}</span>
+      {run.dropped && <small>Not scored: furthest of the runs</small>}
       {run.status === "failed" ? (
         <>
           <strong className="tone-blocked">{runFailureCopy(run)}</strong>
@@ -517,6 +538,16 @@ function RunDetail({ run }: { run: ResearchRunRecord }) {
                       ? formatNzd(component.low)
                       : formatBand(component.low, component.high)}
                     {component.unit && <small>{component.unit}</small>}
+                    {component.rate && component.quantity && (
+                      <small>
+                        {formatBand(component.rate.low, component.rate.high)}
+                        {component.rate.unit ? ` ${component.rate.unit}` : ""} ×{" "}
+                        {component.quantity.low === component.quantity.high
+                          ? component.quantity.low
+                          : `${component.quantity.low}–${component.quantity.high}`}
+                        {component.quantity.unit ? ` ${component.quantity.unit}` : ""}
+                      </small>
+                    )}
                   </td>
                   <td>
                     <ResearchCheckBadge check={component.check} />
@@ -630,5 +661,24 @@ function QvSources({ question }: { question: ResearchQuestion }) {
         ))}
       </ul>
     </section>
+  );
+}
+
+/** What goes back to a tender for this question, and why. */
+function GradingNote({ grading }: { grading: ResearchGrading }) {
+  const band = grading.bestBand ? formatBand(grading.bestBand.low, grading.bestBand.high) : null;
+  const range = grading.range ? formatBand(grading.range.low, grading.range.high) : null;
+  const text =
+    grading.grade === "confident"
+      ? `Confident: ${band} goes back to the tender.`
+      : grading.grade === "unsure"
+        ? `Wide estimate: ${band} goes back to the tender, flagged, with the full range ${range}.`
+        : grading.grade === "no_price"
+          ? "No price: no run could source the main costs, so the tender item reads not established."
+          : `Needs review before anything goes back to the tender. ${grading.reasons.join(" ")}`;
+  return (
+    <p className={`research-grading grade-${grading.grade}`} role="note">
+      {text}
+    </p>
   );
 }

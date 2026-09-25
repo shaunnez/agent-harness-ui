@@ -1,0 +1,196 @@
+{
+  "question": "open-a1",
+  "kind": "open",
+  "arm": "A0",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 30,
+    "high": 120
+  },
+  "range": {
+    "min": 30,
+    "max": 150
+  },
+  "unit": "m2",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 2.167,
+    "highRatio": 1.5,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 2.1464,
+  "elapsedMs": 108376,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 58463,
+      "band": {
+        "unit": "m2",
+        "low": 30,
+        "high": 100,
+        "centre": "Auckland",
+        "basis": "Revolve Asbestos rate for non-friable asbestos-cement cladding, used as a proxy for soffit sheet: Class B, single-storey access, licensed disposal. Soft cross-check against CheckMyBuilder's $30-$150/m2. Small areas (about 10 m2 or less) are governed by a minimum job charge of about $2,000+ (Chemcare), not the per-m2 rate. Excludes scaffold, survey/testing and replacement soffit."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 12,
+        "outputTokens": 4090,
+        "cachedTokens": 204572,
+        "modelCalls": 16,
+        "toolCalls": 15,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.5242104000000001,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 12,
+            "outputTokens": 4090,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.5011144000000001,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 11211,
+            "outputTokens": 377,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.023096,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 108374,
+      "band": {
+        "unit": "m2 of soffit area",
+        "low": 65,
+        "high": 120,
+        "centre": "Auckland",
+        "basis": "Class B licensed removal of intact non-friable AC flat-sheet soffit, single storey, ladder or mobile-scaffold access, about 20–40 m2, including wrapping and disposal to an approved facility. Floor from Safety 1st '$65 per sqm up'; ceiling from BuilderConnect wall/ceiling $120/m2 and Revolve cladding $100/m2; cross-checked against TCB Auckland soffit+fascia lump sum. Excludes survey/testing, clearance certificate, scaffold if separately itemised, replacement soffit. Minimum job about $800–$2,000 applies below about 10 m2. No QV rate exists."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 7,
+        "webVerified": 7,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 22,
+        "outputTokens": 7455,
+        "cachedTokens": 596299,
+        "modelCalls": 22,
+        "toolCalls": 21,
+        "searchCalls": 3,
+        "estimatedCostUsd": 1.0658508,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 22,
+            "outputTokens": 7455,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.9947037999999999,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 34522,
+            "outputTokens": 1325,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.07114699999999999,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 57099,
+      "band": {
+        "unit": "m2 of soffit area",
+        "low": 30,
+        "high": 150,
+        "centre": "Auckland",
+        "basis": "Web-published NZ rates (Revolve cladding $30-100/m2; CheckMyBuilder $30-150/m2). Assumes non-friable AC sheet, Class B, 30-100 m2, single-storey ladder/tower access, licensed disposal included; excludes survey/testing, clearance, scaffold, replacement soffit, GST. Areas under ~20 m2 will be driven by minimum charges (~$2,000 job). No QV rate exists."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 12,
+        "outputTokens": 4221,
+        "cachedTokens": 208067,
+        "modelCalls": 16,
+        "toolCalls": 15,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.5562994000000001,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 12,
+            "outputTokens": 4221,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.5330334000000001,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 11211,
+            "outputTokens": 411,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.023266000000000002,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

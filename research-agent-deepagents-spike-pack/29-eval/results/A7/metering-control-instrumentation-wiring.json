@@ -1,0 +1,185 @@
+{
+  "question": "metering-control-instrumentation-wiring",
+  "kind": "pinned",
+  "arm": "A7",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 54.5,
+    "high": 96.8
+  },
+  "range": {
+    "min": 42.5,
+    "max": 98.39
+  },
+  "unit": "$/m of installed control/instrumentation cable route",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.361,
+    "highRatio": 1.597,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0814,
+  "elapsedMs": 208169,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 58348,
+      "band": {
+        "unit": "$/m of installed control/instrumentation cable route",
+        "low": 42.5,
+        "high": 61.6,
+        "centre": "Auckland (GST exclusive, NZD)",
+        "basis": "Sum of six distinct components: cable material (ASI, sourced), 20mm PVC conduit installed (QV t4:r3, sourced), plus four allowances for drawing-in labour, terminations, testing/BMS interface and scaffold/sundries. Total for 200m nominal: $8,500 (low) to $12,320 (high), centre ~$10,410. Confidence LOW because roughly half the total rests on allowances for installation labour rather than published rates - QV CostBuilder holds no instrumentation-cable, cable-drawing or instrument-termination rows. If the QV conduit rate already includes drawing the cable in, subtract the drawing-in allowance (low $42.5 -> $39.5/m; high $61.6 -> $55.6/m) but then the conduit rate is arguably too high to be only containment."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 321747,
+        "outputTokens": 4994,
+        "cachedTokens": 266112,
+        "modelCalls": 12,
+        "toolCalls": 26,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.01214,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 321747,
+            "outputTokens": 4994,
+            "estimatedCostUsd": 0.01214,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 208164,
+      "band": {
+        "unit": "NZD $/m of installed cable route (GST exclusive), Auckland",
+        "low": 54.5,
+        "high": 96.8,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components, no double counting: cable supply 5.50-11.00 + drawing-in/labelling labour 3.35-5.86 + 20mm conduit installed 34.70-60.00 + 16 terminations 4.15-6.62 + screen earthing/ID 1.00-2.00 + BMS interface and loop testing 3.35-5.86 + scaffold hire 1.99-3.97 + sundries 0.50-1.50 = 54.54-96.81 $/m. TOTAL FOR THE 200m NOMINAL QUANTITY: approx $10,910 (low) to $19,360 (high). The band is wide because QV publishes two conflicting 20mm conduit-to-masonry rates (34.70 and 60.00), which is the dominant component, and because no NZ trade price for the instrumentation cable is published - a US cut-to-length retail price is used as the upper anchor. Excludes GST, preliminaries, margin, design, consent, devices, BMS software/commissioning, 230V supply, trenching/penetrations, after-hours and above-3m work, per the fixed scope. Confidence low: re-price after a wholesaler cable quote (Maser NZ, Advance Electrical, JA Russell, Corys, Ideal Electrical) and confirmation of which QV conduit variant applies."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 1085096,
+        "outputTokens": 25378,
+        "cachedTokens": 901504,
+        "modelCalls": 21,
+        "toolCalls": 50,
+        "searchCalls": 12,
+        "estimatedCostUsd": 0.04547,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1085096,
+            "outputTokens": 25378,
+            "estimatedCostUsd": 0.04547,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 135708,
+      "band": {
+        "unit": "$ per lineal metre of installed control/instrumentation cable route (incl. containment), GST exclusive",
+        "low": 57.86,
+        "high": 98.39,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components: 20mm surface PVC conduit (QV AKL 34.70-60.00/m, the two undisclosed 20mm rows), cable supply at ASI Auckland list $3.03/m +10% waste, and QV-rate build-ups for draw-in, 16 terminations, BMS cabinet interface, testing and scaffold hire, plus two small allowances (termination materials, sundries). Total for the 200m nominal quantity: approx $11,570 low / $19,680 high / $15,600 mid (57.86 / 98.39 / 78.13 $/m). Confidence is low because (a) containment, 60-70% of the total, rests on two identical-wording QV rows 73% apart and neither is described as heavy-duty orange, and (b) the labour-hour components plus the two allowances carry roughly a third of the total and the hours are QS estimates on a cited wage rate, not published fixed prices. No component is counted twice: conduit, cable material, and install/termination/testing labour are separately priced and the BMS cabinet interface is priced once, amortised over 200m."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 875688,
+        "outputTokens": 17829,
+        "cachedTokens": 804480,
+        "modelCalls": 22,
+        "toolCalls": 41,
+        "searchCalls": 5,
+        "estimatedCostUsd": 0.023792,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 875688,
+            "outputTokens": 17829,
+            "estimatedCostUsd": 0.023792,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

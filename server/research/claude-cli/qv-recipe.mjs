@@ -64,8 +64,18 @@ export function qvMcpConfig({
   serverPath = QV_CORPUS_SERVER_PATH,
   indexPath,
   hostTools = null,
+  qvRelay = null,
 }) {
-  const mcpServers = { qv: { command: pythonBin, args: [serverPath, indexPath] } };
+  // PlanCheck's rate library is answered by the host, so `qv` is then the relay, with the same
+  // tool names; otherwise it is the local capture's own server.
+  const mcpServers = {
+    qv: qvRelay
+      ? {
+          command: qvRelay.nodeBin ?? process.execPath,
+          args: [qvRelay.relayPath ?? HOST_TOOL_RELAY_PATH, qvRelay.socketPath, qvRelay.tools.join(",")],
+        }
+      : { command: pythonBin, args: [serverPath, indexPath] },
+  };
   if (hostTools)
     mcpServers[HOST_TOOL_SERVER_NAME] = {
       command: hostTools.nodeBin ?? process.execPath,
@@ -129,6 +139,28 @@ function readComponent(raw) {
     high: numberOrNull(amount.high),
     centre: stringOrNull(raw?.centre),
     caveat: stringOrNull(raw?.caveat),
+    // The working, when the amount is not the cited figure itself: the rate as the page states
+    // it and the quantity it was multiplied by. Only the API loop's prompt asks for them.
+    ...readWorking(raw),
+  };
+}
+
+function readWorking(raw) {
+  const rate = raw?.rate && typeof raw.rate === "object" ? raw.rate : null;
+  const quantity = raw?.quantity && typeof raw.quantity === "object" ? raw.quantity : null;
+  const rateLow = numberOrNull(rate?.low);
+  const rateHigh = numberOrNull(rate?.high) ?? rateLow;
+  const quantityLow = numberOrNull(quantity?.low ?? quantity?.value);
+  const quantityHigh = numberOrNull(quantity?.high ?? quantity?.value) ?? quantityLow;
+  if (rateLow == null || quantityLow == null) return {};
+  return {
+    rate: { low: rateLow, high: rateHigh, unit: stringOrNull(rate?.unit) },
+    quantity: {
+      low: quantityLow,
+      high: quantityHigh,
+      unit: stringOrNull(quantity?.unit),
+      basis: stringOrNull(quantity?.basis),
+    },
   };
 }
 

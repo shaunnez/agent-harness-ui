@@ -36,6 +36,9 @@ import {
   runBenchmark,
 } from "./research-claude-cli/benchmark.mjs";
 
+// Measured against the recorded baseline, which was run on the local capture.
+process.env.RESEARCH_QV_SOURCE ??= "local";
+
 const options = readOptions(process.argv.slice(2));
 const codex = options.runtime === "codex-cli";
 if (codex && process.env.RUN_CODEX_CLI_BENCHMARK !== "1")

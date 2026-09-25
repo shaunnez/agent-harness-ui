@@ -28,17 +28,6 @@ export function createResearchSchema(db) {
       error_json TEXT,
       cancellation_requested_at TEXT
     );
-    CREATE TABLE IF NOT EXISTS research_questions (
-      id TEXT PRIMARY KEY,
-      project_id TEXT NOT NULL,
-      objective TEXT NOT NULL,
-      engine_json TEXT NOT NULL,
-      runs_planned INTEGER NOT NULL,
-      created_at TEXT NOT NULL,
-      source_json TEXT NOT NULL,
-      source_key TEXT NOT NULL,
-      review_json TEXT
-    );
     CREATE TABLE IF NOT EXISTS research_events (
       run_id TEXT NOT NULL REFERENCES research_runs(id) ON DELETE CASCADE,
       id TEXT NOT NULL,
@@ -100,8 +89,6 @@ export function createResearchSchema(db) {
     );
     CREATE INDEX IF NOT EXISTS research_runs_updated_idx  ON research_runs(updated_at DESC, id DESC);
     CREATE INDEX IF NOT EXISTS research_runs_status_idx   ON research_runs(status, updated_at DESC);
-    CREATE INDEX IF NOT EXISTS research_questions_project_idx ON research_questions(project_id, created_at DESC);
-    CREATE UNIQUE INDEX IF NOT EXISTS research_questions_source_idx ON research_questions(project_id, source_key);
     CREATE INDEX IF NOT EXISTS research_events_page_idx   ON research_events(run_id, ordinal ASC);
     CREATE INDEX IF NOT EXISTS research_findings_page_idx ON research_findings(run_id, ordinal ASC);
     CREATE INDEX IF NOT EXISTS research_evidence_find_idx ON research_evidence(run_id, finding_id);
@@ -109,18 +96,144 @@ export function createResearchSchema(db) {
   `);
   if (rebuilding) copyLegacySourceIdentity(db);
   addResearchRunModelColumn(db);
-  addResearchQuestionColumns(db);
+  createResearchQuestionSchema(db);
 }
 
-function addResearchQuestionColumns(db) {
-  const columns = db.prepare("PRAGMA table_info(research_runs)").all();
-  if (!columns.some((column) => column.name === "question_id"))
-    db.exec("ALTER TABLE research_runs ADD COLUMN question_id TEXT");
-  if (!columns.some((column) => column.name === "question_ordinal"))
-    db.exec("ALTER TABLE research_runs ADD COLUMN question_ordinal INTEGER");
-  db.exec(
-    "CREATE UNIQUE INDEX IF NOT EXISTS research_runs_question_idx ON research_runs(question_id, question_ordinal)",
+/** A research question groups one or three runs of the same objective under a research project,
+ *  and carries the reviews made of it. The question's status is not stored: it is computed from
+ *  its runs every time it is read, so it cannot drift from them.
+ *
+ *  `source_key` is how a repeated external request (a Linear issue, a PlanCheck tender line)
+ *  finds the question it already raised instead of starting three more runs. It is null for a
+ *  question asked by hand, and SQLite's UNIQUE allows any number of nulls. */
+function createResearchQuestionSchema(db) {
+  const earlier = earlierQuestionTable(db);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS research_questions (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      title TEXT NOT NULL,
+      objective TEXT NOT NULL,
+      profile TEXT NOT NULL,
+      runs_planned INTEGER NOT NULL,
+      source_json TEXT NOT NULL,
+      source_key TEXT UNIQUE
+    );
+    CREATE TABLE IF NOT EXISTS research_reviews (
+      question_id TEXT NOT NULL REFERENCES research_questions(id) ON DELETE CASCADE,
+      ordinal INTEGER NOT NULL,
+      decision TEXT NOT NULL,
+      note TEXT NOT NULL,
+      reviewer TEXT NOT NULL,
+      decided_at TEXT NOT NULL,
+      evidence_sha256 TEXT NOT NULL,
+      PRIMARY KEY (question_id, ordinal)
+    );
+    CREATE INDEX IF NOT EXISTS research_questions_project_idx
+      ON research_questions(project_id, created_at DESC, id DESC);
+  `);
+  const columns = new Set(
+    db
+      .prepare("PRAGMA table_info(research_runs)")
+      .all()
+      .map((column) => column.name),
   );
+  // Null on every run that predates questions, and on a run submitted on its own.
+  if (!columns.has("question_id")) db.exec("ALTER TABLE research_runs ADD COLUMN question_id TEXT");
+  if (!columns.has("run_label")) db.exec("ALTER TABLE research_runs ADD COLUMN run_label TEXT");
+  // The run's cost band and per-component citation checks, as the runtime reported them when the
+  // run ended. Null for a runtime with no cost-band recipe (the fake) and for any run that failed
+  // before producing one.
+  if (!columns.has("outcome_json")) db.exec("ALTER TABLE research_runs ADD COLUMN outcome_json TEXT");
+  // A question's runs in the order they were started, 1 to N and on through each retry: attempt
+  // k holds ordinals (k-1)·N+1 to k·N. Null only on a run submitted on its own.
+  if (!columns.has("question_ordinal"))
+    db.exec("ALTER TABLE research_runs ADD COLUMN question_ordinal INTEGER");
+  db.exec(`
+    UPDATE research_runs SET question_ordinal = CAST(SUBSTR(run_label, 2) AS INTEGER)
+    WHERE question_id IS NOT NULL AND question_ordinal IS NULL AND run_label GLOB 'r[0-9]*'
+  `);
+  const questionColumns = new Set(
+    db
+      .prepare("PRAGMA table_info(research_questions)")
+      .all()
+      .map((column) => column.name),
+  );
+  // The pinned scope every run was given (`research-scope.mjs`), with who scoped it. Null on a
+  // question asked without one.
+  if (!questionColumns.has("scope_json"))
+    db.exec("ALTER TABLE research_questions ADD COLUMN scope_json TEXT");
+  db.exec("DROP INDEX IF EXISTS research_runs_question_idx");
+  db.exec(
+    "CREATE INDEX IF NOT EXISTS research_runs_question_order_idx ON research_runs(question_id, question_ordinal)",
+  );
+  if (earlier) copyEarlierQuestions(db, earlier);
+}
+
+/**
+ * Main briefly had its own question table (`research-questions.mjs`, 24 September), shaped
+ * differently: an engine and a single review on the question, a source key on every question and
+ * no title, profile or scope. A database that ran it is renamed out of the way here, and its rows
+ * are copied into this shape once the new table exists. The renamed table is kept for recovery.
+ */
+function earlierQuestionTable(db) {
+  const columns = db
+    .prepare("PRAGMA table_info(research_questions)")
+    .all()
+    .map((column) => column.name);
+  if (!columns.includes("engine_json") || columns.includes("title")) return null;
+  const name = "research_questions_main_v1";
+  db.exec(`DROP INDEX IF EXISTS research_questions_project_idx`);
+  db.exec(`DROP INDEX IF EXISTS research_questions_source_idx`);
+  db.exec(`ALTER TABLE research_questions RENAME TO ${name}`);
+  return name;
+}
+
+function copyEarlierQuestions(db, table) {
+  const rows = db.prepare(`SELECT * FROM ${table}`).all();
+  const insert = db.prepare(`
+    INSERT OR IGNORE INTO research_questions(
+      id, project_id, created_at, title, objective, profile, runs_planned, source_json, source_key)
+    VALUES (?, ?, ?, ?, ?, 'standard', ?, ?, NULL)
+  `);
+  const review = db.prepare(`
+    INSERT OR IGNORE INTO research_reviews(
+      question_id, ordinal, decision, note, reviewer, decided_at, evidence_sha256)
+    VALUES (?, 1, ?, ?, ?, ?, ?)
+  `);
+  for (const row of rows) {
+    insert.run(
+      row.id,
+      row.project_id,
+      row.created_at,
+      earlierTitle(row.objective),
+      row.objective,
+      Number(row.runs_planned),
+      row.source_json,
+    );
+    const decided = row.review_json ? JSON.parse(row.review_json) : null;
+    if (decided)
+      review.run(
+        row.id,
+        decided.decision,
+        decided.note ?? "",
+        decided.reviewer ?? "operator",
+        decided.decidedAt ?? row.created_at,
+        decided.evidenceSha ?? "",
+      );
+  }
+  db.exec(`
+    UPDATE research_runs
+    SET run_label = 'r' || (((question_ordinal - 1) % (
+      SELECT runs_planned FROM research_questions WHERE id = research_runs.question_id)) + 1)
+    WHERE question_id IN (SELECT id FROM ${table}) AND run_label IS NULL AND question_ordinal IS NOT NULL
+  `);
+}
+
+function earlierTitle(objective) {
+  const text = String(objective ?? "").trim();
+  return text.length > 90 ? `${text.slice(0, 89).replace(/\s+\S*$/, "")}…` : text;
 }
 
 /** `model_json` arrived after `research_runs` existed, so a database created before it needs

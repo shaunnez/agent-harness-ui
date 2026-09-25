@@ -1,0 +1,166 @@
+{
+  "question": "open-a3",
+  "kind": "open",
+  "arm": "A5",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 120,
+    "high": 201
+  },
+  "range": {
+    "min": 118,
+    "max": 275
+  },
+  "unit": "NZD $/m² of roof area (GST exclusive)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.695,
+    "highRatio": 1.403,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0606,
+  "elapsedMs": 285078,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 285076,
+      "band": {
+        "unit": "NZD $/m² of roof area (GST exclusive)",
+        "low": 118,
+        "high": 196,
+        "centre": "Auckland (AKL)",
+        "basis": "Membrane covering in place (QV AKL $115-186/m²) + minor access/sundries allowance ($3-10/m²) = $118-196/m² of roof area, for 1200 m² (i.e. approx. $142k-$235k total). Basis = 2-layer torch-on polyester-reinforced SBS bituminous membrane (or 1.5 mm butyl rubber) over a prepared continuous substrate. COST IMPACT vs the option being replaced: QV long-run pre-painted (ColorSteel-equivalent) 0.55 mm steel covering - LT7 high-rib $134/m² (t0:r47), Styleline/Veedek low-rib $132/m² (t0:r27), corrugate $115/m² (t0:r5), each INCLUDING wire netting, underlay and 0.1 m flashing per m² - so the switch adds on the order of -$16 to +$81/m² (mid roughly +$25-30/m²) BEFORE any new substrate deck. Excludes removal/disposal of existing roof, structural changes, insulation/ceiling, flashings, gutters and drainage, per pinned scope. Confidence LOW because the membrane type is a proxy (no QV single-ply row), the covering-only rates are not strictly like-for-like with the steel rows (which include underlay/netting/flashing), and the substrate deck the membrane needs is excluded and unresolved."
+      },
+      "checks": [
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 397040,
+        "outputTokens": 18108,
+        "cachedTokens": 339200,
+        "toolCalls": 13,
+        "searchCalls": 5,
+        "estimatedCostUsd": 0.020558,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 397040,
+            "outputTokens": 18108,
+            "estimatedCostUsd": 0.020558,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 250140,
+      "band": {
+        "unit": "m2 of roof area",
+        "low": 200,
+        "high": 275,
+        "centre": "Auckland",
+        "basis": "Working estimate only - not a certified price. Scope priced: membrane roof in place of long-run Coloursteel, per m2 of roof area, 1,200 m2, GST-exclusive, Auckland. Sum of three distinct components (no double counting): membrane covering $115-152/m2 + plywood substrate $76-102/m2 + sundries/access allowance $8-20/m2 = $199-274/m2, rounded to $200-275/m2 (mid ~$235/m2). On 1,200 m2 this is ~$240k-$330k (mid ~$282k). Stated assumption: price the membrane roof ALONE; do not net off the Coloursteel option. Membrane assumed to be double-layer torch-on modified bitumen or single-ply butyl rubber over a new 17-21mm H3.2 plywood sarking on existing purlins; no insulation, no falls-forming, no removal, no flashings/gutters/drainage (all excluded per the pinned scope). COMPARATOR: QV long-run pre-painted steel (MAXAM Matte / MagnaFlow 0.55mm low-rib = Colorsteel product class) = AKL 77-86/m2 supply-and-fix (rows t1:r22, t1:r24); with underlay, wire netting and 0.1m flashing/m2 included the bundled QV row is AKL 115/m2 (row ...:t0:r31). Uplift for switching = ~$115-195/m2, i.e. ~$135k-$235k on 1,200 m2 - the membrane roof costs roughly 2.3-3.4x the long-run steel roof, driven mainly by the substrate the membrane requires and by the higher membrane rate itself. If a solid deck already exists, deduct $76-102/m2 (band ~$125-175/m2). Other centres run ~5-10% lower (WLG/CHC). Confidence MEDIUM: main drivers are sourced (membrane and substrate QV rows), but all QV rows are UNREVIEWED, the substrate is a proxy, the membrane type is not decided, and one minor allowance applies."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 337091,
+        "outputTokens": 17290,
+        "cachedTokens": 240128,
+        "toolCalls": 7,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.025639,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 337091,
+            "outputTokens": 17290,
+            "estimatedCostUsd": 0.025639,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 176379,
+      "band": {
+        "unit": "m2 of roof area",
+        "low": 120,
+        "high": 201,
+        "centre": "Auckland",
+        "basis": "Membrane roof covering only, per m2 of roof area, Auckland, GST exclusive. Sum of components: membrane covering 115-186 + access/sundries 5-15 = 120-201/m2 (mid approx $160/m2; 1200 m2 totals approx $144,000-$241,200). ASSUMPTIONS: (1) like-for-like covering comparison, no removal/disposal of the existing long-run Coloursteel - a retrofit strip-and-replace would add removal cost; (2) double-layer torch-on bituminous membrane on a prepared substrate, with single-ply butyl/EPDM as the alternative build-up; (3) flashings, gutters and drainage excluded per pinned scope; (4) substrate deck excluded as a structural item - a membrane over the existing purlins requires a solid deck (QV plywood H3 17-21mm approx $76-102/m2), which would materially increase the total and must be confirmed. COMPARATOR (cost impact): long-run coloursteel trapezoidal 0.55mm is QV $106-138/m2 (row 05507449e3aed084cd6a9d8c1d66d530536ce71004098595e4ca04ee74122a26:t0:r29 AKL 106; t0:r51 AKL 138), so switching is roughly -$18 to +$95/m2 on the covering alone. Allowances are under 10% of the band. Confidence is LOW because the membrane type/build-up is undecided, QV has no TPO/EPDM single-ply row, and the excluded substrate deck can dominate the real cost."
+      },
+      "checks": [
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 153289,
+        "outputTokens": 13212,
+        "cachedTokens": 112256,
+        "toolCalls": 8,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.014419,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 153289,
+            "outputTokens": 13212,
+            "estimatedCostUsd": 0.014419,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

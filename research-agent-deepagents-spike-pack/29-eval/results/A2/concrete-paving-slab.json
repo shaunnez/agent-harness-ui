@@ -1,0 +1,303 @@
+{
+  "question": "concrete-paving-slab",
+  "kind": "pinned",
+  "arm": "A2",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 186,
+    "high": 209
+  },
+  "range": {
+    "min": 177,
+    "max": 263
+  },
+  "unit": "m2",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.305,
+    "highRatio": 1.315,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 1.6518,
+  "elapsedMs": 564760,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 308268,
+      "band": {
+        "unit": "m2",
+        "low": 177,
+        "high": 200,
+        "centre": "Auckland",
+        "basis": "Sum of 16 components in $/m2 of finished slab, GST exclusive, Auckland Q3 2026. 300 m2 total $53,200-$60,100. Allowances (chairs, trim/cart, set-out) total $6-12/m2, about 3-6% of the total. Cross-checked against QV whole-package rows, not added: slab on ground f0968d...:t3:r3 at $199/m2 and 100mm external paving 67276d...:t1:r3 at $175/m2. Main uncertainties are whether the SE92 mesh rate includes fixing and laps, and the productivity assumed for placing labour."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 13,
+        "rowsFound": 13,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 388253,
+        "outputTokens": 17459,
+        "cachedTokens": 404430,
+        "modelCalls": 3,
+        "toolCalls": 52,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.471269,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 388247,
+            "outputTokens": 9512,
+            "estimatedCostUsd": 0.01584,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 7947,
+            "estimatedCostUsd": 0.4554292,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 199188,
+            "outputTokens": 6991,
+            "cachedTokens": 153088,
+            "estimatedCostUsd": 0.009636
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 189059,
+            "outputTokens": 2521,
+            "cachedTokens": 155136,
+            "estimatedCostUsd": 0.006204
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 7947,
+            "cachedTokens": 96206,
+            "estimatedCostUsd": 0.4554292
+          }
+        ]
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 564757,
+      "band": {
+        "unit": "m2",
+        "low": 186,
+        "high": 209,
+        "centre": "Auckland",
+        "basis": "Sum of 17 components per m2 of finished slab, 300 m2 amortised; total $55,700-$62,800, centre about $59,300, GST exclusive. Allowances are about 3% of the total. Consistent with QV whole-slab proxies: $199 for the internal 150mm slab (E1) and about $220 for the external 150mm paving row (E4) once SE92 and subbase are added. Not a certified price. If the scope means 665 mesh rather than SE92, the band is about $152-176/m2."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 15,
+        "rowsFound": 15,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 1050979,
+        "outputTokens": 31215,
+        "cachedTokens": 980953,
+        "modelCalls": 4,
+        "toolCalls": 86,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.643868,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 1050973,
+            "outputTokens": 19075,
+            "estimatedCostUsd": 0.065847,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 6,
+            "outputTokens": 12140,
+            "estimatedCostUsd": 0.578021,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 463694,
+            "outputTokens": 9109,
+            "cachedTokens": 390656,
+            "estimatedCostUsd": 0.029252
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 309506,
+            "outputTokens": 3657,
+            "cachedTokens": 258048,
+            "estimatedCostUsd": 0.018195
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 277773,
+            "outputTokens": 6309,
+            "cachedTokens": 232704,
+            "estimatedCostUsd": 0.0184
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 6,
+            "outputTokens": 12140,
+            "cachedTokens": 99545,
+            "estimatedCostUsd": 0.578021
+          }
+        ]
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 281904,
+      "band": {
+        "unit": "m2",
+        "low": 231,
+        "high": 263,
+        "centre": "Auckland",
+        "basis": "Sum of components: $230.7-$262.5/m2, midpoint about $247/m2. For 300 m2: $69,210-$78,750, midpoint about $74,100. Base is the QV reinforced broomed paving rate (E1), adjusted to 150mm using the E2-E3 difference and to SE92 using E5-E6, plus rated joints, curing and pump extras. The band width is mainly whether E1 already includes pumping, curing and edge forms. Allowances are at most $15.5/m2 (about 6%). Cross-check from the E2 150mm slab-on-ground rate ($199, with SE92 upgrade and deductions for DPM, sand blinding and extra edge forms) gives about $229/m2, near the low end. If '665 grade' mesh is intended instead of SE92, deduct about $32/m2. GST, preliminaries and margin are excluded per scope."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 8,
+        "rowsFound": 8,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 222342,
+        "outputTokens": 20783,
+        "cachedTokens": 180198,
+        "modelCalls": 1,
+        "toolCalls": 36,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.536669,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 222340,
+            "outputTokens": 6756,
+            "estimatedCostUsd": 0.01036,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 2,
+            "outputTokens": 14027,
+            "estimatedCostUsd": 0.5263092,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 222340,
+            "outputTokens": 6756,
+            "cachedTokens": 169472,
+            "estimatedCostUsd": 0.01036
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 2,
+            "outputTokens": 14027,
+            "cachedTokens": 10726,
+            "estimatedCostUsd": 0.5263092
+          }
+        ]
+      }
+    }
+  ]
+}

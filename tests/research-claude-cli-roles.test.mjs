@@ -14,18 +14,18 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import {
-  CLAUDE_CLI_ROLES_RUNTIME_ID,
-  ClaudeCliRolesResearchRuntime,
-} from "../server/research/claude-cli/roles-runtime.mjs";
+import { comparePhases } from "../scripts/research-claude-cli/phase-comparison.mjs";
 import {
   RESEARCH_ROLE_NAMES,
   RESEARCH_ROLE_SEQUENCE,
   verifierEffect,
 } from "../server/research/claude-cli/roles.mjs";
+import {
+  CLAUDE_CLI_ROLES_RUNTIME_ID,
+  ClaudeCliRolesResearchRuntime,
+} from "../server/research/claude-cli/roles-runtime.mjs";
 import { DEFAULT_CLAUDE_CLI_MODEL } from "../server/research/claude-cli/runtime.mjs";
 import { assertResearchRuntime } from "../server/research/research-runtime-registry.mjs";
-import { comparePhases } from "../scripts/research-claude-cli/phase-comparison.mjs";
 
 const fence = (payload) => `\`\`\`json\n${JSON.stringify(payload)}\n\`\`\``;
 
@@ -115,6 +115,7 @@ async function withRuntime(body, overrides = {}) {
     env: {
       PATH: process.env.PATH,
       HOME: directory,
+      RESEARCH_QV_SOURCE: "local",
       RESEARCH_QV_INDEX: path.join(directory, "capture.jsonl"),
     },
     transcriptDirectory: path.join(directory, "transcripts"),

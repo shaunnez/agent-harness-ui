@@ -1,0 +1,325 @@
+{
+  "question": "deflection-head-acoustic-seal",
+  "kind": "pinned",
+  "arm": "O5",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 82,
+    "high": 142
+  },
+  "range": {
+    "min": 81,
+    "max": 155
+  },
+  "unit": "m",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.049,
+    "highRatio": 1.107,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 5.4558,
+  "elapsedMs": 359125,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 221261,
+      "band": {
+        "unit": "m",
+        "low": 85,
+        "high": 142,
+        "centre": "Auckland",
+        "basis": "Sum of QV-established components only. Excludes mineral wool packer, slotted-track premium over plain track, labelling and slip-connection labour, none of which QV or fetched web sources price. True rate is above this band."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 8,
+        "rowsFound": 8,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 22,
+        "outputTokens": 8975,
+        "cachedTokens": 645699,
+        "modelCalls": 32,
+        "toolCalls": 31,
+        "searchCalls": 2,
+        "estimatedCostUsd": 1.0571537999999998,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 22,
+            "outputTokens": 8975,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.0135518,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 20217,
+            "outputTokens": 677,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.043602,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 289663,
+      "band": {
+        "unit": "m",
+        "low": 82,
+        "high": 155,
+        "centre": "Auckland",
+        "basis": "Sum of QV-derived component lows and highs (81.6 to 154.5). GST exclusive, no prelims or margin. Excludes fire-rating labels (not established). Supplied $48-78/m band not supported by QV."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 22,
+        "outputTokens": 11960,
+        "cachedTokens": 700566,
+        "modelCalls": 32,
+        "toolCalls": 31,
+        "searchCalls": 4,
+        "estimatedCostUsd": 1.2831582000000001,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 22,
+            "outputTokens": 11960,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.1929212,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 43137,
+            "outputTokens": 1420,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.090237,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 335355,
+      "band": {
+        "unit": "m",
+        "low": 81,
+        "high": 140,
+        "centre": "Auckland",
+        "basis": "Sum of QV proxy rows: track 14.3-24.6 + fire sealant x2 32.4-69.6 + head stopping x2 28.2-32.4 + mobile scaffold 6.6-13.2. Excludes the mineral wool packer and labelling, which could not be established. 60m total approx $4,890-$8,390. GST exclusive."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 18,
+        "outputTokens": 9697,
+        "cachedTokens": 435163,
+        "modelCalls": 26,
+        "toolCalls": 25,
+        "searchCalls": 2,
+        "estimatedCostUsd": 1.0233836,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 18,
+            "outputTokens": 9697,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.9772446,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 22344,
+            "outputTokens": 759,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.046139,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 136191,
+      "band": null,
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 18,
+        "outputTokens": 9660,
+        "cachedTokens": 488888,
+        "modelCalls": 27,
+        "toolCalls": 26,
+        "searchCalls": 3,
+        "estimatedCostUsd": 1.0108876,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 18,
+            "outputTokens": 9660,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.9448816,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 31126,
+            "outputTokens": 976,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.06600600000000001,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 359119,
+      "band": {
+        "unit": "m",
+        "low": 96,
+        "high": 153,
+        "centre": "Auckland",
+        "basis": "Sum of QV component rows above (no aggregate combined with its components). Excludes the slotted deflection track premium and fire labelling, which are not established, so the true figure is likely higher; low end falls to ~68 if head stop joints are already in the partition lining rate"
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 9,
+        "rowsFound": 9,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 20,
+        "outputTokens": 9554,
+        "cachedTokens": 581298,
+        "modelCalls": 29,
+        "toolCalls": 28,
+        "searchCalls": 2,
+        "estimatedCostUsd": 1.0812486000000001,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 20,
+            "outputTokens": 9554,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.0367316,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 21522,
+            "outputTokens": 599,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.044517,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

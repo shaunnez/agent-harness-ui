@@ -1,5 +1,5 @@
 import { ArrowRight, Buildings, CheckCircle } from "@phosphor-icons/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { RuntimeProject, RuntimeRepositoryContract } from "../../domain";
 import type { OnboardingReview } from "../../domain/onboarding";
 import type { FrontierGateway } from "../runtime/contracts";
@@ -59,7 +59,8 @@ export function ProjectSetup({
   const registered = project && !project.id.startsWith("suggested:");
   const [kind, setKind] = useState<"delivery" | "research">(project?.kind ?? "delivery");
   const research = kind === "research";
-  const researchAvailable = Boolean(gateway.research);
+  // Offered only when this runtime serves research questions (the JSON-store companion does not).
+  const researchAvailable = useResearchAvailable(gateway);
   const canSave = research
     ? Boolean(name.trim() && !busy && connected && (researchAvailable || registered))
     : Boolean(name.trim() && contract && !busy && !checking && connected);
@@ -122,8 +123,10 @@ export function ProjectSetup({
               </div>
               <small>
                 {research
-                  ? "Asks costing questions, three runs each, on the engine chosen in Settings → Research agent. No repository."
-                  : "Tasks run the delivery workflow against a local Git repository."}
+                  ? "Asks costing questions, five runs each, on the engine chosen in Settings → Research agent. No repository."
+                  : researchAvailable
+                    ? "Tasks run the delivery workflow against a local Git repository."
+                    : "Tasks run the delivery workflow against a local Git repository. This runtime does not serve research projects."}
               </small>
             </div>
           )}
@@ -383,4 +386,28 @@ export function ProjectSetup({
       </footer>
     </>
   );
+}
+
+function useResearchAvailable(gateway: FrontierGateway) {
+  const [available, setAvailable] = useState(false);
+  useEffect(() => {
+    let disposed = false;
+    const research = gateway.research;
+    if (!research) {
+      setAvailable(false);
+      return;
+    }
+    research.available().then(
+      (value) => {
+        if (!disposed) setAvailable(value);
+      },
+      () => {
+        if (!disposed) setAvailable(false);
+      },
+    );
+    return () => {
+      disposed = true;
+    };
+  }, [gateway]);
+  return available;
 }

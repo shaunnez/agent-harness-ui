@@ -1,0 +1,203 @@
+{
+  "question": "site-electrical-reticulation",
+  "kind": "pinned",
+  "arm": "A7",
+  "status": "disputed",
+  "passes": false,
+  "consensus": {
+    "low": 88671,
+    "high": 143921
+  },
+  "range": {
+    "min": 82000,
+    "max": 153000
+  },
+  "unit": "sum (whole external reticulation installation, 250 m nominal route, Auckland, GST exclusive)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.427,
+    "highRatio": 1.07,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1111,
+  "elapsedMs": 223679,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 223675,
+      "band": {
+        "unit": "sum (whole external reticulation installation, 250 m nominal route, Auckland, GST exclusive)",
+        "low": 88671,
+        "high": 143921,
+        "centre": "Auckland",
+        "basis": "Sum of the four rejectable groups: trenching/reinstatement 13,345-27,437; conduit and sub-main 61,100-92,360; pits 5,800-10,800; board, plinth, spurs and testing 8,426-13,324. Midpoint 116,296. Implied rate over the 250 m nominal route: 355/m to 576/m, mid 465/m. Allowances (pits, plinth, testing) are 7,400-14,700, about 8-10% of the sum, so the band rests on cited QV rows and one fetched vendor price rather than on judgement. Confidence is low because the largest line, the 63mm conduit, has internally inconsistent QV rows (50mm 77/m vs 100mm 45.8/m), the sub-main has no like-for-like QV row and is priced on a service-mains proxy, and the pits are proprietary. If the QV service-main rate is later found to include trench and duct, Group 1 can be struck without affecting the other three groups."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 10,
+        "rowsFound": 10,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 861403,
+        "outputTokens": 39164,
+        "cachedTokens": 759424,
+        "modelCalls": 12,
+        "toolCalls": 34,
+        "searchCalls": 5,
+        "estimatedCostUsd": 0.041074,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 861403,
+            "outputTokens": 39164,
+            "estimatedCostUsd": 0.041074,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 142021,
+      "band": {
+        "unit": "sum",
+        "low": 117000,
+        "high": 153000,
+        "centre": "Auckland",
+        "basis": "Working estimate, one site, Auckland, GST exclusive. Sum of the 13 components above. Sub-bands a reviewer can reject independently: trenching and hardstand reinstatement 23,500-31,100; conduit, draw cord, sub-main cable and terminations 77,900-94,400; pits 8,800-14,700; board, plinth and lighting spurs 5,000-8,800; testing and CoC 1,500-3,000. Implied rate over the 250 m nominal route 468/m - 612/m, centre approx. 540/m. Main cost drivers (trenching, conduit, cable, pits, board) each rest on a cited QV row or a stated proxy adjustment, so the band is established; confidence is low because the QV buried-conduit table is internally inconsistent and has no 63 mm row, because QV's copper cable rows do not state core count, and because the pits and board are proxies. Allowances total 3,700-8,400, i.e. 3-5% of the band, well under a third. QV rows are unreviewed and must be tendered. Excludes GST, preliminaries, margin, design and consent fees, incoming supply, network connection, transformer, main switchboard, metering, lighting poles/footings/luminaires/controls, CCTV and comms, rock, contaminated spoil, dewatering, traffic management, second sub-main, generator and EV provisions, and paving/kerbing/landscaping beyond the trench line."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 10,
+        "rowsFound": 10,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 641610,
+        "outputTokens": 27656,
+        "cachedTokens": 562944,
+        "modelCalls": 12,
+        "toolCalls": 39,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.030082,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 641610,
+            "outputTokens": 27656,
+            "estimatedCostUsd": 0.030082,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 221418,
+      "band": {
+        "unit": "sum for the whole external reticulation installation, one site (Auckland, GST exclusive, NZD); implied over the 250 m nominal route $328-$572/m (mid $454/m)",
+        "low": 82000,
+        "high": 143000,
+        "centre": "Auckland",
+        "basis": "Built by adding distinct components from QV CostBuilder AKL rates plus three stated allowances (pits ~$7,900, plinth/terminations ~$1,800, testing/CoC ~$2,250; glands ~$275). Part subtotals (low/mid/high): trenching, sand, backfill and hardstand reinstatement 16,200/20,800/28,900; conduit, draw cord and 180 m sub-main 53,950/74,200/89,200; 10 pits 5,400/7,900/10,400; board, plinth, spurs and testing 6,570/10,700/14,500. Band low $82,000, high $143,000, mid $113,500 (band amounts are the low and high cases; the mid is the sum of the QV mid rates). Allowances are about 11% of the mid case, so the band is not allowance-driven. CONFIDENCE LOW because (a) the 63 mm ducting rate is proxied from QV's 50 mm row on a QV series that is not monotonic (100 mm priced below 50 mm) and is the single largest line in the band, (b) the QV copper cable row gives only a size band and not the core count, and a fetched vendor page shows material at about a sixth of QV's installed rate, and (c) QV publishes no pit, RCBO or IP66 TP&N board rate. GST, preliminaries, margin, design and consent fees excluded; incoming supply/network, poles, luminaires, comms, rock, contamination, dewatering, traffic management, second sub-main, generator and EV provision excluded per scope."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 11,
+        "rowsFound": 11,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 1280507,
+        "outputTokens": 35529,
+        "cachedTokens": 1179776,
+        "modelCalls": 20,
+        "toolCalls": 40,
+        "searchCalls": 8,
+        "estimatedCostUsd": 0.039966,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1280507,
+            "outputTokens": 35529,
+            "estimatedCostUsd": 0.039966,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "question": "network-supply-connection-hv-metering",
+  "kind": "pinned",
+  "arm": "A3",
+  "status": "incomplete",
+  "passes": false,
+  "consensus": null,
+  "range": null,
+  "unit": null,
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": null,
+    "highRatio": null,
+    "runsWithBand": 0,
+    "runsTotal": 3
+  },
+  "costUsd": 0.034,
+  "elapsedMs": 259189,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "failed",
+      "error": {
+        "code": "codex_cli_exited_abnormally",
+        "message": "The Codex CLI exited with code 1: Selected model is at capacity. Please try a different model."
+      },
+      "elapsedMs": 96504,
+      "band": null,
+      "checks": [],
+      "citations": null,
+      "usage": {
+        "partial": true
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 259187,
+      "band": null,
+      "checks": [
+        "web-verified",
+        "allowance",
+        "web-verified",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 569092,
+        "outputTokens": 6781,
+        "cachedTokens": 471552,
+        "toolCalls": 28,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.034025,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 569092,
+            "outputTokens": 6781,
+            "estimatedCostUsd": 0.034025,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "failed",
+      "error": {
+        "code": "codex_cli_exited_abnormally",
+        "message": "The Codex CLI exited with code 1: Selected model is at capacity. Please try a different model."
+      },
+      "elapsedMs": 96737,
+      "band": null,
+      "checks": [],
+      "citations": null,
+      "usage": {
+        "partial": true
+      }
+    }
+  ]
+}

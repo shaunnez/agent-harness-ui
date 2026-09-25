@@ -590,3 +590,59 @@
   min-width: 210px;
   max-width: 280px;
 }
+.research-units-differ {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--amber);
+  font-size: 14px;
+}
+
+.research-scope-editor {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.14));
+  border-radius: 8px;
+}
+
+.research-scope-editor legend {
+  padding: 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.research-scope-row,
+.research-scope-lists {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.research-scope-origin {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Stacked fields inside the scope: the form's side-label grid is too wide for a row of four. */
+.research-scope-row .form-row,
+.research-scope-lists .form-row {
+  grid-template-columns: 1fr;
+  gap: 4px;
+  margin-bottom: 0;
+}
+
+.research-scope-row .form-row:last-child,
+.research-scope-lists .form-row:last-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.research-scope-row .form-row > span,
+.research-scope-lists .form-row > span {
+  padding-top: 0;
+}
+
+.research-scope-editor > .form-row {
+  margin-bottom: 0;
+}

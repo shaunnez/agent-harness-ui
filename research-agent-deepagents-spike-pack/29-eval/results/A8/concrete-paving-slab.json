@@ -1,0 +1,215 @@
+{
+  "question": "concrete-paving-slab",
+  "kind": "pinned",
+  "arm": "A8",
+  "status": "agreed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 159.5,
+    "high": 202
+  },
+  "range": {
+    "min": 151,
+    "max": 206.61
+  },
+  "unit": "m2 of finished slab, measured on plan",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.086,
+    "highRatio": 1.043,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0913,
+  "elapsedMs": 219178,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 166959,
+      "band": {
+        "unit": "m2 of finished slab, measured on plan",
+        "low": 164,
+        "high": 198,
+        "centre": "Auckland",
+        "basis": "Sum of the 14 components above: QV CostBuilder Auckland rows for subgrade trim to falls, GAP40 subbase, 25 MPa concrete supply, screed to falls, broom finish, curing compound, SE92 mesh, bar chairs, edge formwork, sawcut joints, isolation joint and pump hire, plus two small labelled allowances (set out 2.00-4.00/m2; trim-spoil cart 2.50-6.00/m2, together 4-5% of the total). 300 m2 in one pour area, 20m x 15m (70 lm perimeter), level open site with truck access to the pour face; level 1:100 falls formed by subgrade profiling; 120 lm sawcut control joints at 4.0m centres both ways and 20 lm isolation joint. GST exclusive, subcontract rate. BAND TOTALS FOR 300 m2: low 49,200; high 59,400; midpoint 54,300 (midpoint 181/m2). Two amortisation checks: (1) pump hire is a per-m3 rate through the pump - 47.25 m3 x 27.80 = 1,313, i.e. ~4.4/m2 at 300 m2 and ~8.8/m2 at 150 m2; (2) edge formwork scales with the 70 lm perimeter, not the area - at the scope-matched QV row of 66/lm it is 15.4/m2 at 300 m2 and would be 30.8/m2 on the same 150 m2. Subbase, concrete and mesh are area/volume driven and do not move with shape. Identified upside: if QV's subgrade trim row excludes compaction, add ~7/m2 (band becomes ~171-205/m2); if the SE92 mesh row is supply only, add ~4-5/m2 for laps and tying. Excluded as instructed: GST, preliminaries, margin, design/engineering/consent fees, bulk earthworks and soft spots, drainage and services, sealer/hardener/line marking/kerbs/thickened edges/dowelled joints, demolition, traffic management, dewatering, contaminated spoil. QV rows are unreviewed and are subcontract rates for a level open site."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 12,
+        "rowsFound": 12,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 435310,
+        "outputTokens": 36501,
+        "cachedTokens": 365312,
+        "modelCalls": 10,
+        "toolCalls": 31,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.033496,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 435310,
+            "outputTokens": 36501,
+            "estimatedCostUsd": 0.033496,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 152065,
+      "band": {
+        "unit": "$/m2 of finished slab (300 m2 one pour area, Auckland, Q3 2026, subcontract rate, excl. GST)",
+        "low": 151,
+        "high": 202,
+        "centre": null,
+        "basis": "Sum of 17 distinct priced components, no double counting: subgrade trim/compact $7.00; spoil cart allowance $1-2; 150mm GAP40 at QV AKL 112/m3 = $16.80; concrete supply 338/m3 x 0.15-0.1575 = $50.70-53.24 plus water reducer $0.71-0.74; mesh $20.30 (QV 665) to $52.00 (QV SE92) - the grade ambiguity in the scope; placing labour $10.05-14.36 + screed to falls $11.30 + broom $9.00 + wood float edges $0.90 + cure $4.10 = $35.35-39.66; edge formwork 0.2333 lm/m2 x $33-66/lm = $7.70-15.40; sawcut joints $0.88-1.00 plus $0.67-1.33 mobilisation allowance; isolation joint $1.81-2.47; pump $4.17-5.85; set out $3.59-4.81. Allowances (spoil cart, sawcut mobilisation) are only ~1% of the total, so no allowance-dominance discount; confidence set to medium because of the mesh-grade ambiguity (the largest single swing, ~$32/m2), unreviewed QV rows, and QS-judged labour hours for placing and set-out. 300 m2 totals: $45,200 low / $60,700 high; midpoint $53,000 ($176/m2). Sanity check: the same component build priced as a 150mm slab-on-grade (Economesh, vapour barrier, sand blinding, edge formwork at 0.4m/m2) totals ~$163/m2 against QV's published all-in slab-on-grade row of AKL 199/m2 - the ~$36/m2 difference is the margin, overhead and preliminaries that this brief excludes."
+      },
+      "checks": [
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-missing"
+      ],
+      "citations": {
+        "rowsCited": 15,
+        "rowsFound": 14,
+        "rowsMissing": 1,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 390345,
+        "outputTokens": 30171,
+        "cachedTokens": 334720,
+        "modelCalls": 10,
+        "toolCalls": 27,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.027451,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 390345,
+            "outputTokens": 30171,
+            "estimatedCostUsd": 0.027451,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 219173,
+      "band": {
+        "unit": "$/m2 of finished slab",
+        "low": 159.5,
+        "high": 206.61,
+        "centre": "Auckland",
+        "basis": "Sum of 15 distinct components, no double counting: subgrade trim to falls + cart spoil, 150 mm GAP40, 25 MPa concrete supplied and placed (incl. waste and pump-mix surcharge), single-layer mesh, chairs, broom finish and float edges, curing, 70 lm edge formwork, 120 lm sawcut joints, 20 lm isolation joint, one pump for the 45 m3 pour, and a set-out allowance. Concrete, mesh and subbase are cited QV rows taking ~74% of the band; the only allowance is set out at 1-2%. 300 m2 total: $47,850 - $61,983 (midpoint approx. $54,900). Cross-checked against QV's aggregate 'Concrete Slab on Ground 25MPa, 150mm thick' rate of AKL $199/m2, which after removing polythene and sand blinding, upgrading mesh to SE92 and adding curing, sawcutting and subgrade trim lands at $205-$225/m2 - consistent with the upper half. Auckland, Q3 2026 base but QV rates unescalated; excludes GST, preliminaries, margin, design, engineering and consent fees and all other excluded items."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 14,
+        "rowsFound": 14,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 233011,
+        "outputTokens": 31265,
+        "cachedTokens": 158976,
+        "modelCalls": 6,
+        "toolCalls": 25,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.030341,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 233011,
+            "outputTokens": 31265,
+            "estimatedCostUsd": 0.030341,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

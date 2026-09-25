@@ -1,0 +1,239 @@
+{
+  "question": "network-supply-connection-hv-metering",
+  "kind": "pinned",
+  "arm": "A10",
+  "status": "not_established",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": null,
+  "range": null,
+  "unit": null,
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": null,
+    "highRatio": null,
+    "runsWithBand": 0,
+    "runsTotal": 5
+  },
+  "costUsd": 0.1984,
+  "elapsedMs": 570313,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 274162,
+      "band": null,
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 994266,
+        "outputTokens": 28193,
+        "cachedTokens": 850560,
+        "modelCalls": 13,
+        "toolCalls": 39,
+        "searchCalls": 9,
+        "estimatedCostUsd": 0.041023,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 994266,
+            "outputTokens": 28193,
+            "estimatedCostUsd": 0.041023,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 242725,
+      "band": null,
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 648303,
+        "outputTokens": 28344,
+        "cachedTokens": 529792,
+        "modelCalls": 11,
+        "toolCalls": 30,
+        "searchCalls": 9,
+        "estimatedCostUsd": 0.036372,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 648303,
+            "outputTokens": 28344,
+            "estimatedCostUsd": 0.036372,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 257837,
+      "band": null,
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 745679,
+        "outputTokens": 30797,
+        "cachedTokens": 628992,
+        "modelCalls": 13,
+        "toolCalls": 34,
+        "searchCalls": 7,
+        "estimatedCostUsd": 0.037868,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 745679,
+            "outputTokens": 30797,
+            "estimatedCostUsd": 0.037868,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 527315,
+      "band": null,
+      "checks": [],
+      "citations": null,
+      "usage": {
+        "inputTokens": 729998,
+        "outputTokens": 33033,
+        "cachedTokens": 598784,
+        "modelCalls": 11,
+        "toolCalls": 34,
+        "searchCalls": 12,
+        "estimatedCostUsd": 0.041298,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 729998,
+            "outputTokens": 33033,
+            "estimatedCostUsd": 0.041298,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 570298,
+      "band": null,
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 682969,
+        "outputTokens": 39431,
+        "cachedTokens": 573184,
+        "modelCalls": 13,
+        "toolCalls": 31,
+        "searchCalls": 5,
+        "estimatedCostUsd": 0.041846,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 682969,
+            "outputTokens": 39431,
+            "estimatedCostUsd": 0.041846,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

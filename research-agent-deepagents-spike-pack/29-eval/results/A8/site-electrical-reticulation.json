@@ -1,0 +1,221 @@
+{
+  "question": "site-electrical-reticulation",
+  "kind": "pinned",
+  "arm": "A8",
+  "status": "disputed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 92444,
+    "high": 140697
+  },
+  "range": {
+    "min": 84400,
+    "max": 142400
+  },
+  "unit": "sum (whole external reticulation installation, one site, 250 m nominal route)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.256,
+    "highRatio": 1.165,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1221,
+  "elapsedMs": 344667,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 303447,
+      "band": {
+        "unit": "sum (whole external reticulation installation, one site, 250 m nominal route)",
+        "low": 92444,
+        "high": 140697,
+        "centre": "Auckland",
+        "basis": "Bottom-up from QV CostBuilder Auckland rates plus stated allowances, GST exclusive, one site, 250 m nominal route. Section subtotals: A trenching and reinstatement 19,888-26,573; B conduit and cable 56,980-88,380; C pits 9,600-14,400; D board, plinth, spurs and testing 5,976-11,344. Implied 369.8-562.8 per lineal metre (mid about 466/lm). Allowances total 13,050-21,500, about 14-15% of the band, so no single unpublished item carries the estimate - but QV's buried-conduit rows carry roughly 40-50% of it and are unreviewed and internally inconsistent (100mm published below 50mm), which is why confidence is low. Excludes GST, preliminaries, margin, design, consent fees, incoming supply/network/transformer/MSB/metering, poles/footings/luminaires/controls/CCTV, rock, contaminated spoil, dewatering, traffic management, any second sub-main/generator/EV provision, and paving/kerbing/landscaping beyond the trench line."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 11,
+        "rowsFound": 11,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 7
+      },
+      "usage": {
+        "inputTokens": 741340,
+        "outputTokens": 35552,
+        "cachedTokens": 649216,
+        "modelCalls": 16,
+        "toolCalls": 46,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.037097,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 741340,
+            "outputTokens": 35552,
+            "estimatedCostUsd": 0.037097,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 321866,
+      "band": {
+        "unit": "sum (whole external reticulation installation, 250 m nominal route)",
+        "low": 84400,
+        "high": 122200,
+        "centre": "Auckland",
+        "basis": "Sum of the four separable parts (GST exclusive, Auckland, NZD): trenching, sand, backfill and hardstand reinstatement $19,924–$27,939; conduits plus 180 m sub-main cable $44,560–$68,600; pits $13,300–$15,760; board, plinth, lighting spurs and testing/CoC $6,598–$9,897. Arithmetic total $84,382–$122,196, presented rounded as $84,400–$122,200; implied $338/m–$489/m over the 250 m nominal route (centre about $413/m) so the amortisation is auditable. Main cost drivers are all priced from cited QV rows or stated proxies: trench excavation (QV 1c23e190...t2:r6/r7), conduit (QV ac5fef02...t4:r9/r10/r11), sub-main (QV ac5fef02...t6:r2 with a stated copper/aluminium adjustment), pits (QV 915613f8...t10:r2/r3/r5/r6), board (QV ac5fef02...t2:r10 uplifted) and spurs (QV ac5fef02...t7:r81). Allowances for the plinth and glands total only $1,000–$2,000, about 1–2% of the band. Confidence is low because the 63 mm conduit has no QV row and its two bracketing rows disagree by 68% (25% of the whole band swings on that line), because QV buried-conduit and cable rows are unreviewed and read well above typical market pulling rates, and because the board, pits and sub-main are proxies rather than measured items. This is a cost-plan band, not a certified price: it excludes GST, preliminaries, margin, design and consent fees, the incoming supply/network/transformer/main switchboard/metering, poles, footings, luminaires, controls, CCTV/comms active equipment, rock, contaminated spoil, dewatering, traffic management, and any second sub-main, generator feed or EV provision; it assumes a flat Auckland site with no groundwater control and 150 mm hardstand in the trench line."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 14,
+        "rowsFound": 14,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 1009006,
+        "outputTokens": 38338,
+        "cachedTokens": 898688,
+        "modelCalls": 15,
+        "toolCalls": 38,
+        "searchCalls": 5,
+        "estimatedCostUsd": 0.042247,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1009006,
+            "outputTokens": 38338,
+            "estimatedCostUsd": 0.042247,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 344660,
+      "band": {
+        "unit": "sum (whole external reticulation installation, 250 m nominal route, Auckland, GST exclusive)",
+        "low": 106000,
+        "high": 142400,
+        "centre": null,
+        "basis": "Sum of the components above: trenching/sand/backfill/hardstand reinstate 22,683-28,423 (centre 25,553); conduit plus sub-main cable 65,180-90,500 (centre 77,840); pits 12,480-13,980 (centre 13,230); board and spurs 4,192-5,992 (centre 5,092); testing/CoC allowance 1,500-3,500 (centre 2,500). Implied rate over the 250 m nominal route: LOW 424/l m, CENTRE 497/l m, HIGH 570/l m (106,035/250, 124,215/250, 142,395/250), so the amortisation is auditable. Auckland (AKL) column of QV CostBuilder used throughout. ALL QV ROWS ARE UNREVIEWED - they are cited as published, with proxies and adjustments stated. The conduit pair and the sub-main carry about 62% of the value: the conduits rest on cited QV buried-conduit rows (50mm row used for 63mm, +20% at the band top) and the sub-main is bracketed by a cited aluminium set-of-four row (method match) and a cited fire-rated four-core 25mm2 row (size/core match), corroborated by a fetched NZ vendor listing (source-1) at $37.00 ex GST per metre of 25mm 4C+E cable. QV's electrical-section rows appear to carry a generous labour constant, so a competitive tender may land below this band; treat it as a cost-plan reference, not a certified price. Excluded per brief and NOT priced: GST, preliminaries, margin, design, consent fees, incoming supply/network/transformer/main switchboard/metering, poles, footings, luminaires, controls, CCTV/comms, rock, contaminated spoil, dewatering, traffic management, second sub-main, generator, EV, paving, kerbing, landscaping, turf beyond the trench line."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 13,
+        "rowsFound": 13,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 958769,
+        "outputTokens": 41506,
+        "cachedTokens": 856832,
+        "modelCalls": 16,
+        "toolCalls": 34,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.042765,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 958769,
+            "outputTokens": 41506,
+            "estimatedCostUsd": 0.042765,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

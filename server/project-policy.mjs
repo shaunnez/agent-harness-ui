@@ -2,6 +2,24 @@ import path from "node:path";
 
 const TERMINAL = new Set(["completed", "closed", "archived"]);
 
+/** A research project has no repository. It carries this sentinel in `repositoryPath` so every
+ *  project keeps one stable identity field, and every route that validates a repository refuses
+ *  it by prefix. */
+export const RESEARCH_REPOSITORY_PREFIX = "research://";
+
+export function isResearchRepositoryPath(value) {
+  return typeof value === "string" && value.startsWith(RESEARCH_REPOSITORY_PREFIX);
+}
+
+/** Projects saved before `kind` existed are delivery projects. */
+export function projectKindOf(project) {
+  return project?.kind === "research" ? "research" : "delivery";
+}
+
+export function withProjectKind(project) {
+  return { ...project, kind: projectKindOf(project) };
+}
+
 export function assertProjectAcceptsTask(settings, repositoryPath) {
   const project = (settings.projects ?? []).find(
     (item) =>

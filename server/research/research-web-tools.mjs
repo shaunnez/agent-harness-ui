@@ -1,5 +1,6 @@
 import path from "node:path";
 import { validateMarket } from "./research-provider-contracts.mjs";
+import { disclaimerFor, locatePassage } from "./research-quote-figures.mjs";
 import {
   DEFAULT_SOURCE_BYTE_LIMIT,
   DEFAULT_SOURCE_TIMEOUT_MS,
@@ -31,6 +32,12 @@ export { ResearchToolError } from "./research-tool-errors.mjs";
 export { DEFAULT_SOURCE_BYTE_LIMIT, DEFAULT_SOURCE_TIMEOUT_MS, fetchValidatedSource, verifySnapshotEvidence };
 export const DEFAULT_RESEARCH_SOURCE_DIRECTORY = path.resolve(".data", "research-sources");
 const MAX_MODEL_CONTENT_CHARS = 50_000;
+
+/** What one web_search hands the model. Raised from 5 and 2,000 for the API loop's Parallel search,
+ *  whose excerpts carry the price lines a result is worth (24 September). Only runtimes that use the
+ *  host's web_search see it; the CLIs search with their own tools. */
+const MAX_SEARCH_RESULTS = 8;
+const MAX_SNIPPET_CHARACTERS = 3_000;
 
 export class ResearchWebTools {
   #runId;
@@ -243,7 +250,7 @@ export class ResearchWebTools {
     try {
       response = await this.#searchProvider.search(query, {
         market,
-        maxResults: 5,
+        maxResults: MAX_SEARCH_RESULTS,
         signal: this.#signal,
         remainingMs: this.#remainingMs(),
       });
@@ -254,7 +261,7 @@ export class ResearchWebTools {
     const results = [];
     const seen = new Set();
     for (const candidate of response?.results ?? []) {
-      if (results.length === 5) break;
+      if (results.length === MAX_SEARCH_RESULTS) break;
       try {
         await validatePublicSourceUrl(candidate.url, {
           lookup: this.#lookup,
@@ -267,7 +274,7 @@ export class ResearchWebTools {
         results.push({
           title: String(candidate.title ?? "Untitled result").slice(0, 500),
           url: normalizedUrl,
-          snippet: String(candidate.snippet ?? "").slice(0, 2_000),
+          snippet: String(candidate.snippet ?? "").slice(0, MAX_SNIPPET_CHARACTERS),
           ...(candidate.publishedAt ? { publishedAt: String(candidate.publishedAt) } : {}),
         });
       } catch {
@@ -536,6 +543,50 @@ export class ResearchWebTools {
         "The model must not provide quoteVerified; verification is owned by the host.",
       );
     return this.#verifyReference(reference);
+  }
+
+  /**
+   * The physical page of a retained PDF that holds this excerpt, when the citation named none, or
+   * null. Only for the after-the-run check: the page is found by the same exact-substring test the
+   * check then applies, so a quote still has to be on the page word for word. The first page that
+   * holds it wins, and a quote on no page stays unverified.
+   */
+  locatePdfPage(sourceId, excerpt) {
+    const retained = this.#sources.get(String(sourceId ?? ""));
+    if (!retained?.pdf || typeof excerpt !== "string" || !excerpt.trim()) return null;
+    return retained.pdf.pages.find((page) => excerptAppearsIn(page.content, excerpt))?.pageNumber ?? null;
+  }
+
+  /**
+   * Where a quote sits on a retained source, found by its words (`locatePassage`): `{ page, text }`,
+   * `text` being the page's own words, or null. For a PDF the named page is tried first, then every
+   * retained page. Only for the after-the-run check, which then verifies `text` word for word.
+   */
+  /** The words on a retained source that say the figure quoted in `passage` is not a price, or null. */
+  disclaimerFor(sourceId, passage) {
+    const retained = this.#sources.get(String(sourceId ?? ""));
+    if (!retained) return null;
+    const document = retained.pdf
+      ? retained.pdf.pages.map((page) => page.content).join("\n\n")
+      : retained.content;
+    return disclaimerFor(document, passage);
+  }
+
+  locateQuote(sourceId, excerpt, page = null) {
+    const retained = this.#sources.get(String(sourceId ?? ""));
+    if (!retained || typeof excerpt !== "string" || !excerpt.trim()) return null;
+    if (!retained.pdf) {
+      const found = locatePassage(retained.content, excerpt);
+      return found ? { page: null, text: found.text } : null;
+    }
+    const pages = [...retained.pdf.pages].sort((a, b) => (b.pageNumber === page) - (a.pageNumber === page));
+    let best = null;
+    for (const candidate of pages) {
+      const found = locatePassage(candidate.content, excerpt);
+      if (found && (!best || found.coverage > best.coverage))
+        best = { page: candidate.pageNumber, text: found.text, coverage: found.coverage };
+    }
+    return best ? { page: best.page, text: best.text } : null;
   }
 
   #verifyReference(reference) {

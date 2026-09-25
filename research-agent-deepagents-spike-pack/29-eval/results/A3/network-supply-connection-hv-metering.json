@@ -1,0 +1,152 @@
+{
+  "question": "network-supply-connection-hv-metering",
+  "kind": "pinned",
+  "arm": "A3",
+  "status": "not_established",
+  "passes": false,
+  "consensus": null,
+  "range": null,
+  "unit": null,
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": null,
+    "highRatio": null,
+    "runsWithBand": 0,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0844,
+  "elapsedMs": 180110,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 180109,
+      "band": null,
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 427009,
+        "outputTokens": 8470,
+        "cachedTokens": 344064,
+        "toolCalls": 33,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.029823,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 427009,
+            "outputTokens": 8470,
+            "estimatedCostUsd": 0.029823,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 163314,
+      "band": null,
+      "checks": [
+        "web-verified",
+        "allowance",
+        "web-verified",
+        "unsourced",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 382935,
+        "outputTokens": 7832,
+        "cachedTokens": 313344,
+        "toolCalls": 22,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.026059,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 382935,
+            "outputTokens": 7832,
+            "estimatedCostUsd": 0.026059,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 169585,
+      "band": null,
+      "checks": [
+        "web-unverified",
+        "qv-found",
+        "allowance",
+        "web-unverified"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 2,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 461569,
+        "outputTokens": 5838,
+        "cachedTokens": 378624,
+        "toolCalls": 26,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.02854,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 461569,
+            "outputTokens": 5838,
+            "estimatedCostUsd": 0.02854,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

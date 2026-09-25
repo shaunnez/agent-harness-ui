@@ -1,0 +1,194 @@
+{
+  "question": "acp-facade-cladding-install",
+  "kind": "pinned",
+  "arm": "A8",
+  "status": "disputed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 651,
+    "high": 936
+  },
+  "range": {
+    "min": 619,
+    "max": 1048
+  },
+  "unit": "$/m2 of net cladding face area, window and door openings deducted (Auckland, GST exclusive)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.202,
+    "highRatio": 1.372,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0852,
+  "elapsedMs": 311313,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 311308,
+      "band": {
+        "unit": "$/m2 of net cladding face area, window and door openings deducted (Auckland, GST exclusive)",
+        "low": 651,
+        "high": 764,
+        "centre": "Auckland (all QV rows taken at AKL rates; WLG and CHC are the same on every row used, so the band is unaffected by centre)",
+        "basis": "Working estimate band, not a certified price. Sum of the ten components above: 651.21/m2 low and 763.64/m2 high, giving 450 x 651.21 = ~$293,000 to 450 x 763.64 = ~$344,000 for the 450 m2 net face area (centre ~$707/m2, ~$318,000). Main cost driver (the ACP cassette system, 65% of the band) is a directly relevant QV CostBuilder row for aluminium faced composite panel cladding; the subgirt layer, flashings and the plant are likewise sourced (QV rows and a fetched NZ hire rate card); only 54-116/m2 (8-15% of the band) is priced as labelled allowance. Excluded as instructed: GST, preliminaries, margin, design, consent fees, rigid air barrier, sealing to windows, substrate repair, cavity fire barriers/fire-stopping/C-clause verification, windows/doors/louvres/soffits/balustrades/roofing, structural steel or strengthening, perimeter scaffold/edge protection/traffic management/footpath cover, and PS1/PS3/weathertightness producer statements. Two things to confirm with suppliers before this is relied on: (1) whether the QV proprietary panel rate already includes the concealed carrier and subgirts - if it does, deduct 87-100/m2; (2) the routed-and-returned cassette fabrication premium, which no QV row measures."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "web-derived",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 4,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 2,
+        "webUnsupported": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 498416,
+        "outputTokens": 37669,
+        "cachedTokens": 417536,
+        "modelCalls": 13,
+        "toolCalls": 38,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.035986,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 498416,
+            "outputTokens": 37669,
+            "estimatedCostUsd": 0.035986,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 161680,
+      "band": {
+        "unit": "$/m2 net cladding face area (Auckland, GST exclusive)",
+        "low": 744,
+        "high": 1048,
+        "centre": null,
+        "basis": "Sum of components converted to $/m2 over 450 m2 net face: panels 520-720; subgirts 86-130; brackets allowance 40-65; flashings 70.9-97.5 (266 lm x $120-165 = $31,920-43,890); boom hire 17.8 (30 days x $267); lift delivery/pickup 0.9-2.7; minor allowances 8-15. Totals: $334,630 low to $471,600 high for the 450 m2, centre approx $403,000. Allowances (brackets, lift delivery, site measure/drawings/clean/waste) are 6.6-7.9% of the band, well under one third, so the band is established. Main cost driver (the ACP cassette system) rests on a cited QV row (unreviewed, inclusions unstated) and the flashings and plant on cited QV rows with stated adjustments."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 332798,
+        "outputTokens": 18058,
+        "cachedTokens": 274048,
+        "modelCalls": 11,
+        "toolCalls": 21,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.020469,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 332798,
+            "outputTokens": 18058,
+            "estimatedCostUsd": 0.020469,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 218900,
+      "band": {
+        "unit": "m2 (per m2 of net cladding face area, openings deducted)",
+        "low": 619,
+        "high": 936,
+        "centre": "Auckland",
+        "basis": "Sum of the eight components above, all ex-GST, Auckland. Total for the stated 450 m2 net face area: 619 x 450 = $278,550 low; 936 x 450 = $421,200 high; midpoint 778/m2 = $350,000. Component A (ACP cassette system) is the main driver at 421-650/m2 and rests on a cited QV row; B is a close QV proxy with a stated adjustment; D is a QV proxy with a stated gauge adjustment; E is a cited QV day rate with a stated hire-period derivation. Allowances (C, F, G, H) total 22.3-44.7/m2, about 4% of the band, so the band is not allowance-driven. Deducted per the scope: 15 openings at 2.0 x 1.6 m, GST, preliminaries, margin, design and consent fees, rigid air barrier, cavity fire barriers, windows, structural steel, perimeter scaffold and traffic management. QV rows are unreviewed and dated; verify the panel and carrier against a fabricator quote before adopting the band."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 588369,
+        "outputTokens": 23733,
+        "cachedTokens": 501376,
+        "modelCalls": 13,
+        "toolCalls": 35,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.028793,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 588369,
+            "outputTokens": 23733,
+            "estimatedCostUsd": 0.028793,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

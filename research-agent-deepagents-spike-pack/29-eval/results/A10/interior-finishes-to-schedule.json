@@ -1,0 +1,342 @@
+{
+  "question": "interior-finishes-to-schedule",
+  "kind": "pinned",
+  "arm": "A10",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 142471,
+    "high": 180395
+  },
+  "range": {
+    "min": 139000,
+    "max": 187800
+  },
+  "unit": "sum (whole finishes-schedule package, one tenancy floor, 800 m2 NLA)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.032,
+    "highRatio": 1.046,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1727,
+  "elapsedMs": 479702,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 238054,
+      "band": {
+        "unit": "sum",
+        "low": 118800,
+        "high": 180900,
+        "centre": "Auckland",
+        "basis": "Additive build-up of QV CostBuilder Auckland rows for all six finishes plus substrate preparation, levelling and skirting, with four labelled allowances (trims, protection/waste, setout, out-of-hours access). No web prices used: every main cost driver is priced from a QV row, so nothing is unpriced. Carpet tile is the largest line (35-40% of the package) and its QV range of 65-114/m2 alone swings the total by 31,360; latex smoothing compound (QV 33.80-50.00/m2, versus 22/m2 assumed in the brief's own table) is the second-widest. Allowances total 9,800-21,500, about 8-12% of the band, well under a third. Midpoint 149,900 = 187/m2 over 800 m2 NLA. Rates are Auckland, GST exclusive, QV rows unreviewed; quantity lines are linear and can be swapped without re-pricing, except the trims/protection and access/setout package lines."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 558313,
+        "outputTokens": 30703,
+        "cachedTokens": 480128,
+        "modelCalls": 14,
+        "toolCalls": 47,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.03159,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 558313,
+            "outputTokens": 30703,
+            "estimatedCostUsd": 0.03159,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 236907,
+      "band": {
+        "unit": "sum (whole finishes-schedule package, one tenancy floor, 800 m2 NLA)",
+        "low": 143400,
+        "high": 187800,
+        "centre": "Auckland",
+        "basis": "Bottom-up from QV CostBuilder Auckland 2024/25 rows at roughly 1.4-1.5x base labour rates for every finish, substrate, trim and protection line, plus four minor allowances (sundries, rubbish, site measure/setout, out-of-hours access) together carrying only 4-9% of the total. Midpoint $165,600 = $207/m2 over the 800 m2 NLA. Widest lines are the latex compound (thickness not specified) and the LVT plank (no QV row, gauge-matched proxy used), then the carpet tile (nylon band) and the vinyl wall covering (no Type II row). All QV rows are UNREVIEWED. Excludes GST, preliminaries, margin, design and consent fees as directed, and excludes everything on the stated exclusion list. The schedule's own $22/m2 latex assumption is materially below every QV row; if the slab needs a 6 mm fill the top of the band is understated."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 12,
+        "rowsFound": 12,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 1,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 834589,
+        "outputTokens": 30102,
+        "cachedTokens": 727552,
+        "modelCalls": 14,
+        "toolCalls": 45,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.036299,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 834589,
+            "outputTokens": 30102,
+            "estimatedCostUsd": 0.036299,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 230772,
+      "band": {
+        "unit": "sum (whole finishes-schedule package, one tenancy floor, 800 m2 NLA)",
+        "low": 142471,
+        "high": 180395,
+        "centre": "Auckland",
+        "basis": "Sum of the six finishes, skirting, latex smoothing, transitions, protection and tipping priced from QV CostBuilder Auckland rates (unreviewed), plus four labelled allowances (LVT plank premium, skip/cartage, sundries, setout, out-of-hours) totalling $6.95k-$15.38k, 5-8% of the band. Midpoint $161,433 = $201.80/m2 over 800 m2 NLA. Largest line is carpet tile ($64.0k-$73.0k). Widest single spread is the latex smoothing compound ($24.7k-$36.5k) because thickness is unscheduled; next the vinyl wall covering. GST exclusive, excludes preliminaries, margin, design and consent fees and all excluded base-build trades."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 13,
+        "rowsFound": 13,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 543632,
+        "outputTokens": 31158,
+        "cachedTokens": 450816,
+        "modelCalls": 11,
+        "toolCalls": 40,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.03397,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 543632,
+            "outputTokens": 31158,
+            "estimatedCostUsd": 0.03397,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 449340,
+      "band": {
+        "unit": "sum (whole finishes-schedule package, one 800 m2 NLA tenancy floor)",
+        "low": 160000,
+        "high": 212000,
+        "centre": "Auckland",
+        "basis": "GST exclusive, Auckland CBD, one 800 m2 NLA floor, level 4 of an existing multi-storey building with lift access only. Sum of 15 priced lines: six finish lines, three batten-wall and two skirting sub-lines, latex smoothing, floor protection and four allowances. Unrounded sums are $160,243 low / $211,540 high, midpoint $185,892 ($232/m2 over the 800 m2 NLA). Every finish line is priced from a QV CostBuilder row (unreviewed) with a stated adjustment; the largest line, carpet tile at ~43% of the total, is a direct QV row (loose-laid 100% nylon tile, AKL $114/m2). Allowances total $12,300-$25,500, about 8%-12% of the total, so the band is not allowance-driven. QV rates exclude margin and preliminaries, which the scope also excludes. The band sits above the brief's $148k-$196k on carpet tile (QV $114 vs $105) and latex smoothing (QV $33.80-$50 vs $22), partly offset by LVT (QV-anchored $90-$120 vs $145) and acrylic paint (QV $21.80-$25.60 vs $38). Two scope ambiguities could move it materially: if the batten centres are 600 mm not 60 mm the band falls about $7,000, and if the schedule requires F5-level stopping of the linings add AKL $11.10-$13.60/m2 (qv f3f4c6bb...:t0:r14). Confirm those before relying on the midpoint."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 12,
+        "rowsFound": 12,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 600577,
+        "outputTokens": 30366,
+        "cachedTokens": 499072,
+        "modelCalls": 11,
+        "toolCalls": 38,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.034943,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 600577,
+            "outputTokens": 30366,
+            "estimatedCostUsd": 0.034943,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 479695,
+      "band": {
+        "unit": "sum (whole finishes-schedule package, one tenancy floor, 800 m2 NLA)",
+        "low": 139000,
+        "high": 179600,
+        "centre": null,
+        "basis": "Auckland, GST exclusive. Built from QV CostBuilder Auckland rows (unreviewed) for all six finishes, trims, protection and floor preparation, plus three labelled allowances for wall substrate prep, rubbish removal, and site measure/setout/out-of-hours loading (6-10% of the band, well under a third). Carpet tile (640 m2) and latex smoothing compound (730 m2) are the two largest lines and both rest on cited QV rows; the widest single-rate exposures are the floor-levelling product/thickness choice, the carpet tile tier, and whether '60mm centres' means centres or gaps. Central estimate $199/m2 of NLA. Excludes GST, preliminaries, margin, design and consent fees, base-build linings and stopping, ceilings, joinery, glazing film, signage, screed or grinding, asbestos work, removal of existing finishes, and scaffolding/hoists/lift protection, per the stated exclusions."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 14,
+        "rowsFound": 14,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 648130,
+        "outputTokens": 31483,
+        "cachedTokens": 545792,
+        "modelCalls": 12,
+        "toolCalls": 37,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.035878,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 648130,
+            "outputTokens": 31483,
+            "estimatedCostUsd": 0.035878,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

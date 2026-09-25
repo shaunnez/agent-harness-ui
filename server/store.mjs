@@ -14,7 +14,12 @@ import {
   providerForModelId,
   resolveTaskProvider,
 } from "./model-catalog.mjs";
-import { assertProjectAcceptsTask, changeProject } from "./project-policy.mjs";
+import {
+  assertProjectAcceptsTask,
+  changeProject,
+  isResearchRepositoryPath,
+  RESEARCH_REPOSITORY_PREFIX,
+} from "./project-policy.mjs";
 import {
   CANONICAL_RUN_STAGES,
   DEFAULT_STAGE_RUN_LIMIT,
@@ -395,12 +400,14 @@ export function assertProjectIsUnique(projects, input) {
   if (projects.some((project) => project.name.trim().toLowerCase() === name)) {
     throw new Error("A project with that name already exists.");
   }
+  // A research project has no repository, so only delivery projects can collide on one.
+  if (input.kind === "research") return;
+  const repositoryPath = path.resolve(input.repositoryPath);
   if (
-    input.kind !== "research" &&
     projects.some(
       (project) =>
-        project.kind !== "research" &&
-        path.resolve(project.repositoryPath) === path.resolve(input.repositoryPath),
+        !isResearchRepositoryPath(project.repositoryPath) &&
+        path.resolve(project.repositoryPath) === repositoryPath,
     )
   ) {
     throw new Error("That repository is already registered as a project.");
@@ -409,13 +416,20 @@ export function assertProjectIsUnique(projects, input) {
 
 export function projectRecord(input) {
   const id = crypto.randomUUID();
-  const research = input.kind === "research";
+  if (input.kind === "research")
+    return {
+      id,
+      name: input.name.trim(),
+      repositoryPath: `${RESEARCH_REPOSITORY_PREFIX}${id}`,
+      kind: "research",
+      createdAt: new Date().toISOString(),
+    };
   return {
     id,
     name: input.name.trim(),
-    repositoryPath: research ? `research://${id}` : path.resolve(input.repositoryPath),
+    repositoryPath: path.resolve(input.repositoryPath),
+    kind: "delivery",
     createdAt: new Date().toISOString(),
-    ...(research ? { kind: "research" } : {}),
   };
 }
 

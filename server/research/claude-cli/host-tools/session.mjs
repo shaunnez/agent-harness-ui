@@ -3,6 +3,7 @@
 // CLI at the relay. A runtime asks for a session per run and closes it when the run ends.
 
 import process from "node:process";
+import { QV_TOOL_NAMES } from "../../qv-plancheck.mjs";
 import { extractPdfPages } from "../../research-pdf-text.mjs";
 import { DEFAULT_RESEARCH_SOURCE_DIRECTORY, ResearchWebTools } from "../../research-web-tools.mjs";
 import { openHostToolBridge } from "./bridge.mjs";
@@ -22,6 +23,14 @@ export async function openHostToolSession({
   relayPath = undefined,
   emit = () => {},
   onTerminal = () => {},
+  // PlanCheck's rate library (`PlanCheckQvSession`), when it answers the QV tools instead of the
+  // local capture. Its calls go through the same bridge, outside the web tools' budget, as the
+  // local capture's calls always were.
+  qv = null,
+  // Tools answered by a handler the runtime sets once the run is under way (`setHandler`), such
+  // as the pack runtime's `request_evidence`. Exposed on the bridge from the start; a call before
+  // its handler is set is refused.
+  lateTools = [],
 }) {
   const webTools = new ResearchWebTools({
     runId,
@@ -43,12 +52,24 @@ export async function openHostToolSession({
     },
     ...webToolsOptions,
   });
+  const qvTools = qv ? QV_TOOL_NAMES : [];
+  const handlers = new Map();
+  const invoker = {
+    invoke: async (tool, input) => {
+      if (lateTools.includes(tool)) {
+        const handler = handlers.get(tool);
+        if (!handler) throw new Error(`Tool "${tool}" is not available yet.`);
+        return { result: await handler(input) };
+      }
+      return qvTools.includes(tool) ? qv.invoke(tool, input) : webTools.invoke(tool, input);
+    },
+  };
   let bridge;
   try {
     bridge = await openHostToolBridge({
       directory,
-      webTools,
-      tools,
+      webTools: invoker,
+      tools: [...tools, ...qvTools, ...lateTools],
       onTerminal,
       onLog: (message) => emit("log", { message }),
     });
@@ -59,7 +80,15 @@ export async function openHostToolSession({
   let providerAccounting = null;
   return {
     webTools,
-    mcpEntry: { nodeBin, relayPath, socketPath: bridge.socketPath, tools: [...tools] },
+    qv,
+    mcpEntry: tools.length ? { nodeBin, relayPath, socketPath: bridge.socketPath, tools: [...tools] } : null,
+    qvEntry: qv ? { nodeBin, relayPath, socketPath: bridge.socketPath, tools: [...qvTools] } : null,
+    /** A relay entry for exactly these tools, on this run's socket. */
+    entryFor: (names) => ({ nodeBin, relayPath, socketPath: bridge.socketPath, tools: [...names] }),
+    setHandler(tool, handler) {
+      if (!lateTools.includes(tool)) throw new Error(`"${tool}" was not declared when the session opened.`);
+      handlers.set(tool, handler);
+    },
     terminal: () => bridge.terminal(),
     /** Close the socket and settle provider accounting. Safe to call twice. */
     async close() {

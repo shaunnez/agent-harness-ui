@@ -1,0 +1,191 @@
+{
+  "question": "industrial-roller-doors",
+  "kind": "pinned",
+  "arm": "A7",
+  "status": "agreed",
+  "passes": false,
+  "consensus": {
+    "low": 7560,
+    "high": 13140
+  },
+  "range": {
+    "min": 7355,
+    "max": 13718
+  },
+  "unit": "$/ea (one complete motorised insulated roller shutter door, supplied, installed and commissioned), GST exclusive, Auckland",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.186,
+    "highRatio": 1.177,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0804,
+  "elapsedMs": 163983,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 163979,
+      "band": {
+        "unit": "$/ea (one complete motorised insulated roller shutter door, supplied, installed and commissioned), GST exclusive, Auckland",
+        "low": 7560,
+        "high": 11660,
+        "centre": null,
+        "basis": "Sum of the eight priced components: 3,800-4,600 (QV door shell proxy scaled to 18.0 m2) + 1,620-2,520 (foam-insulated slat uplift, fetched per-m2 figure) + 350-700 (powdercoat uplift) + 1,100-2,300 (3-phase operator and controls) + 320-630 (photo-eye pair and safety edge) + 120-210 (scissor lift, already divided by 4) + 100-350 (delivery/offload, already divided by 4, allowance) + 150-350 (final 3-phase connection) = 7,560-11,660/ea, centre 9,610/ea. TOTAL FOR THE 4-DOOR NOMINAL QUANTITY: low $30,240, high $46,640, centre $38,440 (ex-GST, Auckland) - the access and delivery lines are the only components amortised, and they are shown already divided by 4. Scope exactly as pinned: excludes GST, preliminaries, margin, design and consent fees, the structural opening, the 3-phase supply/submain/isolator/switchboard, vision panels, wicket doors, fire rating, cyclone upgrade, remote controls beyond the fixed station, loop detectors, PLC/card interface, painting and patching, and any maintenance contract. Installation labour, fixings and commissioning are assumed included in the QV door and mechanism rates and are deliberately NOT added again - if a supplier quotes supply-only, add roughly $1,000-$1,700/door for fitting and commissioning (fetched DoorsNZ states 'Installed add $1.6k-$2.8k for labour, motor, commissioning' against a supply-only price, of which the motor is $950-$2,300). Allowances carry about 3% of the band, well under a third. Confidence is LOW on three counts: the QV door and mechanism rows are unreviewed and their inclusions (hood, guides, install labour) are unstated; no NZ published price exists for a 77 mm double-skin insulated aluminium shutter, so the curtain is carried as a per-m2 uplift with a rival percentage basis that would cut $1,000-$1,950; and the Auckland market for this exact product is a specialist-supplier market (Glideaway, A1 Garage Doors, SDL Group 'Sentry', Windsor/Garador via DoorsNZ, Premium Garage Doors) whose rates should be obtained to firm this up."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "web-unverified",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 9,
+        "webVerified": 8,
+        "webNotFetched": 0,
+        "webExcerptRejected": 1,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 627993,
+        "outputTokens": 26675,
+        "cachedTokens": 549632,
+        "modelCalls": 13,
+        "toolCalls": 30,
+        "searchCalls": 7,
+        "estimatedCostUsd": 0.029408,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 627993,
+            "outputTokens": 26675,
+            "estimatedCostUsd": 0.029408,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 98467,
+      "band": {
+        "unit": "$/ea",
+        "low": 8720,
+        "high": 13718,
+        "centre": "Auckland",
+        "basis": "$/ea for one complete motorised insulated roller shutter unit, supplied, installed and commissioned into a prepared 4.0m x 4.5m opening, GST exclusive, excluding preliminaries, margin, design, consent, structural opening, 3-phase supply and any scope listed as excluded. Sum of the seven components above. Totals for the 4-door nominal quantity: low $34,880, high $54,872, central ~$44,900 (central $/ea ~$11,200). Allowances (controls/safety, commissioning, delivery) total $1,050-$2,000 per door, about 12-15% of the band - under one third - so the band is established; the main driver (the door assembly) rests on QV proxy rows with a stated material/finish adjustment plus fetched NZ vendor price check, not on a published insulated-aluminium-shutter rate."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 441675,
+        "outputTokens": 16655,
+        "cachedTokens": 377728,
+        "modelCalls": 13,
+        "toolCalls": 24,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.020718,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 441675,
+            "outputTokens": 16655,
+            "estimatedCostUsd": 0.020718,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 161145,
+      "band": {
+        "unit": "ea",
+        "low": 7355,
+        "high": 13140,
+        "centre": null,
+        "basis": "Auckland, GST-exclusive, one complete motorised insulated roller shutter door supplied, installed and commissioned into a prepared 4.0m x 4.5m opening; 4 identical doors, one visit. Sum of the nine components above ($7,355 low / $13,140 high). Nominal 4-door total: $29,420 low / $52,560 high (centre approx $41,000). Allowances (hood, electrical connection, lift, delivery, fixings, commissioning) carry 11% of the low total and 18% of the high total - under one third, so the band is rate-led, not allowance-led. RESOLVED FROM QV PLUS WEB, LOW CONFIDENCE: the dominant component - the double-skinned foam-filled aluminium slat curtain - has no QV row, so it is proxied by single-skin zincalume roller-door rows (t15:r4 per-each and t4:r1 per-m2, which themselves disagree by ~60%) uplifted 25% using published NZ supplier figures; the true insulated-aluminium uplift could run to 40-50%, and a UK retail guide for 77mm insulated aluminium shutters supplied and installed (Security Direct, RA77, 'Large (up to 4m x 4m) Supply & Install – £3,500 – £5,500') sits above this band, which is the main reason the top end is left wide. QV rows used are unreviewed and their inclusions (installation, fixings, headbox) are not stated. Excludes GST, preliminaries, margin, design and consent fees, the structural opening, the 3-phase supply/submain/isolator/containment/switchboard, vision panels, wicket doors, fire rating, cyclone/high-wind upgrade, remotes beyond the fixed button station, loop detectors, card or PLC interface, painting or patching to surrounding cladding, temporary weather closure, and any service contract or warranty extension beyond 12 months. Check whether the proposed unit needs wind-lock guides or a wind rating for the site - not priced here."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "allowance",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 468477,
+        "outputTokens": 30356,
+        "cachedTokens": 395904,
+        "modelCalls": 11,
+        "toolCalls": 30,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.030287,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 468477,
+            "outputTokens": 30356,
+            "estimatedCostUsd": 0.030287,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

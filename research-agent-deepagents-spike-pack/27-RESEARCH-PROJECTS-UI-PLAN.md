@@ -21,6 +21,23 @@ from the recorded results (30 Opus scopes, 7 Codex scopes), the dock, question l
 detail, review pinned to the evidence fingerprint, the ask form, and a Research choice in Project
 setup. No backend, no live project, no model call. Slice A waits on review of the prototype.
 
+**Slice A built, 23 September** (branch `claude/research-projects-backend`, stacked on PR #131).
+Projects carry `kind` (saved projects read as delivery; a research project stores the sentinel
+`research://<id>` and every delivery route refuses it). `research_questions` and `research_reviews`
+tables, `question_id`/`run_label`/`outcome_json` on `research_runs`, and `POST/GET
+/api/research/questions`, `GET /api/research/questions/:id`, `POST .../:id/review`. A question
+starts 1 or 3 runs through `createRun`; its status is computed on every read from
+`agreementForRuns`, so a failed, cancelled or plan-limited run makes it `incomplete`. Each run keeps
+its cost band and per-component citation check (`citations.mjs` now labels each component by its
+weakest citation; no check is `unchecked`, never a pass). An external `source` (provider +
+request id) reuses its question. Reviews are pinned to a sha256 over the record minus the review
+and activity, and nothing happens downstream of one. The live Frontier gateway serves all of it,
+Project setup offers Research when the companion serves research, and running questions reread
+every 5 s. Tests: `tests/research-questions.test.mjs` (stub runtimes, nothing spent). Browser
+check on the isolated 4331/5174 pair: a live research project created on Relay, its empty question
+list and the live ask note. **No live question has been asked**: that needs Shaun's go-ahead
+(about $4–5 of Claude plan usage for three runs).
+
 ---
 
 ## Decisions to confirm before building

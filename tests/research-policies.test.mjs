@@ -50,18 +50,19 @@ const codexAgent = (overrides = {}) => ({
 
 // --- defaults and validation ------------------------------------------------------------------
 
-test("settings saved before the section existed read as Opus 5.5, or as Claude Design when Opus 5.5 is not allowed", () => {
+test("settings saved before the section existed read as the defaults: DeepSeek for the agent, Opus 5.5 or Claude Design for the roles", () => {
   assert.deepEqual(researchPoliciesOf(null), DEFAULT_RESEARCH_POLICIES);
   assert.deepEqual(researchPoliciesOf({ allowedModels: ALLOWED }), DEFAULT_RESEARCH_POLICIES);
   const older = researchPoliciesOf({
     allowedModels: ["claude-opus-5", "gpt-5.6-sol"],
     designPolicies: { "claude-design": { model: "claude-opus-5", reasoning: "high" } },
   });
+  // The agent's default is DeepSeek on OpenCode, which no delivery allowlist governs.
   assert.deepEqual(older.agent, {
-    runtime: "claude-cli",
-    provider: "claude",
-    model: "claude-opus-5",
-    reasoning: "high",
+    runtime: "opencode-cli",
+    provider: "opencode",
+    model: "opencode-go/deepseek-v4.1-flash",
+    reasoning: "default",
   });
   assert.equal(older.roles.verifier.model, "claude-opus-5");
   // A saved choice always wins.
@@ -80,7 +81,8 @@ test("settings saved before the section existed read as Opus 5.5, or as Claude D
     },
   };
   migratePersistedTaskState(state);
-  assert.equal(state.settings.researchPolicies.agent.model, "claude-opus-5");
+  assert.equal(state.settings.researchPolicies.agent.model, "opencode-go/deepseek-v4.1-flash");
+  assert.equal(state.settings.researchPolicies.roles.verifier.model, "claude-opus-5");
   assert.equal(researchPoliciesIssue(state.settings.researchPolicies, MODELS, ["claude-opus-5"]), null);
 });
 
@@ -106,7 +108,25 @@ test("the engine decides the provider, and each model must be allowed and suppor
       MODELS,
       ALLOWED,
     ),
-    /Claude CLI or Codex CLI/,
+    /Claude CLI, Codex CLI or OpenCode CLI/,
+  );
+  // OpenCode models come from their own research list, never the delivery allowlist.
+  assert.equal(researchPoliciesIssue(DEFAULT_RESEARCH_POLICIES, MODELS, ["claude-opus-5-5"]), null);
+  const openCode = (agent) => ({
+    ...structuredClone(DEFAULT_RESEARCH_POLICIES),
+    agent: { ...DEFAULT_RESEARCH_POLICIES.agent, ...agent },
+  });
+  assert.match(
+    researchPoliciesIssue(openCode({ model: "gpt-6-sol" }), MODELS, ALLOWED),
+    /OpenCode research model/,
+  );
+  assert.match(
+    researchPoliciesIssue(openCode({ reasoning: "max" }), MODELS, ALLOWED),
+    /does not support max/,
+  );
+  assert.match(
+    researchPoliciesIssue(openCode({ provider: "claude" }), MODELS, ALLOWED),
+    /runs opencode models only/,
   );
   const codexRole = structuredClone(DEFAULT_RESEARCH_POLICIES);
   codexRole.roles.verifier = { provider: "claude", model: "gpt-6-sol", reasoning: "high" };
@@ -118,7 +138,7 @@ test("the engine decides the provider, and each model must be allowed and suppor
 test("a run that names no runtime takes the Settings engine and model, and keeps them", async () => {
   await withResearchStore(async ({ store }) => {
     let saved = { researchPolicies: codexAgent() };
-    const runtimes = ["fake", "claude-cli", "codex-cli", "claude-cli-roles"].map(stubRuntime);
+    const runtimes = ["fake", "claude-cli", "codex-cli", "opencode-cli", "claude-cli-roles"].map(stubRuntime);
     const service = new ResearchService({
       store,
       registry: createResearchRuntimeRegistry(runtimes),
@@ -138,6 +158,17 @@ test("a run that names no runtime takes the Settings engine and model, and keeps
     // Changing Settings afterwards does not rewrite the run.
     saved = { researchPolicies: structuredClone(DEFAULT_RESEARCH_POLICIES) };
     assert.equal((await service.getRun(run.id)).request.researchPolicy.model, "gpt-6-sol");
+
+    // With no saved choice, the default is DeepSeek on OpenCode.
+    const deepseek = await service.createRun({ objective: "Price a kerb." });
+    assert.equal(deepseek.runtimeId, "opencode-cli");
+    assert.equal(byId["opencode-cli"].started.at(-1).researchPolicy.model, "opencode-go/deepseek-v4.1-flash");
+    saved = {
+      researchPolicies: {
+        ...structuredClone(DEFAULT_RESEARCH_POLICIES),
+        agent: { runtime: "claude-cli", provider: "claude", model: "claude-opus-5-5", reasoning: "high" },
+      },
+    };
 
     // A named runtime still wins. It takes the Settings model only when Settings chose it.
     await service.createRun({ objective: "Price a kerb.", runtimeId: "codex-cli" });
@@ -247,6 +278,7 @@ async function withCliRuntime(Runtime, seen, body) {
     env: {
       PATH: process.env.PATH,
       HOME: directory,
+      RESEARCH_QV_SOURCE: "local",
       RESEARCH_QV_INDEX: path.join(directory, "capture.jsonl"),
     },
     transcriptDirectory: path.join(directory, "transcripts"),

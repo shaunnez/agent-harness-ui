@@ -1,0 +1,346 @@
+{
+  "question": "solar-connection-switchboard-works",
+  "kind": "pinned",
+  "arm": "O5",
+  "status": "disputed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 6800,
+    "high": 10100
+  },
+  "range": {
+    "min": 5843,
+    "max": 13600
+  },
+  "unit": "$/ea",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.523,
+    "highRatio": 2.005,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 6.6713,
+  "elapsedMs": 374175,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 153521,
+      "band": null,
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-not-fetched",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 8,
+        "rowsFound": 8,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 1,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 26,
+        "outputTokens": 9696,
+        "cachedTokens": 879488,
+        "modelCalls": 35,
+        "toolCalls": 34,
+        "searchCalls": 7,
+        "estimatedCostUsd": 1.3384196000000004,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 26,
+            "outputTokens": 9696,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.1795536,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 77421,
+            "outputTokens": 2289,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.158866,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 374170,
+      "band": {
+        "unit": "$/ea",
+        "low": 6800,
+        "high": 13600,
+        "centre": "Auckland",
+        "basis": "Sum of 14 components for ONE package (total = $/ea): low $6,765, high $13,564, rounded. QV rows are unreviewed installed rates, mostly proxy devices; labour from GST-inclusive web charge-out rates converted to excl GST; excludes GST, preliminaries, margin, network charges and switchboard remediation. No aggregate row combined with its components."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-derived",
+        "qv-found",
+        "qv-found",
+        "web-not-fetched",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-derived",
+        "qv-found",
+        "web-verified",
+        "web-derived"
+      ],
+      "citations": {
+        "rowsCited": 9,
+        "rowsFound": 9,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 6,
+        "webVerified": 2,
+        "webNotFetched": 1,
+        "webExcerptRejected": 0,
+        "webDerived": 3,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 26,
+        "outputTokens": 14445,
+        "cachedTokens": 987910,
+        "modelCalls": 39,
+        "toolCalls": 38,
+        "searchCalls": 6,
+        "estimatedCostUsd": 1.634523,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 26,
+            "outputTokens": 14445,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.4965619999999997,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 67636,
+            "outputTokens": 2065,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.137961,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 266648,
+      "band": {
+        "unit": "$/ea",
+        "low": 3653,
+        "high": 7043,
+        "centre": "Auckland",
+        "basis": "Partial. Sum of QV-supported components (mostly stand-in items) plus one unchecked web figure for the Type B device, for the nominal quantity of 1 package, so total = $/ea. Excludes the unpriced in-scope items listed in not_established, so the true figure for this scope will be higher."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-not-fetched",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 1,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 22,
+        "outputTokens": 8932,
+        "cachedTokens": 708913,
+        "modelCalls": 32,
+        "toolCalls": 31,
+        "searchCalls": 7,
+        "estimatedCostUsd": 1.1959506,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 22,
+            "outputTokens": 8932,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.0363746,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 78081,
+            "outputTokens": 2299,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.159576,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 138355,
+      "band": {
+        "unit": "$/ea",
+        "low": 5843,
+        "high": 6784,
+        "centre": "Auckland",
+        "basis": "PARTIAL FLOOR: sum of QV rows for one package (total = $/ea, quantity 1). Excludes export-limit relay/CT equipment, Type B RCBO premium, true 4P MCCB cost and out-of-hours penal premium, all not established. Several rows are proxies."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 13,
+        "rowsFound": 13,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 20,
+        "outputTokens": 9488,
+        "cachedTokens": 588540,
+        "modelCalls": 26,
+        "toolCalls": 25,
+        "searchCalls": 4,
+        "estimatedCostUsd": 1.05123,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 20,
+            "outputTokens": 9488,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.958572,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 45628,
+            "outputTokens": 1406,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.09265799999999999,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 170943,
+      "band": {
+        "unit": "$/ea",
+        "low": 8900,
+        "high": 10100,
+        "centre": "Auckland",
+        "basis": "Sum of listed components for ONE package (8,931-10,097, rounded). Nominal quantity 1, so the total equals $/ea. Excludes penal loading, CT set, RoI, and any MSB busbar/chassis modification. Stand-in rows likely understate; the Type B RCD figure is unchecked."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-not-fetched",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 1,
+        "webNotFetched": 1,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 26,
+        "outputTokens": 12010,
+        "cachedTokens": 887012,
+        "modelCalls": 37,
+        "toolCalls": 36,
+        "searchCalls": 8,
+        "estimatedCostUsd": 1.4511834,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 26,
+            "outputTokens": 12010,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.2690504,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 87273,
+            "outputTokens": 2972,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.182133,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

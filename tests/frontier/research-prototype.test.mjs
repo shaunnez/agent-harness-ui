@@ -20,7 +20,7 @@ async function withVite(body) {
   }
 }
 
-test("the sample world keeps recorded research while the live gateway serves saved questions", async () => {
+test("the sample world has two research projects on the Relay base, and only the live gateway starts real runs", async () => {
   await withVite(async (vite) => {
     const { createFixtureGateway } = await vite.ssrLoadModule("/src/frontier/fixtures/gateway.ts");
     const gateway = createFixtureGateway();
@@ -45,8 +45,12 @@ test("the sample world keeps recorded research while the live gateway serves sav
       /absolute repository/,
     );
 
+    // The live gateway serves the companion's research questions and starts real runs, so it
+    // says so; the sample world never does.
     const { liveGateway } = await vite.ssrLoadModule("/src/frontier/runtime/live-gateway.ts");
-    assert.equal(liveGateway.research?.live, true);
+    assert.equal(liveGateway.research.mode, "live");
+    assert.equal(gateway.research.mode, "fixture");
+    assert.equal(await gateway.research.available(), true);
   });
 });
 

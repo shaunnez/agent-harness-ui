@@ -1,0 +1,184 @@
+{
+  "question": "acp-facade-cladding-install",
+  "kind": "pinned",
+  "arm": "A2",
+  "status": "incomplete",
+  "passes": false,
+  "consensus": null,
+  "range": null,
+  "unit": "m2 net cladding face area",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": null,
+    "highRatio": null,
+    "runsWithBand": 1,
+    "runsTotal": 3
+  },
+  "costUsd": 0.4121,
+  "elapsedMs": 660270,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 660269,
+      "band": {
+        "unit": "m2 net cladding face area",
+        "low": 735,
+        "high": 1075,
+        "centre": "Auckland",
+        "basis": "Sum of components 733.34-1,072.73/m2, rounded to 735-1,075, centre about 900/m2. Totals for 450 m2: 330,750-483,750, centre about 405,000, GST exclusive, excluding preliminaries and margin. The main drivers (panel, carrier, flashings) come from QV proxy rows with judgement adjustments: carrier x1.5-2.2 on a fibre-cement top-hat row, flashings x2-3 on a 0.95mm row, and panel set from the r9 top to the lower third of r7. Allowances are about 4% of the total. Two evidence requests for 3mm PVDF flashing and aluminium carrier rates both failed (retrieval error and timeout), so confidence is low. Replace with a supplier quote before relying on it."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 6
+      },
+      "usage": {
+        "inputTokens": 138450,
+        "outputTokens": 11875,
+        "cachedTokens": 223808,
+        "modelCalls": 4,
+        "toolCalls": 26,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.412053,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 138442,
+            "outputTokens": 4797,
+            "estimatedCostUsd": 0.007695,
+            "priced": true
+          },
+          "claude-opus-5-5": {
+            "inputTokens": 8,
+            "outputTokens": 7078,
+            "estimatedCostUsd": 0.4043584,
+            "priced": true
+          }
+        },
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 138442,
+            "outputTokens": 4797,
+            "cachedTokens": 94976,
+            "estimatedCostUsd": 0.007695
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedTokens": 0,
+            "estimatedCostUsd": null
+          },
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedTokens": 0,
+            "estimatedCostUsd": null
+          },
+          {
+            "stage": "reason",
+            "model": "claude-opus-5-5",
+            "inputTokens": 8,
+            "outputTokens": 7078,
+            "cachedTokens": 128832,
+            "estimatedCostUsd": 0.4043584
+          }
+        ]
+      }
+    },
+    {
+      "run": "r2",
+      "status": "failed",
+      "error": {
+        "code": "codex_cli_exited_abnormally",
+        "message": "Retrieval: The Codex CLI exited with code 1: Selected model is at capacity. Please try a different model."
+      },
+      "elapsedMs": 257267,
+      "band": null,
+      "checks": [],
+      "citations": null,
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedTokens": 0,
+        "modelCalls": 0,
+        "toolCalls": 0,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": true,
+        "byModel": {},
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedTokens": 0,
+            "estimatedCostUsd": null
+          }
+        ]
+      }
+    },
+    {
+      "run": "r3",
+      "status": "failed",
+      "error": {
+        "code": "codex_cli_exited_abnormally",
+        "message": "Retrieval: The Codex CLI exited with code 1: Selected model is at capacity. Please try a different model."
+      },
+      "elapsedMs": 194242,
+      "band": null,
+      "checks": [],
+      "citations": null,
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedTokens": 0,
+        "modelCalls": 0,
+        "toolCalls": 0,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0,
+        "costBasis": "claude_cli_cost_plus_codex_api_rate_estimate",
+        "partial": true,
+        "byModel": {},
+        "byStage": [
+          {
+            "stage": "retrieve",
+            "model": "gpt-6-luna",
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedTokens": 0,
+            "estimatedCostUsd": null
+          }
+        ]
+      }
+    }
+  ]
+}

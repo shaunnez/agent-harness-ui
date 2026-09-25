@@ -1,0 +1,285 @@
+{
+  "question": "open-b2",
+  "kind": "open",
+  "arm": "A10",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 96,
+    "high": 145
+  },
+  "range": {
+    "min": 94.3,
+    "max": 165.9
+  },
+  "unit": "NZD per m2 of floor area, GST exclusive (150 m2 total in brackets)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.159,
+    "highRatio": 1.277,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1106,
+  "elapsedMs": 269776,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 170588,
+      "band": {
+        "unit": "per m2 of office floor area (150 m2 office, Auckland, GST exclusive)",
+        "low": 74,
+        "high": 163,
+        "centre": "Auckland",
+        "basis": "Sum of the four components per m2: 15.9-19.4 (carpet uplift, QV) + 15.0-33.8 (floor preparation, QV) + 40-100 (LVP supply and install, fetched Jacobsen page) + 3.33-10.00 (protection/sundries allowance) = $74/m2 to $163/m2. Total for the 150 m2 office: $11,135 (low) to $24,480 (high); mid-point about $17,800 ($119/m2). Excludes carpet disposal fees, repairs beyond standard preparation, furniture moving and skirting/trim, per the pinned scope. Confidence is LOW because the dominant component (LVP, 54-61% of the band) rests on a published NZ supplier range rather than a QV row or a project-specific quote, and because the grade of plank and the extent of preparation are not yet decided. The mid-band figure assumes a mid-range commercial 4.5-5mm SPC plank and preparation limited to patching - recommend fixing both before this is used beyond a cost plan."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 287057,
+        "outputTokens": 20536,
+        "cachedTokens": 226816,
+        "modelCalls": 10,
+        "toolCalls": 22,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.022038,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 287057,
+            "outputTokens": 20536,
+            "estimatedCostUsd": 0.022038,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 269773,
+      "band": {
+        "unit": "NZD per m2 of floor area, GST exclusive (150 m2 total in brackets)",
+        "low": 96,
+        "high": 145,
+        "centre": "Auckland",
+        "basis": "Sum of the components above, per m2: 16-19 removal + 13-20 localised levelling + 3-9 high-spot grinding + 3-8 prep allowance + 62-88 LVP supply and install = $96-$145/m2. For the full 150 m2 office this is approximately $14,500-$21,700 GST exclusive. Allowances carry about 5% of the total, so the band is driven by cited rates and one stated proxy adjustment. Assumes the existing substrate under the carpet is a sound hard floor (concrete or particleboard) and that standard preparation is sufficient, per the brief. Excludes: disposal/cartage of old carpet and underlay, furniture moving, skirting or trim, and any floor repairs beyond standard preparation. Confidence is low because the largest component (LVP supply and install) is a proxy-adjusted QV row rather than an LVP row, and the extent of floor preparation is an undecided scope item - confirm both before fixing a price."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 275252,
+        "outputTokens": 16385,
+        "cachedTokens": 211584,
+        "modelCalls": 8,
+        "toolCalls": 23,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.020016,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 275252,
+            "outputTokens": 16385,
+            "estimatedCostUsd": 0.020016,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 253798,
+      "band": {
+        "unit": "m2",
+        "low": 94.3,
+        "high": 129.9,
+        "centre": "Auckland",
+        "basis": "Auckland, GST exclusive, per m2 of floor area, summed from the four components above: low = 15.9 (carpet uplift, QV t5:r10) + 33.8 (0.5mm flushing layer, QV Floor Screeds t2:r13) + 42.6 (3mm rigid vinyl tile proxy, QV t4:r3) + 2.0 allowance = 94.3/m2; high = 15.9 + 50.0 (3mm Nuplex Lockfast Matrix, QV t2:r12) + 59.0 (3mm flexible vinyl tile proxy, QV t4:r7) + 5.0 allowance = 129.9/m2. For the stated 150 m2 this is approximately $14,145 to $19,485, i.e. about $14,100 to $19,500. Confidence low: the largest component (LVP supply and lay) is a stated proxy for a product QV does not publish, and the extent of floor preparation is an assumption. Allowances are minor (under 5% of the band), so the total does not rest on them. Excluded per scope: carpet disposal fees, floor repairs beyond standard preparation, furniture moving, skirting/trim. If a premium specified plank or full 6mm levelling compound is required, use the QV rows named in the caveats and the band top should be taken nearer $150-190/m2."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 225020,
+        "outputTokens": 15626,
+        "cachedTokens": 178176,
+        "modelCalls": 9,
+        "toolCalls": 24,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.016937,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 225020,
+            "outputTokens": 15626,
+            "estimatedCostUsd": 0.016937,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 138499,
+      "band": {
+        "unit": "m2",
+        "low": 109.3,
+        "high": 165.9,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components per m2: (1) carpet uplift QV AKL $15.9; (2) standard floor prep QV AKL $38.4-$50.0; (3) supply & install LVP AKL $55-$100. Totals AKL $109.3-$165.9/m2. Less any centre adjustment: WLG removal 16.6, CHC 19.4 (prep and tile rows same across centres). For 150 m2 multiply by 150: approx AKL $16,400-$24,900 (excl. GST). This is a working cost-plan band, not a certified price. Excludes disposal of old carpet, floor repairs beyond standard prep, furniture moving, and skirting/trim."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 424478,
+        "outputTokens": 15671,
+        "cachedTokens": 311040,
+        "modelCalls": 14,
+        "toolCalls": 25,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.027351,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 424478,
+            "outputTokens": 15671,
+            "estimatedCostUsd": 0.027351,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 128176,
+      "band": {
+        "unit": "m2 of office floor area",
+        "low": 124.7,
+        "high": 244.9,
+        "centre": "Auckland",
+        "basis": "Sum of cited components (rounded $125-$245/m2): carpet removal 15.9 + floor preparation 33.8-79.0 + LVP material 40-100 + LVP lay 35-50. On 150 m2: $18,700-$36,700; central estimate $184.8/m2 = $27,700. GST exclusive, no allowances used (every component is cited QV or a fetched page), so no allowance share. Confidence low: no QV row exists for rigid-core LVP plank, the plank is priced from a supplier's published NZ guide rather than a quote, the product tier is undecided, and the wide $40-100/m2 material spread drives most of the band. Basis of pricing: rigid-core click-lock LVP, 4.5-6mm, commercial (>=20 mil / 0.5mm) wear layer, laid floating over standard-prepared substrate; 150 m2 clear floor. Disposal of the old carpet is excluded (if required add QV Tipping Fees 'mixed debris' AKL 602/tonne, row 1e431d3e9f4822173217f03e52bdab07b323b92dd9046304b513b2875344218e:t0:r2, plus cartage); furniture moving, skirting/trim and repairs beyond standard preparation are excluded as scoped."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 336773,
+        "outputTokens": 15560,
+        "cachedTokens": 242304,
+        "modelCalls": 9,
+        "toolCalls": 22,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.024233,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 336773,
+            "outputTokens": 15560,
+            "estimatedCostUsd": 0.024233,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

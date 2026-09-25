@@ -1,0 +1,328 @@
+{
+  "question": "data-rack-and-network-hardware",
+  "kind": "pinned",
+  "arm": "A10",
+  "status": "agreed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 15086,
+    "high": 24258
+  },
+  "range": {
+    "min": 14763.18,
+    "max": 25694.7
+  },
+  "unit": "per completed comms rack (42RU 800x1000, 96 certified Cat6A links, 4 x 24-port panels, 2 x 48-port PoE+ 740W switches, 2 x switched PDU, 100 patch leads)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.16,
+    "highRatio": 1.079,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.2001,
+  "elapsedMs": 474567,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 332437,
+      "band": {
+        "unit": "per completed comms rack (42RU, 96 certified Cat6A links, 2 x 48-port PoE+ switches)",
+        "low": 17650,
+        "high": 20870,
+        "centre": null,
+        "basis": "Sum of the twelve components above (Auckland, GST exclusive, excluding preliminaries and margin per the scope). Low end takes the lightest allowance and labour hours and the lower-cost cabinet mesh reading; high end the heaviest. Sourced rows carry about 89% of the band, allowances about 11%. Equipment prices are NZ retail/marketplace pages, not trade distributor quotes, and the switch GST treatment is unstated - the two together are worth roughly +/-$1,500. This band is valid ONLY on the pinned mid-market switch (Cisco CBS350-class); a tier-1 switch changes the band by more than everything else combined and would need distributor quotes. At 96 links the most-likely figure is about $201/link, of which switches are $74/link."
+      },
+      "dropped": true,
+      "checks": [
+        "web-verified",
+        "allowance",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 7,
+        "webVerified": 7,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 1076978,
+        "outputTokens": 38858,
+        "cachedTokens": 935552,
+        "modelCalls": 16,
+        "toolCalls": 49,
+        "searchCalls": 16,
+        "estimatedCostUsd": 0.047335,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 1076978,
+            "outputTokens": 38858,
+            "estimatedCostUsd": 0.047335,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 211066,
+      "band": {
+        "unit": "per completed comms rack (42RU 800x1000, 96 certified Cat6A links, 4 x 24-port panels, 2 x 48-port PoE+ 740W switches, 2 x switched PDU, 100 patch leads)",
+        "low": 17126,
+        "high": 23816,
+        "centre": null,
+        "basis": "Sum of 14 distinct components - no aggregate row is added alongside its parts, and no separately priced part is added on top of a rate that already includes it (patch-lead installation and cable-manager/switch mounting sit inside the QV-rated labour hours; panel jacks sit inside the panel price). Band low = the low of each component, band high = the high of each; centre = midpoint, $20,471, being $213 per certified link. Hardware and vendor supply is web-priced from four fetched NZ pages (PB Tech, RackPower, PriceMe); all site labour is QV row 77a9ea2e...:t0:r10 at the Auckland rate of $83.65/hr; certification testing uses a fetched Auckland cabling-technician rate of $75/hr. Allowances (blanking/sundries and labelling) total $656 low / $1,352 high, about 4-6% of the band, well under a third. QV's only comms row, Electrical Services / Telephone/Data Reticulation Cabling 'Reticulation cabling' at AKL $11/m2 (row ac5fef02...:t32:r1), is a whole-building floor-area allowance that includes the horizontal cabling this scenario excludes; it has been used as a sanity check only and is NOT added to the band. Excludes GST, preliminaries, margin, design and consent fees, the horizontal cabling and outlet ends, switch configuration, UPS, circuits supplying the PDUs, fibre backbone and all room works, per the fixed scope."
+      },
+      "checks": [
+        "web-unsupported",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "web-verified",
+        "web-derived",
+        "qv-found",
+        "qv-found",
+        "web-unsupported",
+        "allowance",
+        "web-verified",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 8,
+        "webVerified": 5,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 2,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 730422,
+        "outputTokens": 26481,
+        "cachedTokens": 593280,
+        "modelCalls": 13,
+        "toolCalls": 46,
+        "searchCalls": 16,
+        "estimatedCostUsd": 0.03824,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 730422,
+            "outputTokens": 26481,
+            "estimatedCostUsd": 0.03824,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 242536,
+      "band": {
+        "unit": "per completed rack (1 x 42RU rack, 96 certified Cat6A links, 2 x 48-port PoE+ switches)",
+        "low": 18877,
+        "high": 30133,
+        "centre": "Auckland",
+        "basis": "Sum of the components above: cited QV labour rate x judged hours, fetched NZ supplier prices for cabinet, patch panels, cable managers, PDUs, patch leads and switches, plus three labelled minor allowances (blanking/sundries, rack-to-MEB earth bond, tester access). Low uses the 600W/2xSFP+ HPE Instant On 1920-class switch pair and low hours; most likely $20,733 uses the exact-spec Cisco Catalyst 1300 48-port full-PoE+ 740W 4xSFP+ pair at $3,993.91 +GST each with mid hours; high uses the tier-1 Catalyst 9200L-48P-4X-A pair at $8,281.71 each (aggregator listing, possibly GST-inclusive) with high hours. Excl. GST, excl. prelims, margin, design, consent and all excluded scope; not a certified price."
+      },
+      "dropped": true,
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "allowance",
+        "web-derived",
+        "web-derived",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 7,
+        "webVerified": 5,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 2,
+        "webUnsupported": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 917872,
+        "outputTokens": 28254,
+        "cachedTokens": 789376,
+        "modelCalls": 14,
+        "toolCalls": 45,
+        "searchCalls": 16,
+        "estimatedCostUsd": 0.038595,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 917872,
+            "outputTokens": 28254,
+            "estimatedCostUsd": 0.038595,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 450346,
+      "band": {
+        "unit": "per completed comms rack (one 42RU rack, 96 certified Cat6A links, 2 x 48-port PoE+ switches)",
+        "low": 14763.18,
+        "high": 25694.7,
+        "centre": null,
+        "basis": "Sum of cited NZ vendor supply prices (GST-exclusive, retail), QV Auckland electrician labour rate 83.65/hour applied to stated hours, and two small stated allowances (rack plinth/earth kit; horizontal managers and blankings). Low end uses a value-tier 48-port 720W PoE+ switch pair and efficient labour hours; high end uses the spec-matching Cisco CBS350-48FP-4X pair and generous hours. No QV data-communications rates exist, so ~40% of the band is judgement-based labour hours at a proxy trade rate - hence low confidence. Excludes GST, preliminaries, margin, design, consent, the horizontal cabling and outlet ends, switch configuration and licensing, UPS and power supply, fibre and all room works, per the brief. Per-link equivalent at the centre: about $211 across 96 links."
+      },
+      "checks": [
+        "web-verified",
+        "allowance",
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "web-verified",
+        "web-derived",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 6,
+        "webVerified": 5,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 863652,
+        "outputTokens": 25074,
+        "cachedTokens": 728448,
+        "modelCalls": 13,
+        "toolCalls": 40,
+        "searchCalls": 17,
+        "estimatedCostUsd": 0.03751,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 863652,
+            "outputTokens": 25074,
+            "estimatedCostUsd": 0.03751,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 474562,
+      "band": {
+        "unit": "ea (per completed comms rack: 1 x 42RU 800x1000 rack, 96 certified Cat6A links, 2 x 48-port PoE+ switches)",
+        "low": 15086,
+        "high": 24258,
+        "centre": null,
+        "basis": "Auckland, mid-market commercial, GST exclusive and excluding preliminaries, margin, design and consent fees per the fixed scope. Sum of the fourteen components above: low $15,085.82, high $24,257.81, centre $19,671.82 by component midpoints. Equivalent to $157/link low, $253/link high and $205/link at the centre across 96 certified links. QV supplies only the trade labour rate (unreviewed) and one whole-building Telephone/Data Reticulation benchmark that is not a per-rack rate and has NOT been added; every item of comms hardware comes from fetched NZ vendor pages. Allowances (components 2, 5, 10, 14) total $870-$2,070, about 7.5% of the centre, so they are not carrying the band. Confidence is LOW because: (1) the largest component, the switches at roughly 27% of the centre, rests on vendor prices for 500W and 600W units that do not reproduce the specified 740W PoE budget, so the high end is soft and the risk is one-way upward; (2) the rack figure is a clearance line flagged 'only 1 unit left'; (3) the four labour lines, about 35% of the centre, combine a cited QV hourly rate with hour assumptions that no published source can test. This is a cost-plan band, not a certified price."
+      },
+      "checks": [
+        "web-derived",
+        "allowance",
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "web-verified",
+        "web-derived",
+        "qv-found",
+        "web-unsupported",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 6,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 2,
+        "webUnsupported": 1,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 763711,
+        "outputTokens": 26789,
+        "cachedTokens": 626944,
+        "modelCalls": 13,
+        "toolCalls": 42,
+        "searchCalls": 13,
+        "estimatedCostUsd": 0.038469,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 763711,
+            "outputTokens": 26789,
+            "estimatedCostUsd": 0.038469,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

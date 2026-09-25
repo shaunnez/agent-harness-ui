@@ -1,0 +1,304 @@
+{
+  "question": "deflection-head-acoustic-seal",
+  "kind": "pinned",
+  "arm": "A10",
+  "status": "agreed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 85.1,
+    "high": 164
+  },
+  "range": {
+    "min": 83.93,
+    "max": 185.36
+  },
+  "unit": "m",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.108,
+    "highRatio": 1.202,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1679,
+  "elapsedMs": 387706,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 230551,
+      "band": {
+        "unit": "m",
+        "low": 75,
+        "high": 122,
+        "centre": "Auckland",
+        "basis": "Sum of the seven distinct components above (track supply 10.68 + track install/fixings 3.51-12.36 + wool packer 1.66-4.22 + intumescent bead both faces 23.60-46.20 + head trimming/stopping both faces 28.20-32.40 + mobile scaffold 6.62-13.23 + labelling allowance 0.83-3.33) = $75.10-$122.42/m; midpoint $98.76/m. 60m nominal run: $4,510-$7,345, midpoint $5,925. NZD, GST exclusive, Auckland subcontract rates, 2026; excludes preliminaries, margin, design, consent fees and the partition itself as scoped. Only one item is a pure allowance (labelling, ~2% of the total), well under a third, so the band is built from cited rates; but two of the money lines (sealant bead, head stopping) are QV PROXIES for an unpublished proprietary spec and the track supply is an Australian retail price - hence low confidence and the wide spread. If the tested system accepts a single-face intumescent bead, subtract roughly $12-23/m (single-face bead vs two) giving about $63-99/m."
+      },
+      "dropped": true,
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 559518,
+        "outputTokens": 31263,
+        "cachedTokens": 445440,
+        "modelCalls": 10,
+        "toolCalls": 33,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.037206,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 559518,
+            "outputTokens": 31263,
+            "estimatedCostUsd": 0.037206,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 215166,
+      "band": {
+        "unit": "m",
+        "low": 75.9,
+        "high": 130.7,
+        "centre": "Auckland",
+        "basis": "Per lineal metre of partition head, Auckland subcontract rates, GST exclusive, preliminaries, margin and design excluded. Components priced then added: slotted head track 14.9-24.9, soffit fixings 3.5-12.3, mineral wool packer 2.9-5.9, intumescent bead both faces 22.2-34.1, bond breaker 0.5-2.0, head trimming/taping 21.2-28.2, mobile scaffold hire 6.6-13.2, scaffold relocation labour 3.1-6.1, compliance labelling 1.0-4.0. Total 75.9-130.7/m, midpoint 103.3/m; 60m nominal run = $4,554-$7,842, midpoint $6,198. The two allowances are only $1.5-6.0/m of the total, so the band is driven by cited rows, not allowances. Wide range is carried deliberately: the largest lines (intumescent sealant and head finishing) rest on close QV rows with large stated adjustments, and the proprietary track has no published NZ price at all. Confidence low. If the nominated tested system accepts an intumescent bead to one face only, delete the second bead (~11-17/m) and re-pin at approximately $59-$119/m."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-derived",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 618044,
+        "outputTokens": 39415,
+        "cachedTokens": 540800,
+        "modelCalls": 12,
+        "toolCalls": 39,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.036858,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 618044,
+            "outputTokens": 39415,
+            "estimatedCostUsd": 0.036858,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 206323,
+      "band": {
+        "unit": "m",
+        "low": 85.1,
+        "high": 154.2,
+        "centre": null,
+        "basis": "Auckland subcontract rates, GST exclusive, 2026, excludes preliminaries and margin. Sum of the ten components above per lineal metre of partition head (low $85.09, high $154.16). Totals for the 60m nominal run: $5,105 - $9,250, midpoint $7,178 (=$119.63/m). All rates are QV CostBuilder rows or labelled allowances; vendor pages were fetched only to identify the proprietary slotted head track and the sealant grade and to cross-check the sealant price, not to set a rate. Confidence is low because the two largest lines are proxies: the track (no QV row for a slotted head track; QV plain top track used with a stated uplift) and the two-face fire-rated sealant (QV prices a fire-rated acrylic at 15x13; the specified intumescent grade has no NZ-published price). Allowances carry only 7-13% of the total, so the band is established, but budget the wide range until the tested head detail is confirmed. Compared with the indicative $48-78/m in the scenario, this band is higher because (a) a 12x15 fire-rated bead to BOTH faces is two joints per metre at ~$16/m each, and (b) the specified 0.55 BMT slotted track is not made by Rondo or Intex (they start at 0.70 BMT), so a proprietary-profile uplift applies. Two items to settle before repricing: whether the nominated tested system needs the intumescent bead to one face or both, and the actual gauge of the slotted track. If a single face or a plain 10x10 acoustic sealant (QV $5.50/m per face) is accepted, the band falls to roughly $64-131/m."
+      },
+      "checks": [
+        "web-unsupported",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 1,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 536549,
+        "outputTokens": 35700,
+        "cachedTokens": 461952,
+        "modelCalls": 14,
+        "toolCalls": 43,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.033995,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 536549,
+            "outputTokens": 35700,
+            "estimatedCostUsd": 0.033995,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 387703,
+      "band": {
+        "unit": "per lineal metre of partition head (m), GST exclusive, Auckland 2026 subcontract rates",
+        "low": 83.93,
+        "high": 185.36,
+        "centre": "Auckland",
+        "basis": "Working estimate band, summed per lineal metre from seven distinct components (no aggregate row added over components, no part counted twice). QV CostBuilder AKL rows price the slotted head track by proxy, the soffit fixings, the wool packer, the two-face intumescent bead, the head stop joint/taping and the mobile scaffold hire; one small allowance covers compliance tagging. Design, preliminaries, margin, consent fees, producer statements and testing/certification are excluded by scope, so no professional fee is built in. 60m nominal run: low 5,035.80, high 11,121.60, midpoint 8,078.70. Two proprietary lines - the slotted deflection head track (24.6-53.0/m) and the two-face intumescent bead (32.4-69.6/m) - are QV proxies rather than exact rows and together are about two-thirds of the midpoint; that is why the band is roughly 2.2x wide and confidence is low. Excludes GST, preliminaries and margin as scoped."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 672174,
+        "outputTokens": 34537,
+        "cachedTokens": 580736,
+        "modelCalls": 12,
+        "toolCalls": 38,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.03618,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 672174,
+            "outputTokens": 34537,
+            "estimatedCostUsd": 0.03618,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 296924,
+      "band": {
+        "unit": "m (per lineal metre of partition head)",
+        "low": 93,
+        "high": 164,
+        "centre": "Auckland",
+        "basis": "Sum of cited QV rows and labelled allowances, Auckland, GST-exclusive, subcontract supply-and-fix, 2026. Low = $93/m (60m: $5,580); high = $164/m (60m: $9,840); midpoint ~$127/m (60m: ~$7,620). Two of the six components (slotted head track, intumescent sealant both faces) rest on QV close proxies rather than exact rows and together carry over half the cost, so confidence is low and the band is wide. This sits well above the scenario's own $48-$78/m: that draft appears to under-price the two-face intumescent bead and to price the slotted track as a plain top track."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 365810,
+        "outputTokens": 6648,
+        "cachedTokens": 239616,
+        "modelCalls": 11,
+        "toolCalls": 36,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.023637,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 365810,
+            "outputTokens": 6648,
+            "estimatedCostUsd": 0.023637,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,327 @@
+{
+  "question": "sprinkler-system-installation",
+  "kind": "pinned",
+  "arm": "A10",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 44,
+    "high": 80.94
+  },
+  "range": {
+    "min": 43.5,
+    "max": 83
+  },
+  "unit": "$/m2 of sprinklered floor area (Auckland, GST exclusive)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.235,
+    "highRatio": 1.315,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1355,
+  "elapsedMs": 371382,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 149906,
+      "band": {
+        "unit": "$/m2 of sprinklered floor area (Auckland, GST exclusive)",
+        "low": 43.5,
+        "high": 63.1,
+        "centre": null,
+        "basis": "Sum of the ten components above: $130,554 low to $189,304 high for the 3,000 m2, centre $159,900 ($53.30/m2). Excludes GST, preliminaries, margin, hydraulic design, PS1 and consent fees, fire pump/tanks/town main, fire alarm panel and detection, in-rack/ESFR, dry or pre-action systems, penetration fire-stopping and structural steel modifications, after-hours work and builder's work, as the scope directs. Built bottom-up from QV CostBuilder rows: 250 sprinkler heads at all-up rates of $361 (217 exposed) and $386 (33 flush/rosette), mains pipework at $95-$162/m, external bell $129, EWP at $160/day; four labelled allowances (alarm valve set, FACP interface, commissioning/verification/documentation, head guards and sway bracing) carry 11% of the low and 16% of the high, under the one-third limit. No aggregate row (QV dry-pipe $68/m2 or the Fire Services warehouse benchmark $97/m2) has been added, so no double counting of service mains, alarm or hydrants. Assistant's working estimate only - not a certified price; QV rows are unreviewed and the mains pipework quantity is a take-off, not a measured bill. Wellington/Christchurch would be 4-7% lower on the pipework rows; head rows are identical across the three centres."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 242637,
+        "outputTokens": 19321,
+        "cachedTokens": 178560,
+        "modelCalls": 8,
+        "toolCalls": 23,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.02174,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 242637,
+            "outputTokens": 19321,
+            "estimatedCostUsd": 0.02174,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 209452,
+      "band": {
+        "unit": "$/m2 of sprinklered floor area",
+        "low": 55,
+        "high": 72,
+        "centre": null,
+        "basis": "Sum of cited QV CostBuilder rows plus labelled allowances, NZD GST exclusive, Auckland, for 3,000 m2 of sprinklered floor area: $166,300 low / $189,800 mid / $216,000 high total (55.4 / 63.3 / 72.0 per m2). Heads and branch pipe $90,250 (QV all-up head rate @ $361 x 250 heads); mains and ranges 300 m in 40-100 mm from QV fire-pipework and plumbing galvanised rows, $53,900 mid with the take-off varied -20%/+25% to set the band; fittings, hangers to large mains, sway bracing, one alarm valve set, monitoring terminals, commissioning/verification/documentation and EWP access complete the sum. Allowances are 15% of the total (under one third), but the mains quantity is a take-off assumption and the QV rows are unreviewed, so confidence is medium rather than high. Scope excludes GST, preliminaries, margin, hydraulic design, PS1 and consent fees, fire pump, tank, town main upgrade and incoming connection, fire alarm and electrical, in-rack/ESFR, dry or pre-action, penetration fire-stopping and structural steel. QV's dry-pipe cold-store row at $68/m2 of sprinkled area including service mains and connection to the town main (t7:r1) was used only as an order-of-magnitude cross-check and is not added."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 11,
+        "rowsFound": 11,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 430495,
+        "outputTokens": 27078,
+        "cachedTokens": 356096,
+        "modelCalls": 12,
+        "toolCalls": 22,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.028475,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 430495,
+            "outputTokens": 27078,
+            "estimatedCostUsd": 0.028475,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 249845,
+      "band": {
+        "unit": "NZD/m2 of sprinklered floor area, GST exclusive, Auckland",
+        "low": 44,
+        "high": 83,
+        "centre": null,
+        "basis": "Built up from cited QV CostBuilder rows plus four labelled allowances, no component counted twice. Mid-values build: 216 exposed heads @ $298 = $64,368; 34 office heads @ $310 = $10,540; 200 m of 40-50 mm range pipe @ $108 (QV row incl. hangers and painting) = $21,600; 280 m of 65-100 mm main @ $210 (QV proxy, stated adjustment) = $58,800; allowances at mid ($10,000 valve set, $6,750 seismic, $1,050 monitoring terminals, $4,500 commissioning/documentation, $6,000 EWP) = $28,300. Mid total $183,608 = $61.20/m2. Envelope: $43.85/m2 ($131,555) to $83.49/m2 ($250,463); envelope midpoint $63.65/m2. TOTALS FOR THE 3,000 m2 SPRINKLERED AREA: low approx $132,000, centre approx $184,000, high approx $250,000, so the amortisation of the single alarm valve set ($7,000-$13,000) is visible at $2.33-$4.33/m2 and EWP at $1.33-$2.67/m2. Allowances carry $28,300 of $183,608 = 15% of the mid total, i.e. well under one third, so the band is established rather than allowance-dominated. Confidence LOW, not because the main drivers are unsourced - the head/branch lines (largest single component) sit on QV's own 'average all-up cost per sprinkler head' rows, corroborated by the fetched WSP/BSA model at GBP180/head - but because QV's fire pipework group stops at 50 mm, so 65-100 mm mains (the second largest line) rest on a proxy with a stated adjustment plus my own layout quantity, giving a +/-60% spread on that line. Corroboration only, not added: QV [benchmark] Fire Services / Costs per Square Metre, Industrial Warehouse with small office, AKL 97 / WLG 96 / CHC 92 per m2 all fire services (sprinklers plus detection, hydrants, reels, extinguishers), against which a sprinkler-only $61/m2 is the normal two-thirds share; QV Dry Pipe Sprinkler System $68/m2 of sprinkled area including service mains and connection to mains water supply (both excluded here) and dearer dry-pipe hardware; fetched source-2 (WSP/BSA via Designing Buildings) 'Price per sprinkler head ; including pipework valves and supports = GBP180 per head' and 'Total = GBP17.25/m2 GIA [note 6] + Sprinkler infrastructure (GBP70,000)' which includes booster pumps and water storage excluded from this scope; fetched source-1 (CCC Engineering, AU, 2026) 'For a standard warehouse of 2,000 to 5,000 m2, expect to spend $80 to $150 per square metre on fire protection' for the whole fire package. WLG and CHC would be 2-8% lower on the pipework lines (head rows are identical in all three centres). All QV rows are UNREVIEWED and must be caveated in any cost plan."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 494391,
+        "outputTokens": 30969,
+        "cachedTokens": 415616,
+        "modelCalls": 14,
+        "toolCalls": 25,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.031644,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 494391,
+            "outputTokens": 30969,
+            "estimatedCostUsd": 0.031644,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 371379,
+      "band": {
+        "unit": "$/m2 of sprinklered floor area",
+        "low": 65,
+        "high": 100,
+        "centre": "Auckland",
+        "basis": "Auckland, NZD, GST exclusive, NET OF preliminaries and margin (both excluded by scope - a tendered sum would be 15-25% higher). Sum of the components above: low NZ$195,940 (65.3/m2), mid NZ$247,453 (82.5/m2), high NZ$301,126 (100.4/m2) for the 3,000 m2. All costs are totals for the 3,000 m2 except the alarm valve set, EWP, fittings, seismic, commissioning and documentation allowances, which are amortised over it. Allowances carry about 28% of the mid total (under a third); the two QV-priced drivers, heads and pipework, carry about 63%. Reasonableness anchor: QV [benchmark] Fire Services for Industrial 'Warehouse with small office' is AKL 97/m2 of floor area for ALL fire services, so a sprinkler-only band below that is consistent. Main uncertainties: the quantity of mains and the size uplift applied to QV's 50 mm pipe row, and the seismic-restraint allowance. QV rows are unreviewed and are cited with caveats. Get one installer quote (Argus Fire, Wormald, Fire Security Services, Viking Pacific/Sprinkler Systems) to firm the band before it is used for anything but a cost plan."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 7
+      },
+      "usage": {
+        "inputTokens": 422258,
+        "outputTokens": 19571,
+        "cachedTokens": 355584,
+        "modelCalls": 12,
+        "toolCalls": 22,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.02281,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 422258,
+            "outputTokens": 19571,
+            "estimatedCostUsd": 0.02281,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 338878,
+      "band": {
+        "unit": "$/m2 of sprinklered floor area",
+        "low": 53.73,
+        "high": 80.94,
+        "centre": "Auckland",
+        "basis": "Built up from QV CostBuilder Fire Protection rows for the heads and per-head branch work (250 heads: 217 exposed @ $361 all-up, 33 flush-mounted @ $386 all-up), QV galvanised fire pipework to 50 mm, QV Plumbing water-supply galvanised pipe as a stated proxy for the 80 mm and 100 mm mains, and a QV scissor-lift hire day rate; plus labelled allowances for main fittings, NZS 4541 sway bracing and flexible drops, the single 100 mm alarm valve set with flow switch and trim, the monitoring interface terminals, signage, head guards, flush/test/commissioning and as-built/Form 6A/PS3 documentation. GST exclusive. Excludes preliminaries, margin, hydraulic design, PS1 and consent fees, fire pump, pump shed, tanks, town main upgrade and incoming connection, fire alarm panel, detection, sounders and electrical supply, in-rack/ESFR, dry or pre-action systems, penetration fire-stopping and structural steel. Zero double counting: the per-head rows already include 3 m of 25 mm pipe, supports and design (750 m against ~780 m measured branch lines), so no range pipework or head-fixing labour is added; QV pipe rates that say 'including hangers and painting' are not re-loaded with hangers; the dry-pipe per-m2 row and the Fire Services per-m2 benchmark are used only as cross-checks and are not summed. Allowances are 16% of the low band and 27% of the high band, under a third, so the band is carried rather than voided. Confidence lowered to low because the mains quantities (about 30% of the band) are measured from a written brief with no drawings, and the band may need to widen if the OH3 design area forces mains larger than 100 mm."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 8
+      },
+      "usage": {
+        "inputTokens": 559196,
+        "outputTokens": 25299,
+        "cachedTokens": 464000,
+        "modelCalls": 11,
+        "toolCalls": 32,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.030851,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 559196,
+            "outputTokens": 25299,
+            "estimatedCostUsd": 0.030851,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

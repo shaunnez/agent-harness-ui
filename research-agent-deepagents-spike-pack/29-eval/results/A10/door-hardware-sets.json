@@ -1,0 +1,276 @@
+{
+  "question": "door-hardware-sets",
+  "kind": "pinned",
+  "arm": "A10",
+  "status": "disputed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 1884,
+    "high": 2445
+  },
+  "range": {
+    "min": 1497,
+    "max": 2472
+  },
+  "unit": "per door leaf (ea) — complete hardware set, supplied and fitted",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.313,
+    "highRatio": 1.05,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1493,
+  "elapsedMs": 351757,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 179027,
+      "band": {
+        "unit": "per door leaf (ea) — complete hardware set, supplied and fitted",
+        "low": 1497,
+        "high": 2472,
+        "centre": "Auckland (AKL rates; WLG/CHC within ~3% on the QV rows used)",
+        "basis": "Sum of nine distinct components, no double counting: lockset+lever furniture (QV t2:r5, 728–1040), overhead closer (QV t24:r2, 320–800), 3 hinges (QV t0:r11 x3, 117.60), floor door stop (QV t22:r4, 51), restricted-keyway cylinder (QV t7:r11 anchor, +20%/+140%, 60–120), installation labour (QV carpenter 81.30/hr x 1.5–2.0 hr, 122–163), registered key cutting (LockSmart 10–20/key x3, 30–60), bench keying to master system (LockSmart 60–100/lock x1, 60–100) and the amortised master-key/handover allowance (8–20). Total for the nominal 25 leaves $37,425–$61,800, excl. GST. Allowances are ~5% of the total, so the band does not rest on them. Low confidence is driven by two stated QS adjustments: QV's nearest mortice-lock row and closer row are a grade above the specified Grade 2 / EN3 product (-30% and -60% applied to the published AKL rates at the low end; high end = QV as published), and by the unresolved question of whether QV's Hardware-section rows include fixing. For comparison, the scenario's own $620–880/leaf is roughly 40% below this low end and is only reachable with value-brand Grade 2 and economy EN3 hardware, which QV does not price. Re-run the closer and lockset against a supplier quote before using either end of this band."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 359735,
+        "outputTokens": 23148,
+        "cachedTokens": 280320,
+        "modelCalls": 8,
+        "toolCalls": 29,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.026642,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 359735,
+            "outputTokens": 23148,
+            "estimatedCostUsd": 0.026642,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 256950,
+      "band": {
+        "unit": "ea (per door leaf, one complete hardware set fitted)",
+        "low": 1965,
+        "high": 2445,
+        "centre": "Auckland",
+        "basis": "Sum of the components above, per leaf, GST exclusive, Auckland 2026, no preliminaries, margin or design fees. Supply of a complete commercial mortice lock set (QV AKL 830–890, corroborated by the importer's 2025 kit list at 745.00 for the equivalent Legge 991 kit), restricted-keying per door (35–95, fetched), 3 registered keys (30–60, fetched), overhead adjustable closer (QV AKL 800–980), 3 SS butt hinges (QV 117.60–176.40), door stop (QV 20.50–51.00), fitting labour (QV carpenter rate 81.30/hr × 1.5–2.0 h = 121.95–162.60) and a 10–30 sundries/set-up allowance. Allowances are about 1% of the band, so the band is carried by cited rates, not by judgement. Mid-point ~$2,205/leaf; for the 25-leaf nominal run, ~$49,100–$61,100. Principal sensitivities: (a) QV prices only LCN closers at 800–1,140, so if a spec-equivalent Briton 1120 (importer list 275.00) is accepted the band drops to roughly $1,350–$1,650/leaf; (b) if the QV hardware rates already include fixing, deduct 122–163; (c) if furniture is not in the QV lock rate, add 270–330. QV hardware rows are unreviewed and do not state finish or inclusions, hence confidence low."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 991244,
+        "outputTokens": 30635,
+        "cachedTokens": 877184,
+        "modelCalls": 16,
+        "toolCalls": 46,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.038122,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 991244,
+            "outputTokens": 30635,
+            "estimatedCostUsd": 0.038122,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 177237,
+      "band": null,
+      "dropped": true,
+      "checks": [],
+      "citations": null,
+      "usage": {
+        "inputTokens": 789832,
+        "outputTokens": 27854,
+        "cachedTokens": 706944,
+        "modelCalls": 13,
+        "toolCalls": 37,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.031266,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 789832,
+            "outputTokens": 27854,
+            "estimatedCostUsd": 0.031266,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 351753,
+      "band": {
+        "unit": "ea (one complete hardware set fitted to one door leaf)",
+        "low": 1391,
+        "high": 2130,
+        "centre": "Auckland",
+        "basis": "Sum of the seven components above (low sum 1390.88, high sum 2130.30, mid-point about $1,761/leaf), all NZD and GST exclusive, Auckland 2026, no preliminaries, margin, design or consent. For the nominal 25 leaves on one floor and one visit: about $34,800-$53,300 (mid ~$44,000). Every component is priced off a cited QV CostBuilder row or a fetched supplier page; there are no pure judgement allowances. Confidence is LOW because (a) the closer is a premium LCN row cut by 50% to reach the specified standard-range EN 1154 size 3 unit, (b) QV's lock, closer and door-stop rates do not state whether fixing is included and I have assumed it is (the reverse assumption adds about $75-$160/leaf), and (c) the keying and key-cutting figures are a locksmith's indicative ranges rather than quotes. Two structural points: the non-per-leaf items (master-key system set-up and site set-up/handover) are small and amortise to a few dollars per leaf over 25 leaves, so the rate is insensitive to run length; and a fire-rated leaf, panic hardware or access control are outside this scope and priced separately."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 666811,
+        "outputTokens": 26611,
+        "cachedTokens": 596608,
+        "modelCalls": 15,
+        "toolCalls": 48,
+        "searchCalls": 5,
+        "estimatedCostUsd": 0.028287,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 666811,
+            "outputTokens": 26611,
+            "estimatedCostUsd": 0.028287,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 338888,
+      "band": {
+        "unit": "NZD per door leaf (one complete hardware set fitted), excl. GST, Auckland 2026",
+        "low": 1884,
+        "high": 2354,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components only: QV mortice lockset complete $830-$1,040 + QV LCN adjustable closer $800 + QV SS hinges 3 no. supply-only $117.60-$164.64 + QV door stop $20.50-$51 + fetched LockSmart restricted-keying range $35-$95 + QV carpenter 1.0-2.5 h $81.30-$203.25 = $1,884-$2,354 per leaf; nominal 25 leaves = $47,100-$58,850. No aggregate or elemental row used, and hinge/door-stop fixing is added once, in the labour line, because those QV groups are labelled supply only. Confidence is LOW, not medium, for three stated reasons: (1) QV does not disclose whether the unlabelled Hardware groups include fixing, so up to ~$120/leaf could be on the wrong side of the line; (2) the lockset and closer proxies are premium architectural rows (non-stated grade/backset/finish; aluminium-finish LCN closer used for an SSS-spec closer) used in place of the mid-market items actually specified, so the true figure could sit below the low end if value-brand hardware is acceptable; (3) the keying line rests on one locksmith's published range rather than a per-cylinder trade price. Allowances are a small share of the total (only the judgement hours), so the band is established — but it is a cost-plan band for a brand-specified schedule, not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 864915,
+        "outputTokens": 21662,
+        "cachedTokens": 801024,
+        "modelCalls": 21,
+        "toolCalls": 40,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.024984,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 864915,
+            "outputTokens": 21662,
+            "estimatedCostUsd": 0.024984,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

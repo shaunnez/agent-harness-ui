@@ -1,0 +1,205 @@
+{
+  "question": "concrete-paving-slab",
+  "kind": "pinned",
+  "arm": "A0",
+  "status": "agreed",
+  "passes": true,
+  "consensus": {
+    "low": 191,
+    "high": 218
+  },
+  "range": {
+    "min": 184,
+    "max": 220
+  },
+  "unit": "m2",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.043,
+    "highRatio": 1.084,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 3.0472,
+  "elapsedMs": 151918,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 145584,
+      "band": {
+        "unit": "m2",
+        "low": 192,
+        "high": 218,
+        "centre": "Auckland",
+        "basis": "Sum of QV component rows (no aggregate rows combined with components). 300 m2 total $57,600-$65,400. Excludes set-out/level control and cart-away of trim spoil, which were not established. Cross-check only: QV slab-on-grade 150mm aggregate f0968d...:t3:r3 $199/m2 (Economesh), about $230 once SE92 is swapped in"
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 14,
+        "rowsFound": 14,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 18,
+        "outputTokens": 12110,
+        "cachedTokens": 484193,
+        "modelCalls": 30,
+        "toolCalls": 29,
+        "searchCalls": 0,
+        "estimatedCostUsd": 1.0113505999999999,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 18,
+            "outputTokens": 12110,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.0113505999999999,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 151916,
+      "band": {
+        "unit": "m2 of finished slab",
+        "low": 184,
+        "high": 220,
+        "centre": "Auckland",
+        "basis": "Sum of QV components for 300 m2 ($55,281-$65,925), SE92 mesh as named, set out excluded. Cross-checked against QV slab-on-grade 150mm t3:r3 ($199 with Economesh, about $232 with SE92), not combined. If 665 mesh was intended: $153-$188/m2."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 14,
+        "rowsFound": 14,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 16,
+        "outputTokens": 13154,
+        "cachedTokens": 415287,
+        "modelCalls": 28,
+        "toolCalls": 27,
+        "searchCalls": 0,
+        "estimatedCostUsd": 1.0075614000000002,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 16,
+            "outputTokens": 13154,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.0075614000000002,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 150484,
+      "band": {
+        "unit": "m2",
+        "low": 191,
+        "high": 203,
+        "centre": "Auckland",
+        "basis": "Sum of QV component rows for 300 m2 (45 m3 concrete, 120 lm sawcut, 50-70 lm edge form); total $57,250-$60,925 excl GST; no escalation to Q3 2026 applied; QV rows unreviewed"
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 15,
+        "rowsFound": 15,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 18,
+        "outputTokens": 13245,
+        "cachedTokens": 487974,
+        "modelCalls": 30,
+        "toolCalls": 29,
+        "searchCalls": 0,
+        "estimatedCostUsd": 1.0282708,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 18,
+            "outputTokens": 13245,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.0282708,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

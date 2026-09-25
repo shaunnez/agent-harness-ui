@@ -1,0 +1,203 @@
+{
+  "question": "metering-control-instrumentation-wiring",
+  "kind": "pinned",
+  "arm": "A0",
+  "status": "agreed",
+  "passes": false,
+  "consensus": {
+    "low": 48.83,
+    "high": 57.83
+  },
+  "range": {
+    "min": 42.49,
+    "max": 62
+  },
+  "unit": "m",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.177,
+    "highRatio": 1.305,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 3.2439,
+  "elapsedMs": 144788,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 144788,
+      "band": {
+        "unit": "m",
+        "low": 48.83,
+        "high": 57.83,
+        "centre": "Auckland",
+        "basis": "200m total $9,767-$11,566 excl GST: conduit $6,940 + cable supply $636-$667 + draw-in $669-$1,338 + terminations $535-$803 + glands $45 + BMS interface $125-$251 + testing $251-$393 + labelling $167-$335 + scaffold $397-$794, divided by 200m."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 26,
+        "outputTokens": 10218,
+        "cachedTokens": 818691,
+        "modelCalls": 25,
+        "toolCalls": 24,
+        "searchCalls": 3,
+        "estimatedCostUsd": 1.1406672000000002,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 26,
+            "outputTokens": 10218,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.0735782,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 32284,
+            "outputTokens": 961,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.06708900000000001,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 142807,
+      "band": {
+        "unit": "m",
+        "low": 50,
+        "high": 62,
+        "centre": "Auckland",
+        "basis": "Sum of components over 200m: total $10,035 (low) to $12,397 (high), excl. GST, preliminaries and margin. Conduit is QV t4:r3; cable is ASI web price to Belden (unchecked); labour is QV electrician $83.65/h x assumed hours (28-48 h total); scaffold is QV t10:r46. If QV t4:r14 ($60/m) is the correct PVC conduit row, the band rises about $25/m."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "web-not-fetched",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 2,
+        "webNotFetched": 1,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 22,
+        "outputTokens": 11923,
+        "cachedTokens": 617284,
+        "modelCalls": 25,
+        "toolCalls": 24,
+        "searchCalls": 3,
+        "estimatedCostUsd": 1.0941408,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 22,
+            "outputTokens": 11923,
+            "modelCalls": 0,
+            "estimatedCostUsd": 1.0265487999999998,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 33247,
+            "outputTokens": 869,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.067592,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 108715,
+      "band": {
+        "unit": "m",
+        "low": 42.49,
+        "high": 47.5,
+        "centre": "Auckland",
+        "basis": "PARTIAL. Conduit QV t4:r3 $34.70 + cable $5.80-$8.83 (QV coax proxy +/- ASI material) + scaffold $397-$794 over 200m. Total 200m = $8,497-$9,500. Excludes 16 terminations, screen earthing, labelling/schedule, IR/continuity testing, 4-20mA loop injection and BMS cabinet labour, none of which are published."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 22,
+        "outputTokens": 8424,
+        "cachedTokens": 630345,
+        "modelCalls": 27,
+        "toolCalls": 26,
+        "searchCalls": 2,
+        "estimatedCostUsd": 1.009053,
+        "partial": false,
+        "byModel": {
+          "claude-opus-5-5": {
+            "inputTokens": 22,
+            "outputTokens": 8424,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.961557,
+            "priced": true
+          },
+          "claude-haiku-4-5-20251001": {
+            "inputTokens": 24271,
+            "outputTokens": 645,
+            "modelCalls": 0,
+            "estimatedCostUsd": 0.047496,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

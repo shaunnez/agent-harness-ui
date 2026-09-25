@@ -1,0 +1,290 @@
+{
+  "question": "glass-kitchen-splashback",
+  "kind": "pinned",
+  "arm": "A10",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 725,
+    "high": 845
+  },
+  "range": {
+    "min": 665,
+    "max": 915
+  },
+  "unit": "m2 (per m2 of finished splashback face; totals for the 4.32 m2 nominal quantity shown in basis)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.2,
+    "highRatio": 1.089,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.113,
+  "elapsedMs": 323898,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 132424,
+      "band": {
+        "unit": "4.32 m2 total (equals $756-$873/m2 of finished splashback face)",
+        "low": 3265,
+        "high": 3770,
+        "centre": null,
+        "basis": "Working band built from cited QV CostBuilder rows plus two named allowances, Auckland, GST exclusive, excluding preliminaries, main-contractor margin, design/consent fees and all excluded wall, benchtop and services work. Glass supply-and-fix from QV Glazed Splashbacks row ...t24:r32 AKL $600/m2 (5mm low-iron colourbacked proxy; +5% to $630/m2 for the 6mm gauge, benchmarked on QV's own Colourbak 5 to 6mm step), edge polishing from ...t20:r17 ($8.2/m) with the shaped-edge rate $13.6/m as the high case, labour from QV Labour Rates Glazier AKL $96.4/hr and General Labourer AKL $60.55/hr, and allowances for the 3 factory cutouts ($70-$130 each) and CBD cartage ($50-$100). Allowances carry only 8-13% of the total, so the band is not allowance-driven; the largest component rests on a cited QV row. Confidence is medium because the QV rows are unreviewed, the glass row is a 5mm proxy for a 6mm specification, and the row's inclusions (fixing labour, sealant, polished edges, site set-out) are not stated - I have not added install labour on top of it, and the caveats record the deduct if those items are already inside the $600/m2. The band is materially above the $460-$620/m2 proposed in the brief because no QV row supports a $330/m2 glass supply rate: QV's installed rate for this exact product family is $600/m2, which alone is $2,592 for 4.32 m2. Sensitivity: if the QV row is supply-only, add 2 people x 3 hr of glazing at $96.4/hr (about $578, $134/m2) and the band moves to about $890-$1,010/m2."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 206078,
+        "outputTokens": 16573,
+        "cachedTokens": 166016,
+        "modelCalls": 10,
+        "toolCalls": 17,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.016451,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 206078,
+            "outputTokens": 16573,
+            "estimatedCostUsd": 0.016451,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 179334,
+      "band": {
+        "unit": "m2 (per m2 of finished splashback face; totals for the 4.32 m2 nominal quantity shown in basis)",
+        "low": 725,
+        "high": 915,
+        "centre": "Auckland CBD",
+        "basis": "Sum of the five components: low $3,132 / 4.32 m2 = $725/m2; high $3,954 / 4.32 m2 = $915/m2; midpoint $3,543 = $820/m2. Main cost driver (the glass, ~83-85% of the midpoint) is the cited QV installed splashback row t24:r32 at AKL $600/m2 with a stated +$48/m2 gauge adjustment to 6mm; allowances (cutouts, template visit, delivery/handling, protection) total $540-$930, about 17-24% of the band. GST exclusive, excludes preliminaries, main-contractor margin, design/consent fees, substrate, removal, benchtops, joinery, electrical and plumbing fit-off, scaffold, hoist and after-hours access, as scoped. Band is above the $460-620/m2 in the brief because the published QV supply-and-fix rate alone is $600/m2 at 5mm ($648/m2 at 6mm) and QV's glazier charge-out rate is $96.40/hr AKL versus the $48/hr used in the brief's build-up; the brief's figure is a floor that needs a firm glazier quote in writing. Rate is near glaziers' minimum job charge at this 4.32 m2 size; a 15-20 m2 run of the same specification would fall toward $600-680/m2."
+      },
+      "checks": [
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 228265,
+        "outputTokens": 22700,
+        "cachedTokens": 179840,
+        "modelCalls": 10,
+        "toolCalls": 25,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.021423,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 228265,
+            "outputTokens": 22700,
+            "estimatedCostUsd": 0.021423,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 323896,
+      "band": {
+        "unit": "m2 of finished splashback face (nominal 4.32 m2; band total $2,870-$3,630 for the job)",
+        "low": 665,
+        "high": 840,
+        "centre": null,
+        "basis": "Working estimate band, not a certified price. GST exclusive, no preliminaries, no margin, Auckland CBD, subcontractor price to a main contractor. Built from QV row t24:r32 (AKL $600/m2 installed 5mm low-iron colourbacked splashback, UNREVIEWED, group marked 'approximate rates'), adjusted +5% to +10% for the specified 6mm gauge using QV's own Colourbak gauge delta (t4:r23/t4:r24), plus four allowances with no published rate: 3 factory cut-outs $150-330, template/check-measure visit $0-190, delivery and two-person handling $100-200, protection/seal/clean-off $30-60. Low = 4.32 m2 @ $600 + $150 + $0 + $100 + $30 = $2,872 ($665/m2). High = 4.32 m2 @ $660 + $330 + $190 + $200 + $60 = $3,631 ($841/m2). Allowances are ~12% of the midpoint, so the low confidence is not driven by allowance weight but by one unresolved question: whether the QV glazed-splashback rate is supply-and-fix or supply-only. Add flat polished edge 18 m @ $8.20/m (t20:r17) and glazier fixing time (QV Glazier AKL $96.40/hr) if it proves to be supply-only: the band then moves to roughly $970-1,000/m2. This band sits above the scenario's stated $460-620/m2 because the library's installed rate alone is $600/m2 and the scenario's implied glass-supply rate (~$330/m2) is below it; it also sits above a 15-20 m2 run of the same glass, where the fixed costs ($380-420/m2 in a large run) amortise further."
+      },
+      "checks": [
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 2,
+        "webUnsupported": 1,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 526193,
+        "outputTokens": 23026,
+        "cachedTokens": 429440,
+        "modelCalls": 11,
+        "toolCalls": 34,
+        "searchCalls": 5,
+        "estimatedCostUsd": 0.029617,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 526193,
+            "outputTokens": 23026,
+            "estimatedCostUsd": 0.029617,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 268398,
+      "band": {
+        "unit": "m2 of finished splashback face",
+        "low": 428,
+        "high": 797,
+        "centre": "Auckland",
+        "basis": "Component sum, Auckland, GST exclusive, subcontract price to a main contractor, excludes preliminaries, margin, design/consent fees and everything listed as excluded in the scope. Per m2: glass 400-630 + cut-outs 28 + templating 0-58 + delivery/handling 0-46 + silicone/seal/clean 0-35 = 428-797/m2. For the 4.32 m2 nominal quantity: 1,850 low, 3,440 high, midpoint 2,650 (612/m2). Fixed and amortised items load about 131/m2 at the high end, roughly 16% of the rate, which is why the band does not fall further at this area; the identical rate base spread over a 15-20 m2 run would fall back toward the glass rate itself (about 600-650/m2). Confidence is low, not because a driver is missing - every scope line is priced - but because the two published anchors for the glass itself disagree by about 55% (QV 600/m2 for 5mm low-iron colourbacked vs NZ market guides 'from $400/m2' installed including templating, one 2015-dated and possibly AUD), and QV's row does not state whether fixing and templating are included. The scenario's proposed $460-620/m2 band is not supported by any published source I could locate: it assumes about $330/m2 for the glass, whereas QV's only splashback row is $600/m2 (5mm, AKL) and QV's 6mm back-painted toughened glass row is $637/m2 (row 2dc5b4497e75a669b63791e1bce6bc7b6b7822720171a44ad93080bdfe1b8237:t4:r24)."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 678413,
+        "outputTokens": 32455,
+        "cachedTokens": 581632,
+        "modelCalls": 15,
+        "toolCalls": 27,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.035735,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 678413,
+            "outputTokens": 32455,
+            "estimatedCostUsd": 0.035735,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 237449,
+      "band": {
+        "unit": "m2",
+        "low": 798,
+        "high": 845,
+        "centre": "Auckland",
+        "basis": "Per m2 of finished splashback face, 4.32 m2 nominal (3 x 600 x 2400mm panels). Built bottom-up from cited QV rows for the three main drivers (back-painted low-iron glass $600/m2, 3 polished cutouts $28.80, glazier install 6 hr @ $96.4 = $578.40) plus one labelled allowance for template/delivery/handling/seal ($250-450). Totals $3,449-$3,649 excl GST and margin, i.e. $798-$845/m2. The rate is high per m2 because at only 4.32 m2 the fixed items - one template visit, one delivery, and the minimum two-person install crew - dominate: the glass row is a large-area fitted trade rate and this job sits near a glazier's minimum charge. A 15-20 m2 run of the identical specification would fall toward $600-$680/m2. GST, preliminaries, margin, design/consent fees, substrate, removal, joinery, services fit-off and scaffold/after-hours excluded per scope. QV rows are unreviewed and should be caveated."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 180259,
+        "outputTokens": 3824,
+        "cachedTokens": 132992,
+        "modelCalls": 9,
+        "toolCalls": 20,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.009783,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "opencode-go/deepseek-v4.1-flash": {
+            "inputTokens": 180259,
+            "outputTokens": 3824,
+            "estimatedCostUsd": 0.009783,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

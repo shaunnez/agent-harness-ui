@@ -1,0 +1,185 @@
+{
+  "question": "concrete-paving-slab",
+  "kind": "pinned",
+  "arm": "A3",
+  "status": "agreed",
+  "passes": false,
+  "consensus": {
+    "low": 235,
+    "high": 260
+  },
+  "range": {
+    "min": 216.08,
+    "max": 273
+  },
+  "unit": "NZD/m2 finished slab, GST exclusive",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.125,
+    "highRatio": 1.24,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.0344,
+  "elapsedMs": 202842,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 202841,
+      "band": {
+        "unit": "NZD/m2 finished slab, GST exclusive",
+        "low": 216.08,
+        "high": 220.08,
+        "centre": "Auckland",
+        "basis": "Sum of the distinct QV assembly rate, explicit QV additions, and minor stated allowances. 300m2 total: $64,824–$66,024; midpoint $65,424. Low confidence because the assembly is a proxy with included sand and polythene that this scope excludes, and because its finish and edge-form assumptions differ. QV rows are unreviewed."
+      },
+      "checks": [
+        "qv-found",
+        "qv-missing",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 4,
+        "rowsMissing": 1,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 258263,
+        "outputTokens": 10395,
+        "cachedTokens": 200960,
+        "toolCalls": 26,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.012937,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 258263,
+            "outputTokens": 10395,
+            "estimatedCostUsd": 0.012937,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 182614,
+      "band": {
+        "unit": "$/m2 finished slab, and total for 300 m2",
+        "low": 235,
+        "high": 260,
+        "centre": "Auckland",
+        "basis": "GST-exclusive NZD cost-plan band. Component arithmetic is approximately $234.50–$260.20/m2, rounded to $235–$260/m2; the centre is $247.50/m2. For 300 m2, the rounded band is $70,500–$78,000 and the centre is $74,250. Main slab cost uses a QV composite proxy; the range allows for scope mismatch and minor trim, set-out and edge-finish allowances. Allowances are a small share of the total. This is a working estimate, not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 172613,
+        "outputTokens": 6601,
+        "cachedTokens": 122624,
+        "toolCalls": 25,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.009526,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 172613,
+            "outputTokens": 6601,
+            "estimatedCostUsd": 0.009526,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 157562,
+      "band": {
+        "unit": "$/m2 finished slab",
+        "low": 243,
+        "high": 273,
+        "centre": "Auckland",
+        "basis": "Auckland QV rates, GST exclusive, for the stated 300 m2 open-site pour. Component rates total $242.59–$272.59/m2, rounded to $243–$273/m2. That is $72,900–$81,900 total for 300 m2; midpoint approximately $258/m2 or $77,400. Allowances are $7–$12/m2, under one third of the total. Low confidence reflects the bundled slab proxy's differing inclusions and the unreviewed QV rows. The assembly rate includes 0.4 m/m2 edge formwork, more than the stated 70 lm perimeter requires; no unverified credit has been taken. Its power-float finish also differs from the specified broom finish, so the bundle finish allowance cannot be cleanly reconciled against the separate QV broom-finish rate."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-missing",
+        "qv-missing",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 4,
+        "rowsMissing": 2,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 224970,
+        "outputTokens": 7916,
+        "cachedTokens": 161280,
+        "toolCalls": 32,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.01194,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "gpt-6-luna": {
+            "inputTokens": 224970,
+            "outputTokens": 7916,
+            "estimatedCostUsd": 0.01194,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}
