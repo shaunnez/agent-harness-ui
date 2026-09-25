@@ -1,12 +1,12 @@
 import { projectTaskAttention } from "../../../server/task-attention.mjs";
-import type { RuntimeTask } from "../../domain.ts";
+import type { RuntimeTask, StageId } from "../../domain.ts";
 import type { FrontierGateway, TaskCore } from "../runtime/contracts.ts";
 import { colonyStressFixtures } from "./colony.ts";
 import { fixtureHistory } from "./history.ts";
 import { loadFixture } from "./load.ts";
 import { fixtureManagement } from "./management.ts";
 import { fixtureResearch, researchFixtureProjects } from "./research/questions.ts";
-import { fixtureArtifact, fixtureProjects, fixtureTask, makeFixtureTasks } from "./scenarios.ts";
+import { fixtureArtifact, fixtureProjects, fixtureRun, fixtureTask, makeFixtureTasks } from "./scenarios.ts";
 import { stationFixtures } from "./stations.ts";
 import { fixtureWorkflow, sampleEligibility } from "./workflow.ts";
 import { enrichWorkflowScenarios } from "./workflow-scenarios.ts";
@@ -20,6 +20,10 @@ export function createFixtureGateway(
   colonyStress = false,
   workspaceReview = false,
 ): FrontierGateway & {
+  sampleWorldEvent(
+    id: string,
+    kind: "arrival" | "working" | "artifact" | "repair" | "tool" | StageId,
+  ): string;
   setDisconnected(value: boolean): void;
   appendActivity(id: string, count: number): void;
   setUsageState(id: string, state: "pending" | "zero"): void;
@@ -132,6 +136,76 @@ export function createFixtureGateway(
       task.activeRunIds = [];
       task.activeRunKind = null;
       changed(task);
+    },
+    sampleWorldEvent(id, kind) {
+      let task = get(id);
+      task.runs ??= [];
+      task.activeRunIds ??= [];
+      if (kind === "arrival") {
+        task = fixtureTask(`ARR-${tasks.size + 1}`, "New delivery task", task.repositoryPath, {
+          currentStage: "triage",
+          status: "queued",
+          activeRunIds: [],
+          activeRunKind: null,
+        });
+        tasks.set(task.id, task);
+        changed(task);
+        return task.id;
+      }
+      if (kind === "artifact") {
+        task.artifacts.push({
+          ...fixtureArtifact(
+            crypto.randomUUID(),
+            task.currentStage,
+            "# Recorded sample artifact\n\nThis event is an isolated visual QA fixture.",
+          ),
+          createdAt: new Date().toISOString(),
+        });
+      } else if (kind === "tool") {
+        const run = task.runs.find(
+          (entry) => entry.status === "running" && task.activeRunIds?.includes(entry.id),
+        );
+        if (!run) throw new Error("Start sample work before a tool response.");
+        task.events.push({
+          id: crypto.randomUUID(),
+          at: new Date().toISOString(),
+          category: "tool",
+          tone: "info",
+          stage: run.stage,
+          runId: run.id,
+          title: "Reading repository",
+          detail: "Sample tool activity; no model ran.",
+          toolCall: {
+            id: crypto.randomUUID(),
+            name: "read_file",
+            category: "file-read",
+            phase: "started",
+            result: null,
+          },
+        });
+      } else {
+        for (const run of task.runs)
+          if (run.status === "running") {
+            run.status = "completed";
+            run.completedAt = new Date().toISOString();
+          }
+        task.currentStage = kind === "repair" ? "implement" : kind === "working" ? task.currentStage : kind;
+        const run = fixtureRun(task.id, task.currentStage, "running");
+        run.id = crypto.randomUUID();
+        run.startedAt = new Date().toISOString();
+        run.usage = null;
+        task.runs.push(run);
+        task.activeRunIds = [run.id];
+        task.status = "running";
+        task.activeRunKind = kind === "repair" ? "repair" : "implementation";
+        task.activeRunReservationId = crypto.randomUUID();
+        task.blocker = null;
+        task.error = null;
+        for (const workPackage of task.workPackages)
+          if (workPackage.status === "running") workPackage.status = "planned";
+      }
+      changed(task);
+      return task.id;
     },
     sampleHistoryChange(id, status) {
       const task = get(id);

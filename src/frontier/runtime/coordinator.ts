@@ -1,5 +1,6 @@
 import type { WorkspaceHistoryPage, WorkspaceHistoryRequest } from "../../domain/workspace-history.ts";
 import type { FrontierGateway, FrontierSnapshot } from "./contracts.ts";
+import { currentFeedback, WorldFeedbackCursor } from "./world-feedback.ts";
 import { refreshPage } from "./pages.ts";
 
 const initialSnapshot: FrontierSnapshot = {
@@ -21,6 +22,15 @@ const initialSnapshot: FrontierSnapshot = {
 /** One refresh owner; stale responses can never change the selected task. */
 export class RefreshCoordinator {
   private snapshot: FrontierSnapshot = initialSnapshot;
+  private feedbackCursor = new WorldFeedbackCursor();
+  private feedbackGeneration = 0;
+  private visibilityChanged = () => {
+    this.feedbackGeneration++;
+    this.feedbackCursor.reset();
+    this.set({ worldFeedback: [] });
+    this.globalDue = 0;
+    if (!this.hidden()) void this.refresh();
+  };
   private listeners = new Set<() => void>();
   private timer: ReturnType<typeof setTimeout> | null = null;
   private busy = false;
@@ -62,10 +72,17 @@ export class RefreshCoordinator {
   }
   start() {
     this.stopped = false;
+    this.feedbackCursor.reset();
+    if (typeof document !== "undefined")
+      document.addEventListener("visibilitychange", this.visibilityChanged);
     void this.refresh();
   }
   stop() {
     this.stopped = true;
+    if (typeof document !== "undefined")
+      document.removeEventListener("visibilitychange", this.visibilityChanged);
+    this.feedbackGeneration++;
+    this.feedbackCursor.reset();
     this.generation++;
     if (this.timer) clearTimeout(this.timer);
     this.timer = null;
@@ -187,6 +204,15 @@ export class RefreshCoordinator {
     try {
       this.metrics.cycles++;
       const now = Date.now();
+      const wasConnected = this.snapshot.connection === "connected";
+      if (!wasConnected || this.hidden()) {
+        this.feedbackCursor.reset();
+        this.set({ worldFeedback: [] });
+      } else {
+        const current = this.snapshot.worldFeedback ?? [];
+        const remaining = current.filter((effect) => currentFeedback(effect, this.snapshot.tasks, now));
+        if (current.length !== remaining.length) this.set({ worldFeedback: remaining });
+      }
       if (force || now >= this.statusDue || this.snapshot.connection !== "connected") {
         const status = await this.gateway.status();
         this.set({ status });
@@ -199,6 +225,8 @@ export class RefreshCoordinator {
             workspace.sourceId !== this.snapshot.workspace?.sourceId ||
             workspace.upper < (this.snapshot.workspace?.upper ?? 0)
           ) {
+            this.feedbackCursor.reset();
+            this.set({ worldFeedback: [] });
             this.sourceGeneration++;
             this.generation++;
             this.versions.clear();
@@ -364,6 +392,39 @@ export class RefreshCoordinator {
             }),
           );
       }
+      const head = this.snapshot.workspace;
+      if (head && !this.snapshot.workspaceError) {
+        const request = this.feedbackCursor.request(head, !wasConnected || this.hidden());
+        if (request) {
+          const generation = this.feedbackGeneration;
+          try {
+            const page = await this.gateway.workspaceHistory(request);
+            if (
+              !this.stopped &&
+              !this.hidden() &&
+              generation === this.feedbackGeneration &&
+              page.sourceId === this.snapshot.workspace?.sourceId
+            ) {
+              const fresh = this.feedbackCursor.accept(page, Date.now());
+              const byTask = new Map(
+                (this.snapshot.worldFeedback ?? []).map((effect) => [effect.fact.taskId, effect]),
+              );
+              for (const effect of fresh) byTask.set(effect.fact.taskId, effect);
+              this.set({
+                worldFeedback: [...byTask.values()]
+                  .filter((effect) => currentFeedback(effect, this.snapshot.tasks, Date.now()))
+                  .slice(-8),
+              });
+            }
+          } catch {
+            this.feedbackCursor.reset();
+            this.set({ worldFeedback: [] });
+          }
+        }
+      } else {
+        this.feedbackCursor.reset();
+        this.set({ worldFeedback: [] });
+      }
       const historyRequest = this.historyRequests.shift();
       if (historyRequest) {
         try {
@@ -383,6 +444,8 @@ export class RefreshCoordinator {
         }
       }
     } catch (error) {
+      this.feedbackCursor.reset();
+      this.set({ worldFeedback: [] });
       this.metrics.failures++;
       this.set({ connection: "offline", error: errorMessage(error), selectedLoading: false });
       for (const request of this.historyRequests) request.reject(new Error(errorMessage(error)));

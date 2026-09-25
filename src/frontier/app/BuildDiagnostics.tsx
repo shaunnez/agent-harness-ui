@@ -1,4 +1,6 @@
 import { useState } from "react";
+import type { StageId } from "../../domain";
+import { stageLabels } from "../runtime/presentation";
 import type { RefreshCoordinator } from "../runtime/coordinator";
 
 /** Explicit QA-only entry; never opens in the ordinary product route. */
@@ -10,6 +12,7 @@ export function BuildDiagnostics({
   selectionTiming: React.RefObject<{ samples: number[] }>;
 }) {
   const [qaTaskId, setQaTaskId] = useState("");
+  const [qaStage, setQaStage] = useState<StageId>("plan");
   const [sample, setSample] = useState<unknown>(null);
   const [deliveryError, setDeliveryError] = useState<string | null>(null);
   if (new URLSearchParams(window.location.search).get("qa") !== "1") return null;
@@ -35,6 +38,46 @@ export function BuildDiagnostics({
             ))}
           </select>
         </label>
+      )}
+      {runtime.gateway.mode === "fixture" && "sampleWorldEvent" in runtime.gateway && (
+        <fieldset>
+          <legend>Recorded world events · sample only</legend>
+          <label>
+            Destination stage{" "}
+            <select value={qaStage} onChange={(event) => setQaStage(event.target.value as StageId)}>
+              {Object.entries(stageLabels).map(([id, label]) => (
+                <option value={id} key={id}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {(["working", qaStage, "arrival", "artifact", "repair", "tool"] as const).map((kind) => (
+            <button
+              type="button"
+              key={kind}
+              onClick={() => {
+                const id = qaTaskId || runtime.getSnapshot().selectedId;
+                const gateway = runtime.gateway;
+                if (!id || !("sampleWorldEvent" in gateway) || typeof gateway.sampleWorldEvent !== "function")
+                  return;
+                try {
+                  const changedId = gateway.sampleWorldEvent(id, kind);
+                  if (kind === "arrival") {
+                    setQaTaskId(changedId);
+                    runtime.select(changedId);
+                  }
+                  runtime.retry();
+                  setDeliveryError(`Sample ${kind} recorded. No live task changed.`);
+                } catch (error) {
+                  setDeliveryError(error instanceof Error ? error.message : "Sample event failed.");
+                }
+              }}
+            >
+              {kind === qaStage ? `Move to ${stageLabels[qaStage]}` : `Sample ${kind}`}
+            </button>
+          ))}
+        </fieldset>
       )}
       {runtime.gateway.mode === "fixture" && "sampleExternalChange" in runtime.gateway && (
         <div>
