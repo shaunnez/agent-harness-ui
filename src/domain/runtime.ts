@@ -704,6 +704,7 @@ export interface RuntimeTask {
   startedAt: string | null;
   completedAt: string | null;
   error: string | null;
+  activeRunReservationId?: string | null;
   activeRunKind: string | null;
   activeRunIds?: string[];
   attemptsByStage: Partial<Record<StageId, number>>;
@@ -757,6 +758,7 @@ export type RuntimeTaskSummary = Pick<
   | "completedAt"
   | "error"
   | "activeRunKind"
+  | "activeRunReservationId"
   | "activeRunIds"
   | "attemptsByStage"
   | "models"

@@ -56,6 +56,7 @@ export function projectWorkspaceState(task) {
     label: attention.label,
     reason: text(attention.reason),
     nextActor: attention.nextActor,
+    attentionKind: attention.kind,
   };
 }
 
@@ -110,6 +111,30 @@ export function materialCoreChanges(previous, next) {
                 `${stage}: ${gate?.state ?? "unavailable"}${gate?.reason ? ` — ${gate.reason}` : ""}`,
             )
             .join("; ") || null;
+      }
+      if (after.kind === "task-state") {
+        after.fromStage = previous?.currentStage ?? null;
+        after.fromStatus = previous?.status ?? null;
+        after.transition = !previous
+          ? "task-created"
+          : next.status === "completed" && previous.status !== "completed"
+            ? "task-completed"
+            : next.activeRunKind === "repair" &&
+                (next.activeRunReservationId !== previous.activeRunReservationId ||
+                  previous.currentStage !== next.currentStage)
+              ? "repair-started"
+              : previous.currentStage !== next.currentStage
+                ? "stage-advanced"
+                : before?.attentionKind !== after.attentionKind &&
+                    ["answer", "approval", "failed", "repair", "blocked"].includes(after.attentionKind)
+                  ? "attention"
+                  : null;
+        if (after.transition === "repair-started") {
+          const candidate = next.candidates?.at(-1);
+          after.reservationId = next.activeRunReservationId;
+          after.candidateId = candidate?.id;
+          after.candidateRevision = candidate?.revisionNumber;
+        }
       }
       changes.push(after);
     }

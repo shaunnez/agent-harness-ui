@@ -37,6 +37,13 @@ export interface WorkspaceChange {
   kind: "task-state" | "candidate-gates" | "artifact-arrived" | "run-completed";
   label: string;
   reason: string | null;
+  transition?: "task-created" | "stage-advanced" | "repair-started" | "task-completed" | "attention" | null;
+  fromStage?: StageId | null;
+  fromStatus?: string | null;
+  attentionKind?: string;
+  reservationId?: string;
+  workPackageId?: string;
+  runId?: string;
   status?: string;
   nextActor?: string | null;
   run?: WatchRun;

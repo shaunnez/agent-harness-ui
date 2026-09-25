@@ -25,6 +25,9 @@ export class RetentionOrchestrator {
         error: result.error,
       });
       for (const event of result.runtimeEvents?.slice(-100) ?? []) {
+        // Incremental records were acknowledged before terminal persistence. A watermark,
+        // not retained event membership, prevents old pruned records being appended again.
+        if (event.activityId && event.ordinal <= (run.activitySequence ?? 0)) continue;
         draft.events.push(
           activity(
             stageId,

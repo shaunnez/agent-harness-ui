@@ -40,6 +40,7 @@ export function projectTaskSummary(task, retainedCounts = {}) {
     completedAt: task.completedAt ?? null,
     error: effectiveTaskError(task),
     activeRunKind: task.activeRunKind ?? null,
+    activeRunReservationId: task.activeRunReservationId ?? null,
     activeRunIds: task.activeRunIds ?? [],
     models: task.models ?? [],
     agentConfig: task.agentConfig
