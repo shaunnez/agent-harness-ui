@@ -112,3 +112,7 @@ Live Claude/Codex sessions, complete implementation-to-PR delivery, production d
 `journal-site/` is absent from this main checkout. Updated the local usability progress and build-goal records; no external journal publication is claimed.
 
 Next: Shaun's visual review of the running preview. Continue only with concrete feedback or a subsequent delivery instruction. Preserve the implementation commits, evidence and temporary API records; no pending implementation fix is known at this checkpoint.
+
+## PR preparation — 25 September 2026
+
+Shaun subsequently requested PR publication. Integrated `origin/main` at `4dad6e41f05fee883628ddc2157a155f8430b903`; the only conflict was adjacent additions to `AGENTS.md`, resolved by retaining both the Goal 6 and Azure planning instructions. The incoming application change opens Run Activity by default. Typecheck and the combined runtime-activity-routing/world-feedback tests passed (12 tests) after integration. Earlier full-suite and browser receipts above remain the implementation qualification; this integration used targeted regression checks. This publication instruction does not authorize merging or deploying the PR.

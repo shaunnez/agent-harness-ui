@@ -109,7 +109,7 @@ export function RunActivity({
   initialFilter?: RunActivityFilter;
   initialSelectedId?: string | null;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [filter, setFilter] = useState<RunActivityFilter>(initialFilter);
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId);
   const [pagedEvents, setPagedEvents] = useState<RuntimeEvent[]>(task.events);
