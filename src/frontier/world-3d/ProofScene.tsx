@@ -35,6 +35,8 @@ import { PerformanceProbe, profiling } from "./PerformanceProbe";
 import { ProofBase, type SceneLight } from "./ProofBase";
 import { ProofCamera } from "./ProofCamera";
 import { ProofLabels } from "./ProofLabels";
+import { WorldEventSignal } from "./WorldEventSignals";
+import { planWorkerJourney, type WorkerJourney } from "./scene-journeys";
 import { ProofWorker } from "./ProofWorker";
 import { SceneFinish } from "./SceneFinish";
 import { lanternLampOffset, scatterLayout } from "./scatter";
@@ -135,6 +137,29 @@ export function ProofScene(props: Props) {
     [manifest, layoutKey, field],
   );
   const workers = proofWorkers(input, manifest, bases);
+  const journeyCache = useRef(new Map<string, WorkerJourney | null>());
+  const effects = (input.connected ? (input.worldFeedback ?? []) : []).filter(
+    (effect) => effect.expiresAt > Date.now(),
+  );
+  const journeys = new Map<string, WorkerJourney>();
+  const movingBases = new Set<string>();
+  for (const effect of effects) {
+    if (journeys.size >= 4) break;
+    const worker = workers.find((actor) => actor.task.id === effect.fact.taskId);
+    if (!worker || movingBases.has(worker.projectId)) continue;
+    const key = `${effect.id}:${input.location.view}:${worker.id}:${worker.position.join()}`;
+    if (!journeyCache.current.has(key)) {
+      journeyCache.current.set(key, planWorkerJourney(effect, worker, input, manifest, bases, field));
+      if (journeyCache.current.size > 32)
+        journeyCache.current.delete(journeyCache.current.keys().next().value ?? "");
+    }
+    if (!input.motion) journeyCache.current.set(key, null);
+    const journey = journeyCache.current.get(key);
+    if (journey && input.motion && worker.behavior !== "park") {
+      journeys.set(worker.id, journey);
+      movingBases.add(worker.projectId);
+    }
+  }
   const cutaway = input.location.view !== "world";
   const activeFocus = cutaway ? (locatedProject(input)?.id ?? null) : focusId;
   const view = proofView(input, focusId);
@@ -368,6 +393,21 @@ export function ProofScene(props: Props) {
         <ProofWorker
           key={worker.id}
           worker={worker}
+          journey={journeys.get(worker.id)}
+          toolEvent={
+            input.watchedRunActive &&
+            input.location.view === "agent" &&
+            input.location.taskId === worker.task.id
+              ? [...(input.watchedActivity ?? [])]
+                  .sort((a, b) => Date.parse(b.at) - Date.parse(a.at))
+                  .find(
+                    (event) =>
+                      event.runId === input.watchedRunId &&
+                      event.toolCall &&
+                      (!worker.packageId || event.workPackageId === worker.packageId),
+                  )
+              : undefined
+          }
           view={view}
           source={workerModel.scene}
           clips={workerGltf?.animations ?? []}
@@ -377,6 +417,25 @@ export function ProofScene(props: Props) {
           onSelect={() => onSelect("task", worker.task.id)}
         />
       ))}
+      {effects.map((effect) => {
+        const base = bases.find((item) => item.project.id === effect.fact.projectId);
+        if (!base || (input.location.view !== "world" && base.project.id !== locatedProject(input)?.id))
+          return null;
+        const worker = workers.find((actor) => actor.task.id === effect.fact.taskId);
+        const position: Point3 =
+          input.location.view === "world" || !worker
+            ? [base.position[0], 4.4, base.position[2] + 24]
+            : worker.position;
+        return (
+          <WorldEventSignal
+            key={effect.id}
+            effect={effect}
+            position={position}
+            motion={input.motion}
+            size={input.location.view === "world" ? 7 : 2.4}
+          />
+        );
+      })}
       <ProofCamera
         {...props}
         focusId={activeFocus}

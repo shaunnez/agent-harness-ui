@@ -26,6 +26,7 @@ import { shouldShowWelcome, Welcome } from "../views/Welcome";
 import { AttentionQueue, ConnectionBadge, SelectionHud, WorldActions, WorldClock } from "../views/WorldHud";
 import { WorldNavigation } from "../views/WorldNavigation";
 import { type ProofControls, proofVisible } from "../world-3d/model";
+import { WorldNotices } from "../views/WorldNotices";
 import { BuildDiagnostics } from "./BuildDiagnostics";
 import { useBottomHudLayout } from "./bottom-hud-layout";
 import { CommandWorkspaceProvider } from "./command-context";
@@ -151,9 +152,14 @@ export function FrontierApp() {
       watchedStage: run?.stage,
       watchedRole: run?.role,
       watchedRunStatus: run?.status ?? null,
+      worldFeedback: snapshot.worldFeedback ?? [],
+      watchedRunId: run?.id,
+      watchedActivity: snapshot.selected?.activity.items ?? [],
     }),
     [
       runtime.gateway.mode,
+      snapshot.worldFeedback,
+      snapshot.selected?.activity.items,
       snapshot.projects,
       snapshot.tasks,
       location,
@@ -489,6 +495,16 @@ export function FrontierApp() {
               </button>
             )}
           </header>
+          <WorldNotices
+            motion={preferences.motion && !reduced}
+            effects={connected ? (snapshot.worldFeedback ?? []) : []}
+            projectId={location.view === "world" ? undefined : project?.id}
+            onOpen={(effect) =>
+              effect.fact.artifactId
+                ? open({ kind: "artifact", taskId: effect.fact.taskId, artifactId: effect.fact.artifactId })
+                : inspect(effect.fact.taskId)
+            }
+          />
           <WorldNavigation
             onWorld={() => navigate(worldLocation)}
             onOpen={(kind) => open({ kind })}

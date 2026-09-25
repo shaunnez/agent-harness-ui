@@ -1,6 +1,7 @@
 import { copyFile, mkdir, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { createActivityRecorder } from "./incremental-activity.mjs";
 import { validatedAttachmentReadPaths } from "./attachment-storage.mjs";
 import { candidateGateCommandLimit } from "./candidate-gate-policy.mjs";
 import { effectivePolicyFromReservation } from "./effective-policy.mjs";
@@ -324,9 +325,14 @@ export class RepairExecutionOrchestrator {
         ),
       );
     });
-    const runtimeEvents = [];
     const commandLimit = candidateGateCommandLimit(stageId);
-    const runController = commandLimit == null ? null : new AbortController();
+    const runController = new AbortController();
+    const recorder = createActivityRecorder({
+      store: this._store,
+      taskId: task.id,
+      runId,
+      onOverflow: () => runController.abort(),
+    });
     let commandStarts = 0;
     let commandLimitExceeded = false;
     const relayAbort = () => runController?.abort();
@@ -397,7 +403,7 @@ export class RepairExecutionOrchestrator {
         tempDirectory: runtimeTemp,
         timeoutMs: stageTimeoutMs(stageId, effectiveSandbox, task),
         onEvent(event) {
-          if (event.type === "activity") runtimeEvents.push(event);
+          if (event.type !== "activity" || !recorder.add(event)) return;
           if (
             commandLimit != null &&
             event.toolCall?.category === "repository-command" &&
@@ -406,7 +412,7 @@ export class RepairExecutionOrchestrator {
             commandStarts += 1;
             if (commandStarts > commandLimit && !commandLimitExceeded) {
               commandLimitExceeded = true;
-              runtimeEvents.push({
+              recorder.add({
                 type: "activity",
                 tone: "warning",
                 title: "Review command budget exceeded",
@@ -419,6 +425,9 @@ export class RepairExecutionOrchestrator {
           }
         },
       });
+      await recorder.close();
+      if (recorder.overflowed)
+        throw new Error("Activity coverage interrupted because pending storage exceeded its limit.");
       if (commandLimitExceeded) {
         throw new Error(
           `${getStageMetadata(stageId).label} exceeded its hard ${commandLimit}-command review budget.`,
@@ -444,10 +453,11 @@ export class RepairExecutionOrchestrator {
         pricingSettings.pricing?.rates,
         pricingSettings.pricing?.version,
       );
-      result.runtimeEvents = runtimeEvents;
+      result.runtimeEvents = recorder.events();
       await this._finishAgentRun(task.id, stageId, eventLabel ?? metadata.label, result, "completed");
       return result;
     } catch (error) {
+      await recorder.close();
       const failure = commandLimitExceeded
         ? new Error(
             `${getStageMetadata(stageId).label} exceeded its hard ${commandLimit}-command review budget.`,
@@ -463,7 +473,7 @@ export class RepairExecutionOrchestrator {
           startedAt,
           completedAt,
           durationMs: Math.max(0, new Date(completedAt).getTime() - new Date(startedAt).getTime()),
-          runtimeEvents,
+          runtimeEvents: recorder.events(),
           usage: null,
           error: failure instanceof Error ? failure.message : String(failure),
         },

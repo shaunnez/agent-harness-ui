@@ -1,3 +1,5 @@
+import type { WorldFeedback } from "../runtime/world-feedback";
+import type { RuntimeEvent } from "../../domain";
 import type { RuntimeProject, StageId } from "../../domain";
 import type { WorldLocation } from "../app/navigation";
 import type { TaskSummary } from "../runtime/contracts";
@@ -9,6 +11,9 @@ import type { EnvironmentPreferences } from "./environment-model";
  * live -- and nothing branches on it any more.
  */
 export interface SceneInput {
+  worldFeedback?: WorldFeedback[];
+  watchedRunId?: string;
+  watchedActivity?: RuntimeEvent[];
   mode: "fixture" | "live";
   placementNamespace?: string;
   projects: RuntimeProject[];

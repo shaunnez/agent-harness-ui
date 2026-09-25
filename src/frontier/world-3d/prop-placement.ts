@@ -102,15 +102,10 @@ export const propPlacements: PropPlacement[] = [
     height: 1.36,
   },
   {
-    // Not the greybox console's own spot. Briefing is a wedge that narrows toward the hub, and the
-    // greybox sits far enough left that a 2.66 m desk on that centre puts its front corner through
-    // the partition. Shifted right and back until every corner is inside the room's walkable
-    // polygon and both briefing sockets clear the footprint by the 0.6 m the clearance test wants
-    // -- which is better than the greybox manages, since its obstacle swallows `hq_briefing_02`.
-    // The back corners sit 0.25 m into the 0.6 m front wall, where the greybox's also sit.
     id: "MF_Prop_IntakeDesk",
     node: "MF_Prop_IntakeDesk",
-    position: [-5.6, floor, 14.4],
+    // Keep the court doorway at (-6, 15.588) clear for recorded arrivals and handoffs.
+    position: [-4.8, floor, 10.8],
     facingDeg: 270,
     footprint: [2.648, 0.699],
     height: 2.4,

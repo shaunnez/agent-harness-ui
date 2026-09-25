@@ -79,6 +79,10 @@ export function observeWorkspaceRecords(db, task) {
       facts.push({
         kind: "artifact-arrived",
         artifactId: artifact.id,
+        runId: artifact.runId ?? undefined,
+        workPackageId: artifact.workPackageId ?? undefined,
+        candidateId: artifact.candidateId ?? undefined,
+        candidateRevision: artifact.candidateRevision ?? undefined,
         stage: artifact.stage,
         label: String(artifact.name ?? "Artifact available").slice(0, 250),
         reason: null,

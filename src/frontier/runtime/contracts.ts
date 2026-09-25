@@ -26,6 +26,7 @@ import type {
   RuntimeWorktreeInventoryRow,
   StageId,
 } from "../../domain.ts";
+import type { WorldFeedback } from "./world-feedback.ts";
 import type { ResearchGateway } from "./research.ts";
 import type { SettingsInput } from "./settings.ts";
 
@@ -122,6 +123,7 @@ export interface CandidateScope {
 
 export type ConnectionState = "connecting" | "connected" | "offline";
 export interface FrontierSnapshot {
+  worldFeedback?: WorldFeedback[];
   workspace: WorkspaceHead | null;
   workspaceError: string | null;
   watchedRuns: Record<string, WatchedRun | { error: string }>;

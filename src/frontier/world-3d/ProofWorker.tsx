@@ -2,6 +2,7 @@ import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import {
   type AnimationClip,
+  type AnimationAction,
   AnimationMixer,
   type BufferGeometry,
   type Group,
@@ -9,6 +10,9 @@ import {
   type MeshBasicMaterial,
   type Object3D,
 } from "three";
+import type { RuntimeEvent } from "../../domain";
+import type { WorkerJourney } from "./scene-journeys";
+import { journeyLength, journeyPose } from "./worker-journeys";
 import { actorSeed, patrolPose, workActions } from "../scene/worker-behavior";
 import {
   type Point3,
@@ -33,8 +37,12 @@ export function ProofWorker({
   onSelect,
   positions,
   clips,
+  journey,
+  toolEvent,
 }: {
   worker: Worker;
+  journey?: WorkerJourney;
+  toolEvent?: RuntimeEvent;
   view: ProofView;
   source: Object3D;
   selected: boolean;
@@ -70,23 +78,11 @@ export function ProofWorker({
    * Parking plays nothing, so the mixer leaves the authored rest pose alone.
    */
   const clipName = clipForWorker(worker.behavior, action.pose);
-  const playing = useMemo(() => {
-    const clip = clipName ? clips.find((entry) => entry.name === clipName) : undefined;
-    return clip ? mixer.clipAction(clip) : null;
-  }, [clipName, clips, mixer]);
-  useEffect(() => {
-    if (!playing) {
-      mixer.stopAllAction();
-      return;
-    }
-    playing.reset();
-    // The walk is authored at one cycle per 0.8 s; hold it to the ground speed or the feet skate.
-    playing.timeScale = clipName === "worker_walk" ? roamSpeed / walkCycleSpeed : 1;
-    playing.play();
-    return () => {
-      playing.stop();
-    };
-  }, [playing, clipName, mixer]);
+  const actions = useMemo(
+    () => new Map(clips.map((clip) => [clip.name, mixer.clipAction(clip)])),
+    [clips, mixer],
+  );
+  const activeAction = useRef<AnimationAction | null>(null);
   useEffect(
     () => () => {
       positions.delete(worker.id);
@@ -99,19 +95,78 @@ export function ProofWorker({
     [body, positions, worker.id],
   );
   const patrol = useMemo(() => route.map((p) => ({ x: p[0], y: p[2] })), [route]);
+  const arrivalPatrol = useRef<{
+    startedAt: number;
+    startPhase: number;
+    view: ProofView;
+    points: { x: number; y: number }[];
+  } | null>(null);
   const stepping = useRef(0);
   const halo = useRef<Mesh<BufferGeometry, MeshBasicMaterial> | null>(null);
   useFrame((_, delta) => {
     if (!root.current) return;
     positions.set(worker.id, root.current);
+    const pose =
+      journey && worker.moving && !document.hidden
+        ? journeyPose(journey.route, (Math.max(0, Date.now() - journey.startedAt) / 1000) * journey.speed)
+        : null;
+    const travelling = pose && !pose.done;
+    if (journey && worker.behavior === "roam" && arrivalPatrol.current?.startedAt !== journey.startedAt) {
+      const end = journey.route.at(-1) ?? worker.position;
+      arrivalPatrol.current = {
+        startedAt: journey.startedAt,
+        startPhase:
+          time.current +
+          Math.max(0, journeyLength(journey.route) / journey.speed - (Date.now() - journey.startedAt) / 1000),
+        view,
+        points: [{ x: end[0], y: end[2] }, ...patrol],
+      };
+    }
+    const category = toolEvent?.toolCall?.category;
+    const toolFresh = toolEvent && Date.now() - Date.parse(toolEvent.at) < 3000;
+    const toolClip =
+      toolFresh && worker.behavior === "work"
+        ? category === "file-read"
+          ? "worker_scan"
+          : category === "file-edit"
+            ? "worker_tool_work"
+            : category === "repository-command"
+              ? "worker_type"
+              : null
+        : null;
+    const desired = travelling ? "worker_walk" : (toolClip ?? clipName);
+    const playing = desired ? (actions.get(desired) ?? null) : null;
+    if (playing !== activeAction.current) {
+      if (playing) {
+        playing.reset().setEffectiveWeight(1).play();
+        if (activeAction.current) playing.crossFadeFrom(activeAction.current, 0.18, true);
+      } else mixer.stopAllAction();
+      activeAction.current = playing;
+    }
+    if (playing)
+      playing.timeScale =
+        desired === "worker_walk"
+          ? (travelling ? (journey?.speed ?? roamSpeed) : roamSpeed) / (walkCycleSpeed * workerScale(view))
+          : 1;
     const step = worker.moving && !document.hidden ? Math.min(delta, 0.1) : 0;
     if (step) {
       time.current += step;
       if (playing) mixer.update(step);
     }
     const phase = time.current;
-    if (worker.behavior === "roam") {
-      const pose = patrolPose(patrol, phase * 1000, actorSeed(worker.task.id), roamSpeed);
+    if (travelling) {
+      root.current.position.set(...pose.position);
+      body.rotation.y = pose.facing;
+      playing?.setEffectiveWeight(1);
+    } else if (worker.behavior === "roam") {
+      // Start an arrival's idle loop from its landing point, including after the notice expires.
+      const arrival = arrivalPatrol.current?.view === view ? arrivalPatrol.current : null;
+      const pose = patrolPose(
+        arrival?.points ?? patrol,
+        arrival ? Math.max(0, phase - arrival.startPhase) * 1000 : phase * 1000,
+        arrival ? 0 : actorSeed(worker.task.id),
+        roamSpeed,
+      );
       root.current.position.set(pose.x, worker.position[1], pose.y);
       body.rotation.y = pose.facing > 0 ? 0.9 : -0.9;
       // Ease the cycle in and out so a worker settles rather than snapping at a patrol waypoint.
@@ -123,16 +178,17 @@ export function ProofWorker({
       stepping.current = 0;
     }
     if (halo.current) {
-      const breath = 0.5 + 0.5 * Math.sin(performance.now() / 620);
+      const breath = worker.moving && !document.hidden ? 0.5 + 0.5 * Math.sin(performance.now() / 620) : 0;
       halo.current.scale.setScalar(1 + breath * 0.045);
       halo.current.material.opacity = 0.35 + breath * 0.35;
     }
-    body.rotation.y =
-      worker.behavior === "work"
-        ? worker.facing + Math.sin(phase * 0.7) * 0.04
-        : worker.behavior === "park"
-          ? worker.facing
-          : body.rotation.y;
+    if (!travelling)
+      body.rotation.y =
+        worker.behavior === "work"
+          ? worker.facing + Math.sin(phase * 0.7) * 0.04
+          : worker.behavior === "park"
+            ? worker.facing
+            : body.rotation.y;
   });
   const status =
     worker.tone === "answer"

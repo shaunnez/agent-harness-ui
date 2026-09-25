@@ -164,6 +164,8 @@ export interface RuntimeRun {
 }
 
 export interface RuntimeEvent {
+  occurredAt?: string | null;
+  workPackageId?: string | null;
   id: string;
   at: string;
   category: "activity" | "agent" | "artifact" | "decision" | "tool";

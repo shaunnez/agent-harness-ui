@@ -1,10 +1,10 @@
 # Mission Frontier — prompts and goals
 
-Revision 10 · 16 September 2026. Goals 1, 2 and 3 are completed; their prompts remain for reference. The later living-world pass is recorded in [PR-HANDOFF.md](PR-HANDOFF.md). **Goal 4 U0–U2 is complete and PR #73 is merged. Goal 5 functional acceptance is complete; delivery and journal receipts are in its current handoff. Goal 6 has not started.** See the [Goal 5 handoff](build-evidence/USABILITY/goal-5/HANDOFF.md) and retained [Goal 4 handoff](build-evidence/USABILITY/goal-4/HANDOFF.md). [USABILITY-PLAN.md](USABILITY-PLAN.md) defines scope, dependencies and acceptance checks; the earlier plans remain the history for completed work.
+Revision 11 · 25 September 2026. Goals 1, 2 and 3 are completed; their prompts remain for reference. The later living-world pass is recorded in [PR-HANDOFF.md](PR-HANDOFF.md). **Goal 4 U0–U2 is complete and PR #73 is merged. Goal 5 functional acceptance is complete; delivery and journal receipts are in its current handoff. Goal 6 is implemented and locally qualified for visual review.** See the [Goal 5 handoff](build-evidence/USABILITY/goal-5/HANDOFF.md) and retained [Goal 4 handoff](build-evidence/USABILITY/goal-4/HANDOFF.md). [USABILITY-PLAN.md](USABILITY-PLAN.md) defines scope, dependencies and acceptance checks; the earlier plans remain the history for completed work.
 
 Delivery update, 15 September 2026: PRs #86–#88 are merged. [Art checkpoint 1](ART-CHECKPOINT-1.md) is delivered for artistic review in draft PR #89, including one Astra-produced exterior, the merged HUD, passing local qualification and journal version 20. See its [handoff](build-evidence/COASTAL-CHECKPOINT-1/HANDOFF.md).
 
-The [3D visual proof](3D-VISUAL-PROOF.md) and subsequent [three-project exterior extension](EXTERIOR-BASES.md) are implemented and locally qualified for review. Shaun requested PR publication on 16 September; see [PR qualification](build-evidence/PR-3D-PROOF/HANDOFF.md). The next connected-colony/hexagonal-HQ brief is recorded in [NEXT-PHASE-HANDOFF.md](NEXT-PHASE-HANDOFF.md) and remains at design stage. Goal 6 and live 3D adoption have not started.
+The [3D visual proof](3D-VISUAL-PROOF.md) and subsequent [three-project exterior extension](EXTERIOR-BASES.md) are implemented and locally qualified for review. Shaun requested PR publication on 16 September; see [PR qualification](build-evidence/PR-3D-PROOF/HANDOFF.md). The next connected-colony/hexagonal-HQ brief is recorded in [NEXT-PHASE-HANDOFF.md](NEXT-PHASE-HANDOFF.md) and remains at design stage. This is the retained 16 September checkpoint; Goal 6 now has its own acceptance record below.
 
 ## How to use
 
@@ -262,48 +262,17 @@ build/check/browser/fix loop and leave the result ready for my artistic review.
 
 ## Goal 6 — recorded activity and meaningful world feedback
 
-Latest visual steering: the [3D visual proof](3D-VISUAL-PROOF.md) and exterior extension are delivered fixture previews. [NEXT-PHASE-HANDOFF.md](NEXT-PHASE-HANDOFF.md) records the proposed connected colony, fixed hexagonal HQ and spacecraft arrivals. Reconcile those designs with this goal before a future start; neither the visual proof nor its PR starts Goal 6 or its activity-persistence work.
+**Implemented for review, 25 September 2026.** Shaun requested the plan and then explicitly started implementation in an isolated feature worktree. [Goal 6 handoff and evidence](build-evidence/USABILITY/goal-6/HANDOFF.md) records the implementation, checks and running preview. [GOAL-6-PLAN.md](GOAL-6-PLAN.md) is the current implementation brief for UB2, U6 and combined qualification. It reconciles the earlier usability scope with the shipped 3D colony and rigged robots, and includes the task-created arrival from the colony delivery plan.
 
-**Planned, not started.** Start after the Goal 5 handoff. Complete UB2, U6 and the combined qualification.
+Deliver in three reviewable slices:
 
-```text
-Run Goal 6 from design/mission-frontier/BUILD-GOALS.md. Read USABILITY-PLAN.md,
-AGENTS.md, LIVING-WORLD.md and build-evidence/USABILITY/progress.md. Verify the
-accepted Goal 4/5 source and evidence. Create and execute a goal to complete UB2,
-U6 and the combined usability qualification in the current isolated checkout.
+1. Persist typed transition facts and incremental operational activity during the exact active run, with idempotent terminal retention and bounded failure handling.
+2. Consume new facts through the existing refresh coordinator, with source-scoped identities, bounded reads and no initial-load, reconnect or historical replay.
+3. Add brief 3D robot journeys and action responses using the current colony-v2 anchors and existing clips; qualify workflow truth, interaction, motion preferences and normal laptop/desktop behavior.
 
-Persist bounded batches of permitted operational activity while its exact run
-is active, using existing store coordination and HTTP refresh. Keep terminal
-retention idempotent, preserve task/run/package/candidate identity, and handle
-interruption and persistence failures visibly. Do not expose private reasoning,
-raw provider streams or estimated live token usage.
+The older instruction to extend existing world transition infrastructure referred to the removed 2D renderer. Use the current 3D integration described in the plan. Existing history remains readable; no backfilled arrivals or new live-token estimates. Research-specific animation and a cinematic shuttle flight are separate work.
 
-Extend the existing world transition infrastructure with brief feedback for
-recorded stage advances, artifact arrival, started repair, attention and actual
-task completion. Reuse the current art first. If a concrete missing asset is
-proven in the integrated scene, you may assign one bounded Astra asset task
-under ASSET-PRODUCTION.md with disjoint staging ownership and measured output.
-The builder owns integration and visual acceptance; no speculative asset batch.
-
-Never animate a waiting/historical worker as executing, a required repair as
-already started, an integrated package as task completion, or an initial load /
-reconnect / history page as a new event. Keep motion, audio and day/night controls
-authoritative. Preserve attention clarity, camera controls and immediate actions.
-
-Use isolated provider/API fixtures for timing, duplicate/late-event, cancellation,
-concurrent-package and store-failure tests. Complete real computer-use checks,
-matched screenshots and normal laptop/desktop usability checks. Performance
-benchmarks and extreme-zoom experiments remain waived by Shaun’s later steering.
-Run the final complete root, Frontier and Frontier API suite after both builds,
-plus typing, lint and formatting. Do not substitute these checks for the separate
-real end-to-end implementation-to-PR qualification or restart live tasks for QA.
-
-Finish only when UB2, U6 and the combined acceptance matrix pass. Retain evidence
-and any explicitly unverified native-platform checks in goal-6 and progress.md.
-Leave the preview running/open, update the project journal with verified results
-for its existing audience, and give a concise handoff with screenshots and issues.
-Do not merge a PR, publish the game or introduce v2 progression.
-```
+Implemented on `codex/mission-frontier-goal-6`. The isolated preview is running for visual review. No PR, merge, game deployment or real model execution was performed. Use the handoff for continuation and service ownership.
 
 ## Steering and resumption
 
