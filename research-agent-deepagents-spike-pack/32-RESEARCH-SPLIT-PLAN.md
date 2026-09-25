@@ -136,7 +136,11 @@ Exit: Shaun reviews the screens in the browser, in fixture mode and against the 
 
 ## Open questions for Shaun
 
-1. How to reconcile the two research implementations (Phase 0.1).
+Answered 26 September: same repo for now; a separate repo can follow later. Reconcile by keeping this branch's research question service and porting main's live research projects, retries and QV row display onto it.
+
+Later idea (not planned): the research console's world as one research base on much larger land, with robots mining, exploring and so on, bound to recorded runs.
+
+1. ~~How to reconcile the two research implementations (Phase 0.1).~~ Keep this branch's service (above).
 2. The data classification (Phase 0.2).
 3. What a research project is in prod (Phase 0.3).
 4. How prod scopes questions (Phase 0.4).
