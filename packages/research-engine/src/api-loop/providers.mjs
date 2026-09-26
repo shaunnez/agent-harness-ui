@@ -42,6 +42,10 @@ export const API_LOOP_PROVIDERS = Object.freeze({
     label: "DeepInfra",
     endpoint: "https://api.deepinfra.com/v1/openai",
     keyEnv: "DEEPINFRA_API_KEY",
+    // DeepInfra serves DeepSeek 4.1 Flash with thinking off unless asked; the eval measured it
+    // thinking (A10 and F10 averaged about 2k output tokens a call, tool calls included), so ask.
+    // Its prompt cache needs no session header: a repeated prefix is read from cache as it is.
+    requestDefaults: Object.freeze({ reasoning_effort: "high" }),
     rates: { "deepseek-ai/DeepSeek-V4.1-Flash": { input: 0.2, output: 0.6, cacheRead: 0.006 } },
   }),
   baseten: Object.freeze({

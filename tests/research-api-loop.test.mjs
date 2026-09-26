@@ -492,3 +492,22 @@ test("a provider's per-minute rate limit is waited out, not scored as a spent pl
   // The throttle schedule (5 s first), then the provider's own Retry-After (2 s).
   assert.deepEqual(waits, [5_000, 2_000]);
 });
+
+test("DeepInfra calls ask for DeepSeek's thinking, which it leaves off by default; others send nothing extra", async () => {
+  const bodies = [];
+  const fetchImpl = async (_url, init) => {
+    bodies.push(JSON.parse(init.body));
+    return new Response(
+      JSON.stringify({ choices: [{ message: { content: "Done." }, finish_reason: "stop" }], usage: {} }),
+      { status: 200 },
+    );
+  };
+  const { chatOnceWithRetries } = await import("@eversor/research-engine/api-loop/chat-loop.mjs");
+  const ask = (env, model) =>
+    chatOnceWithRetries({ env, model, systemPrompt: "x", prompt: "y", timeoutMs: 60_000, fetchImpl });
+  await ask({ DEEPINFRA_API_KEY: "test" }, "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash");
+  await ask({ BASETEN_API_KEY: "test" }, "baseten/deepseek-ai/DeepSeek-V4.1-Flash");
+  assert.equal(bodies[0].reasoning_effort, "high");
+  assert.equal(bodies[0].model, "deepseek-ai/DeepSeek-V4.1-Flash");
+  assert.equal("reasoning_effort" in bodies[1], false);
+});

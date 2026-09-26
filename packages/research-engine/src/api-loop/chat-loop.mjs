@@ -377,7 +377,9 @@ async function chatOnce({ provider, apiKey, headers = {}, body, fetchImpl, signa
   const response = await fetchImpl(`${provider.endpoint}/chat/completions`, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json", ...headers },
-    body: JSON.stringify(body),
+    // A provider's own request settings (DeepInfra's reasoning) go under the call's, so every call
+    // on that provider, the loop's and the scoper's alike, is made the same way.
+    body: JSON.stringify({ ...provider.requestDefaults, ...body }),
     signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
   });
   const text = await response.text();
