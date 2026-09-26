@@ -1,0 +1,286 @@
+{
+  "question": "open-b2",
+  "kind": "open",
+  "arm": "F10",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 95.3,
+    "high": 135
+  },
+  "range": {
+    "min": 92.3,
+    "max": 153.9
+  },
+  "unit": "m2",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.04,
+    "highRatio": 1.232,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.2653,
+  "elapsedMs": 71513,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 19089,
+      "band": {
+        "unit": "m2",
+        "low": 92.3,
+        "high": 124.9,
+        "centre": "Auckland",
+        "basis": "Sum of per-m² rates: carpet removal 15.9 + standard preparation 33.8–50.0 + LVP supply/lay 42.6–59.0 = 92.3–124.9 $/m². For the full 150 m² office: $13,845 – $18,735 (Auckland, GST-exclusive). Excludes carpet disposal, repairs beyond standard prep, furniture moving, skirting/trim. Confidence medium: LVP has no exact QV row (tile proxy used with stated gauge widening) and the extent of floor preparation is undecided."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 89727,
+        "outputTokens": 5180,
+        "cachedTokens": 49838,
+        "modelCalls": 6,
+        "toolCalls": 20,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.027723,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 89727,
+            "outputTokens": 5180,
+            "estimatedCostUsd": 0.027723,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 25039,
+      "band": {
+        "unit": "m2 of floor area",
+        "low": 96,
+        "high": 135,
+        "centre": "Auckland",
+        "basis": "Sum of four distinct components for 150 m2: carpet removal 15.9/m2 + floor preparation 33.8-50/m2 + LVP supply and install 42.6-59/m2 + minor sundries allowance (500-1500 total). Low $14,345, high $20,235 for the 150 m2 office. GST exclusive, NZD, QV CostBuilder unreviewed library rates, Auckland centre (WLG prep and CHC removal differ marginally). Confidence medium because the LVP rate is a stated tile-for-plank proxy and the extent of floor preparation is an assumption, not a surveyed quantity."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 95870,
+        "outputTokens": 7318,
+        "cachedTokens": 45420,
+        "modelCalls": 8,
+        "toolCalls": 17,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.036284,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 95870,
+            "outputTokens": 7318,
+            "estimatedCostUsd": 0.036284,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 71511,
+      "band": {
+        "unit": "NZD per m² of office floor area (Auckland, GST exclusive)",
+        "low": 134.7,
+        "high": 244.4,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components, no double counting: carpet removal 15.9–19.4 + adhesive/grind prep allowance 8–20 + QV levelling compound 33.8–50 + LVP material 40–100 + LVP install 35–50 + sundries allowance 2–5 = 134.7–244.4 per m², i.e. about $20,200–$36,700 for the 150 m² office. Priced on: standard preparation sufficient; carpet disposal excluded (add roughly $5–7/m² if required); furniture moving and skirting/trim excluded. The band is wide and confidence low because the dominant item (LVP supply and install, ~56–61% of the total) rests on a supplier's general NZ market guide rather than a QV row, and because the specified plank grade, wear layer and install method (glue-down vs floating click) are undecided. Allowances are only ~$10–25/m², under a third of the total. Firm up with a flooring subcontractor's measured quote."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "web-verified",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 231846,
+        "outputTokens": 12974,
+        "cachedTokens": 152316,
+        "modelCalls": 11,
+        "toolCalls": 26,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.060513,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 231846,
+            "outputTokens": 12974,
+            "estimatedCostUsd": 0.060513,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 51135,
+      "band": {
+        "unit": "$/m2 of floor area (GST exclusive, NZD)",
+        "low": 96.3,
+        "high": 167.9,
+        "centre": "Auckland",
+        "basis": "Sum of the four components above, all per m2, no item counted twice: 15.9 (carpet lift/remove, QV) + 4.0-9.0 (adhesive/staple scrape, allowance) + 33.8-79.0 (levelling compound/skim, QV) + 42.6-64.0 (LVP supply and lay, QV tile proxy) = $96.3-167.9/m2. For the pinned 150 m2: low $14,445, centre $19,815, high $25,185 (Auckland, GST exclusive). Wellington: removal row 16.6 and levelling 28.7-74 give ~$99-$162/m2; Christchurch: removal row 19.4 and levelling 33.1-78 give ~$102-$170/m2. Excluded per the pinned scope: carpet disposal fees, floor repairs beyond standard preparation, furniture moving, skirting/trim. Assumption priced: existing floor is sound and standard preparation (scrape plus patch/thin skim) is sufficient; any full 6 mm screed is at the top of the range. Only one allowance (adhesive scrape, ~4-6% of the total) - the main cost drivers are all on cited QV rows, but the LVP rests on a tile proxy and the plank product is unchosen, hence low confidence."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 181834,
+        "outputTokens": 14195,
+        "cachedTokens": 83720,
+        "modelCalls": 8,
+        "toolCalls": 26,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.070456,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 181834,
+            "outputTokens": 14195,
+            "estimatedCostUsd": 0.070456,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 63156,
+      "band": {
+        "unit": "m2",
+        "low": 95.3,
+        "high": 153.9,
+        "centre": "Auckland",
+        "basis": "Sum of per-m2 components at Auckland rates, GST exclusive: removal 15.9 (QV) + preparation 33.8-50.0 (QV) + LVP supply & install 42.6-82.0 (QV rigid vinyl tile 3mm proxy, uplifted for 4.5-5mm rigid-core plank) + sundries allowance 3-6. Equivalent to about $14,300-$23,100 for the full 150 m2 (centre about $18,700). Allowances carry under 5% of the band. Confidence low: the largest component (LVP supply and install) rests on a proxy QV rate with a judgement uplift because QV publishes no luxury vinyl plank row; removal and preparation are firmly published. Excludes carpet disposal, floor repairs beyond standard preparation, furniture moving, skirting and trim."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 228687,
+        "outputTokens": 10810,
+        "cachedTokens": 118006,
+        "modelCalls": 10,
+        "toolCalls": 28,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.070327,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 228687,
+            "outputTokens": 10810,
+            "estimatedCostUsd": 0.070327,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,291 @@
+{
+  "question": "joinery-finishing-painting",
+  "kind": "pinned",
+  "arm": "F10",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 50,
+    "high": 74
+  },
+  "range": {
+    "min": 48,
+    "max": 80
+  },
+  "unit": "$/m2 of finished joinery face area (Auckland, GST exclusive, normal working hours)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.104,
+    "highRatio": 1.29,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.3945,
+  "elapsedMs": 167260,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 88081,
+      "band": {
+        "unit": "$/m2 of finished joinery face area (Auckland, GST exclusive, normal working hours)",
+        "low": 53,
+        "high": 74,
+        "centre": "Auckland",
+        "basis": "Sum of the four distinct components, no double counting: coating system 42-51 + raw-MDF preparation 5-10 + booth/masking/wrap/consumables amortised 4-8 + 5% on-site touch-up 2-5. Total for the 150 m2 batch: $7,950 - $11,100 (low 53 x 150 = 7,950; high 74 x 150 = 11,100), mid-point about $9,450. Allowances (preparation, booth/wrap/consumables, touch-up) carry roughly 15-30% of the total — at the top of the range they approach a third, which is why confidence is set low. The single largest component, the coating itself, rests on a QV proxy row with a stated adjustment rather than a purpose-published factory-spray joinery rate."
+      },
+      "checks": [
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 922668,
+        "outputTokens": 15717,
+        "cachedTokens": 749934,
+        "modelCalls": 20,
+        "toolCalls": 50,
+        "searchCalls": 9,
+        "estimatedCostUsd": 0.11277,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 922668,
+            "outputTokens": 15717,
+            "estimatedCostUsd": 0.11277,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 43599,
+      "band": {
+        "unit": "$/m2 of finished face area (Auckland, GST exclusive)",
+        "low": 50,
+        "high": 80,
+        "centre": "Auckland",
+        "basis": "Sum of six distinct components: QV proxy for the pigmented 2-pack factory-spray 3-coat system (32-46/m2, proxied on QV unreviewed site-painting row 36.6), QV proxy for MDF prep (6.9-9.8), plus four minor allowances (masking 1.5-3.5, booth/colour/consumables/waste 4-9, wrap/stacking 2.5-6, site touch-up + trade visit 3-6). Amortised batch of 150 m2. Allowances = 22% of the low end and 31% of the high end, hence medium confidence. Batch totals: low $7,485 / mid $9,765 / high $12,045 for 150 m2. Main driver rests on a close QV proxy (a site-applied 3-coat polyurethane rate), NOT on a rate that names factory 2-pack joinery spray - so the band is indicative and should be firmed against a finisher's trade schedule."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 178525,
+        "outputTokens": 9812,
+        "cachedTokens": 132638,
+        "modelCalls": 9,
+        "toolCalls": 23,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.039504,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 178525,
+            "outputTokens": 9812,
+            "estimatedCostUsd": 0.039504,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 135488,
+      "band": {
+        "unit": "$ per m2 of finished face area (anonymous measure: fronts, exposed ends, shelf tops and bottoms; carcase interiors excluded)",
+        "low": 71,
+        "high": 105,
+        "centre": null,
+        "basis": "Auckland, GST exclusive, one 150 m2 batch. Sum of priced components: QV general preparation 9.8/m2 + QV edge sealing 4.1/m2 + Resene trade rate for sand and two 2-pack coats 33.00/m2 + QV additional coat (sealer) 7.00/m2 + stated 0.25-0.75 uplift on the Resene rate for small-part/shaped-edge booth work 8.25-24.75/m2, plus allowances for booth setup/masking/consumables 4-10, transport wrap 1-3, 5% site touch-up 2.41-2.83 and one touch-up visit 1.00-2.67. Total for the 150 m2 batch: about $10,650 low, $15,750 high, centre about $13,200. Allowances are 8-16% of the total. Cross-check: Auckland supply prices quoted for cabinet doors (Little Giant Interiors, source-2) show polyurethane-painted finishes at $140-$200+ per door against $60-$110 melamine, i.e. small finished parts carry a much higher $/m2 than the flat whole-cabinet Resene measure, which is why the upper half of this band should be treated as the more likely outcome for fronts and shelf tops/bottoms. Confidence low because the largest component rests on a web trade average adjusted by judgement, QV having no factory-spray MDF joinery row; no review has been made of either the QV rows or the Resene edition for this specification."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "web-unsupported",
+        "allowance",
+        "allowance",
+        "web-unsupported",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 2,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 614756,
+        "outputTokens": 21944,
+        "cachedTokens": 541772,
+        "modelCalls": 17,
+        "toolCalls": 43,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.077218,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 614756,
+            "outputTokens": 21944,
+            "estimatedCostUsd": 0.077218,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 112978,
+      "band": {
+        "unit": "NZ$/m2 of finished face area (fronts, exposed ends, shelf tops and bottoms; carcase interiors excluded), GST exclusive, Auckland",
+        "low": 48,
+        "high": 62,
+        "centre": null,
+        "basis": "Sum of the four components: low 44 + 1.83 + 1.3 + 1 = 48; high 55 + 1.83 + 2.7 + 3 = 62. For the stated 150 m2 batch this is approx NZ$7,200 (low) to NZ$9,300 (high); the amortised per-m2 rates are auditable by dividing those totals by 150. Main driver (~90% of the total) is the factory spray finish, priced from an Auckland published trade rate converted from per-door to per-m2; the balance is QV site touch-up plus two minor allowances. Low confidence: the sole NZ anchor is a flat-door, per-door price whose 2-pack specification and face coverage are assumed, shaped-edge counter/shelving work costs more, and equivalent published UK trade rates for the same 2-pack factory system are roughly 2x this band. Confirm with an Auckland finisher before relying on it."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 418316,
+        "outputTokens": 27867,
+        "cachedTokens": 336394,
+        "modelCalls": 12,
+        "toolCalls": 37,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.090053,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 418316,
+            "outputTokens": 27867,
+            "estimatedCostUsd": 0.090053,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 167258,
+      "band": {
+        "unit": "$/m2 of finished joinery face area (Auckland, GST exclusive, ex preliminaries/margin/joinery supply and installation)",
+        "low": 64,
+        "high": 111,
+        "centre": null,
+        "basis": "Sum of the three components: 47+15+2 = 64 low; 65+40+6 = 111 high. For the 150 m2 batch: $9,600 low, $16,650 high, $13,125 mid. Main driver rests on a fetched Auckland factory 2-pack spray price used as a close proxy; the two allowances carry about 35% of the mid total, so confidence is low. Independent checks: Resene productivity tables give 0.41 hr/m2 of painter time to sand and 2-pack coat cabinets/shelving, and a UK trade finisher publishes GBP45-GBP90/m2 plus VAT for 2-pack MDF spray finishing with sealed flat edges."
+      },
+      "dropped": true,
+      "checks": [
+        "web-verified",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 479465,
+        "outputTokens": 18246,
+        "cachedTokens": 393722,
+        "modelCalls": 11,
+        "toolCalls": 34,
+        "searchCalls": 7,
+        "estimatedCostUsd": 0.074971,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 479465,
+            "outputTokens": 18246,
+            "estimatedCostUsd": 0.074971,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

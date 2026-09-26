@@ -113,3 +113,39 @@ DeepSeek's run-to-run variance, which moved an unchanged arm from 6 to 4 on doc 
 repeat). Cost and time are reported beside it; at Fireworks' US rates (1.5x its global price, and
 about 3x OpenCode Go's) the suite is expected to cost about $7.
 
+**Two false starts, not scored (26 September).** The first attempt failed every run on PlanCheck: its
+Docker app had stopped, and once restarted as a single worker it timed out under 75 runs' searches at
+once. The second, three questions at a time, failed every run on Fireworks' per-minute token limit
+(45,000 generated tokens a minute on this account): the loop read Fireworks' 429 "rate limit exceeded"
+as a spent plan and stopped. The loop now waits a throttle out (5 s rising to 60 s, or the provider's
+Retry-After) and fails a run as provider trouble only when every wait is used up. That is harness
+plumbing, not the recipe. A third attempt, three questions at a time, was still throttled: Fireworks'
+limits are adaptive, start low on a new account and grow only with gradual use ("If your traffic ramps up
+too quickly, you will get 429s"). F10 is otherwise as registered, run one question (five runs) at a time.
+
+## Provider parity result (26 September)
+
+F10, one question at a time: 15 questions × 5 runs, 38 minutes of run time, $5.20 at Fireworks US
+rates ($0.35 a question). **10 of 15 agreed and 8 passed, all 8 fully traced.** Against the rule fixed
+before the run (at least 8 passes, at least 12 agreed, no run failing for a provider reason), passes
+meet it and the other two conditions do not: **F10 fails the registered rule.**
+
+| | A10 (OpenCode Go) | F10 (Fireworks US) | O5 (Opus) |
+|---|---|---|---|
+| Agreed | 14 | 10 | 11 |
+| Passed | 10 | 8 | 5 |
+| Fully traced passes | 9 | 8 | 4 |
+| Cost for the suite | $2.27 | $5.20 | $75.27 |
+
+Why five questions did not agree:
+- **Throttling (2).** Deflection head seal and facade coating each lost two of five runs to Fireworks'
+  429 after every wait, so they are incomplete. The account's adaptive limit was the cause, not the
+  research.
+- **Disputed (3).** Glass splashback and open-b1 agreed on A10 and disputed here; open-b3 disputed on
+  both.
+
+Where both agreed, the bands sit close: garden beds $118–191 against $117–193, joinery $50–74 against
+$52–71, subgrade $249–334 against $219–336, sprinklers $51–65 against $44–81, solar $6.9k–11.6k against
+$7.3k–12.5k, and site establishment $4.6k–7.1k against $5.7k–9.4k (nearer Opus's $2.4k–3.9k and the
+22 September runs' $3.3k–7k). Fireworks is not repeated or tuned on this suite; a repeat once the
+account's limit has grown is the same arm run again, reported beside this one, as A5's repeat was.

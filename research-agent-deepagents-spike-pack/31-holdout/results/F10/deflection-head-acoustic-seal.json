@@ -1,0 +1,246 @@
+{
+  "question": "deflection-head-acoustic-seal",
+  "kind": "pinned",
+  "arm": "F10",
+  "status": "incomplete",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": null,
+  "range": null,
+  "unit": "m",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": null,
+    "highRatio": null,
+    "runsWithBand": 3,
+    "runsTotal": 5
+  },
+  "costUsd": 0.2476,
+  "elapsedMs": 111232,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "failed",
+      "error": {
+        "code": "provider_unavailable",
+        "message": "Fireworks (US only) is throttling (HTTP 429): {\"error\":{\"object\":\"error\",\"type\":\"invalid_request_error\",\"code\":\"invalid_request_error\",\"message\":\"rate limit exceeded, please try again later\"}}"
+      },
+      "elapsedMs": 110178,
+      "band": null,
+      "checks": [],
+      "citations": null,
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedTokens": 0,
+        "modelCalls": 0,
+        "toolCalls": 0,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0,
+        "costBasis": "api_rate_estimate",
+        "partial": true,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "estimatedCostUsd": 0,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "failed",
+      "error": {
+        "code": "provider_unavailable",
+        "message": "Fireworks (US only) is throttling (HTTP 429): {\"error\":{\"object\":\"error\",\"type\":\"invalid_request_error\",\"code\":\"invalid_request_error\",\"message\":\"rate limit exceeded, please try again later\"}}"
+      },
+      "elapsedMs": 111230,
+      "band": null,
+      "checks": [],
+      "citations": null,
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedTokens": 0,
+        "modelCalls": 0,
+        "toolCalls": 0,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0,
+        "costBasis": "api_rate_estimate",
+        "partial": true,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "estimatedCostUsd": 0,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 87955,
+      "band": {
+        "unit": "m",
+        "low": 64.1,
+        "high": 107.8,
+        "centre": "Auckland",
+        "basis": "Sum of seven distinct per-metre components: slotted deflection head track supplied and fixed (QV 92mm top-track proxy + proprietary uplift), soffit fixings at 600 crs (QV shot fix), mineral wool head packer (allowance), intumescent fire-rated acoustic sealant to both faces over bond breaker (QV Promaseal-a head-joint rate x2 faces), head trimming/taping/slip connection (QV stopping angle), mobile scaffold amortised (QV weekly hire), and compliance labelling (allowance). GST exclusive, Auckland subcontract rates, 2026, excluding preliminaries, margin, design/consent and producer statements. The seals carry the spread: the two-face fire-rated bead is $32.4/m at the QV rate, and every QV fire-sealant row lands above the $16/m you allowed for both faces. Two minor allowances (packer, labelling) are under 15% of the total. 60m nominal run: $3,847 to $6,468, midpoint about $5,160."
+      },
+      "checks": [
+        "web-derived",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 350829,
+        "outputTokens": 25385,
+        "cachedTokens": 278240,
+        "modelCalls": 10,
+        "toolCalls": 34,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.080862,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 350829,
+            "outputTokens": 25385,
+            "estimatedCostUsd": 0.080862,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 84877,
+      "band": {
+        "unit": "$/m of partition head (also x60m for the nominal run)",
+        "low": 76,
+        "high": 130,
+        "centre": null,
+        "basis": "Auckland subcontract rates, GST exclusive, ex preliminaries, margin, design and consent fees. Sum of seven distinct components: track supply (QV proxy) 14.3-22.0; soffit fixings 3.5-7.0; mineral wool packer allowance 5-11; intumescent acoustic sealant both faces 32.4-46.2; head trimming/taping/slip connection 14.1-28.2; mobile scaffold amortised 6.6-13.2; compliance labelling allowance 0.5-2.0. Total for the 60m nominal run: about $4,600-$7,800, midpoint about $6,200. Allowances (packer + labelling) are only 7-10% of the total, so the band is rate-led, not allowance-led. Confidence low: the track rests on a QV proxy with a judgement uplift, the stop-joint row does not state per-face or per-run, and the specified intumescent grade is priced off a QV acrylic fire sealant. If the nominated tested system accepts a single-face sealant, the band repins at about $60-$106/m (midpoint about $83/m)."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 443001,
+        "outputTokens": 23416,
+        "cachedTokens": 355442,
+        "modelCalls": 12,
+        "toolCalls": 42,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.084749,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 443001,
+            "outputTokens": 23416,
+            "estimatedCostUsd": 0.084749,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 83771,
+      "band": {
+        "unit": "$ per lineal metre of partition head",
+        "low": 62.9,
+        "high": 116.8,
+        "centre": "Auckland",
+        "basis": "Sum of the seven components above: low 10.68+3.51+6.00+16.40+19.20+6.62+0.50 = 62.91; high 12.81+8.18+12.00+32.40+36.20+13.23+2.00 = 116.82. Midpoint 89.9/m, i.e. 60m = $3,775 - $7,009 (mid $5,392). QV rates are unreviewed and the main drivers rest on proxies: the slotted head track is a supplier list price (QV publishes no deflection head track), and the intumescent bead is priced from QV's Promaseal-A fire-rated joint rate (a 15x13mm joint used for the 12x15mm bead, one line per face). Allowances (packer, labelling) are about 10% of the midpoint, so the band is not allowance-led. The band excludes GST, preliminaries, margin, design, consent fees and producer statements, and the partition itself below the head, as scoped. Single-face or non-intumescent sealant would take this to roughly $46-84/m - confirm the tested system's requirement before repinning."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 444109,
+        "outputTokens": 23150,
+        "cachedTokens": 361710,
+        "modelCalls": 10,
+        "toolCalls": 31,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.082005,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 444109,
+            "outputTokens": 23150,
+            "estimatedCostUsd": 0.082005,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

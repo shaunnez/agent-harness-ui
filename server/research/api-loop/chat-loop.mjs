@@ -25,14 +25,17 @@ export const API_LOOP_SOFT_TOOL_CALLS = 50;
 const MAX_TOOL_RESULT_CHARACTERS = 60_000;
 const REQUEST_TIMEOUT_MS = 180_000;
 const RETRY_DELAYS_MS = [2_000, 5_000, 12_000];
+/** A provider that throttles (Fireworks answers 429 "rate limit exceeded" when a minute's token
+ *  budget is spent) is waited out rather than failed: the budget refills within the minute. */
+const THROTTLE_DELAYS_MS = [5_000, 15_000, 30_000, 45_000, 60_000];
 const WRAP_UP =
   "You have used your tool budget. Give your final answer now, as the JSON object the instructions ask " +
   "for. If the main cost is still unsourced, set the band to null with resolved_from not_established.";
 
 class ApiError extends Error {
-  constructor(message, { status = null, retryable = false, code = null } = {}) {
+  constructor(message, { status = null, retryable = false, code = null, retryAfterMs = null } = {}) {
     super(message);
-    Object.assign(this, { status, retryable, code });
+    Object.assign(this, { status, retryable, code, retryAfterMs });
   }
 }
 
@@ -311,15 +314,25 @@ async function chat({ provider, apiKey, headers, body, fetchImpl, sleep, signal,
     } catch (error) {
       if (signal?.aborted) throw error;
       const retry = error instanceof ApiError ? error.retryable : true;
-      if (!retry || attempt >= RETRY_DELAYS_MS.length) {
+      const delays = error?.code === "throttled" ? THROTTLE_DELAYS_MS : RETRY_DELAYS_MS;
+      if (!retry || attempt >= delays.length) {
         if (error instanceof ApiError) throw error;
         throw new ApiError(`${provider.label} could not be reached: ${error?.message ?? error}`, {
           code: "provider_unavailable",
         });
       }
-      await sleep(RETRY_DELAYS_MS[attempt]);
+      await sleep(Math.min(error?.retryAfterMs ?? delays[attempt], Math.max(0, deadline - now())));
     }
   }
+}
+
+/** `Retry-After` in seconds or as a date, in milliseconds, capped at a minute; null when absent. */
+function retryAfterOf(response) {
+  const value = response.headers?.get?.("retry-after");
+  if (!value) return null;
+  const seconds = Number(value);
+  const ms = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(value) - Date.now();
+  return Number.isFinite(ms) && ms > 0 ? Math.min(ms, 60_000) : null;
 }
 
 async function chatOnce({ provider, apiKey, headers = {}, body, fetchImpl, signal, timeoutMs }) {
@@ -337,6 +350,14 @@ async function chatOnce({ provider, apiKey, headers = {}, body, fetchImpl, signa
       throw new ApiError(`${provider.label} refused the key (HTTP ${response.status}): ${detail}`, {
         status: response.status,
         code: "auth",
+      });
+    // A per-minute rate limit is a throttle, not a spent plan: wait and try again.
+    if (response.status === 429 && /rate limit|too many requests|slow down/i.test(detail))
+      throw new ApiError(`${provider.label} is throttling (HTTP 429): ${detail}`, {
+        status: 429,
+        retryable: true,
+        code: "throttled",
+        retryAfterMs: retryAfterOf(response),
       });
     if (response.status === 402 || (response.status === 429 && /quota|limit|balance|credit/i.test(detail)))
       throw new ApiError(`${provider.label} usage limit (HTTP ${response.status}): ${detail}`, {
@@ -395,7 +416,8 @@ export function classifyApiLoopCall(call) {
     return {
       ok: false,
       error: {
-        code: /could not be reached|HTTP 5\d\d/.test(call.failure)
+        // A throttle that outlasted every wait is the provider's capacity, not the research.
+        code: /could not be reached|HTTP 5\d\d|is throttling/.test(call.failure)
           ? "provider_unavailable"
           : "api_loop_reported_error",
         message: call.failure,

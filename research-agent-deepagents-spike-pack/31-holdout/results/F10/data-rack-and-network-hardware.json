@@ -1,0 +1,318 @@
+{
+  "question": "data-rack-and-network-hardware",
+  "kind": "pinned",
+  "arm": "F10",
+  "status": "agreed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 18738,
+    "high": 30900
+  },
+  "range": {
+    "min": 18300,
+    "max": 33636
+  },
+  "unit": "per completed 42RU rack serving 96 certified Cat6A links (ea)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.186,
+    "highRatio": 1.269,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.5386,
+  "elapsedMs": 195227,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 177333,
+      "band": {
+        "unit": "per completed 42RU rack serving 96 certified Cat6A links (ea)",
+        "low": 21700,
+        "high": 26500,
+        "centre": "Auckland",
+        "basis": "Sum of distinct components, none counted twice: cabinet $3,068.70 + 4 patch panels $956.52 + accessories allowance $600-$1,200 + 2 PDUs $3,540.60 + 2 switches $7,105.92 + 100 patch leads $844.00 + rack-end termination $2,007.60-$3,212.16 + certification testing allowance $1,200-$2,400 + labelling/as-built allowance $500-$1,200 + install labour $1,840.30-$3,011.40 = $21,663.64-$26,539.30, rounded to $21,700-$26,500, midpoint $24,100. Auckland, mid-market commercial, GST, preliminaries, margin, design and consent fees excluded; horizontal cable, outlet ends, containment, switch configuration, UPS and power circuits, fibre backbone and room works excluded per the fixed scope. Sourced supply lines are street prices ex-GST from fetched NZ supplier pages, not tendered supply-and-install rates, so trade discount against them should be netted off before any margin is added. Allowances carry 11% of the low total and 18% of the high total (accessories, testing, labelling only) - below a third, so the band is established, but note the two labour components are cited QV rates multiplied by the estimator's own hours. IMPORTANT DIVERGENCE: this band is well below the $36,000-$48,000 in the scenario memo because the memo pins the switches at $7,600 each, whereas the sourced NZ street price for the exact specified Cisco CBS350-48FP-4X (48x GbE PoE+ 740W, 4x 10G SFP+, L3) is $3,552.96 each. The memo's ~16% contingency is also outside this scope. Good practice would be to split the switch out of this line: a tier-1 requirement (Catalyst 9200L, Aruba CX 6100) at roughly $22,000 for the pair moves this band to about $28,000-$41,500, and a tier-2 accept (Netgear M4250, Ubiquiti) at about $4,800 for the pair moves it to about $19,000."
+      },
+      "checks": [
+        "web-verified",
+        "web-unsupported",
+        "allowance",
+        "web-verified",
+        "web-verified",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 5,
+        "webVerified": 4,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 1,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 366898,
+        "outputTokens": 17745,
+        "cachedTokens": 262210,
+        "modelCalls": 10,
+        "toolCalls": 35,
+        "searchCalls": 9,
+        "estimatedCostUsd": 0.08141,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 366898,
+            "outputTokens": 17745,
+            "estimatedCostUsd": 0.08141,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 93672,
+      "band": {
+        "unit": "per completed comms rack (ea) serving 96 links",
+        "low": 23048,
+        "high": 34714,
+        "centre": "Auckland",
+        "basis": "Sum of cited NZ supplier prices (rack, 4 patch panels, 2 PDUs, 2 switches, 100 patch leads) plus two cited-labour components, plus stated allowances for plinth/earth kit, cable managers/blanking, rack-end termination and certification testing. Excludes GST, preliminaries, margin, design, consent, horizontal cabling, ups and switch configuration per the fixed scope. QV CostBuilder contributed nothing: its only comms row is an $11/m2 whole-building reticulation benchmark. Switches are the driver - a tier-2 switch would take the rack under $20k, a tier-1 pair with support to the top of the range. Allowances are ~19-24% of the band."
+      },
+      "dropped": true,
+      "checks": [
+        "web-verified",
+        "allowance",
+        "web-verified",
+        "allowance",
+        "web-verified",
+        "web-derived",
+        "web-verified",
+        "allowance",
+        "allowance",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 7,
+        "webVerified": 6,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 638458,
+        "outputTokens": 17456,
+        "cachedTokens": 413480,
+        "modelCalls": 13,
+        "toolCalls": 42,
+        "searchCalls": 11,
+        "estimatedCostUsd": 0.136382,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 638458,
+            "outputTokens": 17456,
+            "estimatedCostUsd": 0.136382,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 98858,
+      "band": {
+        "unit": "ea (one fully populated 42RU rack, 96 certified Cat6A links, 2 x 48-port PoE+ switches)",
+        "low": 24500,
+        "high": 32500,
+        "centre": null,
+        "basis": "Sum of the eleven components above: rack $4,823-$5,674; 4 patch panels $957; cable managers $230; blanking $99; plinth/earth allowance $250-$700; 2 switched PDUs $2,042; 2 switches $11,475-$15,515; rack-end termination $1,338-$2,175; certification $837-$1,506; install labour $1,673-$2,844; patch leads $732. Auckland, mid-market commercial, GST exclusive, no prelims/margin/design/consent. Allowances are 1-2% of the total, so the band is built from cited QV row(s) and fetched NZ pages, not padding. QV supplied only the labour rate: its entire comms library is a single per-m2 'Reticulation cabling' row, which does not price this scope. Confidence is medium, not high, because (a) the switch vendor tier alone moves the rack by $4,000-$11,000 and both fetched switches are out of stock, (b) QV has no comms rates so every hardware line is a retail web price that a project buy would beat, and (c) the three labour lines are priced at the QV all-in electrician rate of $83.65/hr, below a specialist comms contractor's charge-out - at $110-$130/hr the band becomes roughly $26,000-$35,000. Per-link amortisation at the most-likely figure is $297/link over 96 links (brief's equivalent was $370/link). Most likely $28,500 assumes mid-market switches near $7,100 each and mid-range labour hours."
+      },
+      "dropped": true,
+      "checks": [
+        "web-unsupported",
+        "web-verified",
+        "web-verified",
+        "web-unsupported",
+        "allowance",
+        "web-verified",
+        "web-derived",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 3,
+        "rowsFound": 3,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 7,
+        "webVerified": 4,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 2,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 553684,
+        "outputTokens": 21525,
+        "cachedTokens": 411858,
+        "modelCalls": 11,
+        "toolCalls": 41,
+        "searchCalls": 11,
+        "estimatedCostUsd": 0.106273,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 553684,
+            "outputTokens": 21525,
+            "estimatedCostUsd": 0.106273,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 111988,
+      "band": {
+        "unit": "per completed comms rack (42RU, 96 certified Cat6A links, 2 x 48-port PoE+ switches)",
+        "low": 18738,
+        "high": 33636,
+        "centre": null,
+        "basis": "Sum of nine distinct components, no double counting: cabinet supply, patch panels (jacks included), accessory allowance, plinth/earth allowance, PDUs, switches, patch leads, install labour, certification allowance. Excludes GST, preliminaries, margin, contingency, horizontal cabling, outlet-end work, containment, fibre backbone, UPS and power circuits, switch configuration, and room works - all excluded by the scope. Low end uses the 370W switch option and the low hours/allowances; high end uses the spec-matching 740W Catalyst 9200L and the high hours/allowances. Allowances (accessories, plinth/earth, certification) carry 17-18% of each end, under one third, so the band stands, but the switch tier alone swings 42% of the midpoint - hence low confidence. QV could not price any of this scope; the band rests on fetched NZ vendor and rate pages."
+      },
+      "checks": [
+        "web-verified",
+        "web-verified",
+        "allowance",
+        "allowance",
+        "web-verified",
+        "web-derived",
+        "web-verified",
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 6,
+        "webVerified": 5,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 566852,
+        "outputTokens": 20456,
+        "cachedTokens": 448702,
+        "modelCalls": 12,
+        "toolCalls": 38,
+        "searchCalls": 15,
+        "estimatedCostUsd": 0.094027,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 566852,
+            "outputTokens": 20456,
+            "estimatedCostUsd": 0.094027,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 195226,
+      "band": {
+        "unit": "per completed comms rack, fully populated and tested (ea)",
+        "low": 18300,
+        "high": 30900,
+        "centre": "Auckland",
+        "basis": "Sum of the components above at their low and high ends; midpoint ~$24,500. QV's entire Telephone/Data section is a single whole-building allowance (Reticulation cabling, m2, AKL 11) with nothing per-rack, so every proprietary item is priced from fetched NZ vendor pages and QV supplies only the electrician labour rate. Largest driver is the switch pair, carried at $1,781-$3,553 per unit against two fetched NZ sources, a 2:1 spread that is a specification decision (500W L2+ vs 740W L3) rather than a rack-installation cost. Allowances (plinth/earth, managers and blanking, labelling, certification testing, handover) carry roughly 20-24% of the total, under a third, so the band is carried. GST exclusive, excludes preliminaries, margin, design, consent fees, horizontal cabling runs, outlet-end work, containment, switch configuration, UPS and dedicated power circuits, fibre backbone and room works, all per the fixed scope. NOTE: this band is materially LOWER than the pinned $36,000-$48,000 build-up, principally because the pinned $7,600 per switch is well above current NZ mid-market retail for a 48-port PoE+ 4x10G access switch; one rack amortises to roughly $190/link here, not $370-432."
+      },
+      "checks": [
+        "web-derived",
+        "allowance",
+        "web-derived",
+        "allowance",
+        "web-verified",
+        "web-derived",
+        "qv-found",
+        "web-derived",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 5,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 4,
+        "webUnsupported": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 1014976,
+        "outputTokens": 20980,
+        "cachedTokens": 848102,
+        "modelCalls": 15,
+        "toolCalls": 46,
+        "searchCalls": 13,
+        "estimatedCostUsd": 0.12049,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 1014976,
+            "outputTokens": 20980,
+            "estimatedCostUsd": 0.12049,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

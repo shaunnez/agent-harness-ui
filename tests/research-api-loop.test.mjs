@@ -431,9 +431,44 @@ test("an API-loop run without its keys fails before it starts, naming the keys",
     objective: "Concrete paving slab, per m2.",
     researchPolicy: { runtime: "api-loop", model: "baseten/deepseek-ai/DeepSeek-V4.1-Flash" },
   };
-  await assert.rejects(new ApiLoopResearchRuntime({ env: {} }).start(request), /BASETEN_API_KEY and PARALLEL_API_KEY/);
+  await assert.rejects(
+    new ApiLoopResearchRuntime({ env: {} }).start(request),
+    /BASETEN_API_KEY and PARALLEL_API_KEY/,
+  );
   await assert.rejects(
     new ApiLoopResearchRuntime({ env: { BASETEN_API_KEY: "test" } }).start(request),
     /needs PARALLEL_API_KEY in the companion's environment/,
   );
+});
+
+test("a provider's per-minute rate limit is waited out, not scored as a spent plan", async () => {
+  let calls = 0;
+  const waits = [];
+  const fetchImpl = async () => {
+    calls += 1;
+    if (calls <= 2)
+      return new Response(
+        '{"error":{"code":"invalid_request_error","message":"rate limit exceeded, please try again later"}}',
+        { status: 429, headers: calls === 2 ? { "retry-after": "2" } : {} },
+      );
+    return new Response(
+      JSON.stringify({ choices: [{ message: { content: "Done." }, finish_reason: "stop" }], usage: {} }),
+      { status: 200 },
+    );
+  };
+  const { chatOnceWithRetries } = await import("../server/research/api-loop/chat-loop.mjs");
+  const reply = await chatOnceWithRetries({
+    env: { FIREWORKS_API_KEY: "test" },
+    model: "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us",
+    systemPrompt: "x",
+    prompt: "y",
+    timeoutMs: 600_000,
+    fetchImpl,
+    sleep: async (ms) => {
+      waits.push(ms);
+    },
+  });
+  assert.equal(reply.text, "Done.");
+  // The throttle schedule (5 s first), then the provider's own Retry-After (2 s).
+  assert.deepEqual(waits, [5_000, 2_000]);
 });

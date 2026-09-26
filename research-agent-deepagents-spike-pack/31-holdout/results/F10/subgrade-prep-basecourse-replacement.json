@@ -1,0 +1,306 @@
+{
+  "question": "subgrade-prep-basecourse-replacement",
+  "kind": "pinned",
+  "arm": "F10",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 249,
+    "high": 334
+  },
+  "range": {
+    "min": 245,
+    "max": 360
+  },
+  "unit": "$/m3 in-situ undercut volume (150 m3 nominal)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.029,
+    "highRatio": 1.121,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.3357,
+  "elapsedMs": 163138,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 78272,
+      "band": {
+        "unit": "$/m3 in-situ undercut volume (150 m3 nominal)",
+        "low": 252,
+        "high": 334,
+        "centre": null,
+        "basis": "Sum of the eight components above, added not averaged. Auckland, GST exclusive, excludes preliminaries, margin, design, geotechnical fees, consents, contaminated spoil, managed fill, dewatering, breaking out seal/slab, traffic management and shift premiums, all per the fixed scope. In dollars for the nominal 150 m3: low $37,800, high $50,100, centre $43,950. The band is wider than a normal working estimate because component 5 (AP40) has no exact QV row and the two closest rows span $112 to $147/m3, and because the cleanfill gate rate is a fetched commercial-yard list price where a farm-consented tip could be materially cheaper. Allowances are about 10% of the centre. Centre differs from the $185-$255/m3 sketched in the brief because QV's cited basecourse rows are much higher than the brief's AP40 line."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 138357,
+        "outputTokens": 19691,
+        "cachedTokens": 100046,
+        "modelCalls": 7,
+        "toolCalls": 23,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.053584,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 138357,
+            "outputTokens": 19691,
+            "estimatedCostUsd": 0.053584,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 163134,
+      "band": {
+        "unit": "m3 of in-situ undercut volume (= m3 compacted replacement)",
+        "low": 245,
+        "high": 360,
+        "centre": null,
+        "basis": "Sum of distinct components, no item counted twice: QV Excavation rows for dig/load (25/m3) and removal (30.2/m3), a fetched Auckland cleanfill list for the gate fee ($26-41/t at ~1.9 t/m3), QV Soil Control Fabrics rows for the geotextile ($3.60-6.00/m2), and QV's combined GAP40 'supply to site, spread and consolidated in layers' row (112/m3) for the basecourse - the largest single line, adjusted upward for the TNZ M/4 AP40 specification and 95% MDD layering, corroborated by two fetched Auckland quarry lists pricing TNZ 40 at $44.50-45.00/t ex-gate. Trim/water, testing and mobilisation are allowances and together carry about 10% of the total. Centre is the arithmetic midpoint, rounded; total for the nominal 150 m3 is $36,700-54,000, midpoint ~$45,300. Excludes GST, preliminaries, margin, design, geotechnical fees, consents, contaminated spoil, dewatering, breakout of overlying seal/slab, traffic management and stabilisation."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 382976,
+        "outputTokens": 25251,
+        "cachedTokens": 315424,
+        "modelCalls": 10,
+        "toolCalls": 30,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.078689,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 382976,
+            "outputTokens": 25251,
+            "estimatedCostUsd": 0.078689,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 100158,
+      "band": {
+        "unit": "$/m3 in-situ undercut volume (equals compacted replacement volume)",
+        "low": 252,
+        "high": 397,
+        "centre": null,
+        "basis": "Auckland, suburban commercial site, GST exclusive, no margin, preliminaries or professional fees. Sum of the nine components above, each priced from a cited QV CostBuilder row (Auckland column) or, for the cleanfill gate fee, a fetched Auckland price list. Component midpoints sum to $324.60/m3 (arithmetic total $252.30-$396.90). Total for the nominal 150 m3: $37,800-$59,550, midpoint $48,750. The band is wide because three items genuinely swing: cleanfill gate rate (weight-based, $47-56/m3 in-situ), AP40 supply (QV indicative $76/m3 vs fetched ex-gate $44.50/t = $95.70/m3 before delivery), and excavation productivity in CBR<3 clay. Allowances carry only ~7% of the midpoint, so the band is carried by cited rates. Excludes everything on the scope's excluded list."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "web-derived",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 484526,
+        "outputTokens": 26739,
+        "cachedTokens": 403626,
+        "modelCalls": 10,
+        "toolCalls": 41,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.088168,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 484526,
+            "outputTokens": 26739,
+            "estimatedCostUsd": 0.088168,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 142880,
+      "band": {
+        "unit": "NZD per m3 in-situ undercut volume (= compacted replacement volume), GST exclusive, Auckland",
+        "low": 236,
+        "high": 321,
+        "centre": null,
+        "basis": "Sum of eight distinct components per m3: QV excavate-and-load $20-30; QV cart-to-cleanfill 25km RT $34-42; fetched Auckland cleanfill gate fee $39-53; QV goetextile proxy $16-22; QV placed TNZ-M/4 proxy basecourse $112-145 (main driver, cited); plus three minor allowances (testing $6.7-12, mobilisation $6-12, trim/water/set-out $2-5). Midpoint $278/m3; total for the nominal 150 m3 = $35,400-$48,150, midpoint about $41,700. Allowances carry under 10% of the total, so the band is not allowance-led. Compared with the scenario's proposed $185-$255 band, this is higher chiefly because (a) the scenario's AP40 supply line mixed $44/t x 2.15 t/m3 (= $99/m3) with a $62/m3 figure, which understates the replacement by roughly $24/m3 at mid, and (b) published Auckland cleanfill gate rates are $22-$28 per tonne, i.e. $39-$53 per in-situ m3, against the scenario's $34/m3."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 159450,
+        "outputTokens": 19312,
+        "cachedTokens": 118606,
+        "modelCalls": 6,
+        "toolCalls": 17,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.054209,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 159450,
+            "outputTokens": 19312,
+            "estimatedCostUsd": 0.054209,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 79692,
+      "band": {
+        "unit": "$/m3 in-situ undercut volume",
+        "low": 249,
+        "high": 321,
+        "centre": "Auckland",
+        "basis": "Sum of the eight components above (unrounded low 248.58, high 320.89), per m3 of in-situ undercut = compacted replacement volume. Nominal 150 m3: $37,287 - $48,134, midpoint about $42,700. GST exclusive. Excludes preliminaries, margin, design, geotechnical fees, consent fees, contaminated spoil, dewatering, breaking out/reinstating overlying seal or slab, traffic management/temporary works and shift premiums, per the fixed scope. Sits above the draft $185-255/m3 band principally because QV's GAP40 supplied/spread/consolidated row is $112/m3 AKL (not $88/m3) once a genuine TNZ M/4 supply price is used, and because Auckland cleanfill gate fees are charged per tonne on the weighbridge (~$44-53 per in-situ m3 at 1.7-1.9 t/m3), not per loose m3. Allowances (testing, mobilisation, sundries) total $16-40/m3, i.e. 6-13% of the band, so the band is carried by cited rates, not by judgement."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 4,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 223258,
+        "outputTokens": 20756,
+        "cachedTokens": 174132,
+        "modelCalls": 9,
+        "toolCalls": 24,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.061035,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 223258,
+            "outputTokens": 20756,
+            "estimatedCostUsd": 0.061035,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,321 @@
+{
+  "question": "site-establishment-relocation",
+  "kind": "pinned",
+  "arm": "F10",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 4560,
+    "high": 7059.6
+  },
+  "range": {
+    "min": 4356.55,
+    "max": 7178.9
+  },
+  "unit": "sum (one complete relocation event of a single site compound, in place on an operating site)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.077,
+    "highRatio": 1.11,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.402,
+  "elapsedMs": 161398,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 114011,
+      "band": {
+        "unit": "sum (one complete relocation event of a single site compound, in place on an operating site)",
+        "low": 4356.55,
+        "high": 7178.9,
+        "centre": null,
+        "basis": "Auckland, GST exclusive, direct cost of the works only (preliminaries, margin, design/consent fees, traffic management and any new hardstand/aggregate/seal excluded per the fixed scope). Nominal quantity is one event, so the 3-person gang day and the single plant mobilisation are already inside the total with nothing further to amortise. Price is the sum of the 13 components above: QV site-fence install and dismantle rows; QV labour-rate build-ups for the electrician, blocklayer, blocklayer's labourer, leading hand and two labourers; a fetched NZ vendor range for the hiab and a fetched Auckland certificate price; and four minor allowances (gate, bearing-point re-levelling, signage/barriers, tidy). No separate container-relocation and no separate plant-mobilisation line is added, to avoid double-counting the hiab and hookup labour already carried. Allowances are ~20% of the low end and ~31% of the high end, at the upper end approaching the one-third limit. Largest driver is the three-person gang day (~$1,543), then the hiab ($480-$1,200) and the fence ($696)."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "web-verified",
+        "allowance",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 707457,
+        "outputTokens": 29447,
+        "cachedTokens": 604038,
+        "modelCalls": 17,
+        "toolCalls": 44,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.104979,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 707457,
+            "outputTokens": 29447,
+            "estimatedCostUsd": 0.104979,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 62786,
+      "band": {
+        "unit": "sum (one complete compound relocation event; nominal qty 1 event = 120 m fence, 2 no. 20ft units, 60 lm bay wall, 24 gang-hours)",
+        "low": 4560,
+        "high": 6470,
+        "centre": "Auckland",
+        "basis": "Sum of the seven components above: low $4,557.60, high $6,466.55, median $5,512. All main cost drivers (fence lift-and-shift, 8t hiab with operator, blocklayer/labourer re-set of the bay walls, electrician reconnect, and the 3-person 8-hour gang day) are priced from cited QV CostBuilder rows; the only web component is the CoC certificate fee, quoted from a fetched page. Allowances carry $250-$600 of the total, about 5-8% of the mid - well under a third, so the band is established rather than allowance-driven. GST exclusive, mid-market subcontract pricing, Auckland centre, QV rates unreviewed. The band is the event total, not a rate: each line is priced at the actual event quantity so no amortisation divisor is buried in it. Principal risks widening the high end: a hiab spill to a second attendance, blocks that need new bedding or bases, and the 20 m reconnect turning out to be a longer run."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 277005,
+        "outputTokens": 16378,
+        "cachedTokens": 186900,
+        "modelCalls": 8,
+        "toolCalls": 26,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.07171,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 277005,
+            "outputTokens": 16378,
+            "estimatedCostUsd": 0.07171,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 98941,
+      "band": {
+        "unit": "$/sum (one complete relocation event of a single site compound, in-place on an operating site)",
+        "low": 4230,
+        "high": 6690,
+        "centre": "Auckland",
+        "basis": "Sum of QV-cited components for the fence, hiab, block-wall labour, gang labour and electrician labour, plus the web-quoted CoC fee and four stated minor allowances (gate leaf, on-site transport, electrical certification, sundries). Nominal quantity is ONE event, so the band total is also the amortised event total — no further division is needed. Excludes GST, preliminaries, margin, design/consent fees, new hardstand, new fence/containers/blocks, works beyond the site boundary, traffic management and security. Allowances are minor lines and carry well under a third of the total. Main cost drivers (crane, gang labour, fence, block work) all rest on cited QV rows."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 8,
+        "rowsFound": 8,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 416020,
+        "outputTokens": 27048,
+        "cachedTokens": 336746,
+        "modelCalls": 13,
+        "toolCalls": 40,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.08739,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 416020,
+            "outputTokens": 27048,
+            "estimatedCostUsd": 0.08739,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 145454,
+      "band": {
+        "unit": "sum (one complete relocation event, as scoped)",
+        "low": 4692.4,
+        "high": 7059.6,
+        "centre": null,
+        "basis": "Bottom-up from cited QV rows (fence install/dismantle and transport, hiab hours plus plant mobilisation, electrician and blocklayer and general labour rates, tipping fee) plus labelled allowances for the five minor unpublished items (gate re-hang, bearing packers/pads, electrical reconnect materials, mortar sundries, signage/tape/barrier re-fix). Components are added once each: the QV site-fence transport rows are listed separately from the per-m rates so they are added on top; the hire-company install/dismantle rate already contains the fence crew's labour, and the gang-day labour is not added to the items it performs. Nominal quantity for the event: ONE complete relocation = 120 m fence, 1 gate, 2 x 20ft containers, 1 hiab visit (4 hrs on site, 4 lifts), 2 storage bays (60 lm of block wall re-set), 1 x 8-hour 3-person day, 1 plant mobilisation. Allowances are about 19% of the median, below the one-third threshold, so the band rests on sourced rates. Centre: Auckland, GST exclusive, excluding preliminaries, margin, design/consent fees, new hardstand, new materials and a second move event. Confidence is low, chiefly because the fence relocation rate is a hire-contract install/dismantle charge rather than a one-off relocation rate, and the hiab is a mobile-crane proxy."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "web-verified",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 8,
+        "rowsFound": 8,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 364083,
+        "outputTokens": 24313,
+        "cachedTokens": 304296,
+        "modelCalls": 12,
+        "toolCalls": 37,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.073406,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 364083,
+            "outputTokens": 24313,
+            "estimatedCostUsd": 0.073406,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 161396,
+      "band": {
+        "unit": "sum (one complete relocation event of a single site compound, in-place on an operating site)",
+        "low": 4900,
+        "high": 7850,
+        "centre": "Auckland",
+        "basis": "Sum of cited QV CostBuilder rows (Auckland column) plus four labelled allowances for minor items. Nominal scope: 120 lm of existing 1.8m panel fence plus one 4.0m double gate re-erected on existing hardstand; 2 x 20ft containers shifted 60m on one 8t hiab visit; 12 m2 (60 lm, 1 course) of existing block bay wall re-set on the same hiab visit; one electrical disconnect/reconnect with CoC; one 3-person 8-hour gang day; one plant mobilisation, all amortised across the single event. Median total approx $5,900-$6,400. Allowances carry approx 26% of the median - under a third - so the band stands. QV rows are UNREVIEWED and QV mobile-crane hire is used as the proxy for the truck-mounted hiab; both are caveated above. GST, preliminaries, margin and design/consent fees excluded per scope, so this is a cost-level band, not a market subcontract price."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 334218,
+        "outputTokens": 17401,
+        "cachedTokens": 265724,
+        "modelCalls": 10,
+        "toolCalls": 32,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.064536,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 334218,
+            "outputTokens": 17401,
+            "estimatedCostUsd": 0.064536,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}
