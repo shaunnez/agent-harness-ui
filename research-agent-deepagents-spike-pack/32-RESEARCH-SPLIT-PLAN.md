@@ -94,7 +94,7 @@ Exit: all current tests pass, and re-checking the recorded eval arms, including 
 2. Update the imports in the harness server, the tests, the scripts and the eval paths. The comparison runtimes stay in `server/research/` and import the engine.
 3. Keep these green: `npm test`, `test:frontier`, `test:frontier-api`, `typecheck`, `lint`, `build`, `test:sites`, and the container build on main.
 
-### Phase 3: research service skeleton, still dev only (built, live check pending)
+### Phase 3: research service skeleton, still dev only (done)
 
 **Built on 26 September 2026**, with Shaun's answers folded in: Postgres rather than a second SQLite file, a queue that paces PlanCheck's batches (20 to 100 items), and the API PlanCheck calls. `apps/research-service` (`README.md` there):
 
@@ -105,9 +105,15 @@ Exit: all current tests pass, and re-checking the recorded eval arms, including 
 - **The queue** is the batch tables, claimed with `FOR UPDATE SKIP LOCKED`; the worker asks only as many questions as the pacer has room for (run slots ÷ runs per question, plus one). Items being asked when the service stops go back to the queue. A run still queued when it stops now fails as `interrupted_before_start`, which a question may retry like a failed start (the harness gains this too); the worker retries such runs up to twice.
 - **Research projects** are the service's own table. Phase 0.3 is still open, so the service asks every batch in one standing project (`plancheck`) and keeps PlanCheck's batch reference as opaque data; one project per account can follow without a schema change.
 - **Review console routes** (the engine's `/api/research/…`, plus a projects list) answer only on a loopback listener to a loopback `Host` and origin; in the container they are off until sign-in (Phase 5).
-- **Image**: `apps/research-service/Dockerfile` (engine, service, `pg`, poppler; no PGlite, no harness UI packages) with `scripts/check-image.sh`, which fails on any `claude`, `codex` or `opencode` binary or package, harness source, orchestrator module, `.data`, React, Vite, three.js or PGlite. The dependency install was reproduced outside Docker (17 packages, none of the root's), but **the image has not been built**: Docker Desktop was not running. The repo has no CI, so the check runs by hand for now.
+- **Image**: `apps/research-service/Dockerfile` (engine, service, `pg`, poppler; 399 MB) with `scripts/check-image.sh`, which fails on any `claude`, `codex` or `opencode` binary or package, harness source, orchestrator module, `.data`, React, Vite, three.js or PGlite. The first build failed that check: npm installs a named workspace's devDependencies even with `--omit=dev`, so PGlite was in the image; the build now drops them from its own copy of the manifest before `npm ci`, and the rebuilt image passes. The repo has no CI, so the check runs by hand for now.
 
-Not done: the exit's live half. Running the service against a local PlanCheck with a synthetic tender needs PlanCheck up and a small paid run (about $0.35 a question on Fireworks US), which waits for Shaun. It has been started locally (Postgres on PGlite, Fireworks US, pacing at 3) and answered its health, credential, batch-validation and console routes without starting a run. Still single process: runs execute inside the service, so separate worker containers stay in Phase 5, and what the pacer learns is lost on a restart.
+**Exit checks, 26 September 2026:**
+
+- *Grades the same as the harness*: the parity test passes on PGlite and on a real Postgres 16 server through `pg` (`RESEARCH_TEST_POSTGRES_URL`), all 45 held-out results included.
+- *The image runs*: against that Postgres 16, it applied both migrations, answered `/healthz` as `postgres`, served the token-protected batch routes, and kept the console routes off.
+- *Live, against local PlanCheck, with a synthetic tender*: two made-up items (a 90 mm partition wall in Auckland, porcelain floor tiles in Wellington), five runs each on Fireworks US with QV from PlanCheck's rate library. Both came back **Confident** in 82 seconds for $0.22 in all: $165–$190 per m² of wall and $120–$183 per m² of floor, NZD excluding GST, every priced component a found QV row. The pacer grew from 3 to 6 runs at once with no throttles. Both items had close QV rows, so this shows the path works end to end, not how the service copes with items that need the web.
+
+Still single process: runs execute inside the service, so separate worker containers stay in Phase 5, and what the pacer learns is lost on a restart.
 
 Original plan:
 

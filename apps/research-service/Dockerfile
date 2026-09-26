@@ -14,8 +14,11 @@ COPY package.json package-lock.json ./
 COPY packages/research-engine/package.json ./packages/research-engine/
 COPY apps/research-service/package.json ./apps/research-service/
 # Only the service's own production dependencies: none of the root's (the harness UI), and no
-# dev tools such as PGlite, so the image can only reach a real Postgres.
-RUN npm ci --omit=dev --workspace @eversor/research-service --include-workspace-root=false --no-audit --no-fund \
+# dev tools such as PGlite, so the image can only reach a real Postgres. npm installs a named
+# workspace's devDependencies even with --omit=dev (npm 10), so they are taken out of this stage's
+# copy of the manifest first; the lockfile still matches, and the copy never leaves this stage.
+RUN node -e 'const fs = require("fs"); const file = "apps/research-service/package.json"; const manifest = JSON.parse(fs.readFileSync(file, "utf8")); delete manifest.devDependencies; fs.writeFileSync(file, JSON.stringify(manifest, null, 2));' \
+  && npm ci --omit=dev --workspace @eversor/research-service --include-workspace-root=false --no-audit --no-fund \
   && npm cache clean --force
 
 FROM ${NODE_IMAGE}

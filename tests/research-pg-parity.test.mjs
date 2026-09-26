@@ -41,8 +41,12 @@ function openSqlite() {
   };
 }
 
+/** PGlite in memory by default. `RESEARCH_TEST_POSTGRES_URL` points the same tests at a real
+ *  server through `pg`, as production runs; its public schema is emptied before each test. */
 async function openPg() {
-  const db = await openDatabase("pglite:memory");
+  const url = process.env.RESEARCH_TEST_POSTGRES_URL;
+  const db = await openDatabase(url ?? "pglite:memory");
+  if (url) await db.exec("DROP SCHEMA public CASCADE; CREATE SCHEMA public;");
   await migrateResearchSchema(db);
   await new PgResearchProjectStore(db).ensure({ ...PROJECT, now: "2026-09-26T00:00:00.000Z" });
   return {
