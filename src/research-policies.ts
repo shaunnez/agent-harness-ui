@@ -22,7 +22,7 @@ export const RESEARCH_ENGINES: Readonly<
 });
 
 /** The models the API loop offers research: DeepSeek on OpenCode Go's API for testing, and on
- *  Baseten for production. DeepSeek's own API is deliberately absent (traffic stays out of China).
+ *  Fireworks' US-only endpoint or Baseten for production. DeepSeek's own API is deliberately absent (traffic stays out of China).
  *  "default" is the only reasoning: the eval ran DeepSeek with no variant. */
 export const API_LOOP_RESEARCH_MODELS: readonly {
   id: string;
@@ -32,6 +32,11 @@ export const API_LOOP_RESEARCH_MODELS: readonly {
   {
     id: "opencode-go/deepseek-v4.1-flash",
     label: "DeepSeek 4.1 Flash · OpenCode Go API",
+    reasoningLevels: ["default"],
+  },
+  {
+    id: "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us",
+    label: "DeepSeek 4.1 Flash · Fireworks (US only)",
     reasoningLevels: ["default"],
   },
   {

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // The scope → pack eval (`research-agent-deepagents-spike-pack/29-EVAL-PREREGISTRATION.md`).
 //
-//   node scripts/research-eval.mjs --arm A0|A2|A3|A4|A5|A6|A7|A8|A9|A10|O5 [--only id,id] [--out <dir>]
+//   node scripts/research-eval.mjs --arm A6|A7|A8|A9|A10|F10 (A0–A5 and O5 re-score only) [--only id,id] [--out <dir>]
 //   node scripts/research-eval.mjs --rescore [--out <dir>]
 //   node scripts/research-eval.mjs --arm A4 --set <questions.json> --model <model> --out <dir>   (tuning)
 //
@@ -110,6 +110,15 @@ export const ARMS = {
     reasoning: "high",
     runs: 5,
     retired: true,
+  },
+  // Doc 31 provider parity: A10 unchanged except the provider, DeepSeek 4.1 Flash on Fireworks'
+  // US-only endpoint. Needs FIREWORKS_API_KEY and PARALLEL_API_KEY in the environment.
+  F10: {
+    runtime: "api-loop",
+    model: "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us",
+    reasoning: null,
+    runs: 5,
+    make: (env) => new ApiLoopResearchRuntime({ env }),
   },
   // Doc 29 addendum A10: A9 with the not-a-price rule (check and prompt) and open-a3 pinned to the
   // net change.

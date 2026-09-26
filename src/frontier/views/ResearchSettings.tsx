@@ -29,9 +29,9 @@ export function ResearchSettings({
         <h4>Engine</h4>
         <p>API loop</p>
         <small>
-          No CLI: the companion calls the model's API with a key from its own environment (OPENCODE_API_KEY or
-          BASETEN_API_KEY, and PARALLEL_API_KEY for web search). A run without its keys fails before it starts
-          and can be retried once they are set.
+          No CLI: the companion calls the model's API with a key from its own environment (OPENCODE_API_KEY,
+          FIREWORKS_API_KEY or BASETEN_API_KEY for the model, and PARALLEL_API_KEY for web search). A run
+          without its keys fails before it starts and can be retried once they are set.
         </small>
       </div>
       <div className="design-policy-default">
@@ -55,8 +55,9 @@ export function ResearchSettings({
         </div>
         <small>
           DeepSeek 4.1 Flash with the host checking each answer before accepting it. It passed 10 of 15
-          held-out eval questions against Claude Opus 5.5's 5, at about $0.15 a question. Baseten serves the
-          same model on US infrastructure for production. Dollar figures are API-rate estimates.
+          held-out eval questions against Claude Opus 5.5's 5, at about $0.15 a question on OpenCode Go.
+          Fireworks' US-only endpoint serves the same model only from the US, at about three times the price.
+          Dollar figures are API-rate estimates.
         </small>
       </div>
     </section>

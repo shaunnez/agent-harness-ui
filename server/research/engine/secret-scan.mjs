@@ -21,6 +21,7 @@ export const SCANNED_CREDENTIAL_VARS = Object.freeze([
   // The API-loop runtime's provider and search keys (`../api-loop/providers.mjs`).
   "OPENCODE_API_KEY",
   "BASETEN_API_KEY",
+  "FIREWORKS_API_KEY",
   "PARALLEL_API_KEY",
   "GITHUB_TOKEN",
   "GH_TOKEN",

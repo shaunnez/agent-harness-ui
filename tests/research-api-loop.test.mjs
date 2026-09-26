@@ -95,6 +95,19 @@ test("models route to their provider, DeepSeek's own API is not one, and usage i
     "deepseek-ai/DeepSeek-V4.1-Flash",
   );
   assert.throws(() => resolveApiModel("deepseek/deepseek-flash"), /names no API-loop provider/);
+  // Fireworks' US-only endpoint, keyed separately, with its model path kept whole.
+  const fireworks = resolveApiModel("fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us");
+  assert.equal(fireworks.provider.endpoint, "https://us.api.fireworks.ai/inference/v1");
+  assert.equal(fireworks.provider.keyEnv, "FIREWORKS_API_KEY");
+  assert.equal(fireworks.remoteModel, "accounts/fireworks/routers/deepseek-v4p1-flash-us");
+  assert.equal(
+    priceApiUsage("fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us", {
+      inputTokens: 2e6,
+      cachedTokens: 1e6,
+      outputTokens: 1e6,
+    }),
+    2.259,
+  );
   // 1M uncached in at $0.15, 1M cached at $0.003, 1M out at $0.60.
   assert.equal(
     priceApiUsage("opencode-go/deepseek-v4.1-flash", {

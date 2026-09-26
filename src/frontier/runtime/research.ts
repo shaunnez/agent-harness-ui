@@ -342,6 +342,7 @@ export function researchEngineLabel(engine: ResearchEngineSnapshot) {
       "gpt-6-luna": "GPT-6 Luna",
       "opencode-go/deepseek-v4.1-flash": "DeepSeek 4.1 Flash",
       "baseten/deepseek-ai/DeepSeek-V4.1-Flash": "DeepSeek 4.1 Flash",
+      "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": "DeepSeek 4.1 Flash",
     }[engine.model] ?? engine.model;
   const reasoning = engine.reasoning
     ? engine.reasoning === "xhigh"
@@ -354,7 +355,11 @@ export function researchEngineLabel(engine: ResearchEngineSnapshot) {
 export function researchEnginePlan(engine: ResearchEngineSnapshot) {
   if (engine.runtime === "opencode-cli") return "OpenCode CLI · OpenCode Go plan";
   if (engine.runtime === "api-loop")
-    return engine.model.startsWith("baseten/") ? "API loop · Baseten API" : "API loop · OpenCode Go API";
+    return engine.model.startsWith("baseten/")
+      ? "API loop · Baseten API"
+      : engine.model.startsWith("fireworks-us/")
+        ? "API loop · Fireworks US API"
+        : "API loop · OpenCode Go API";
   return engine.runtime === "codex-cli" ? "Codex CLI · ChatGPT plan" : "Claude CLI · Claude plan";
 }
 

@@ -3,8 +3,9 @@
 // this process: there is no child process on this runtime.
 //
 // DeepSeek's own API (api.deepseek.com) is deliberately absent. Shaun wants DeepSeek traffic
-// ring-fenced from China; Baseten serves the open weights on its own infrastructure. OpenCode Go is
-// here for testing on the plan the eval already used.
+// ring-fenced from China. Fireworks' US-only endpoint serves inference only from the US and keeps
+// no prompt or output data for open models by default; Baseten serves the open weights on its own
+// infrastructure. OpenCode Go is here for testing on the plan the eval already used.
 //
 // Rates are USD per million tokens, from models.dev (`https://models.opencode.ai/api.json`),
 // 24 September 2026. A figure computed from them is an API-rate estimate, never a charge.
@@ -18,6 +19,17 @@ export const API_LOOP_PROVIDERS = Object.freeze({
     // run keeps a run's calls on one route, which is also what lets its prompt cache hit.
     sessionHeader: "x-opencode-session",
     rates: { "deepseek-v4.1-flash": { input: 0.15, output: 0.6, cacheRead: 0.003 } },
+  }),
+  // Fireworks' US-only serverless (`https://docs.fireworks.ai/serverless/us-only-serverless`),
+  // priced at 1.5x its global rate. Rates from its pricing page, 26 September 2026, which already
+  // show the DeepSeek V4.1 Flash increase that takes effect on 1 October.
+  "fireworks-us": Object.freeze({
+    label: "Fireworks (US only)",
+    endpoint: "https://us.api.fireworks.ai/inference/v1",
+    keyEnv: "FIREWORKS_API_KEY",
+    rates: {
+      "accounts/fireworks/routers/deepseek-v4p1-flash-us": { input: 0.45, output: 1.8, cacheRead: 0.009 },
+    },
   }),
   baseten: Object.freeze({
     label: "Baseten",

@@ -98,3 +98,18 @@ rack and joinery painting now sit with DeepSeek. Opus prices joinery at $46–57
 22 September runs' $92.5–167.5, and it did not price the glazed vision panel. The clearest remaining
 difference is site establishment: DeepSeek $5.7k–9.4k, Opus $2.4k–3.9k, and the 22 September runs
 $3.3k–7k. Which is right is not measured here.
+
+## Provider parity arm (registered 26 September, before its run)
+
+Shaun: "Lets do fireworks". Arm `F10` is A10 with one change, the provider: DeepSeek 4.1 Flash on
+Fireworks' US-only serverless endpoint (`us.api.fireworks.ai`, model
+`accounts/fireworks/routers/deepseek-v4p1-flash-us`) instead of OpenCode Go. The prompt, checks, answer
+review, five runs and questions are A10's, so this measures the provider, not the recipe.
+
+**Decision rule, fixed now.** Fireworks US is acceptable for production if F10 passes at least 8 of the
+15 questions (A10 passed 10) and agrees on at least 12 (A10 agreed 14), with no run failing for a
+provider reason (refused key, rate limit, tool-call format). The two-question margin allows for
+DeepSeek's run-to-run variance, which moved an unchanged arm from 6 to 4 on doc 29's set (A5 and its
+repeat). Cost and time are reported beside it; at Fireworks' US rates (1.5x its global price, and
+about 3x OpenCode Go's) the suite is expected to cost about $7.
+
