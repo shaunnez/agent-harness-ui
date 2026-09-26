@@ -532,7 +532,7 @@ kbd {
 .ae-herald {
   position: absolute;
   left: 12px;
-  bottom: 236px;
+  bottom: 220px;
   display: grid;
   gap: 3px;
   max-width: min(640px, 55vw);
@@ -576,9 +576,9 @@ kbd {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 200px;
+  height: 184px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 330px 360px;
+  grid-template-columns: minmax(0, 1fr) 330px 340px;
   gap: 6px;
   padding: 10px 10px 8px;
   background: var(--frame);
@@ -619,8 +619,8 @@ kbd {
 }
 .ae-sel-portrait {
   flex: none;
-  width: 100px;
-  height: 118px;
+  width: 104px;
+  align-self: stretch;
   display: grid;
   place-items: center;
   background: radial-gradient(circle at 50% 40%, #6b8a5a 0%, #2e3a22 80%);
@@ -763,12 +763,17 @@ kbd {
 .ae-sel-chips button:hover {
   background: rgba(226, 189, 98, 0.15);
 }
+/* Commands wrap into full rows: a short last row stretches, so there are never empty slots. */
 .ae-commands {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-  gap: 5px;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: stretch;
+  gap: 6px;
   padding: 8px;
+}
+.ae-commands .ae-cmd {
+  flex: 1 1 calc((100% - (var(--cols) - 1) * 6px) / var(--cols));
+  min-width: 0;
 }
 .ae-cmd {
   position: relative;
@@ -784,18 +789,18 @@ kbd {
   box-shadow:
     inset 0 0 0 1px var(--gold-0),
     inset 0 1px 0 1px rgba(255, 220, 150, 0.15);
-  font-size: 22px;
+  font-size: 26px;
   color: var(--gold-3);
 }
 .ae-cmd span {
   font-family: var(--display);
-  font-size: 9.5px;
+  font-size: 12px;
   line-height: 1.05;
   font-weight: 700;
   text-align: center;
   color: var(--cream);
 }
-.ae-cmd:hover:not(.is-empty) {
+.ae-cmd:hover {
   filter: brightness(1.3);
 }
 .ae-cmd--gold {
@@ -810,11 +815,6 @@ kbd {
 }
 .ae-cmd--blue {
   background: linear-gradient(180deg, #3a6a9a, #1a3450);
-}
-.ae-cmd.is-empty {
-  background: rgba(0, 0, 0, 0.35);
-  box-shadow: inset 0 0 0 1px rgba(184, 138, 46, 0.2);
-  cursor: default;
 }
 .ae-bottom-map {
   display: flex;
@@ -1913,4 +1913,11 @@ select {
   background: rgba(217, 162, 27, 0.14);
   border-left-color: var(--gold-1);
   color: var(--ink);
+}
+.ae-cmd kbd {
+  margin-left: 5px;
+  padding: 0 4px;
+  font-size: 10px;
+  vertical-align: 1px;
+  opacity: 0.8;
 }

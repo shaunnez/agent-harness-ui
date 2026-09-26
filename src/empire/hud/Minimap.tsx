@@ -4,8 +4,8 @@ import type { RealmScene } from "../map/scene";
 import { N } from "../map/world";
 import { type Campaign, type Kingdom, postureStyle } from "../realm";
 
-const W = 232;
-const H = 116;
+const W = 216;
+const H = 108;
 
 export function Minimap({
   sceneRef,

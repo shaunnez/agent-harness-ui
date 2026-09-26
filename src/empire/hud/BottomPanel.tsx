@@ -1,4 +1,4 @@
-import type { MutableRefObject } from "react";
+import type { CSSProperties, MutableRefObject } from "react";
 import type { RealmActions } from "../EmpireApp";
 import type { RealmScene, Selection } from "../map/scene";
 import { type Campaign, type Kingdom, postureStyle } from "../realm";
@@ -27,29 +27,33 @@ export function BottomPanel(input: {
     marketCard(card) ??
     capitalCard(card) ??
     realmCard(card);
-  const grid: (Command | null)[] = [...commands.slice(0, 10)];
-  while (grid.length < 10) grid.push(null);
+  // Only real commands, sized to fill the panel: no empty slots.
+  const grid = commands.slice(0, 9);
+  const cols = grid.length <= 2 ? grid.length : grid.length <= 4 ? 2 : 3;
   return (
     <footer className="ae-bottom">
       <div className="ae-bottom-frame ae-bottom-sel">{body}</div>
-      <div className="ae-bottom-frame ae-commands" role="toolbar" aria-label="Commands">
-        {grid.map((cmd, i) =>
-          cmd ? (
-            <button
-              type="button"
-              key={cmd.label}
-              className={`ae-cmd ${cmd.tone ? `ae-cmd--${cmd.tone}` : ""}`}
-              onClick={cmd.run}
-              title={cmd.hotkey ? `${cmd.label} (${cmd.hotkey})` : cmd.label}
-            >
-              {cmd.icon}
-              <span>{cmd.label}</span>
-            </button>
-          ) : (
-            // biome-ignore lint/suspicious/noArrayIndexKey: empty command slots have no identity
-            <span key={`empty-${i}`} className="ae-cmd is-empty" aria-hidden="true" />
-          ),
-        )}
+      <div
+        className="ae-bottom-frame ae-commands"
+        role="toolbar"
+        aria-label="Commands"
+        style={{ "--cols": Math.max(1, cols) } as CSSProperties}
+      >
+        {grid.map((cmd: Command) => (
+          <button
+            type="button"
+            key={cmd.label}
+            className={`ae-cmd ${cmd.tone ? `ae-cmd--${cmd.tone}` : ""}`}
+            onClick={cmd.run}
+            title={cmd.hotkey ? `${cmd.label} (${cmd.hotkey})` : cmd.label}
+          >
+            {cmd.icon}
+            <span>
+              {cmd.label}
+              {cmd.hotkey && <kbd>{cmd.hotkey}</kbd>}
+            </span>
+          </button>
+        ))}
       </div>
       <div className="ae-bottom-frame ae-bottom-map">
         <Minimap sceneRef={input.sceneRef} kingdoms={input.kingdoms} campaigns={input.campaigns} />

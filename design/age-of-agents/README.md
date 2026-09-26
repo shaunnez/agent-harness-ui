@@ -60,4 +60,4 @@ Squads, yards, fires and envoy ships come only from the recorded task, run and p
 
 ## Screens
 
-`01-title` · `02-realm` · `03-workshop-yards` · `04-chronicle` · `05-muster` · `06-tech-tree` · `07-found-kingdom` · `08-research-realm` · `09-replay-workshop` · `10-replay-repair-road` · `11-replay-envoy` · `12-watch` · `13-interior-monastery` · `14-interior-proving-grounds` · `15-interior-war-room` · `16-night` · `17-muster-corps` · `18-muster-orders`
+`01-title` · `02-realm` · `03-workshop-yards` · `04-chronicle` · `05-muster` · `06-tech-tree` · `07-found-kingdom` · `08-research-realm` · `09-replay-workshop` · `10-replay-repair-road` · `11-replay-envoy` · `12-watch` · `13-interior-monastery` · `14-interior-proving-grounds` · `15-interior-war-room` · `16-night` · `17-muster-corps` · `18-muster-orders` · `19-bottom-hud`
