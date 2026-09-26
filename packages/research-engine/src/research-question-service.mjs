@@ -8,6 +8,7 @@
 // rather than being part of one.
 
 import { questionRecord } from "./research-question-record.mjs";
+import { answerKey, FIRST_STAGE_RUNS, nextStage, reusable } from "./research-question-stages.mjs";
 import { scopedObjective, validateScope } from "./research-scope.mjs";
 import { NOT_STARTED_CODES } from "./research-service.mjs";
 
@@ -31,11 +32,26 @@ export class ResearchQuestionService {
   #scoper;
   #now;
   #retrying = new Map();
+  #advancing = new Map();
+  #stageFiveRuns;
+  #reuseForMs;
 
   /** `research` starts runs; `runs` is the `ResearchStore` they are read back from; `projects`
    *  lists registered projects, so a question can only be asked of a live research project.
-   *  `scoper` (`ResearchScoper`) drafts scopes; without one, questions are asked unscoped. */
-  constructor({ questions, research, runs, projects, scoper = null, now = () => new Date().toISOString() }) {
+   *  `scoper` (`ResearchScoper`) drafts scopes; without one, questions are asked unscoped.
+   *  `stageFiveRuns` starts a five-run question with three and adds two only when those disagree;
+   *  `reuseAnswersForMs` lets an identical ask be answered by a finished question that young
+   *  (`research-question-stages.mjs`). */
+  constructor({
+    questions,
+    research,
+    runs,
+    projects,
+    scoper = null,
+    now = () => new Date().toISOString(),
+    stageFiveRuns = true,
+    reuseAnswersForMs = 0,
+  }) {
     if (!questions || !research || !runs || !projects)
       throw new Error("ResearchQuestionService requires questions, research, runs and projects.");
     this.#questions = questions;
@@ -44,6 +60,14 @@ export class ResearchQuestionService {
     this.#projects = projects;
     this.#scoper = scoper;
     this.#now = now;
+    this.#stageFiveRuns = stageFiveRuns;
+    this.#reuseForMs = Number(reuseAnswersForMs) || 0;
+    // Every run of a question settles in the process that started it, so this process decides
+    // when a staged question needs its other two.
+    research.onRunSettled?.((run) => {
+      const questionId = run?.request?.metadata?.questionId;
+      if (questionId) return this.#advance(questionId);
+    });
   }
 
   /** A draft scope for the operator to read and correct. Starts nothing and stores nothing. */
@@ -69,11 +93,23 @@ export class ResearchQuestionService {
     // A repeated request finds its question before anything is scoped, so it costs nothing.
     const earlier = sourceKey ? await this.#questions.findBySourceKey(sourceKey) : null;
     if (earlier) return { question: await this.#record(earlier), reused: true };
+    // Keyed by what the asker sent: a scope drafted for them is a model's reading of the question,
+    // and two drafts of one question may differ, so an unscoped ask is keyed by its objective.
+    const key = answerKey({ projectId: project.id, objective, scope: sentScope(input.scope), runs, profile });
+    // An identical ask answered recently, when this service allows it, costs nothing either; it
+    // is checked before scoping, so it does not cost a scoping call.
+    if (this.#reuseForMs > 0 && input.reuse !== false) {
+      const answered = await this.#questions.findByAnswerKey?.(key);
+      const record = answered ? await this.#record(answered) : null;
+      if (reusable(record, { now: this.#now(), maxAgeMs: this.#reuseForMs }))
+        return { question: record, reused: true };
+    }
     const scope = await this.#scopeFor(input, objective, source);
     const runObjective = scopedObjective(objective, scope?.scope ?? null);
     if (runObjective.length > MAX_RUN_OBJECTIVE_LENGTH)
       throw badRequest("The question and its scope are too long together. Shorten one of them.");
 
+    const staged = this.#stageFiveRuns && runs === 5 && input.staged !== false;
     const { question, reused } = await this.#questions.createQuestion({
       projectId: project.id,
       title: title.slice(0, 160),
@@ -83,20 +119,76 @@ export class ResearchQuestionService {
       source,
       sourceKey,
       scope,
+      staged,
+      answerKey: key,
       now: this.#now(),
     });
     // A repeated request reuses the question it already raised and starts nothing.
     if (reused) return { question: await this.#record(question), reused: true };
-    for (let index = 0; index < runs; index += 1) {
-      const label = `r${index + 1}`;
+    await this.#startRuns(question, {
+      objective: runObjective,
+      profile,
+      labels: staged ? FIRST_STAGE_RUNS : runs,
+      firstOrdinal: 1,
+    });
+    // A run that settled before the last one was attached could not see the whole first stage.
+    await this.#advance(question.id);
+    return { question: await this.#record(question), reused: false };
+  }
+
+  /**
+   * Picks up staged questions whose first three runs finished while this process was down, so
+   * their other two are not left unstarted. Call once at startup, after `recoverInterrupted`.
+   */
+  async resumeStaged() {
+    for (const project of await this.#projects()) {
+      if (project.kind !== "research") continue;
+      for (const question of await this.#questions.listQuestions(project.id))
+        if (question.staged) await this.#advance(question.id);
+    }
+  }
+
+  async #startRuns(question, { objective, profile, labels, firstOrdinal, runtimeId, from = 1 }) {
+    for (let index = 0; index < labels; index += 1) {
+      const label = `r${from + index}`;
       const run = await this.#research.createRun({
-        objective: runObjective,
+        objective,
         profile,
+        ...(runtimeId ? { runtimeId } : {}),
         metadata: { questionId: question.id, run: label },
       });
-      await this.#questions.attachRun(question.id, run.id, label, index + 1);
+      await this.#questions.attachRun(question.id, run.id, label, firstOrdinal + index);
     }
-    return { question: await this.#record(question), reused: false };
+  }
+
+  /** Starts a staged question's other two runs when its first three call for them. One at a time
+   *  per question, and it reads the runs afresh, so two runs settling together start two, not four. */
+  async #advance(id) {
+    const previous = this.#advancing.get(id) ?? Promise.resolve();
+    const work = previous.then(() => this.#advanceNow(id)).catch(() => undefined);
+    this.#advancing.set(id, work);
+    await work;
+    if (this.#advancing.get(id) === work) this.#advancing.delete(id);
+  }
+
+  async #advanceNow(id) {
+    const question = await this.#questions.getQuestion(id);
+    if (!question?.staged) return;
+    const { latest } = await this.#attempts(question);
+    const record = questionRecord({ question: { ...question, runsPlanned: latest.length }, runs: latest });
+    if (nextStage(record) !== "extend") return;
+    const first = latest[0];
+    const order = await this.#questions.runOrder(id);
+    const block = Math.ceil(order.at(-1).ordinal / question.runsPlanned) - 1;
+    await this.#startRuns(question, {
+      // The same request the first stage was given, on the same engine.
+      objective: first.request.objective,
+      profile: first.request.profile ?? question.profile,
+      runtimeId: first.runtimeId,
+      labels: question.runsPlanned - FIRST_STAGE_RUNS,
+      firstOrdinal: block * question.runsPlanned + FIRST_STAGE_RUNS + 1,
+      from: FIRST_STAGE_RUNS + 1,
+    });
   }
 
   /**
@@ -117,9 +209,12 @@ export class ResearchQuestionService {
     if (!question) return null;
     await this.#researchProject(question.projectId);
     const { latest } = await this.#attempts(question);
-    if (!failedToStart(latest, question.runsPlanned))
+    if (!failedToStart(latest, question))
       throw conflict("Only runs that failed before starting can be retried.");
-    const next = Math.max(...(await this.#questions.runOrder(id)).map((entry) => entry.ordinal)) + 1;
+    // The first ordinal of the next attempt's block: a staged attempt stopped at three still
+    // owns five ordinals.
+    const highest = Math.max(...(await this.#questions.runOrder(id)).map((entry) => entry.ordinal));
+    const next = Math.ceil(highest / question.runsPlanned) * question.runsPlanned + 1;
     for (const [index, failed] of latest.entries()) {
       const label = `r${index + 1}`;
       // The same request the failed run was given, on the same engine.
@@ -131,6 +226,7 @@ export class ResearchQuestionService {
       });
       await this.#questions.attachRun(question.id, run.id, label, next + index);
     }
+    await this.#advance(question.id);
     return this.#record(question, { activity: true });
   }
 
@@ -210,14 +306,18 @@ export class ResearchQuestionService {
         events.set(run.id, (await this.#runs.listEvents(run.id, { limit: EVENTS_PER_RUN })).events);
       sources.set(run.id, await this.#runs.listSources(run.id));
     }
+    // A staged question whose first three call for two more is still going, even in the moment
+    // before those two are started.
+    const staging = question.staged ? stageOf(question, runs) : null;
     return questionRecord({
       question,
       runs,
       events,
       sources,
       prior,
-      retryable: failedToStart(runs, question.runsPlanned),
+      retryable: failedToStart(runs, question),
       review: await this.#questions.latestReview(question.id),
+      awaitingRuns: staging === "extend" ? question.runsPlanned - runs.length : 0,
     });
   }
 
@@ -254,12 +354,29 @@ export class ResearchQuestionService {
 }
 
 /** True when every run of an attempt failed before its runtime started: a failed start, or a
- *  run still queued when the process stopped. */
-function failedToStart(runs, runsPlanned) {
+ *  run still queued when the process stopped. A staged attempt has three runs until it extends. */
+function failedToStart(runs, question) {
+  const expected =
+    runs.length === question.runsPlanned || (question.staged && runs.length === FIRST_STAGE_RUNS);
   return (
-    runs.length === runsPlanned &&
-    runs.every((run) => run.status === "failed" && NOT_STARTED_CODES.includes(run.error?.code))
+    expected && runs.every((run) => run.status === "failed" && NOT_STARTED_CODES.includes(run.error?.code))
   );
+}
+
+/** The scope the asker sent, validated, for the answer key; null when none or not valid (the ask
+ *  itself then refuses an invalid one). */
+function sentScope(value) {
+  if (value == null) return null;
+  try {
+    return validateScope(value);
+  } catch {
+    return null;
+  }
+}
+
+/** A staged question's next step, from its latest attempt's runs. */
+function stageOf(question, runs) {
+  return nextStage(questionRecord({ question: { ...question, runsPlanned: runs.length }, runs }));
 }
 
 /** Manual by default. An external request names its provider and its own id, which is what makes

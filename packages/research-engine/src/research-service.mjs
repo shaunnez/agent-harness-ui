@@ -34,6 +34,8 @@ export class ResearchService {
   #inFlight = new Map();
   #now;
   #settings;
+  #settledListeners = new Set();
+  #closing = false;
 
   /** `settings` reads the operator's saved Settings, whose Research section says which engine
    *  and model answer a run that names neither. Without it, a run with no runtime id goes to the
@@ -74,10 +76,12 @@ export class ResearchService {
       // A runtime that cannot start still leaves a durable, explainable row. A run that
       // vanishes because the thing meant to run it threw is the failure mode audit §12 calls
       // out, and it is not repeated here.
-      return this.#fail(record.id, {
+      const failed = await this.#fail(record.id, {
         code: "runtime_start_failed",
         message: error instanceof Error ? error.message : String(error),
       });
+      await this.#notifySettled(failed);
+      return failed;
     }
     const started = await this.#store.updateRun(
       record.id,
@@ -157,12 +161,21 @@ export class ResearchService {
     return cancelling;
   }
 
+  /** `listener(run)` is called with each run's terminal record once it is written. Returns a
+   *  function that stops the calls. A listener's failure is its own; it never touches the run. */
+  onRunSettled(listener) {
+    this.#settledListeners.add(listener);
+    return () => this.#settledListeners.delete(listener);
+  }
+
   /** Resolves once the run's event stream has been consumed and its terminal row written. */
   settled(runId) {
     return this.#inFlight.get(runId) ?? Promise.resolve();
   }
 
   async shutdown() {
+    // Runs cancelled on the way down start nothing new; a staged question picks up at next start.
+    this.#closing = true;
     const running = [...this.#inFlight.keys()];
     await Promise.allSettled(running.map((runId) => this.cancel(runId)));
     await Promise.allSettled(running.map((runId) => this.settled(runId)));
@@ -217,6 +230,8 @@ export class ResearchService {
           message: error instanceof Error ? error.message : String(error),
         }).catch(() => undefined);
       } finally {
+        // Before the run counts as settled, so `settled()` also covers what its question does next.
+        await this.#notifySettled(await this.#store.getRun(runId).catch(() => null));
         this.#inFlight.delete(runId);
       }
     })();
@@ -275,6 +290,11 @@ export class ResearchService {
       },
       { now: this.#now() },
     );
+  }
+
+  async #notifySettled(run) {
+    if (!run || this.#closing) return;
+    await Promise.allSettled([...this.#settledListeners].map(async (listener) => listener(run)));
   }
 
   async #fail(runId, error) {

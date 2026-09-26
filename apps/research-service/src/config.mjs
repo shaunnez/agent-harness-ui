@@ -62,6 +62,16 @@ export function loadConfig(env = process.env) {
   if (minRuns > maxRuns) problems.push("RESEARCH_MIN_CONCURRENT_RUNS is above RESEARCH_MAX_CONCURRENT_RUNS.");
   const runsPerQuestion = integer(env.RESEARCH_RUNS_PER_QUESTION, 5, problems, "RESEARCH_RUNS_PER_QUESTION");
   if (!RUN_COUNTS.has(runsPerQuestion)) problems.push("RESEARCH_RUNS_PER_QUESTION must be 5, 3 or 1.");
+  // Hours a search, captured page or QV read is shared across runs; 0 turns the sharing off.
+  const toolCacheHours = integer(env.RESEARCH_TOOL_CACHE_HOURS, 24, problems, "RESEARCH_TOOL_CACHE_HOURS", {
+    min: 0,
+    max: 24 * 14,
+  });
+  // Days an answered question may answer an identical later ask; 0 always starts new runs.
+  const reuseDays = integer(env.RESEARCH_REUSE_ANSWERS_DAYS, 7, problems, "RESEARCH_REUSE_ANSWERS_DAYS", {
+    min: 0,
+    max: 90,
+  });
   const dataDirectory = path.resolve(env.RESEARCH_DATA_DIR ?? ".data");
 
   if (problems.length) {
@@ -81,6 +91,8 @@ export function loadConfig(env = process.env) {
     consoleEnabled: isLoopback(host),
     pacing: { min: minRuns, max: maxRuns, initial: Math.min(Math.max(initialRuns, minRuns), maxRuns) },
     runsPerQuestion,
+    toolCacheTtlMs: toolCacheHours * 60 * 60_000,
+    reuseAnswersForMs: reuseDays * 24 * 60 * 60_000,
     project: {
       id: env.RESEARCH_PROJECT_ID ?? "plancheck",
       name: env.RESEARCH_PROJECT_NAME ?? "PlanCheck",

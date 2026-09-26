@@ -176,7 +176,9 @@ export function ResearchQuestionView({
               <small>
                 {question.runsPlanned === 1
                   ? "Quick ask · one run cannot show disagreement"
-                  : `${question.runsPlanned} independent runs`}
+                  : question.staged && !question.staged.extended
+                    ? `${question.staged.firstRuns} of ${question.runsPlanned} independent runs · two more only if these disagree`
+                    : `${question.runsPlanned} independent runs`}
               </small>
             </header>
             <div className="research-runs" role="tablist" aria-label="Runs">
@@ -340,7 +342,12 @@ function ReviewCommand({
             disabled={!connected || busy}
             onClick={() => void retryStart()}
           >
-            Retry {question.runsPlanned === 1 ? "Quick · one run" : `${question.runsPlanned} runs`}
+            Retry{" "}
+            {question.runsPlanned === 1
+              ? "Quick · one run"
+              : question.staged
+                ? `${question.staged.firstRuns} runs`
+                : `${question.runsPlanned} runs`}
           </button>
         )}
         {state !== "not-ready" && !decision && (

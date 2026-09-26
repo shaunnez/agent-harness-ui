@@ -26,6 +26,8 @@ export class PgResearchQuestionStore {
     source,
     sourceKey,
     scope = null,
+    staged = false,
+    answerKey = null,
     now,
   }) {
     if (sourceKey) {
@@ -37,8 +39,9 @@ export class PgResearchQuestionStore {
       const id = `${QUESTION_ID_PREFIX}-${String(Number(rows[0].next)).padStart(3, "0")}`;
       const inserted = await tx.query(
         `INSERT INTO research_questions(
-           id, project_id, created_at, title, objective, profile, runs_planned, source_json, source_key, scope_json)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+           id, project_id, created_at, title, objective, profile, runs_planned, source_json, source_key, scope_json,
+           runs_staged, answer_key)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
          ON CONFLICT (source_key) DO NOTHING`,
         [
           id,
@@ -51,6 +54,8 @@ export class PgResearchQuestionStore {
           JSON.stringify(source),
           sourceKey ?? null,
           scope ? JSON.stringify(scope) : null,
+          staged ? 1 : null,
+          answerKey,
         ],
       );
       if (Number(inserted.rowCount) === 1) return { question: await getQuestion(tx, id), reused: false };
@@ -65,6 +70,15 @@ export class PgResearchQuestionStore {
     const { rows } = await this.#db.query("SELECT * FROM research_questions WHERE source_key = $1", [
       sourceKey,
     ]);
+    return rows[0] ? questionRecord(rows[0]) : null;
+  }
+
+  /** The newest question asked with this answer key, or null. */
+  async findByAnswerKey(answerKey) {
+    const { rows } = await this.#db.query(
+      "SELECT * FROM research_questions WHERE answer_key = $1 ORDER BY created_at DESC, id DESC LIMIT 1",
+      [answerKey],
+    );
     return rows[0] ? questionRecord(rows[0]) : null;
   }
 

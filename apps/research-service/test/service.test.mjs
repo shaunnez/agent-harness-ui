@@ -360,7 +360,11 @@ test("the service serves the built review console on loopback, and nothing outsi
       assert.match(asset.headers["content-type"], /text\/javascript/);
       assert.match(asset.headers["cache-control"], /immutable/);
       // Nothing outside the console's directory, however the path is spelled.
-      for (const outside of ["/../package.json", "/%2e%2e/package.json", "/assets/%2e%2e/%2e%2e/package.json"])
+      for (const outside of [
+        "/../package.json",
+        "/%2e%2e/package.json",
+        "/assets/%2e%2e/%2e%2e/package.json",
+      ])
         assert.notEqual((await raw(base, outside)).body.includes('"name"'), true, outside);
       assert.equal((await raw(base, "/", { host: "evil.example" })).status, 404);
 

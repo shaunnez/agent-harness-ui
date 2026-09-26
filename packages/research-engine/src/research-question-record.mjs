@@ -16,7 +16,8 @@ const ACTIVITY_PER_RUN = 80;
  * `runLabel` and `outcome`) in label order, latest attempt only; `events` maps a run id to its
  * stored events, and is empty for a list read; `sources` maps a run id to its retained sources;
  * `prior` holds the runs of earlier attempts, with `attempt`; `retryable` is true when the latest
- * attempt failed before starting; `review` is the standing review or null.
+ * attempt failed before starting; `review` is the standing review or null. `awaitingRuns` counts
+ * runs a staged question is about to start: until they exist, it is still queued, not settled.
  */
 export function questionRecord({
   question,
@@ -26,19 +27,21 @@ export function questionRecord({
   prior = [],
   retryable = false,
   review = null,
+  awaitingRuns = 0,
 }) {
-  const pending = allRuns.filter(
-    (run) => runStatus(run.status) === "running" || runStatus(run.status) === "queued",
-  );
+  // Runs about to start count as pending, so nothing is scored or reported before they finish.
+  const pending =
+    allRuns.filter((run) => runStatus(run.status) === "running" || runStatus(run.status) === "queued")
+      .length + Math.max(0, Number(awaitingRuns) || 0);
   // With more than three runs, the three that agree best are scored; the rest stay on the record.
-  const dropped = pending.length ? new Set() : droppedRuns(allRuns);
+  const dropped = pending ? new Set() : droppedRuns(allRuns);
   const runs = allRuns.filter((run) => !dropped.has(run));
   const runRecords = allRuns.map((run) => ({
     ...runRecord(run, events.get(run.id) ?? []),
     ...(dropped.has(run) ? { dropped: true } : {}),
   }));
   const scoredRecords = runRecords.filter((run) => !run.dropped);
-  const recorded = pending.length
+  const recorded = pending
     ? null
     : agreementForRuns(
         runs.map((run) => ({
@@ -54,13 +57,13 @@ export function questionRecord({
   const unitsDiffer =
     recorded && recorded.status !== "incomplete" ? differingUnits(runs, scopeMeasure) : null;
   const agreement = unitsDiffer ? incomparable(recorded) : loneBand(singleRun(recorded, runs), runs);
-  const status = pending.length
+  const status = pending
     ? runRecords.some((run) => run.status === "running")
       ? "running"
       : "queued"
     : agreement.status;
   const firstBand = runs.map((run) => run.outcome?.costBand?.band).find(Boolean) ?? null;
-  const settledAt = pending.length ? null : latest(allRuns.map((run) => run.updatedAt));
+  const settledAt = pending ? null : latest(allRuns.map((run) => run.updatedAt));
   const costs = runRecords.map((run) => run.costUsd).filter((cost) => cost != null);
   const completed = allRuns.filter((run) => run.status === "completed");
 
@@ -128,6 +131,11 @@ export function questionRecord({
     })),
     review,
     provenance: "live",
+    // A staged question (`research-question-stages.mjs`): three runs, and two more only when
+    // those three did not settle it. Only on staged questions, and outside the fingerprint.
+    ...(question.staged
+      ? { staged: { firstRuns: 3, extended: allRuns.length > 3 || awaitingRuns > 0 } }
+      : {}),
     provenanceNote: provenanceNote(runs[0] ?? null, question),
   };
 }

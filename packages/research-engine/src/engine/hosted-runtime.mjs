@@ -57,6 +57,7 @@ export class HostedResearchRuntime {
   #sourceSnapshotDirectory;
   #captureProvider;
   #webToolsOptions;
+  #toolCache;
   #driver;
 
   constructor({
@@ -83,6 +84,9 @@ export class HostedResearchRuntime {
     captureProvider = null,
     // For tests: `fetchImpl` and `lookup` reach `ResearchWebTools` so no test touches the network.
     webToolsOptions = {},
+    // Searches, captures and QV reads shared across runs (`tool-cache.mjs`). Null, the default,
+    // fetches everything afresh in every run, as the recorded eval arms did.
+    toolCache = null,
   } = {}) {
     if (!id || !driver || !systemPromptPath)
       throw new Error("A hosted research runtime needs an id, a driver and a system prompt.");
@@ -104,7 +108,8 @@ export class HostedResearchRuntime {
     this.#hostTools = [...hostTools];
     this.#sourceSnapshotDirectory = sourceSnapshotDirectory;
     this.#captureProvider = captureProvider;
-    this.#webToolsOptions = webToolsOptions;
+    this.#webToolsOptions = toolCache ? { toolCache, ...webToolsOptions } : webToolsOptions;
+    this.#toolCache = toolCache;
     if (!this.#hostTools.length) this.#allowedTools = this.#allowedTools.filter((tool) => !hostToolOf(tool));
   }
 
@@ -327,7 +332,7 @@ export class HostedResearchRuntime {
       run.controller.abort();
     };
     try {
-      const qv = planCheck ? new PlanCheckQvSession(planCheck) : null;
+      const qv = planCheck ? new PlanCheckQvSession({ ...planCheck, cache: this.#toolCache }) : null;
       if (this.#hostTools.length || qv)
         session = await openHostToolSession({
           qv,

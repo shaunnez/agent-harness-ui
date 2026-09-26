@@ -28,6 +28,8 @@ export class ResearchQuestionStore {
     source,
     sourceKey,
     scope = null,
+    staged = false,
+    answerKey = null,
     now,
   }) {
     return this.#transaction(() => {
@@ -40,8 +42,8 @@ export class ResearchQuestionStore {
         .prepare(`
         INSERT INTO research_questions(
           id, project_id, created_at, title, objective, profile, runs_planned, source_json, source_key,
-          scope_json)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          scope_json, runs_staged, answer_key)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
         .run(
           id,
@@ -54,6 +56,8 @@ export class ResearchQuestionStore {
           JSON.stringify(source),
           sourceKey ?? null,
           scope ? JSON.stringify(scope) : null,
+          staged ? 1 : null,
+          answerKey,
         );
       return { question: this.getQuestion(id), reused: false };
     });
@@ -62,6 +66,16 @@ export class ResearchQuestionStore {
   /** The question an external request already raised, or null. */
   findBySourceKey(sourceKey) {
     const row = this.#db.prepare("SELECT * FROM research_questions WHERE source_key = ?").get(sourceKey);
+    return row ? questionRecord(row) : null;
+  }
+
+  /** The newest question asked with this answer key, or null. */
+  findByAnswerKey(answerKey) {
+    const row = this.#db
+      .prepare(
+        "SELECT * FROM research_questions WHERE answer_key = ? ORDER BY created_at DESC, id DESC LIMIT 1",
+      )
+      .get(answerKey);
     return row ? questionRecord(row) : null;
   }
 
@@ -173,5 +187,7 @@ export function questionRecord(row) {
     source: JSON.parse(row.source_json),
     // `{scope, scopedBy, reviewed}`, or null for a question asked without a scope.
     scope: row.scope_json ? JSON.parse(row.scope_json) : null,
+    // Only when set, so a question asked before reads exactly as it did.
+    ...(row.runs_staged ? { staged: true } : {}),
   };
 }
