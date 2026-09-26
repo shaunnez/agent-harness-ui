@@ -62,7 +62,7 @@ export async function runChatLoop({
 }) {
   const { provider, remoteModel } = resolveApiModel(model);
   const apiKey = env?.[provider.keyEnv];
-  const headers = provider.sessionHeader ? { [provider.sessionHeader]: `research-${randomUUID()}` } : {};
+  const headers = sessionHeaders(provider, `research-${randomUUID()}`);
   const deadline = now() + timeoutMs;
   const byName = new Map(tools.map((tool) => [tool.name, tool]));
   const toolDefinitions = tools.map((tool) => ({
@@ -273,7 +273,7 @@ export async function chatOnceWithRetries({
     throw new ApiError(`${provider.label} needs ${provider.keyEnv} in the host's environment.`, {
       code: "missing_key",
     });
-  const headers = provider.sessionHeader ? { [provider.sessionHeader]: `scope-${randomUUID()}` } : {};
+  const headers = sessionHeaders(provider, `scope-${randomUUID()}`);
   const reply = await chat({
     provider,
     apiKey,
@@ -324,6 +324,11 @@ async function chat({ provider, apiKey, headers, body, fetchImpl, sleep, signal,
       await sleep(Math.min(error?.retryAfterMs ?? delays[attempt], Math.max(0, deadline - now())));
     }
   }
+}
+
+/** One id for every call of a run, on each header the provider routes by. */
+function sessionHeaders(provider, id) {
+  return Object.fromEntries((provider.sessionHeaders ?? []).map((name) => [name, id]));
 }
 
 /** `Retry-After` in seconds or as a date, in milliseconds, capped at a minute; null when absent. */

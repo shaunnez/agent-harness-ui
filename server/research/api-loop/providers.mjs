@@ -17,7 +17,7 @@ export const API_LOOP_PROVIDERS = Object.freeze({
     keyEnv: "OPENCODE_API_KEY",
     // Go refuses a request without it ("MissingSessionID … cannot be routed efficiently"); one id per
     // run keeps a run's calls on one route, which is also what lets its prompt cache hit.
-    sessionHeader: "x-opencode-session",
+    sessionHeaders: ["x-opencode-session"],
     rates: { "deepseek-v4.1-flash": { input: 0.15, output: 0.6, cacheRead: 0.003 } },
   }),
   // Fireworks' US-only serverless (`https://docs.fireworks.ai/serverless/us-only-serverless`),
@@ -27,6 +27,10 @@ export const API_LOOP_PROVIDERS = Object.freeze({
     label: "Fireworks (US only)",
     endpoint: "https://us.api.fireworks.ai/inference/v1",
     keyEnv: "FIREWORKS_API_KEY",
+    // Sticky routing, so a run's turns reach the replica that cached its prefix
+    // (`https://docs.fireworks.ai/guides/prompt-caching`). Cached tokens are cheaper and count less
+    // toward the per-minute prompt limit, so this raises throughput as well as cutting cost.
+    sessionHeaders: ["x-session-affinity", "x-multi-turn-session-id"],
     rates: {
       "accounts/fireworks/routers/deepseek-v4p1-flash-us": { input: 0.45, output: 1.8, cacheRead: 0.009 },
     },

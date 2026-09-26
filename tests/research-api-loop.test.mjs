@@ -100,6 +100,7 @@ test("models route to their provider, DeepSeek's own API is not one, and usage i
   assert.equal(fireworks.provider.endpoint, "https://us.api.fireworks.ai/inference/v1");
   assert.equal(fireworks.provider.keyEnv, "FIREWORKS_API_KEY");
   assert.equal(fireworks.remoteModel, "accounts/fireworks/routers/deepseek-v4p1-flash-us");
+  assert.deepEqual(fireworks.provider.sessionHeaders, ["x-session-affinity", "x-multi-turn-session-id"]);
   assert.equal(
     priceApiUsage("fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us", {
       inputTokens: 2e6,
