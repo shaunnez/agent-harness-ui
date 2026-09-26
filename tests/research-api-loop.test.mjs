@@ -11,7 +11,11 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { runChatLoop } from "@eversor/research-engine/api-loop/chat-loop.mjs";
-import { priceApiUsage, resolveApiModel } from "@eversor/research-engine/api-loop/providers.mjs";
+import {
+  API_LOOP_KEY_VARS,
+  priceApiUsage,
+  resolveApiModel,
+} from "@eversor/research-engine/api-loop/providers.mjs";
 import { ApiLoopResearchRuntime, apiLoopSystemPrompt } from "@eversor/research-engine/api-loop/runtime.mjs";
 import { ParallelSearchProvider } from "@eversor/research-engine/parallel-search-provider.mjs";
 import { assertResearchRuntime } from "@eversor/research-engine/research-runtime-registry.mjs";
@@ -108,6 +112,21 @@ test("models route to their provider, DeepSeek's own API is not one, and usage i
       outputTokens: 1e6,
     }),
     2.259,
+  );
+  // DeepInfra, keyed separately, priced at its list rates: 1M uncached in at $0.20, 1M cached at
+  // $0.006, 1M out at $0.60.
+  const deepinfra = resolveApiModel("deepinfra/deepseek-ai/DeepSeek-V4.1-Flash");
+  assert.equal(deepinfra.provider.endpoint, "https://api.deepinfra.com/v1/openai");
+  assert.equal(deepinfra.provider.keyEnv, "DEEPINFRA_API_KEY");
+  assert.equal(deepinfra.remoteModel, "deepseek-ai/DeepSeek-V4.1-Flash");
+  assert.ok(API_LOOP_KEY_VARS.includes("DEEPINFRA_API_KEY"));
+  assert.equal(
+    priceApiUsage("deepinfra/deepseek-ai/DeepSeek-V4.1-Flash", {
+      inputTokens: 2e6,
+      cachedTokens: 1e6,
+      outputTokens: 1e6,
+    }),
+    0.806,
   );
   // 1M uncached in at $0.15, 1M cached at $0.003, 1M out at $0.60.
   assert.equal(
@@ -472,4 +491,23 @@ test("a provider's per-minute rate limit is waited out, not scored as a spent pl
   assert.equal(reply.text, "Done.");
   // The throttle schedule (5 s first), then the provider's own Retry-After (2 s).
   assert.deepEqual(waits, [5_000, 2_000]);
+});
+
+test("DeepInfra calls ask for DeepSeek's thinking, which it leaves off by default; others send nothing extra", async () => {
+  const bodies = [];
+  const fetchImpl = async (_url, init) => {
+    bodies.push(JSON.parse(init.body));
+    return new Response(
+      JSON.stringify({ choices: [{ message: { content: "Done." }, finish_reason: "stop" }], usage: {} }),
+      { status: 200 },
+    );
+  };
+  const { chatOnceWithRetries } = await import("@eversor/research-engine/api-loop/chat-loop.mjs");
+  const ask = (env, model) =>
+    chatOnceWithRetries({ env, model, systemPrompt: "x", prompt: "y", timeoutMs: 60_000, fetchImpl });
+  await ask({ DEEPINFRA_API_KEY: "test" }, "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash");
+  await ask({ BASETEN_API_KEY: "test" }, "baseten/deepseek-ai/DeepSeek-V4.1-Flash");
+  assert.equal(bodies[0].reasoning_effort, "high");
+  assert.equal(bodies[0].model, "deepseek-ai/DeepSeek-V4.1-Flash");
+  assert.equal("reasoning_effort" in bodies[1], false);
 });

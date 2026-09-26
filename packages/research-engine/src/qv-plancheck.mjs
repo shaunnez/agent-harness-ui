@@ -79,8 +79,12 @@ export class PlanCheckQvSession {
   #fetch;
   #shown = new Map();
   #sections = null;
+  #cache;
 
-  constructor({ baseUrl, tokens, rowKinds = [], fetchImpl = fetch }) {
+  /** `cache` (`engine/tool-cache.mjs`) shares the library's answers across runs; the rows each run
+   *  was shown, which its citations are checked against, stay this run's own. */
+  constructor({ baseUrl, tokens, rowKinds = [], fetchImpl = fetch, cache = null }) {
+    this.#cache = cache;
     this.#baseUrl = baseUrl;
     this.#tokens = tokens;
     this.#rowKinds = rowKinds;
@@ -202,6 +206,11 @@ export class PlanCheckQvSession {
     const url = new URL(`${this.#baseUrl}${pathname}`);
     for (const [key, value] of Object.entries(params)) url.searchParams.set(key, String(value));
     for (const kind of this.#rowKinds) url.searchParams.append("row_kind", kind);
+    if (!this.#cache) return this.#request(url);
+    return (await this.#cache.remember("qv", url.href, () => this.#request(url))).value;
+  }
+
+  async #request(url) {
     const token = await this.#tokens.token();
     let response = await this.#send(url, token);
     // Refused anyway (revoked, or the library restarted with a new secret): mint once and retry.

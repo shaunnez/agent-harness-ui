@@ -16,28 +16,18 @@
 import { randomUUID } from "node:crypto";
 import { isFinalAnswerText } from "../engine/final-answer.mjs";
 import { reviewMessage } from "../research-answer-review.mjs";
-import { priceApiUsage, resolveApiModel } from "./providers.mjs";
+import { ApiError, chat, sessionHeaders } from "./chat-call.mjs";
+import { openingKey } from "./prefix-warmer.mjs";
+import { priceApiUsage, reasoningSettings, resolveApiModel } from "./providers.mjs";
 
 export const API_LOOP_EMPTY_OUTPUT_ERROR_CODE = "api_loop_empty_output";
 export const API_LOOP_PLAN_LIMIT_ERROR_CODE = "api_loop_plan_limit_reached";
 export const API_LOOP_SOFT_TOOL_CALLS = 50;
 
 const MAX_TOOL_RESULT_CHARACTERS = 60_000;
-const REQUEST_TIMEOUT_MS = 180_000;
-const RETRY_DELAYS_MS = [2_000, 5_000, 12_000];
-/** A provider that throttles (Fireworks answers 429 "rate limit exceeded" when a minute's token
- *  budget is spent) is waited out rather than failed: the budget refills within the minute. */
-const THROTTLE_DELAYS_MS = [5_000, 15_000, 30_000, 45_000, 60_000];
 const WRAP_UP =
   "You have used your tool budget. Give your final answer now, as the JSON object the instructions ask " +
   "for. If the main cost is still unsourced, set the band to null with resolved_from not_established.";
-
-class ApiError extends Error {
-  constructor(message, { status = null, retryable = false, code = null, retryAfterMs = null } = {}) {
-    super(message);
-    Object.assign(this, { status, retryable, code, retryAfterMs });
-  }
-}
 
 /** `tools` is `[{ name, cliName, definition: { description, inputSchema } }]`. */
 export async function runChatLoop({
@@ -59,8 +49,17 @@ export async function runChatLoop({
   onCeiling = () => {},
   // `(text) => string[]`: the host's check of a final answer. Problems go back to the model once.
   reviewAnswer = null,
+  // Shared by every run of a service (`engine/pacer.mjs`): told of each throttle and success, and
+  // holds a call while the provider has asked everyone to wait. Null in the harness.
+  pacer = null,
+  // Holds this run's first call until another run with the same opening has put it in the
+  // provider's cache (`prefix-warmer.mjs`). Null sends at once.
+  warmer = null,
+  // The run's reasoning level (`providers.mjs`, `reasoningSettings`); null is the provider's own.
+  reasoning = null,
 }) {
   const { provider, remoteModel } = resolveApiModel(model);
+  const settings = reasoningSettings(provider, reasoning);
   const apiKey = env?.[provider.keyEnv];
   const headers = sessionHeaders(provider, `research-${randomUUID()}`);
   const deadline = now() + timeoutMs;
@@ -87,7 +86,7 @@ export async function runChatLoop({
     sawTurnCompleted: false,
     wrappedUp: false,
     reviewed: false,
-    totals: { inputTokens: 0, cachedTokens: 0, outputTokens: 0 },
+    totals: { inputTokens: 0, cachedTokens: 0, outputTokens: 0, providerCostUsd: null },
   };
   let spawnError = null;
   const ceiling = (name, counts) => {
@@ -117,11 +116,42 @@ export async function runChatLoop({
         messages.push({ role: "user", content: WRAP_UP });
       }
       const body = {
+        ...settings,
         model: remoteModel,
         messages,
         ...(state.wrappedUp ? {} : { tools: toolDefinitions, tool_choice: "auto" }),
       };
-      const reply = await chat({ provider, apiKey, headers, body, fetchImpl, sleep, signal, deadline, now });
+      // Only the first call waits: its opening is what every run of the question shares.
+      const release =
+        warmer && state.modelCalls === 0
+          ? await warmer.enter(
+              openingKey({
+                endpoint: provider.endpoint,
+                model: remoteModel,
+                messages,
+                tools: toolDefinitions,
+              }),
+              { signal },
+            )
+          : () => {};
+      let reply;
+      try {
+        reply = await chat({
+          provider,
+          apiKey,
+          headers,
+          body,
+          fetchImpl,
+          sleep,
+          signal,
+          deadline,
+          now,
+          pacer,
+          onFirstChunk: release,
+        });
+      } finally {
+        release();
+      }
       state.modelCalls += 1;
       addUsage(state.totals, reply.usage);
       const choice = reply.choices?.[0] ?? {};
@@ -241,6 +271,11 @@ export async function runChatLoop({
       searchCalls: state.searchCallCount,
       ...(priced != null ? { estimatedCostUsd: priced } : {}),
       costBasis: "api_rate_estimate",
+      // What the provider itself said the calls cost, where it says (DeepInfra's
+      // `estimated_cost`), beside our estimate from list rates.
+      ...(state.totals.providerCostUsd != null
+        ? { providerReportedCostUsd: round6(state.totals.providerCostUsd) }
+        : {}),
       partial: false,
       byModel: {
         [model]: {
@@ -266,6 +301,10 @@ export async function chatOnceWithRetries({
   fetchImpl = globalThis.fetch,
   sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   now = () => Date.now(),
+  pacer = null,
+  // The call's reasoning level; the scoper asks for none, which a provider that can turn thinking
+  // off honours (`providers.mjs`).
+  reasoning = null,
 }) {
   const { provider, remoteModel } = resolveApiModel(model);
   const apiKey = env?.[provider.keyEnv];
@@ -279,6 +318,7 @@ export async function chatOnceWithRetries({
     apiKey,
     headers,
     body: {
+      ...reasoningSettings(provider, reasoning),
       model: remoteModel,
       messages: [
         { role: "system", content: systemPrompt },
@@ -290,96 +330,9 @@ export async function chatOnceWithRetries({
     signal,
     deadline: now() + timeoutMs,
     now,
+    pacer,
   });
   return { text: String(reply.choices?.[0]?.message?.content ?? ""), usage: reply.usage ?? null };
-}
-
-async function chat({ provider, apiKey, headers, body, fetchImpl, sleep, signal, deadline, now }) {
-  for (let attempt = 0; ; attempt += 1) {
-    const remaining = deadline - now();
-    if (remaining <= 0)
-      throw Object.assign(new Error("The run's deadline passed during a model call."), {
-        code: "PROCESS_TIMEOUT",
-      });
-    try {
-      return await chatOnce({
-        provider,
-        apiKey,
-        headers,
-        body,
-        fetchImpl,
-        signal,
-        timeoutMs: Math.min(remaining, REQUEST_TIMEOUT_MS),
-      });
-    } catch (error) {
-      if (signal?.aborted) throw error;
-      const retry = error instanceof ApiError ? error.retryable : true;
-      const delays = error?.code === "throttled" ? THROTTLE_DELAYS_MS : RETRY_DELAYS_MS;
-      if (!retry || attempt >= delays.length) {
-        if (error instanceof ApiError) throw error;
-        throw new ApiError(`${provider.label} could not be reached: ${error?.message ?? error}`, {
-          code: "provider_unavailable",
-        });
-      }
-      await sleep(Math.min(error?.retryAfterMs ?? delays[attempt], Math.max(0, deadline - now())));
-    }
-  }
-}
-
-/** One id for every call of a run, on each header the provider routes by. */
-function sessionHeaders(provider, id) {
-  return Object.fromEntries((provider.sessionHeaders ?? []).map((name) => [name, id]));
-}
-
-/** `Retry-After` in seconds or as a date, in milliseconds, capped at a minute; null when absent. */
-function retryAfterOf(response) {
-  const value = response.headers?.get?.("retry-after");
-  if (!value) return null;
-  const seconds = Number(value);
-  const ms = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(value) - Date.now();
-  return Number.isFinite(ms) && ms > 0 ? Math.min(ms, 60_000) : null;
-}
-
-async function chatOnce({ provider, apiKey, headers = {}, body, fetchImpl, signal, timeoutMs }) {
-  const timeout = AbortSignal.timeout(timeoutMs);
-  const response = await fetchImpl(`${provider.endpoint}/chat/completions`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json", ...headers },
-    body: JSON.stringify(body),
-    signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
-  });
-  const text = await response.text();
-  if (!response.ok) {
-    const detail = text.slice(0, 300);
-    if (response.status === 401 || response.status === 403)
-      throw new ApiError(`${provider.label} refused the key (HTTP ${response.status}): ${detail}`, {
-        status: response.status,
-        code: "auth",
-      });
-    // A per-minute rate limit is a throttle, not a spent plan: wait and try again.
-    if (response.status === 429 && /rate limit|too many requests|slow down/i.test(detail))
-      throw new ApiError(`${provider.label} is throttling (HTTP 429): ${detail}`, {
-        status: 429,
-        retryable: true,
-        code: "throttled",
-        retryAfterMs: retryAfterOf(response),
-      });
-    if (response.status === 402 || (response.status === 429 && /quota|limit|balance|credit/i.test(detail)))
-      throw new ApiError(`${provider.label} usage limit (HTTP ${response.status}): ${detail}`, {
-        status: response.status,
-        code: "plan_limit",
-      });
-    throw new ApiError(`${provider.label} returned HTTP ${response.status}: ${detail}`, {
-      status: response.status,
-      retryable: response.status === 429 || response.status >= 500,
-      code: response.status >= 500 ? "provider_unavailable" : null,
-    });
-  }
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new ApiError(`${provider.label} returned a body that is not JSON.`, { retryable: true });
-  }
 }
 
 function addUsage(totals, usage) {
@@ -389,6 +342,13 @@ function addUsage(totals, usage) {
   totals.cachedTokens += Number(
     usage.prompt_tokens_details?.cached_tokens ?? usage.prompt_cache_hit_tokens ?? 0,
   );
+  const cost = Number(usage.estimated_cost);
+  if (usage.estimated_cost != null && Number.isFinite(cost))
+    totals.providerCostUsd = (totals.providerCostUsd ?? 0) + cost;
+}
+
+function round6(value) {
+  return Math.round(value * 1e6) / 1e6;
 }
 
 function bounded(text) {
@@ -422,7 +382,9 @@ export function classifyApiLoopCall(call) {
       ok: false,
       error: {
         // A throttle that outlasted every wait is the provider's capacity, not the research.
-        code: /could not be reached|HTTP 5\d\d|is throttling/.test(call.failure)
+        code: /could not be reached|HTTP 5\d\d|is throttling|sent nothing for|failed mid-answer|stream ended/.test(
+          call.failure,
+        )
           ? "provider_unavailable"
           : "api_loop_reported_error",
         message: call.failure,

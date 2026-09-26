@@ -16,6 +16,11 @@ import { isResearchProfile, readResearchModelIdentity } from "./engine/contracts
 import { DEFAULT_RESEARCH_RUNTIME_ID } from "./research-runtime-registry.mjs";
 
 const MAX_OBJECTIVE_LENGTH = 4_000;
+
+/** A run the process stopped while it was still queued: never started, nothing spent. */
+export const INTERRUPTED_BEFORE_START_CODE = "interrupted_before_start";
+/** The failure codes of a run that never started, which a question may retry. */
+export const NOT_STARTED_CODES = Object.freeze(["runtime_start_failed", INTERRUPTED_BEFORE_START_CODE]);
 const MAX_CONTEXT_REFS = 20;
 const MAX_METADATA_KEYS = 20;
 
@@ -29,6 +34,8 @@ export class ResearchService {
   #inFlight = new Map();
   #now;
   #settings;
+  #settledListeners = new Set();
+  #closing = false;
 
   /** `settings` reads the operator's saved Settings, whose Research section says which engine
    *  and model answer a run that names neither. Without it, a run with no runtime id goes to the
@@ -69,10 +76,12 @@ export class ResearchService {
       // A runtime that cannot start still leaves a durable, explainable row. A run that
       // vanishes because the thing meant to run it threw is the failure mode audit §12 calls
       // out, and it is not repeated here.
-      return this.#fail(record.id, {
+      const failed = await this.#fail(record.id, {
         code: "runtime_start_failed",
         message: error instanceof Error ? error.message : String(error),
       });
+      await this.#notifySettled(failed);
+      return failed;
     }
     const started = await this.#store.updateRun(
       record.id,
@@ -99,15 +108,25 @@ export class ResearchService {
     return this.#store.listRuns(options);
   }
 
-  /** CLI processes are not resumable after this companion exits. Make interrupted work
-   *  inspectable as a failure instead of leaving the UI showing a worker forever. */
+  /** A run is not resumable after the process that ran it exits. Make interrupted work
+   *  inspectable as a failure instead of leaving the UI showing a worker forever. A run still
+   *  waiting in the queue had spent nothing, so it fails as one that never started, which its
+   *  question can retry. */
   async recoverInterrupted() {
     const interrupted = await this.#store.listInterruptedRuns();
     for (const run of interrupted)
-      await this.#fail(run.id, {
-        code: "companion_interrupted",
-        message: "The companion stopped before this research run finished.",
-      });
+      await this.#fail(
+        run.id,
+        run.status === "queued"
+          ? {
+              code: INTERRUPTED_BEFORE_START_CODE,
+              message: "The service stopped before this research run started. Nothing was spent.",
+            }
+          : {
+              code: "companion_interrupted",
+              message: "The companion stopped before this research run finished.",
+            },
+      );
   }
 
   async listEvents(runId, options) {
@@ -142,12 +161,21 @@ export class ResearchService {
     return cancelling;
   }
 
+  /** `listener(run)` is called with each run's terminal record once it is written. Returns a
+   *  function that stops the calls. A listener's failure is its own; it never touches the run. */
+  onRunSettled(listener) {
+    this.#settledListeners.add(listener);
+    return () => this.#settledListeners.delete(listener);
+  }
+
   /** Resolves once the run's event stream has been consumed and its terminal row written. */
   settled(runId) {
     return this.#inFlight.get(runId) ?? Promise.resolve();
   }
 
   async shutdown() {
+    // Runs cancelled on the way down start nothing new; a staged question picks up at next start.
+    this.#closing = true;
     const running = [...this.#inFlight.keys()];
     await Promise.allSettled(running.map((runId) => this.cancel(runId)));
     await Promise.allSettled(running.map((runId) => this.settled(runId)));
@@ -202,6 +230,8 @@ export class ResearchService {
           message: error instanceof Error ? error.message : String(error),
         }).catch(() => undefined);
       } finally {
+        // Before the run counts as settled, so `settled()` also covers what its question does next.
+        await this.#notifySettled(await this.#store.getRun(runId).catch(() => null));
         this.#inFlight.delete(runId);
       }
     })();
@@ -260,6 +290,11 @@ export class ResearchService {
       },
       { now: this.#now() },
     );
+  }
+
+  async #notifySettled(run) {
+    if (!run || this.#closing) return;
+    await Promise.allSettled([...this.#settledListeners].map(async (listener) => listener(run)));
   }
 
   async #fail(runId, error) {

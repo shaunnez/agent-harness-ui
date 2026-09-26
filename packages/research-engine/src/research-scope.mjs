@@ -13,6 +13,7 @@
 
 import process from "node:process";
 import { chatOnceWithRetries } from "./api-loop/chat-loop.mjs";
+import { resolveApiModel } from "./api-loop/providers.mjs";
 import { DEFAULT_API_LOOP_MODEL } from "./api-loop/runtime.mjs";
 
 /** The measures a band can be priced in, named as `unitMeasure` names them, so a run's band and
@@ -136,12 +137,31 @@ export class ResearchScoper {
   #env;
   #model;
   #fetchImpl;
+  #pacer;
+  #reasoning;
 
-  /** `env` holds the provider key (the companion passes the API loop's own copy). */
-  constructor({ env = process.env, model = null, fetchImpl = globalThis.fetch } = {}) {
+  /** `env` holds the provider key (the companion passes the API loop's own copy). `pacer` is the
+   *  research service's shared one, so a scoping call also waits out a throttle. `reasoning` is the
+   *  scoping call's level: "off" by default, because a scope is one short JSON answer and thinking
+   *  is most of a call's time and cost; `RESEARCH_SCOPE_REASONING` changes it. Only a provider
+   *  that can turn thinking off (DeepInfra) is affected; the others think as they always have. */
+  constructor({
+    env = process.env,
+    model = null,
+    fetchImpl = globalThis.fetch,
+    pacer = null,
+    reasoning = env.RESEARCH_SCOPE_REASONING ?? "off",
+  } = {}) {
     this.#env = env;
     this.#model = model ?? env.RESEARCH_SCOPE_MODEL ?? DEFAULT_SCOPE_MODEL;
     this.#fetchImpl = fetchImpl;
+    this.#pacer = pacer;
+    this.#reasoning = reasoning;
+  }
+
+  /** The model that scopes, provider-qualified. */
+  get model() {
+    return this.#model;
   }
 
   async scope({ objective, signal } = {}) {
@@ -157,6 +177,8 @@ export class ResearchScoper {
         timeoutMs: SCOPE_TIMEOUT_MS,
         signal,
         fetchImpl: this.#fetchImpl,
+        pacer: this.#pacer,
+        reasoning: this.#reasoning,
       });
     } catch (error) {
       throw new ScopeError(`The scoper could not answer: ${error?.message ?? String(error)}`, {
@@ -166,9 +188,16 @@ export class ResearchScoper {
     }
     return {
       scope: parseScope(reply.text),
-      scopedBy: { runtime: "api-loop", model: this.#model, reasoning: null },
+      scopedBy: { runtime: "api-loop", model: this.#model, reasoning: this.#appliedReasoning() },
       usage: reply.usage ?? null,
     };
+  }
+
+  /** The level the provider was actually asked for, or null when it was left to the provider. */
+  #appliedReasoning() {
+    const level = this.#reasoning;
+    if (level == null || level === "default") return null;
+    return resolveApiModel(this.#model).provider.reasoning?.[level] ? level : null;
   }
 }
 

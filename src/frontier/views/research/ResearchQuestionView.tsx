@@ -1,6 +1,6 @@
 import { ArrowSquareOut, CheckCircle, WarningCircle, XCircle } from "@phosphor-icons/react";
 import { useState } from "react";
-import { errorMessage } from "../../runtime/coordinator";
+import { errorMessage } from "../../runtime/errors";
 import { formatDuration } from "../../runtime/presentation";
 import {
   componentCounts,
@@ -176,7 +176,9 @@ export function ResearchQuestionView({
               <small>
                 {question.runsPlanned === 1
                   ? "Quick ask · one run cannot show disagreement"
-                  : `${question.runsPlanned} independent runs`}
+                  : question.staged && !question.staged.extended
+                    ? `${question.staged.firstRuns} of ${question.runsPlanned} independent runs · two more only if these disagree`
+                    : `${question.runsPlanned} independent runs`}
               </small>
             </header>
             <div className="research-runs" role="tablist" aria-label="Runs">
@@ -340,7 +342,12 @@ function ReviewCommand({
             disabled={!connected || busy}
             onClick={() => void retryStart()}
           >
-            Retry {question.runsPlanned === 1 ? "Quick · one run" : `${question.runsPlanned} runs`}
+            Retry{" "}
+            {question.runsPlanned === 1
+              ? "Quick · one run"
+              : question.staged
+                ? `${question.staged.firstRuns} runs`
+                : `${question.runsPlanned} runs`}
           </button>
         )}
         {state !== "not-ready" && !decision && (
@@ -482,8 +489,10 @@ function RunDetail({ run }: { run: ResearchRunRecord }) {
       <div className="research-run-detail" role="tabpanel">
         <h3>Activity · {run.run}</h3>
         <ol className="research-activity">
-          {run.activity.map((event) => (
-            <li key={`${event.at}-${event.label}`} className={`activity-${event.kind}`}>
+          {run.activity.map((event, index) => (
+            // Two tool calls can land in the same millisecond; the position keeps each row its own.
+            // biome-ignore lint/suspicious/noArrayIndexKey: the feed is append-only and never reordered.
+            <li key={`${index}-${event.at}-${event.label}`} className={`activity-${event.kind}`}>
               <time dateTime={event.at}>
                 {new Date(event.at).toLocaleTimeString([], {
                   hour: "2-digit",

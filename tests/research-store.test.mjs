@@ -119,6 +119,14 @@ test("startup marks interrupted CLI work failed while retaining terminal runs", 
       request: requestFor("Interrupted live question"),
       budget,
     });
+    await store.updateRun(interrupted.id, (draft) => {
+      draft.status = "running";
+    });
+    const waiting = await store.createRun({
+      runtimeId: "claude-cli",
+      request: requestFor("Queued live question"),
+      budget,
+    });
     const completed = await store.createRun({
       runtimeId: "claude-cli",
       request: requestFor("Completed live question"),
@@ -133,6 +141,10 @@ test("startup marks interrupted CLI work failed while retaining terminal runs", 
     assert.equal(recovered.status, "failed");
     assert.equal(recovered.error.code, "companion_interrupted");
     assert.equal(recovered.usage.partial, true);
+    // Still queued when the companion stopped: it never started, so its question may retry it.
+    const neverStarted = await store.getRun(waiting.id);
+    assert.equal(neverStarted.status, "failed");
+    assert.equal(neverStarted.error.code, "interrupted_before_start");
     assert.equal((await store.getRun(completed.id)).status, "completed");
   });
 });

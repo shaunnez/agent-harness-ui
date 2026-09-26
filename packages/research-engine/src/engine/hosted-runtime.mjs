@@ -44,6 +44,7 @@ export class HostedResearchRuntime {
   #model;
   #binary;
   #maxConcurrent;
+  #pacer;
   #active = 0;
   #queue = [];
   #transcriptDirectory;
@@ -56,6 +57,7 @@ export class HostedResearchRuntime {
   #sourceSnapshotDirectory;
   #captureProvider;
   #webToolsOptions;
+  #toolCache;
   #driver;
 
   constructor({
@@ -64,6 +66,8 @@ export class HostedResearchRuntime {
     model = null,
     binary = null,
     maxConcurrentRuns = DEFAULT_MAX_CONCURRENT_RUNS,
+    // An `AdaptivePacer` (`pacer.mjs`) replaces the fixed cap with one learned from the provider.
+    pacer = null,
     transcriptDirectory = DEFAULT_TRANSCRIPT_DIRECTORY,
     systemPromptPath,
     allowedTools = [],
@@ -80,6 +84,9 @@ export class HostedResearchRuntime {
     captureProvider = null,
     // For tests: `fetchImpl` and `lookup` reach `ResearchWebTools` so no test touches the network.
     webToolsOptions = {},
+    // Searches, captures and QV reads shared across runs (`tool-cache.mjs`). Null, the default,
+    // fetches everything afresh in every run, as the recorded eval arms did.
+    toolCache = null,
   } = {}) {
     if (!id || !driver || !systemPromptPath)
       throw new Error("A hosted research runtime needs an id, a driver and a system prompt.");
@@ -89,6 +96,9 @@ export class HostedResearchRuntime {
     this.#model = model ?? driver.defaultModel(env);
     this.#binary = binary;
     this.#maxConcurrent = Math.max(1, Number(maxConcurrentRuns) || DEFAULT_MAX_CONCURRENT_RUNS);
+    this.#pacer = pacer;
+    // A raised limit starts waiting runs now rather than when the next run ends.
+    pacer?.onChange(() => this.#pump());
     this.#transcriptDirectory = transcriptDirectory;
     this.#systemPromptPath = systemPromptPath;
     this.#allowedTools = [...allowedTools];
@@ -98,7 +108,8 @@ export class HostedResearchRuntime {
     this.#hostTools = [...hostTools];
     this.#sourceSnapshotDirectory = sourceSnapshotDirectory;
     this.#captureProvider = captureProvider;
-    this.#webToolsOptions = webToolsOptions;
+    this.#webToolsOptions = toolCache ? { toolCache, ...webToolsOptions } : webToolsOptions;
+    this.#toolCache = toolCache;
     if (!this.#hostTools.length) this.#allowedTools = this.#allowedTools.filter((tool) => !hostToolOf(tool));
   }
 
@@ -288,7 +299,7 @@ export class HostedResearchRuntime {
   }
 
   #pump() {
-    while (this.#active < this.#maxConcurrent && this.#queue.length) {
+    while (this.#active < (this.#pacer?.limit ?? this.#maxConcurrent) && this.#queue.length) {
       const task = this.#queue.shift();
       this.#active += 1;
       void Promise.resolve()
@@ -321,7 +332,7 @@ export class HostedResearchRuntime {
       run.controller.abort();
     };
     try {
-      const qv = planCheck ? new PlanCheckQvSession(planCheck) : null;
+      const qv = planCheck ? new PlanCheckQvSession({ ...planCheck, cache: this.#toolCache }) : null;
       if (this.#hostTools.length || qv)
         session = await openHostToolSession({
           qv,

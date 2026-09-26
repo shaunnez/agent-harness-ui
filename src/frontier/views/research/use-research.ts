@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { errorMessage } from "../../runtime/coordinator";
+import { errorMessage } from "../../runtime/errors";
 import type { ResearchGateway, ResearchQuestion } from "../../runtime/research";
 
 const PENDING_POLL_MS = 5_000;

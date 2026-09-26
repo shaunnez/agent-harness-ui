@@ -33,8 +33,8 @@ export function ResearchSettings({
         <p>API loop</p>
         <small>
           No CLI: the companion calls the model's API with a key from its own environment (OPENCODE_API_KEY,
-          FIREWORKS_API_KEY or BASETEN_API_KEY for the model, and PARALLEL_API_KEY for web search). A run
-          without its keys fails before it starts and can be retried once they are set.
+          FIREWORKS_API_KEY, DEEPINFRA_API_KEY or BASETEN_API_KEY for the model, and PARALLEL_API_KEY for web
+          search). A run without its keys fails before it starts and can be retried once they are set.
         </small>
       </div>
       <div className="design-policy-default">

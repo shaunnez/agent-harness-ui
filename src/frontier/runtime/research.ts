@@ -135,6 +135,9 @@ export interface ResearchQuestion {
   askedAt: string;
   engine: ResearchEngineSnapshot;
   runsPlanned: number;
+  /** A five-run question that started three and adds two only when those disagree. Absent on
+   *  every other question. */
+  staged?: { firstRuns: number; extended: boolean };
   status: ResearchQuestionStatus;
   range: { min: number; max: number } | null;
   consensus: { low: number; high: number } | null;
@@ -342,6 +345,7 @@ export function researchEngineLabel(engine: ResearchEngineSnapshot) {
       "gpt-6-luna": "GPT-6 Luna",
       "opencode-go/deepseek-v4.1-flash": "DeepSeek 4.1 Flash",
       "baseten/deepseek-ai/DeepSeek-V4.1-Flash": "DeepSeek 4.1 Flash",
+      "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash": "DeepSeek 4.1 Flash",
       "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": "DeepSeek 4.1 Flash",
     }[engine.model] ?? engine.model;
   const reasoning = engine.reasoning
@@ -359,7 +363,9 @@ export function researchEnginePlan(engine: ResearchEngineSnapshot) {
       ? "API loop · Baseten API"
       : engine.model.startsWith("fireworks-us/")
         ? "API loop · Fireworks US API"
-        : "API loop · OpenCode Go API";
+        : engine.model.startsWith("deepinfra/")
+          ? "API loop · DeepInfra API"
+          : "API loop · OpenCode Go API";
   return engine.runtime === "codex-cli" ? "Codex CLI · ChatGPT plan" : "Claude CLI · Claude plan";
 }
 

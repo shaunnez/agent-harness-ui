@@ -130,7 +130,7 @@ test("the harness imports research by the package name only", async () => {
   // A relative path into the package would still work in this repo but break once the package is
   // built or published on its own, and it hides the dependency from anyone reading the import.
   const reachIns = [];
-  for (const top of ["server", "src", "scripts", "tests", "worker"]) {
+  for (const top of ["server", "src", "scripts", "tests", "worker", "apps"]) {
     for (const file of await modulesIn(path.join(repositoryRoot, top))) {
       for (const specifier of specifiersOf(await readFile(file, "utf8"))) {
         if (!specifier.startsWith(".")) continue;
@@ -141,4 +141,37 @@ test("the harness imports research by the package name only", async () => {
     }
   }
   assert.deepEqual(reachIns, [], `use ${PACKAGE_NAME}/… instead:\n${reachIns.join("\n")}`);
+});
+
+test("the research service imports only the engine, its own files and its declared packages", async () => {
+  // `apps/research-service` is what production runs (32-RESEARCH-SPLIT-PLAN.md, Phase 3): the
+  // engine, Postgres, and nothing of the harness.
+  const serviceRoot = path.join(repositoryRoot, "apps", "research-service");
+  const manifest = JSON.parse(await readFile(path.join(serviceRoot, "package.json"), "utf8"));
+  const declared = new Set([
+    ...Object.keys(manifest.dependencies ?? {}),
+    ...Object.keys(manifest.devDependencies ?? {}),
+  ]);
+  assert.deepEqual(Object.keys(manifest.dependencies ?? {}).sort(), [PACKAGE_NAME, "pg"]);
+  const escapes = [];
+  for (const file of await modulesIn(serviceRoot)) {
+    for (const specifier of specifiersOf(await readFile(file, "utf8"))) {
+      if (specifier.startsWith("node:")) {
+        if (specifier === "node:child_process") escapes.push(`${relative(file)} imports node:child_process`);
+        continue;
+      }
+      if (specifier.startsWith(".")) {
+        const target = path.resolve(path.dirname(file), specifier);
+        if (!target.startsWith(serviceRoot + path.sep))
+          escapes.push(`${relative(file)} imports ${relative(target)}`);
+        continue;
+      }
+      const name = specifier.startsWith("@")
+        ? specifier.split("/").slice(0, 2).join("/")
+        : specifier.split("/")[0];
+      if (!declared.has(name))
+        escapes.push(`${relative(file)} imports the undeclared package "${specifier}"`);
+    }
+  }
+  assert.deepEqual(escapes, [], `the research service must not reach the harness:\n${escapes.join("\n")}`);
 });

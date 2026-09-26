@@ -1,5 +1,6 @@
 import type { WorkspaceHistoryPage, WorkspaceHistoryRequest } from "../../domain/workspace-history.ts";
 import type { FrontierGateway, FrontierSnapshot } from "./contracts.ts";
+import { errorMessage } from "./errors.ts";
 import { refreshPage } from "./pages.ts";
 
 const initialSnapshot: FrontierSnapshot = {
@@ -410,6 +411,4 @@ function mergeItems<T extends { id: string }>(first: T[], second: T[]) {
   return [...new Map([...first, ...second].map((item) => [item.id, item])).values()];
 }
 
-export function errorMessage(error: unknown) {
-  return error instanceof Error ? error.message : "The request could not be completed.";
-}
+export { errorMessage };

@@ -164,6 +164,17 @@ function createResearchQuestionSchema(db) {
   // question asked without one.
   if (!questionColumns.has("scope_json"))
     db.exec("ALTER TABLE research_questions ADD COLUMN scope_json TEXT");
+  // 1 when a five-run question starts three and runs the other two only if those three disagree
+  // (`research-question-stages.mjs`). Null on every question asked before.
+  if (!questionColumns.has("runs_staged"))
+    db.exec("ALTER TABLE research_questions ADD COLUMN runs_staged INTEGER");
+  // What the question asked, hashed: project, objective, scope and runs. A later identical ask may
+  // be answered by it (`research-question-stages.mjs`, `answerKey`). Null before.
+  if (!questionColumns.has("answer_key"))
+    db.exec("ALTER TABLE research_questions ADD COLUMN answer_key TEXT");
+  db.exec(
+    "CREATE INDEX IF NOT EXISTS research_questions_answer_idx ON research_questions(answer_key, created_at DESC)",
+  );
   db.exec("DROP INDEX IF EXISTS research_runs_question_idx");
   db.exec(
     "CREATE INDEX IF NOT EXISTS research_runs_question_order_idx ON research_runs(question_id, question_ordinal)",
