@@ -35,9 +35,14 @@
     "dev:frontier-api": "node scripts/frontier/dev-api.mjs",
     "serve:frontier": "npm run build:frontier && node scripts/frontier/dev-api.mjs",
     "dev:frontier-api-smoke": "node scripts/frontier/qa-server.mjs --codex",
-    "check:manifest": "node scripts/check-verification-manifest.mjs"
+    "check:manifest": "node scripts/check-verification-manifest.mjs",
+    "dev:empire": "vite --config vite.empire.config.mjs",
+    "build:empire": "vite build --config vite.empire.config.mjs",
+    "test:empire": "node --test tests/empire/*.test.mjs"
   },
   "dependencies": {
+    "@fontsource/cinzel": "^5.3.0",
+    "@fontsource/eb-garamond": "^5.3.0",
     "@fontsource/inter": "^5.3.0",
     "@phosphor-icons/react": "^2.1.10",
     "@react-three/fiber": "9.7.0",
