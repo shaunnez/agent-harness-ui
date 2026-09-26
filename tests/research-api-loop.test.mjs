@@ -113,7 +113,8 @@ test("models route to their provider, DeepSeek's own API is not one, and usage i
     }),
     2.259,
   );
-  // DeepInfra, keyed separately, with no rate recorded yet: its cost is unavailable, not guessed.
+  // DeepInfra, keyed separately, priced at its list rates: 1M uncached in at $0.20, 1M cached at
+  // $0.006, 1M out at $0.60.
   const deepinfra = resolveApiModel("deepinfra/deepseek-ai/DeepSeek-V4.1-Flash");
   assert.equal(deepinfra.provider.endpoint, "https://api.deepinfra.com/v1/openai");
   assert.equal(deepinfra.provider.keyEnv, "DEEPINFRA_API_KEY");
@@ -121,11 +122,11 @@ test("models route to their provider, DeepSeek's own API is not one, and usage i
   assert.ok(API_LOOP_KEY_VARS.includes("DEEPINFRA_API_KEY"));
   assert.equal(
     priceApiUsage("deepinfra/deepseek-ai/DeepSeek-V4.1-Flash", {
-      inputTokens: 1,
-      cachedTokens: 0,
-      outputTokens: 1,
+      inputTokens: 2e6,
+      cachedTokens: 1e6,
+      outputTokens: 1e6,
     }),
-    null,
+    0.806,
   );
   // 1M uncached in at $0.15, 1M cached at $0.003, 1M out at $0.60.
   assert.equal(

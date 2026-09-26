@@ -36,13 +36,13 @@ export const API_LOOP_PROVIDERS = Object.freeze({
     },
   }),
   // DeepInfra's OpenAI-compatible endpoint (`https://deepinfra.com/docs/openai_api`), added to try
-  // the API loop on it. No rate is recorded here yet: its price page could not be read when this was
-  // added, so a DeepInfra run's cost reads as unavailable rather than an unverified estimate.
+  // the API loop on it. List rates from its `/v1/openai/models` metadata, 26 September 2026; that
+  // listing also shows a 30% discount, left out here so the estimate does not rest on a promotion.
   deepinfra: Object.freeze({
     label: "DeepInfra",
     endpoint: "https://api.deepinfra.com/v1/openai",
     keyEnv: "DEEPINFRA_API_KEY",
-    rates: {},
+    rates: { "deepseek-ai/DeepSeek-V4.1-Flash": { input: 0.2, output: 0.6, cacheRead: 0.006 } },
   }),
   baseten: Object.freeze({
     label: "Baseten",
