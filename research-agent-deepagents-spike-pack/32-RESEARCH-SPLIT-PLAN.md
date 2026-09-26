@@ -94,7 +94,23 @@ Exit: all current tests pass, and re-checking the recorded eval arms, including 
 2. Update the imports in the harness server, the tests, the scripts and the eval paths. The comparison runtimes stay in `server/research/` and import the engine.
 3. Keep these green: `npm test`, `test:frontier`, `test:frontier-api`, `typecheck`, `lint`, `build`, `test:sites`, and the container build on main.
 
-### Phase 3: research service skeleton, still dev only (2 to 3 days)
+### Phase 3: research service skeleton, still dev only (built, live check pending)
+
+**Built on 26 September 2026**, with Shaun's answers folded in: Postgres rather than a second SQLite file, a queue that paces PlanCheck's batches (20 to 100 items), and the API PlanCheck calls. `apps/research-service` (`README.md` there):
+
+- **Postgres stores in the engine** (`packages/research-engine/src/pg/`): run, question and project stores with the SQLite stores' methods, over an injected `query`/`exec`/`transaction` handle, so the engine still has no dependencies. JSON stays TEXT and keys sort in the C collation, so records and evidence fingerprints are byte-for-byte what SQLite gives. `tests/research-pg-parity.test.mjs` runs every store operation against both and requires identical results, and puts all 45 recorded held-out eval results through Postgres and the real question service: every one grades as recorded. The question service now awaits its store, so it runs on either.
+- **The service** (`apps/research-service/src/`): `pg` for Postgres (Azure Database for PostgreSQL in prod), PGlite (`pglite:<dir>`, dev only) for local runs and tests without Docker. It registers only the API loop, behind a guard that refuses any run not on a US-hosted provider (Fireworks US or Baseten); its configuration refuses OpenCode Go, an unlisted model, and starting with no client credentials. It takes the provider and search keys out of its own environment before anything starts, as the harness does.
+- **Pacing** (`engine/pacer.mjs`): runs calling the model at once start at 3, grow by one after 20 unthrottled calls, halve on a 429 (to a floor of 1, a ceiling of 6 by default), and every run holds its next call for the provider's `Retry-After`. The scoper shares it. The harness keeps its fixed cap.
+- **PlanCheck's API**: `POST /v1/batches` (up to 200 items; a resent `batchId` returns the stored batch), `GET /v1/batches/:id` and `?batchId=`, each item's grade, best band, range, unit and reasons once its question settles. Client tokens are configured as SHA-256 hashes only and compared in constant time; a client sees only its batches. An item sent again (same item id, any batch) reuses its question and starts nothing.
+- **The queue** is the batch tables, claimed with `FOR UPDATE SKIP LOCKED`; the worker asks only as many questions as the pacer has room for (run slots ÷ runs per question, plus one). Items being asked when the service stops go back to the queue. A run still queued when it stops now fails as `interrupted_before_start`, which a question may retry like a failed start (the harness gains this too); the worker retries such runs up to twice.
+- **Research projects** are the service's own table. Phase 0.3 is still open, so the service asks every batch in one standing project (`plancheck`) and keeps PlanCheck's batch reference as opaque data; one project per account can follow without a schema change.
+- **Review console routes** (the engine's `/api/research/…`, plus a projects list) answer only on a loopback listener to a loopback `Host` and origin; in the container they are off until sign-in (Phase 5).
+- **Image**: `apps/research-service/Dockerfile` (engine, service, `pg`, poppler; no PGlite, no harness UI packages) with `scripts/check-image.sh`, which fails on any `claude`, `codex` or `opencode` binary or package, harness source, orchestrator module, `.data`, React, Vite, three.js or PGlite. The dependency install was reproduced outside Docker (17 packages, none of the root's), but **the image has not been built**: Docker Desktop was not running. The repo has no CI, so the check runs by hand for now.
+
+Not done: the exit's live half. Running the service against a local PlanCheck with a synthetic tender needs PlanCheck up and a small paid run (about $0.35 a question on Fireworks US), which waits for Shaun. It has been started locally (Postgres on PGlite, Fireworks US, pacing at 3) and answered its health, credential, batch-validation and console routes without starting a run. Still single process: runs execute inside the service, so separate worker containers stay in Phase 5, and what the pacer learns is lost on a restart.
+
+Original plan:
+
 
 1. Create `apps/research-service/index.mjs`, which:
    - mounts only the research routes

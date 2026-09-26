@@ -322,57 +322,22 @@ export class ResearchStore {
       .prepare("SELECT payload_json FROM research_artifacts WHERE run_id = ? AND id = '__result__'")
       .get(runId);
     if (!summaryRow) return null;
-    const summary = JSON.parse(summaryRow.payload_json);
-    const sources = new Map(this.listSourcesSync(runId).map((source) => [source.id, source]));
-    const evidenceByFinding = new Map();
-    for (const row of this.#db
-      .prepare("SELECT * FROM research_evidence WHERE run_id = ? ORDER BY finding_id ASC, ordinal ASC")
-      .all(runId)) {
-      const source = sources.get(row.source_id);
-      const reference = {
-        sourceId: row.source_id,
-        sourceType: source?.sourceType ?? "other",
-        ...(source?.url ? { url: source.url } : {}),
-        ...(source?.title ? { title: source.title } : {}),
-        retrievedAt: source?.retrievedAt ?? run.createdAt,
-        ...(row.locator_json ? { locator: JSON.parse(row.locator_json) } : {}),
-        ...(row.excerpt == null ? {} : { excerpt: row.excerpt }),
-        ...(row.snapshot_ref ? { snapshotRef: row.snapshot_ref } : {}),
-        quoteVerified: Number(row.quote_verified) === 1,
-        ...(row.authority ? { authority: row.authority } : {}),
-      };
-      const bucket = evidenceByFinding.get(row.finding_id) ?? [];
-      bucket.push(reference);
-      evidenceByFinding.set(row.finding_id, bucket);
-    }
-    const findings = this.#db
-      .prepare("SELECT * FROM research_findings WHERE run_id = ? ORDER BY ordinal ASC")
-      .all(runId)
-      .map((row) => ({
-        ...JSON.parse(row.payload_json),
-        id: row.id,
-        claim: row.claim,
-        producedBy: row.produced_by,
-        evidence: evidenceByFinding.get(row.id) ?? [],
-      }));
-    const artifacts = this.#db
-      .prepare(
-        "SELECT * FROM research_artifacts WHERE run_id = ? AND id <> '__result__' ORDER BY ordinal ASC",
-      )
-      .all(runId)
-      .map((row) => ({ id: row.id, kind: row.kind, name: row.name, contentRef: row.content_ref }));
-    return {
-      runId,
-      // Read back from the run, not from whatever the runtime put in the result blob, so a
-      // finding always reports the identity the run itself is stamped with.
-      ...(run.model ? { model: run.model } : {}),
-      ...(summary.summary ? { summary: summary.summary } : {}),
-      findings,
-      artifacts,
-      usage: run.usage ?? { partial: true },
-      ...(summary.unresolvedQuestions?.length ? { unresolvedQuestions: summary.unresolvedQuestions } : {}),
-      ...(summary.truncatedBy ? { truncatedBy: summary.truncatedBy } : {}),
-    };
+    return researchResultFromRows({
+      run,
+      summaryRow,
+      sources: this.listSourcesSync(runId),
+      evidenceRows: this.#db
+        .prepare("SELECT * FROM research_evidence WHERE run_id = ? ORDER BY finding_id ASC, ordinal ASC")
+        .all(runId),
+      findingRows: this.#db
+        .prepare("SELECT * FROM research_findings WHERE run_id = ? ORDER BY ordinal ASC")
+        .all(runId),
+      artifactRows: this.#db
+        .prepare(
+          "SELECT * FROM research_artifacts WHERE run_id = ? AND id <> '__result__' ORDER BY ordinal ASC",
+        )
+        .all(runId),
+    });
   }
 
   listSourcesSync(runId) {
@@ -440,7 +405,9 @@ export class ResearchStore {
   }
 }
 
-function runRecord(row) {
+/** A `research_runs` row as the run record every reader sees. Shared with the Postgres store
+ *  (`pg/research-store.mjs`), so both databases give the same record. */
+export function runRecord(row) {
   const request = JSON.parse(row.request_json);
   return {
     id: row.id,
@@ -472,7 +439,7 @@ function runRecord(row) {
   };
 }
 
-function sourceRecord(row) {
+export function sourceRecord(row) {
   return {
     id: row.id,
     runId: row.run_id,
@@ -484,5 +451,64 @@ function sourceRecord(row) {
     contentBytes: row.content_bytes == null ? null : Number(row.content_bytes),
     mediaType: row.media_type ?? null,
     metadata: row.metadata_json ? JSON.parse(row.metadata_json) : null,
+  };
+}
+
+/** Rebuild the neutral `ResearchResult` from the rows. Nothing is read back out of the runtime,
+ *  which is what makes "remove the runtime, keep the research" true. Shared with the Postgres
+ *  store. */
+export function researchResultFromRows({
+  run,
+  summaryRow,
+  sources,
+  evidenceRows,
+  findingRows,
+  artifactRows,
+}) {
+  const summary = JSON.parse(summaryRow.payload_json);
+  const byId = new Map(sources.map((source) => [source.id, source]));
+  const evidenceByFinding = new Map();
+  for (const row of evidenceRows) {
+    const source = byId.get(row.source_id);
+    const reference = {
+      sourceId: row.source_id,
+      sourceType: source?.sourceType ?? "other",
+      ...(source?.url ? { url: source.url } : {}),
+      ...(source?.title ? { title: source.title } : {}),
+      retrievedAt: source?.retrievedAt ?? run.createdAt,
+      ...(row.locator_json ? { locator: JSON.parse(row.locator_json) } : {}),
+      ...(row.excerpt == null ? {} : { excerpt: row.excerpt }),
+      ...(row.snapshot_ref ? { snapshotRef: row.snapshot_ref } : {}),
+      quoteVerified: Number(row.quote_verified) === 1,
+      ...(row.authority ? { authority: row.authority } : {}),
+    };
+    const bucket = evidenceByFinding.get(row.finding_id) ?? [];
+    bucket.push(reference);
+    evidenceByFinding.set(row.finding_id, bucket);
+  }
+  const findings = findingRows.map((row) => ({
+    ...JSON.parse(row.payload_json),
+    id: row.id,
+    claim: row.claim,
+    producedBy: row.produced_by,
+    evidence: evidenceByFinding.get(row.id) ?? [],
+  }));
+  const artifacts = artifactRows.map((row) => ({
+    id: row.id,
+    kind: row.kind,
+    name: row.name,
+    contentRef: row.content_ref,
+  }));
+  return {
+    runId: run.id,
+    // Read back from the run, not from whatever the runtime put in the result blob, so a
+    // finding always reports the identity the run itself is stamped with.
+    ...(run.model ? { model: run.model } : {}),
+    ...(summary.summary ? { summary: summary.summary } : {}),
+    findings,
+    artifacts,
+    usage: run.usage ?? { partial: true },
+    ...(summary.unresolvedQuestions?.length ? { unresolvedQuestions: summary.unresolvedQuestions } : {}),
+    ...(summary.truncatedBy ? { truncatedBy: summary.truncatedBy } : {}),
   };
 }

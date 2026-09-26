@@ -9,6 +9,7 @@
 
 import { questionRecord } from "./research-question-record.mjs";
 import { scopedObjective, validateScope } from "./research-scope.mjs";
+import { NOT_STARTED_CODES } from "./research-service.mjs";
 
 // Five by default: the three that agree best are scored (Shaun, 25 September: "5 is fine for now").
 // Three remains for a cheaper cross-check, and one for a Quick answer.
@@ -66,14 +67,14 @@ export class ResearchQuestionService {
     const title = String(input.title ?? "").trim() || titleFrom(objective);
     const sourceKey = source.kind === "external" ? `${source.provider}:${source.requestId}` : null;
     // A repeated request finds its question before anything is scoped, so it costs nothing.
-    const earlier = sourceKey ? this.#questions.findBySourceKey(sourceKey) : null;
+    const earlier = sourceKey ? await this.#questions.findBySourceKey(sourceKey) : null;
     if (earlier) return { question: await this.#record(earlier), reused: true };
     const scope = await this.#scopeFor(input, objective, source);
     const runObjective = scopedObjective(objective, scope?.scope ?? null);
     if (runObjective.length > MAX_RUN_OBJECTIVE_LENGTH)
       throw badRequest("The question and its scope are too long together. Shorten one of them.");
 
-    const { question, reused } = this.#questions.createQuestion({
+    const { question, reused } = await this.#questions.createQuestion({
       projectId: project.id,
       title: title.slice(0, 160),
       objective,
@@ -93,7 +94,7 @@ export class ResearchQuestionService {
         profile,
         metadata: { questionId: question.id, run: label },
       });
-      this.#questions.attachRun(question.id, run.id, label, index + 1);
+      await this.#questions.attachRun(question.id, run.id, label, index + 1);
     }
     return { question: await this.#record(question), reused: false };
   }
@@ -112,13 +113,13 @@ export class ResearchQuestionService {
   }
 
   async #retryFailedStart(id) {
-    const question = this.#questions.getQuestion(id);
+    const question = await this.#questions.getQuestion(id);
     if (!question) return null;
     await this.#researchProject(question.projectId);
     const { latest } = await this.#attempts(question);
     if (!failedToStart(latest, question.runsPlanned))
       throw conflict("Only runs that failed before starting can be retried.");
-    const next = Math.max(...this.#questions.runOrder(id).map((entry) => entry.ordinal)) + 1;
+    const next = Math.max(...(await this.#questions.runOrder(id)).map((entry) => entry.ordinal)) + 1;
     for (const [index, failed] of latest.entries()) {
       const label = `r${index + 1}`;
       // The same request the failed run was given, on the same engine.
@@ -128,23 +129,26 @@ export class ResearchQuestionService {
         runtimeId: failed.runtimeId,
         metadata: { questionId: question.id, run: label },
       });
-      this.#questions.attachRun(question.id, run.id, label, next + index);
+      await this.#questions.attachRun(question.id, run.id, label, next + index);
     }
     return this.#record(question, { activity: true });
   }
 
   async list(projectId) {
     await this.#researchProject(projectId, { allowArchived: true });
-    return Promise.all(this.#questions.listQuestions(projectId).map((question) => this.#record(question)));
+    return Promise.all(
+      (await this.#questions.listQuestions(projectId)).map((question) => this.#record(question)),
+    );
   }
 
-  async get(id) {
-    const question = this.#questions.getQuestion(id);
-    return question ? this.#record(question, { activity: true }) : null;
+  /** `activity: false` leaves out each run's event feed, for a caller that needs only the answer. */
+  async get(id, { activity = true } = {}) {
+    const question = await this.#questions.getQuestion(id);
+    return question ? this.#record(question, { activity }) : null;
   }
 
   async review(id, input) {
-    const question = this.#questions.getQuestion(id);
+    const question = await this.#questions.getQuestion(id);
     if (!question) return null;
     const decision = input?.decision;
     if (decision !== "approved" && decision !== "rejected") throw badRequest("Choose approved or rejected.");
@@ -159,7 +163,7 @@ export class ResearchQuestionService {
       throw conflict("Retry the runs that failed to start before reviewing this question.");
     if (String(input?.evidenceSha ?? "") !== current.evidenceSha)
       throw conflict("The evidence changed while you were reviewing. Reload it and review again.");
-    this.#questions.addReview(question.id, {
+    await this.#questions.addReview(question.id, {
       decision,
       note,
       reviewer: "operator",
@@ -213,13 +217,13 @@ export class ResearchQuestionService {
       sources,
       prior,
       retryable: failedToStart(runs, question.runsPlanned),
-      review: this.#questions.latestReview(question.id),
+      review: await this.#questions.latestReview(question.id),
     });
   }
 
   /** The runs of the question's latest attempt, in label order, and every earlier run. */
   async #attempts(question) {
-    const order = this.#questions.runOrder(question.id);
+    const order = await this.#questions.runOrder(question.id);
     const size = question.runsPlanned;
     const last = order.at(-1)?.ordinal ?? 0;
     const first = last ? Math.floor((last - 1) / size) * size + 1 : 1;
@@ -249,11 +253,12 @@ export class ResearchQuestionService {
   }
 }
 
-/** True when every run of an attempt failed before its runtime started. */
+/** True when every run of an attempt failed before its runtime started: a failed start, or a
+ *  run still queued when the process stopped. */
 function failedToStart(runs, runsPlanned) {
   return (
     runs.length === runsPlanned &&
-    runs.every((run) => run.status === "failed" && run.error?.code === "runtime_start_failed")
+    runs.every((run) => run.status === "failed" && NOT_STARTED_CODES.includes(run.error?.code))
   );
 }
 

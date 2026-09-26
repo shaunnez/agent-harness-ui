@@ -1,0 +1,9 @@
+# Read by BuildKit for apps/research-service/Dockerfile in place of the root .dockerignore.
+# Everything is excluded except what the Dockerfile copies.
+*
+!package.json
+!package-lock.json
+!packages/research-engine/package.json
+!packages/research-engine/src/**
+!apps/research-service/package.json
+!apps/research-service/src/**

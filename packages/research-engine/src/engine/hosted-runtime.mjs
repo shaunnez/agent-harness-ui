@@ -44,6 +44,7 @@ export class HostedResearchRuntime {
   #model;
   #binary;
   #maxConcurrent;
+  #pacer;
   #active = 0;
   #queue = [];
   #transcriptDirectory;
@@ -64,6 +65,8 @@ export class HostedResearchRuntime {
     model = null,
     binary = null,
     maxConcurrentRuns = DEFAULT_MAX_CONCURRENT_RUNS,
+    // An `AdaptivePacer` (`pacer.mjs`) replaces the fixed cap with one learned from the provider.
+    pacer = null,
     transcriptDirectory = DEFAULT_TRANSCRIPT_DIRECTORY,
     systemPromptPath,
     allowedTools = [],
@@ -89,6 +92,9 @@ export class HostedResearchRuntime {
     this.#model = model ?? driver.defaultModel(env);
     this.#binary = binary;
     this.#maxConcurrent = Math.max(1, Number(maxConcurrentRuns) || DEFAULT_MAX_CONCURRENT_RUNS);
+    this.#pacer = pacer;
+    // A raised limit starts waiting runs now rather than when the next run ends.
+    pacer?.onChange(() => this.#pump());
     this.#transcriptDirectory = transcriptDirectory;
     this.#systemPromptPath = systemPromptPath;
     this.#allowedTools = [...allowedTools];
@@ -288,7 +294,7 @@ export class HostedResearchRuntime {
   }
 
   #pump() {
-    while (this.#active < this.#maxConcurrent && this.#queue.length) {
+    while (this.#active < (this.#pacer?.limit ?? this.#maxConcurrent) && this.#queue.length) {
       const task = this.#queue.shift();
       this.#active += 1;
       void Promise.resolve()

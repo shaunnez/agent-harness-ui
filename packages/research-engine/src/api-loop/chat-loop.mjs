@@ -59,6 +59,9 @@ export async function runChatLoop({
   onCeiling = () => {},
   // `(text) => string[]`: the host's check of a final answer. Problems go back to the model once.
   reviewAnswer = null,
+  // Shared by every run of a service (`engine/pacer.mjs`): told of each throttle and success, and
+  // holds a call while the provider has asked everyone to wait. Null in the harness.
+  pacer = null,
 }) {
   const { provider, remoteModel } = resolveApiModel(model);
   const apiKey = env?.[provider.keyEnv];
@@ -121,7 +124,18 @@ export async function runChatLoop({
         messages,
         ...(state.wrappedUp ? {} : { tools: toolDefinitions, tool_choice: "auto" }),
       };
-      const reply = await chat({ provider, apiKey, headers, body, fetchImpl, sleep, signal, deadline, now });
+      const reply = await chat({
+        provider,
+        apiKey,
+        headers,
+        body,
+        fetchImpl,
+        sleep,
+        signal,
+        deadline,
+        now,
+        pacer,
+      });
       state.modelCalls += 1;
       addUsage(state.totals, reply.usage);
       const choice = reply.choices?.[0] ?? {};
@@ -266,6 +280,7 @@ export async function chatOnceWithRetries({
   fetchImpl = globalThis.fetch,
   sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   now = () => Date.now(),
+  pacer = null,
 }) {
   const { provider, remoteModel } = resolveApiModel(model);
   const apiKey = env?.[provider.keyEnv];
@@ -290,19 +305,33 @@ export async function chatOnceWithRetries({
     signal,
     deadline: now() + timeoutMs,
     now,
+    pacer,
   });
   return { text: String(reply.choices?.[0]?.message?.content ?? ""), usage: reply.usage ?? null };
 }
 
-async function chat({ provider, apiKey, headers, body, fetchImpl, sleep, signal, deadline, now }) {
+async function chat({
+  provider,
+  apiKey,
+  headers,
+  body,
+  fetchImpl,
+  sleep,
+  signal,
+  deadline,
+  now,
+  pacer = null,
+}) {
   for (let attempt = 0; ; attempt += 1) {
+    const hold = pacer?.delayMs() ?? 0;
+    if (hold > 0) await sleep(Math.min(hold, Math.max(0, deadline - now())));
     const remaining = deadline - now();
     if (remaining <= 0)
       throw Object.assign(new Error("The run's deadline passed during a model call."), {
         code: "PROCESS_TIMEOUT",
       });
     try {
-      return await chatOnce({
+      const reply = await chatOnce({
         provider,
         apiKey,
         headers,
@@ -311,8 +340,11 @@ async function chat({ provider, apiKey, headers, body, fetchImpl, sleep, signal,
         signal,
         timeoutMs: Math.min(remaining, REQUEST_TIMEOUT_MS),
       });
+      pacer?.succeeded();
+      return reply;
     } catch (error) {
       if (signal?.aborted) throw error;
+      if (error?.code === "throttled") pacer?.throttled(error.retryAfterMs ?? null);
       const retry = error instanceof ApiError ? error.retryable : true;
       const delays = error?.code === "throttled" ? THROTTLE_DELAYS_MS : RETRY_DELAYS_MS;
       if (!retry || attempt >= delays.length) {

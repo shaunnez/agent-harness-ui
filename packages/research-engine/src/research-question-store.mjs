@@ -160,7 +160,8 @@ export class ResearchQuestionStore {
   }
 }
 
-function questionRecord(row) {
+/** A `research_questions` row as a question record. Shared with the Postgres store. */
+export function questionRecord(row) {
   return {
     id: row.id,
     projectId: row.project_id,

@@ -136,12 +136,20 @@ export class ResearchScoper {
   #env;
   #model;
   #fetchImpl;
+  #pacer;
 
-  /** `env` holds the provider key (the companion passes the API loop's own copy). */
-  constructor({ env = process.env, model = null, fetchImpl = globalThis.fetch } = {}) {
+  /** `env` holds the provider key (the companion passes the API loop's own copy). `pacer` is the
+   *  research service's shared one, so a scoping call also waits out a throttle. */
+  constructor({ env = process.env, model = null, fetchImpl = globalThis.fetch, pacer = null } = {}) {
     this.#env = env;
     this.#model = model ?? env.RESEARCH_SCOPE_MODEL ?? DEFAULT_SCOPE_MODEL;
     this.#fetchImpl = fetchImpl;
+    this.#pacer = pacer;
+  }
+
+  /** The model that scopes, provider-qualified. */
+  get model() {
+    return this.#model;
   }
 
   async scope({ objective, signal } = {}) {
@@ -157,6 +165,7 @@ export class ResearchScoper {
         timeoutMs: SCOPE_TIMEOUT_MS,
         signal,
         fetchImpl: this.#fetchImpl,
+        pacer: this.#pacer,
       });
     } catch (error) {
       throw new ScopeError(`The scoper could not answer: ${error?.message ?? String(error)}`, {

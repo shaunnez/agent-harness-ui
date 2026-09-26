@@ -16,6 +16,11 @@ import { isResearchProfile, readResearchModelIdentity } from "./engine/contracts
 import { DEFAULT_RESEARCH_RUNTIME_ID } from "./research-runtime-registry.mjs";
 
 const MAX_OBJECTIVE_LENGTH = 4_000;
+
+/** A run the process stopped while it was still queued: never started, nothing spent. */
+export const INTERRUPTED_BEFORE_START_CODE = "interrupted_before_start";
+/** The failure codes of a run that never started, which a question may retry. */
+export const NOT_STARTED_CODES = Object.freeze(["runtime_start_failed", INTERRUPTED_BEFORE_START_CODE]);
 const MAX_CONTEXT_REFS = 20;
 const MAX_METADATA_KEYS = 20;
 
@@ -99,15 +104,25 @@ export class ResearchService {
     return this.#store.listRuns(options);
   }
 
-  /** CLI processes are not resumable after this companion exits. Make interrupted work
-   *  inspectable as a failure instead of leaving the UI showing a worker forever. */
+  /** A run is not resumable after the process that ran it exits. Make interrupted work
+   *  inspectable as a failure instead of leaving the UI showing a worker forever. A run still
+   *  waiting in the queue had spent nothing, so it fails as one that never started, which its
+   *  question can retry. */
   async recoverInterrupted() {
     const interrupted = await this.#store.listInterruptedRuns();
     for (const run of interrupted)
-      await this.#fail(run.id, {
-        code: "companion_interrupted",
-        message: "The companion stopped before this research run finished.",
-      });
+      await this.#fail(
+        run.id,
+        run.status === "queued"
+          ? {
+              code: INTERRUPTED_BEFORE_START_CODE,
+              message: "The service stopped before this research run started. Nothing was spent.",
+            }
+          : {
+              code: "companion_interrupted",
+              message: "The companion stopped before this research run finished.",
+            },
+      );
   }
 
   async listEvents(runId, options) {
