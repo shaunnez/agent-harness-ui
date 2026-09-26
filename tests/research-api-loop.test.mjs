@@ -410,3 +410,17 @@ test("the host checks a final answer once and hands its problems back before acc
   assert.match(feedback.content, /1\. Too wide\./);
   assert.match(call.finalText, /"low":60/);
 });
+
+test("an API-loop run without its keys fails before it starts, naming the keys", async () => {
+  const { ApiLoopResearchRuntime } = await import("../server/research/api-loop/runtime.mjs");
+  const request = {
+    id: "RSCH-KEYS",
+    objective: "Concrete paving slab, per m2.",
+    researchPolicy: { runtime: "api-loop", model: "baseten/deepseek-ai/DeepSeek-V4.1-Flash" },
+  };
+  await assert.rejects(new ApiLoopResearchRuntime({ env: {} }).start(request), /BASETEN_API_KEY and PARALLEL_API_KEY/);
+  await assert.rejects(
+    new ApiLoopResearchRuntime({ env: { BASETEN_API_KEY: "test" } }).start(request),
+    /needs PARALLEL_API_KEY in the companion's environment/,
+  );
+});

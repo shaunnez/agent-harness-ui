@@ -12,6 +12,8 @@ import { ClaudeCliRolesResearchRuntime } from "./research/claude-cli/roles-runti
 import { ClaudeCliResearchRuntime } from "./research/claude-cli/runtime.mjs";
 import { CodexCliResearchRuntime } from "./research/codex-cli/runtime.mjs";
 import { FakeResearchRuntime } from "./research/fake-research-runtime.mjs";
+import { API_LOOP_KEY_VARS } from "./research/api-loop/providers.mjs";
+import { ApiLoopResearchRuntime } from "./research/api-loop/runtime.mjs";
 import { OpenCodeCliResearchRuntime } from "./research/opencode-cli/runtime.mjs";
 import { PackResearchRuntime } from "./research/pack/runtime.mjs";
 import { ResearchQuestionService } from "./research/research-question-service.mjs";
@@ -102,6 +104,14 @@ try {
 // `opencode-cli` (DeepSeek 4.1 Flash on the OpenCode Go plan) is the Settings default since the
 // 24 September eval: 7 of 13 against Opus 5.5's 5 (`30-EVAL-RESULT.md`). A saved Settings choice
 // still wins, and a request that names a runtime still wins over both.
+// `api-loop` is the same DeepSeek with no CLI: the companion calls the chat API itself with a key
+// from its own environment (OPENCODE_API_KEY or BASETEN_API_KEY, and PARALLEL_API_KEY for search),
+// with the host's answer check. The eval's best arm (A10: 10 of 15 held-out questions).
+// The API loop's keys are taken out of this process's environment before anything is spawned, so
+// no delivery agent, CLI or repository test command started from here can inherit them. Only the
+// API-loop runtime holds them; it starts no child process.
+const apiLoopEnv = { ...process.env };
+for (const name of [...API_LOOP_KEY_VARS, "PARALLEL_API_KEY"]) delete process.env[name];
 const researchStore = jsonStore ? null : new ResearchStore(store.databaseHandle());
 const researchService = jsonStore
   ? null
@@ -114,6 +124,7 @@ const researchService = jsonStore
         new ClaudeCliResearchRuntime(),
         new CodexCliResearchRuntime(),
         new OpenCodeCliResearchRuntime(),
+        new ApiLoopResearchRuntime({ env: apiLoopEnv }),
         new ClaudeCliRolesResearchRuntime(),
         new PackResearchRuntime(),
       ]),

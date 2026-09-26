@@ -381,6 +381,8 @@ function provenanceNote(run, question) {
       ? "the ChatGPT plan"
       : run?.runtimeId === "opencode-cli"
         ? "the OpenCode Go plan"
+        : run?.runtimeId === "api-loop"
+          ? "the API loop, on a provider API key"
         : run?.runtimeId === "claude-cli"
           ? "the Claude plan"
           : `the ${run?.runtimeId ?? "unknown"} runtime`;

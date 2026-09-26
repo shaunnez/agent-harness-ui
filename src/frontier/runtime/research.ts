@@ -88,7 +88,7 @@ export interface ResearchRunRecord {
 }
 
 export interface ResearchEngineSnapshot {
-  runtime: "claude-cli" | "codex-cli" | "opencode-cli";
+  runtime: "claude-cli" | "codex-cli" | "opencode-cli" | "api-loop";
   model: string;
   reasoning: string | null;
 }
@@ -338,6 +338,7 @@ export function researchEngineLabel(engine: ResearchEngineSnapshot) {
       "gpt-6-sol": "GPT-6 Sol",
       "gpt-6-luna": "GPT-6 Luna",
       "opencode-go/deepseek-v4.1-flash": "DeepSeek 4.1 Flash",
+      "baseten/deepseek-ai/DeepSeek-V4.1-Flash": "DeepSeek 4.1 Flash",
     }[engine.model] ?? engine.model;
   const reasoning = engine.reasoning
     ? engine.reasoning === "xhigh"
@@ -349,6 +350,8 @@ export function researchEngineLabel(engine: ResearchEngineSnapshot) {
 
 export function researchEnginePlan(engine: ResearchEngineSnapshot) {
   if (engine.runtime === "opencode-cli") return "OpenCode CLI · OpenCode Go plan";
+  if (engine.runtime === "api-loop")
+    return engine.model.startsWith("baseten/") ? "API loop · Baseten API" : "API loop · OpenCode Go API";
   return engine.runtime === "codex-cli" ? "Codex CLI · ChatGPT plan" : "Claude CLI · Claude plan";
 }
 

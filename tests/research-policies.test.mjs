@@ -108,7 +108,7 @@ test("the engine decides the provider, and each model must be allowed and suppor
       MODELS,
       ALLOWED,
     ),
-    /Claude CLI, Codex CLI or OpenCode CLI/,
+    /Claude CLI, Codex CLI, OpenCode CLI or the API loop/,
   );
   // OpenCode models come from their own research list, never the delivery allowlist.
   assert.equal(researchPoliciesIssue(DEFAULT_RESEARCH_POLICIES, MODELS, ["claude-opus-5-5"]), null);
@@ -118,7 +118,7 @@ test("the engine decides the provider, and each model must be allowed and suppor
   });
   assert.match(
     researchPoliciesIssue(openCode({ model: "gpt-6-sol" }), MODELS, ALLOWED),
-    /OpenCode research model/,
+    /OpenCode CLI's research models/,
   );
   assert.match(
     researchPoliciesIssue(openCode({ reasoning: "max" }), MODELS, ALLOWED),
@@ -127,6 +127,15 @@ test("the engine decides the provider, and each model must be allowed and suppor
   assert.match(
     researchPoliciesIssue(openCode({ provider: "claude" }), MODELS, ALLOWED),
     /runs opencode models only/,
+  );
+  // The API loop has its own research list too: DeepSeek on OpenCode Go's API or on Baseten.
+  const apiLoop = (model) => openCode({ runtime: "api-loop", provider: "api", model });
+  assert.equal(researchPoliciesIssue(apiLoop("opencode-go/deepseek-v4.1-flash"), MODELS, ["claude-opus-5-5"]), null);
+  assert.equal(researchPoliciesIssue(apiLoop("baseten/deepseek-ai/DeepSeek-V4.1-Flash"), MODELS, ["claude-opus-5-5"]), null);
+  assert.match(researchPoliciesIssue(apiLoop("gpt-6-sol"), MODELS, ALLOWED), /API loop's research models/);
+  assert.match(
+    researchPoliciesIssue(openCode({ runtime: "api-loop", provider: "opencode" }), MODELS, ALLOWED),
+    /runs api models only/,
   );
   const codexRole = structuredClone(DEFAULT_RESEARCH_POLICIES);
   codexRole.roles.verifier = { provider: "claude", model: "gpt-6-sol", reasoning: "high" };

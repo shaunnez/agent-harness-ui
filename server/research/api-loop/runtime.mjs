@@ -135,6 +135,9 @@ export function apiLoopDriver({ env = process.env, fetchImpl = globalThis.fetch 
 }
 
 export class ApiLoopResearchRuntime extends ClaudeCliResearchRuntime {
+  #env;
+  #searchReady;
+
   /** `fetchImpl` answers the model calls; tests pass a stub, nothing else should. */
   constructor({ env = process.env, webToolsOptions = {}, fetchImpl = globalThis.fetch, ...options } = {}) {
     const searchProvider =
@@ -150,5 +153,24 @@ export class ApiLoopResearchRuntime extends ClaudeCliResearchRuntime {
       webToolsOptions: { ...webToolsOptions, ...(searchProvider ? { searchProvider } : {}) },
       driver: apiLoopDriver({ env, fetchImpl }),
     });
+    this.#env = env;
+    this.#searchReady = Boolean(searchProvider);
+  }
+
+  /** A missing key fails the run before anything is spent, as a failed start the question can
+   *  retry once the key is set, rather than as a run that dies on its first model call. */
+  async start(request) {
+    const policy = request?.researchPolicy?.runtime === API_LOOP_RESEARCH_RUNTIME_ID ? request.researchPolicy : null;
+    const model = policy?.model ?? this.#env.RESEARCH_API_LOOP_MODEL ?? DEFAULT_API_LOOP_MODEL;
+    const { provider } = resolveApiModel(model);
+    const missing = [
+      ...(this.#env[provider.keyEnv] ? [] : [provider.keyEnv]),
+      ...(this.#searchReady ? [] : ["PARALLEL_API_KEY"]),
+    ];
+    if (missing.length)
+      throw new Error(
+        `The API loop needs ${missing.join(" and ")} in the companion's environment. Set ${missing.length > 1 ? "them" : "it"} and restart the companion, then retry.`,
+      );
+    return super.start(request);
   }
 }

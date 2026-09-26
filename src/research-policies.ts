@@ -7,8 +7,8 @@
 
 import type { ResearchRole } from "./domain/research.ts";
 
-export type ResearchEngineId = "claude-cli" | "codex-cli" | "opencode-cli";
-export type ResearchProviderId = "claude" | "codex" | "opencode";
+export type ResearchEngineId = "claude-cli" | "codex-cli" | "opencode-cli" | "api-loop";
+export type ResearchProviderId = "claude" | "codex" | "opencode" | "api";
 
 export const RESEARCH_ENGINES: Readonly<
   Record<ResearchEngineId, { provider: ResearchProviderId; label: string; plan: string }>
@@ -16,6 +16,9 @@ export const RESEARCH_ENGINES: Readonly<
   "claude-cli": { provider: "claude", label: "Claude CLI", plan: "Claude subscription" },
   "codex-cli": { provider: "codex", label: "Codex CLI", plan: "ChatGPT plan" },
   "opencode-cli": { provider: "opencode", label: "OpenCode CLI", plan: "OpenCode Go plan" },
+  // No CLI: the companion calls the model's chat API itself, with a key from its environment
+  // (`server/research/api-loop/`). The eval's best arm (A10).
+  "api-loop": { provider: "api", label: "API loop", plan: "provider API key" },
 });
 
 /** The models the OpenCode engine offers research. Its own list, not the delivery catalogue or
@@ -29,6 +32,33 @@ export const OPENCODE_RESEARCH_MODELS: readonly {
 }[] = Object.freeze([
   { id: "opencode-go/deepseek-v4.1-flash", label: "DeepSeek 4.1 Flash", reasoningLevels: ["default"] },
 ]);
+
+/** The models the API loop offers research: DeepSeek on OpenCode Go's API for testing, and on
+ *  Baseten for production. DeepSeek's own API is deliberately absent (traffic stays out of China). */
+export const API_LOOP_RESEARCH_MODELS: readonly {
+  id: string;
+  label: string;
+  reasoningLevels: readonly string[];
+}[] = Object.freeze([
+  {
+    id: "opencode-go/deepseek-v4.1-flash",
+    label: "DeepSeek 4.1 Flash · OpenCode Go API",
+    reasoningLevels: ["default"],
+  },
+  {
+    id: "baseten/deepseek-ai/DeepSeek-V4.1-Flash",
+    label: "DeepSeek 4.1 Flash · Baseten",
+    reasoningLevels: ["default"],
+  },
+]);
+
+/** The research-only model list an engine offers, or null for an engine whose models come from
+ *  the delivery catalogue (Claude and Codex). */
+export function researchOnlyModels(provider: ResearchProviderId) {
+  if (provider === "opencode") return OPENCODE_RESEARCH_MODELS;
+  if (provider === "api") return API_LOOP_RESEARCH_MODELS;
+  return null;
+}
 
 /** The four-role comparison runs every role through the Claude CLI. */
 export const RESEARCH_ROLES_ENGINE = "claude-cli-roles";
@@ -140,13 +170,13 @@ export function researchPoliciesIssue(
     return null;
   };
   const engine = RESEARCH_ENGINES[policies.agent?.runtime as ResearchEngineId];
-  if (!engine) return "Choose Claude CLI, Codex CLI or OpenCode CLI for the research agent.";
+  if (!engine) return "Choose Claude CLI, Codex CLI, OpenCode CLI or the API loop for the research agent.";
   if (policies.agent.provider !== engine.provider)
     return `The research agent's ${engine.label} runs ${engine.provider} models only.`;
-  const agentIssue =
-    engine.provider === "opencode"
-      ? openCodeIssue(policies.agent)
-      : check("The research agent", policies.agent, engine.provider);
+  const researchOnly = researchOnlyModels(engine.provider);
+  const agentIssue = researchOnly
+    ? researchOnlyIssue(policies.agent, researchOnly, engine.label)
+    : check("The research agent", policies.agent, engine.provider);
   if (agentIssue) return agentIssue;
   for (const role of RESEARCH_ROLE_IDS) {
     const policy = policies.roles?.[role];
@@ -157,9 +187,13 @@ export function researchPoliciesIssue(
   return null;
 }
 
-function openCodeIssue(policy: { model?: unknown; reasoning?: unknown }): string | null {
-  const model = OPENCODE_RESEARCH_MODELS.find((entry) => entry.id === policy?.model);
-  if (!model) return "The research agent needs an OpenCode research model.";
+function researchOnlyIssue(
+  policy: { model?: unknown; reasoning?: unknown },
+  models: typeof OPENCODE_RESEARCH_MODELS,
+  engineLabel: string,
+): string | null {
+  const model = models.find((entry) => entry.id === policy?.model);
+  if (!model) return `The research agent needs one of the ${engineLabel}'s research models.`;
   if (typeof policy.reasoning !== "string" || !model.reasoningLevels.includes(policy.reasoning))
     return `${model.label} does not support ${String(policy.reasoning ?? "that")} reasoning.`;
   return null;

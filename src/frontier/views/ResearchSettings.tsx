@@ -2,10 +2,10 @@ import type { RuntimeStatus } from "../../domain";
 import type { ResearchRole } from "../../domain/research";
 import {
   DEFAULT_RESEARCH_POLICIES,
-  OPENCODE_RESEARCH_MODELS,
   RESEARCH_ENGINES,
   RESEARCH_ROLE_IDS,
   type ResearchEngineId,
+  researchOnlyModels,
   type RuntimeResearchPolicies,
 } from "../../research-policies";
 import { selectableModels } from "../runtime/policies";
@@ -16,10 +16,11 @@ const ENGINE_DEFAULTS: Record<ResearchEngineId, { model: string; reasoning: stri
   "claude-cli": { model: "claude-opus-5-5", reasoning: "high" },
   "codex-cli": { model: "gpt-6-sol", reasoning: "high" },
   "opencode-cli": { model: "opencode-go/deepseek-v4.1-flash", reasoning: "default" },
+  "api-loop": { model: "opencode-go/deepseek-v4.1-flash", reasoning: "default" },
 };
 
-/** OpenCode's models are research-only and not in the runtime's delivery catalogue. */
-const isOpenCode = (runtime: ResearchEngineId) => RESEARCH_ENGINES[runtime].provider === "opencode";
+/** OpenCode's and the API loop's models are research-only and not in the delivery catalogue. */
+const researchOnly = (runtime: ResearchEngineId) => researchOnlyModels(RESEARCH_ENGINES[runtime].provider);
 
 const ROLE_COPY: Record<ResearchRole, { label: string; detail: string }> = {
   planner: { label: "Planner", detail: "Surveys the QV catalogue; no web access" },
@@ -56,11 +57,11 @@ export function ResearchSettings({
   function chooseEngine(runtime: ResearchEngineId) {
     if (runtime === agent.runtime) return;
     const provider = RESEARCH_ENGINES[runtime].provider;
-    if (provider === "opencode") {
+    if (researchOnlyModels(provider)) {
       onChange({ ...value, agent: { runtime, provider, ...ENGINE_DEFAULTS[runtime] } });
       return;
     }
-    const offered = selectableModels(status, provider);
+    const offered = selectableModels(status, provider as "claude" | "codex");
     const preferred = offered.find((model) => model.id === ENGINE_DEFAULTS[runtime].model) ?? offered[0];
     const reasoning =
       preferred && preferred.reasoningLevels.includes(ENGINE_DEFAULTS[runtime].reasoning)
@@ -97,7 +98,7 @@ export function ResearchSettings({
                   checked={agent.runtime === id}
                   disabled={
                     busy ||
-                    (!isOpenCode(id) &&
+                    (!researchOnly(id) &&
                       !selectableModels(status, RESEARCH_ENGINES[id].provider as "claude" | "codex").length)
                   }
                   onChange={() => chooseEngine(id)}
@@ -106,17 +107,25 @@ export function ResearchSettings({
               </label>
             ))}
           </div>
-          <small>
-            Runs on the operator's {engine.plan}, never on an API key.{" "}
-            {isOpenCode(agent.runtime)
-              ? "Each run checks the OpenCode Go sign-in when it starts."
-              : signInLabel(status.providers?.find((provider) => provider.id === engine.provider))}
-          </small>
+          {agent.runtime === "api-loop" ? (
+            <small>
+              No CLI: the companion calls the model's API with a key from its own environment
+              (OPENCODE_API_KEY or BASETEN_API_KEY, and PARALLEL_API_KEY for web search). A run without its
+              keys fails before it starts and can be retried once they are set.
+            </small>
+          ) : (
+            <small>
+              Runs on the operator's {engine.plan}, never on an API key.{" "}
+              {researchOnly(agent.runtime)
+                ? "Each run checks the OpenCode Go sign-in when it starts."
+                : signInLabel(status.providers?.find((provider) => provider.id === engine.provider))}
+            </small>
+          )}
         </div>
         <div className="design-policy-default">
           <h4>Model & reasoning</h4>
           <div className="policy-selects">
-            {isOpenCode(agent.runtime) ? (
+            {researchOnly(agent.runtime) ? (
               <label>
                 <span>Research agent</span>
                 <select
@@ -125,7 +134,7 @@ export function ResearchSettings({
                   disabled={busy}
                   onChange={(event) => onChange({ ...value, agent: { ...agent, model: event.target.value } })}
                 >
-                  {OPENCODE_RESEARCH_MODELS.map((model) => (
+                  {(researchOnly(agent.runtime) ?? []).map((model) => (
                     <option key={model.id} value={model.id}>
                       {model.label}
                     </option>
@@ -143,7 +152,13 @@ export function ResearchSettings({
               />
             )}
           </div>
-          {isOpenCode(agent.runtime) ? (
+          {agent.runtime === "api-loop" ? (
+            <small>
+              The eval's best arm: DeepSeek 4.1 Flash with the host checking each answer before accepting it.
+              It passed 10 of 15 held-out questions against Claude Opus 5.5's 5, at about $0.15 a question.
+              Dollar figures are API-rate estimates.
+            </small>
+          ) : researchOnly(agent.runtime) ? (
             <small>
               Default: DeepSeek 4.1 Flash, which passed 7 of 13 eval questions against Claude Opus 5.5's 5, at
               about $0.09 a question. It sometimes prices an item that should have no price, so read Review
