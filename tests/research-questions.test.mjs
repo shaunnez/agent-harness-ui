@@ -354,8 +354,7 @@ test("a repeated external request reuses its question and starts no more runs", 
     assert.equal(second.status, 200);
     assert.equal(second.body.reused, true);
     assert.equal(second.body.question.id, first.body.question.id);
-    // Five runs planned; a staged question starts three.
-    assert.equal((await call("GET", "/api/research/runs")).body.runs.length, 3);
+    assert.equal((await call("GET", "/api/research/runs")).body.runs.length, 5);
     assert.deepEqual(first.body.question.source, {
       kind: "external",
       provider: "linear",
@@ -761,14 +760,26 @@ test("a database that ran main's earlier question table is carried over, review 
   }
 });
 
+test("five runs start together unless staging is asked for", async () => {
+  const objective = "Floor tiles, per m2.";
+  await withServer({ [objective]: { r1: [80, 100], r2: [82, 105], r3: [78, 98] } }, async ({ call }) => {
+    const project = await researchProject(call);
+    const asked = (await call("POST", "/api/research/questions", { projectId: project.id, objective })).body
+      .question;
+    assert.equal(asked.runs.length, 5);
+    assert.equal(asked.staged, undefined);
+  });
+});
+
 test("a staged five-run question stops at three runs that agree", async () => {
   const objective = "Concrete kerb, per metre.";
   await withServer(
     { [objective]: { r1: [80, 100], r2: [82, 105], r3: [78, 98] } },
     async ({ call, finish }) => {
       const project = await researchProject(call);
-      const asked = (await call("POST", "/api/research/questions", { projectId: project.id, objective })).body
-        .question;
+      const asked = (
+        await call("POST", "/api/research/questions", { projectId: project.id, objective, staged: true })
+      ).body.question;
       assert.equal(asked.runsPlanned, 5);
       assert.deepEqual(
         asked.runs.map((run) => run.run),
@@ -790,8 +801,9 @@ test("a staged question whose first three disagree runs the other two and is sco
   };
   await withServer(script, async ({ call, runtime, researchService }) => {
     const project = await researchProject(call);
-    const asked = (await call("POST", "/api/research/questions", { projectId: project.id, objective })).body
-      .question;
+    const asked = (
+      await call("POST", "/api/research/questions", { projectId: project.id, objective, staged: true })
+    ).body.question;
     for (const run of asked.runs) {
       runtime.advanceToEnd(run.runId);
       await researchService.settled(run.runId);
@@ -830,10 +842,10 @@ test("a staged question stops when a first-stage run fails, and asking for all f
     const ask = async (objective, extra = {}) =>
       (await call("POST", "/api/research/questions", { projectId: project.id, objective, ...extra })).body
         .question;
-    const failed = await finish(await ask(failing));
+    const failed = await finish(await ask(failing, { staged: true }));
     assert.equal(failed.status, "incomplete");
     assert.equal(failed.runs.length, 3);
-    const unstaged = await ask(whole, { staged: false });
+    const unstaged = await ask(whole);
     assert.equal(unstaged.runs.length, 5);
     assert.equal(unstaged.staged, undefined);
   });
@@ -849,8 +861,9 @@ test("a staged question that failed to start retries three runs in the next atte
       runtime.start = async () => {
         throw new Error("Not logged in.");
       };
-      const asked = (await call("POST", "/api/research/questions", { projectId: project.id, objective })).body
-        .question;
+      const asked = (
+        await call("POST", "/api/research/questions", { projectId: project.id, objective, staged: true })
+      ).body.question;
       assert.equal(asked.retryable, true);
       assert.equal(asked.runs.length, 3);
       runtime.start = start;
@@ -879,7 +892,7 @@ test("an identical ask is answered by a recent finished question when reuse is o
       // A different run count, or an asker who wants fresh runs, gets a new question.
       assert.notEqual((await ask({ runs: 3 })).body.question.id, first.id);
       assert.notEqual((await ask({ reuse: false })).body.question.id, first.id);
-      assert.equal((await call("GET", "/api/research/runs")).body.runs.length, 3 + 3 + 3);
+      assert.equal((await call("GET", "/api/research/runs")).body.runs.length, 5 + 3 + 5);
     },
     { questionOptions: { reuseAnswersForMs: 60 * 60_000 } },
   );

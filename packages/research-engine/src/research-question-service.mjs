@@ -39,7 +39,9 @@ export class ResearchQuestionService {
   /** `research` starts runs; `runs` is the `ResearchStore` they are read back from; `projects`
    *  lists registered projects, so a question can only be asked of a live research project.
    *  `scoper` (`ResearchScoper`) drafts scopes; without one, questions are asked unscoped.
-   *  `stageFiveRuns` starts a five-run question with three and adds two only when those disagree;
+   *  `stageFiveRuns` starts every five-run question with three and adds two only when those
+   *  disagree; off by default (Shaun, 26 September: "back to five"), when a question is staged
+   *  only if its ask says `staged: true`;
    *  `reuseAnswersForMs` lets an identical ask be answered by a finished question that young
    *  (`research-question-stages.mjs`). */
   constructor({
@@ -49,7 +51,7 @@ export class ResearchQuestionService {
     projects,
     scoper = null,
     now = () => new Date().toISOString(),
-    stageFiveRuns = true,
+    stageFiveRuns = false,
     reuseAnswersForMs = 0,
   }) {
     if (!questions || !research || !runs || !projects)
@@ -109,7 +111,8 @@ export class ResearchQuestionService {
     if (runObjective.length > MAX_RUN_OBJECTIVE_LENGTH)
       throw badRequest("The question and its scope are too long together. Shorten one of them.");
 
-    const staged = this.#stageFiveRuns && runs === 5 && input.staged !== false;
+    // Five runs start together unless staging is asked for, by the ask or the service.
+    const staged = runs === 5 && (input.staged === true || (this.#stageFiveRuns && input.staged !== false));
     const { question, reused } = await this.#questions.createQuestion({
       projectId: project.id,
       title: title.slice(0, 160),
