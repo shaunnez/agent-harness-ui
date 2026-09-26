@@ -135,6 +135,9 @@ export interface ResearchQuestion {
   askedAt: string;
   engine: ResearchEngineSnapshot;
   runsPlanned: number;
+  /** A five-run question that started three and adds two only when those disagree. Absent on
+   *  every other question. */
+  staged?: { firstRuns: number; extended: boolean };
   status: ResearchQuestionStatus;
   range: { min: number; max: number } | null;
   consensus: { low: number; high: number } | null;
