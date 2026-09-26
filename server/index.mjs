@@ -91,7 +91,7 @@ try {
 //
 // `api-loop` is the only research engine (Shaun, 26 September 2026): DeepSeek 4.1 Flash with no
 // CLI, the companion calling the chat API itself with a key from its own environment
-// (OPENCODE_API_KEY, FIREWORKS_API_KEY or BASETEN_API_KEY, and PARALLEL_API_KEY for search), and the host checking
+// (OPENCODE_API_KEY, FIREWORKS_API_KEY, DEEPINFRA_API_KEY or BASETEN_API_KEY, and PARALLEL_API_KEY for search), and the host checking
 // each answer. The eval's best arm (A10: 10 of 15 held-out questions against Opus 5.5's 5). The
 // Claude, Codex, OpenCode, pack and four-role research runtimes are retired; the Claude and Codex
 // CLIs still run every delivery stage. `fake` stays for tests and fixture runs.

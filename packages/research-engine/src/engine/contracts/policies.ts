@@ -40,6 +40,11 @@ export const API_LOOP_RESEARCH_MODELS: readonly {
     reasoningLevels: ["default"],
   },
   {
+    id: "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash",
+    label: "DeepSeek 4.1 Flash · DeepInfra",
+    reasoningLevels: ["default"],
+  },
+  {
     id: "baseten/deepseek-ai/DeepSeek-V4.1-Flash",
     label: "DeepSeek 4.1 Flash · Baseten",
     reasoningLevels: ["default"],

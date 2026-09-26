@@ -35,6 +35,15 @@ export const API_LOOP_PROVIDERS = Object.freeze({
       "accounts/fireworks/routers/deepseek-v4p1-flash-us": { input: 0.45, output: 1.8, cacheRead: 0.009 },
     },
   }),
+  // DeepInfra's OpenAI-compatible endpoint (`https://deepinfra.com/docs/openai_api`), added to try
+  // the API loop on it. No rate is recorded here yet: its price page could not be read when this was
+  // added, so a DeepInfra run's cost reads as unavailable rather than an unverified estimate.
+  deepinfra: Object.freeze({
+    label: "DeepInfra",
+    endpoint: "https://api.deepinfra.com/v1/openai",
+    keyEnv: "DEEPINFRA_API_KEY",
+    rates: {},
+  }),
   baseten: Object.freeze({
     label: "Baseten",
     endpoint: "https://inference.baseten.co/v1",

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // The scope → pack eval (`research-agent-deepagents-spike-pack/29-EVAL-PREREGISTRATION.md`).
 //
-//   node scripts/research-eval.mjs --arm A6|A7|A8|A9|A10|F10 (A0–A5 and O5 re-score only) [--only id,id] [--out <dir>]
+//   node scripts/research-eval.mjs --arm A6|A7|A8|A9|A10|F10|D10 (A0–A5 and O5 re-score only) [--only id,id] [--out <dir>]
 //   node scripts/research-eval.mjs --rescore [--out <dir>] [--set <question-set.json>]
 //   node scripts/research-eval.mjs --arm A4 --set <questions.json> --model <model> --out <dir>   (tuning)
 //
@@ -116,6 +116,15 @@ export const ARMS = {
   F10: {
     runtime: "api-loop",
     model: "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us",
+    reasoning: null,
+    runs: 5,
+    make: (env) => new ApiLoopResearchRuntime({ env }),
+  },
+  // A10 unchanged except the provider, DeepSeek 4.1 Flash on DeepInfra. Needs DEEPINFRA_API_KEY and
+  // PARALLEL_API_KEY in the environment. A trial of the provider, not a preregistered arm.
+  D10: {
+    runtime: "api-loop",
+    model: "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash",
     reasoning: null,
     runs: 5,
     make: (env) => new ApiLoopResearchRuntime({ env }),

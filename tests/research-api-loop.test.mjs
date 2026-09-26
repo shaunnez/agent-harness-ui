@@ -11,7 +11,11 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { runChatLoop } from "@eversor/research-engine/api-loop/chat-loop.mjs";
-import { priceApiUsage, resolveApiModel } from "@eversor/research-engine/api-loop/providers.mjs";
+import {
+  API_LOOP_KEY_VARS,
+  priceApiUsage,
+  resolveApiModel,
+} from "@eversor/research-engine/api-loop/providers.mjs";
 import { ApiLoopResearchRuntime, apiLoopSystemPrompt } from "@eversor/research-engine/api-loop/runtime.mjs";
 import { ParallelSearchProvider } from "@eversor/research-engine/parallel-search-provider.mjs";
 import { assertResearchRuntime } from "@eversor/research-engine/research-runtime-registry.mjs";
@@ -108,6 +112,20 @@ test("models route to their provider, DeepSeek's own API is not one, and usage i
       outputTokens: 1e6,
     }),
     2.259,
+  );
+  // DeepInfra, keyed separately, with no rate recorded yet: its cost is unavailable, not guessed.
+  const deepinfra = resolveApiModel("deepinfra/deepseek-ai/DeepSeek-V4.1-Flash");
+  assert.equal(deepinfra.provider.endpoint, "https://api.deepinfra.com/v1/openai");
+  assert.equal(deepinfra.provider.keyEnv, "DEEPINFRA_API_KEY");
+  assert.equal(deepinfra.remoteModel, "deepseek-ai/DeepSeek-V4.1-Flash");
+  assert.ok(API_LOOP_KEY_VARS.includes("DEEPINFRA_API_KEY"));
+  assert.equal(
+    priceApiUsage("deepinfra/deepseek-ai/DeepSeek-V4.1-Flash", {
+      inputTokens: 1,
+      cachedTokens: 0,
+      outputTokens: 1,
+    }),
+    null,
   );
   // 1M uncached in at $0.15, 1M cached at $0.003, 1M out at $0.60.
   assert.equal(
