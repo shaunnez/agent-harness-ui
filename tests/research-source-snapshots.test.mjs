@@ -10,7 +10,7 @@ import {
   serializePdfSnapshot,
   verifySnapshotEvidence,
   writeResearchSnapshot,
-} from "../server/research/research-source-snapshots.mjs";
+} from "@eversor/research-engine/research-source-snapshots.mjs";
 
 test("a capped physical-page map survives deterministic envelope serialization", () => {
   const pdf = normalizePdfCapture({
@@ -152,8 +152,12 @@ test("a quote matches across whitespace differences and nothing else", () => {
 });
 
 test("a quote matches across typographic look-alikes and nothing else", () => {
-  const page = "Three\u2011phase high\u2011cycle $1,800\u2013$2,300 \u2014 add $400\u2013$1.1k per door, \u201Cinstalled\u201D\u00A0price\u2026";
-  assert.equal(excerptAppearsIn(page, "Three-phase high-cycle $1,800-$2,300 - add $400-$1.1k per door"), true);
+  const page =
+    "Three\u2011phase high\u2011cycle $1,800\u2013$2,300 \u2014 add $400\u2013$1.1k per door, \u201Cinstalled\u201D\u00A0price\u2026";
+  assert.equal(
+    excerptAppearsIn(page, "Three-phase high-cycle $1,800-$2,300 - add $400-$1.1k per door"),
+    true,
+  );
   assert.equal(excerptAppearsIn(page, '"installed" price...'), true);
   // A figure rewritten in another form is still a different quote.
   assert.equal(excerptAppearsIn(page, "add $400-$1,100 per door"), false);

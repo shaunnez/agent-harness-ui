@@ -86,7 +86,9 @@ Goal: the DeepSeek path (`api-loop`, the service, the stores and the checks) imp
 
 Exit: all current tests pass, and re-checking the recorded eval arms, including the held-out suite, gives identical grades.
 
-### Phase 2: move into a package (about half a day)
+### Phase 2: move into a package (done)
+
+**Done on 26 September 2026.** `server/research/` moved whole, with `git mv`, to `packages/research-engine/src/`, an npm workspace named `@eversor/research-engine` with no dependencies and one export pattern (`@eversor/research-engine/<path>` → `src/<path>`). Inside the package nothing changed: its imports are relative, so no research file was edited. The harness server, Frontier, scripts and tests import it by the package name only, and the boundary test now also fails on a relative path into the package from outside or on any dependency in its manifest. The research tests stay in `tests/` for now. The harness image copies `packages/` and makes the one workspace link itself, since it carries no `node_modules`. `npm test`, `test:frontier`, `test:frontier-api`, `typecheck`, `lint`, `build` and `test:sites` pass, and both eval suites re-score identically. Docker Desktop was not running, so the image was not built; the image's file layout was reproduced by hand and the companion started from it and answered on its research routes.
 
 1. Add an npm workspace for `packages/research-engine`. Use `git mv` to keep file history.
 2. Update the imports in the harness server, the tests, the scripts and the eval paths. The comparison runtimes stay in `server/research/` and import the engine.

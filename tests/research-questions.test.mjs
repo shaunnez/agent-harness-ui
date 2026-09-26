@@ -10,14 +10,14 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { createApiServer } from "../server/api.mjs";
-import { checkCostBandCitations } from "../server/research/engine/citations.mjs";
-import { FakeResearchRuntime } from "../server/research/fake-research-runtime.mjs";
-import { unitMeasure } from "../server/research/research-question-record.mjs";
-import { ResearchQuestionService } from "../server/research/research-question-service.mjs";
-import { ResearchQuestionStore } from "../server/research/research-question-store.mjs";
-import { createResearchRuntimeRegistry } from "../server/research/research-runtime-registry.mjs";
-import { ResearchService } from "../server/research/research-service.mjs";
-import { ResearchStore } from "../server/research/research-store.mjs";
+import { checkCostBandCitations } from "@eversor/research-engine/engine/citations.mjs";
+import { FakeResearchRuntime } from "@eversor/research-engine/fake-research-runtime.mjs";
+import { unitMeasure } from "@eversor/research-engine/research-question-record.mjs";
+import { ResearchQuestionService } from "@eversor/research-engine/research-question-service.mjs";
+import { ResearchQuestionStore } from "@eversor/research-engine/research-question-store.mjs";
+import { createResearchRuntimeRegistry } from "@eversor/research-engine/research-runtime-registry.mjs";
+import { ResearchService } from "@eversor/research-engine/research-service.mjs";
+import { ResearchStore } from "@eversor/research-engine/research-store.mjs";
 import { SqliteTaskStore } from "../server/sqlite-store.mjs";
 
 const CSRF_TOKEN = "research-questions-token";
@@ -510,7 +510,11 @@ test("a draft scope starts nothing; an asked scope is pinned onto every run and 
       const question = asked.body.question;
       assert.equal(question.objective, objective, "the question keeps the operator's words");
       assert.equal(question.scope.centre, "Wellington");
-      assert.deepEqual(question.scopedBy, { runtime: "api-loop", model: "opencode-go/deepseek-v4.1-flash", reasoning: null });
+      assert.deepEqual(question.scopedBy, {
+        runtime: "api-loop",
+        model: "opencode-go/deepseek-v4.1-flash",
+        reasoning: null,
+      });
       assert.equal(question.scopeReviewed, true);
       for (const run of question.runs) {
         const given = runtime.objectiveOf(run.runId);
@@ -621,8 +625,9 @@ test("runs that failed to start can be retried, keeping the failed attempt on th
     runtime.start = async () => {
       throw new Error("Not logged in.");
     };
-    const asked = (await call("POST", "/api/research/questions", { projectId: project.id, objective, runs: 1 }))
-      .body.question;
+    const asked = (
+      await call("POST", "/api/research/questions", { projectId: project.id, objective, runs: 1 })
+    ).body.question;
     assert.equal(asked.retryable, true);
     assert.equal(asked.runs[0].error.code, "runtime_start_failed");
     const early = await call("POST", `/api/research/questions/${asked.id}/review`, {
@@ -678,7 +683,7 @@ test("a research project with runs still going cannot be archived", async () => 
 
 test("a database that ran main's earlier question table is carried over, review and runs included", async () => {
   const { DatabaseSync } = await import("node:sqlite");
-  const { createResearchSchema } = await import("../server/research/research-schema.mjs");
+  const { createResearchSchema } = await import("@eversor/research-engine/research-schema.mjs");
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-research-migrate-"));
   try {
     const db = new DatabaseSync(path.join(directory, "research.sqlite3"));

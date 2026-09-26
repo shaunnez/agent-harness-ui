@@ -957,7 +957,7 @@ export interface RuntimeSettings {
   designPolicies: RuntimeDesignPolicies;
   /** Research runs only. Absent from settings saved before the section existed, which read as
    *  the defaults (`researchPoliciesOf`). */
-  researchPolicies?: import("../../server/research/engine/contracts/policies.ts").RuntimeResearchPolicies;
+  researchPolicies?: import("@eversor/research-engine/engine/contracts/policies.ts").RuntimeResearchPolicies;
   pricing: {
     version: string;
     sourceUrl: string;

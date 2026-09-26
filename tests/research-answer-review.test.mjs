@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { reviewCostBand, reviewMessage } from "../server/research/research-answer-review.mjs";
-import { questionRecord } from "../server/research/research-question-record.mjs";
+import { reviewCostBand, reviewMessage } from "@eversor/research-engine/research-answer-review.mjs";
+import { questionRecord } from "@eversor/research-engine/research-question-record.mjs";
 
 const answer = (band, components) => ({ band: { unit: "m2", ...band }, components });
 const qv = (role, low, high) => ({ role, rowId: "row-1", low, high });

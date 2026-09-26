@@ -2,10 +2,10 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { FakeResearchRuntime } from "../server/research/fake-research-runtime.mjs";
-import { createResearchRuntimeRegistry } from "../server/research/research-runtime-registry.mjs";
-import { ResearchService } from "../server/research/research-service.mjs";
-import { ResearchStore } from "../server/research/research-store.mjs";
+import { FakeResearchRuntime } from "@eversor/research-engine/fake-research-runtime.mjs";
+import { createResearchRuntimeRegistry } from "@eversor/research-engine/research-runtime-registry.mjs";
+import { ResearchService } from "@eversor/research-engine/research-service.mjs";
+import { ResearchStore } from "@eversor/research-engine/research-store.mjs";
 import { migrateSqliteSchema } from "../server/sqlite-storage.mjs";
 
 /** A research store on a throwaway database carrying the real migrated schema. */

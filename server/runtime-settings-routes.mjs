@@ -3,7 +3,7 @@ import {
   normalizeResearchPolicies,
   researchPoliciesIssue,
   researchPoliciesOf,
-} from "./research/engine/contracts/policies.ts";
+} from "@eversor/research-engine/engine/contracts/policies.ts";
 import { validateDesignPolicies } from "./design-policies.mjs";
 import { validateGatePolicies } from "./gate-policies.mjs";
 import { normalizeModelId, readExecutionProviderCatalog } from "./model-catalog.mjs";

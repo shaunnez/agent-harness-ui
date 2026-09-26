@@ -7,15 +7,15 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { ApiLoopResearchRuntime } from "../server/research/api-loop/runtime.mjs";
-import { createResearchRuntimeRegistry } from "../server/research/research-runtime-registry.mjs";
-import { ResearchService } from "../server/research/research-service.mjs";
+import { ApiLoopResearchRuntime } from "@eversor/research-engine/api-loop/runtime.mjs";
+import { createResearchRuntimeRegistry } from "@eversor/research-engine/research-runtime-registry.mjs";
+import { ResearchService } from "@eversor/research-engine/research-service.mjs";
 import { migratePersistedTaskState } from "../server/store.mjs";
 import {
   DEFAULT_RESEARCH_POLICIES,
   researchPoliciesIssue,
   researchPoliciesOf,
-} from "../server/research/engine/contracts/policies.ts";
+} from "@eversor/research-engine/engine/contracts/policies.ts";
 import { withResearchStore } from "./research-test-support.mjs";
 
 const BASETEN = "baseten/deepseek-ai/DeepSeek-V4.1-Flash";

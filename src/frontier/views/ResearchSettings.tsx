@@ -1,7 +1,7 @@
 import {
   API_LOOP_RESEARCH_MODELS,
   type RuntimeResearchPolicies,
-} from "../../../server/research/engine/contracts/policies.ts";
+} from "@eversor/research-engine/engine/contracts/policies.ts";
 
 /**
  * Settings → Research agent. Research runs only: delivery tasks, their stage roles and design

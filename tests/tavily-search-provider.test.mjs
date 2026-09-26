@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { TavilySearchProvider } from "../server/research/tavily-search-provider.mjs";
+import { TavilySearchProvider } from "@eversor/research-engine/tavily-search-provider.mjs";
 
 test("the Tavily adapter sends one bounded bearer-authenticated search request", async () => {
   let observed;

@@ -19,10 +19,10 @@ import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
-import { ApiLoopResearchRuntime } from "../server/research/api-loop/runtime.mjs";
-import { questionRecord } from "../server/research/research-question-record.mjs";
-import { scopedObjective } from "../server/research/research-scope.mjs";
-import { resolveResearchBudget } from "../server/research/engine/contracts/budget-policy.ts";
+import { ApiLoopResearchRuntime } from "@eversor/research-engine/api-loop/runtime.mjs";
+import { questionRecord } from "@eversor/research-engine/research-question-record.mjs";
+import { scopedObjective } from "@eversor/research-engine/research-scope.mjs";
+import { resolveResearchBudget } from "@eversor/research-engine/engine/contracts/budget-policy.ts";
 
 const PACK_DIRECTORY = fileURLToPath(new URL("../research-agent-deepagents-spike-pack/", import.meta.url));
 const EVAL_DIRECTORY = path.join(PACK_DIRECTORY, "29-eval");

@@ -4,7 +4,7 @@ import {
   isGlobalAddress,
   normalizeRequestedUrl,
   validatePublicSourceUrl,
-} from "../server/research/research-source-policy.mjs";
+} from "@eversor/research-engine/research-source-policy.mjs";
 
 test("private, reserved, mapped and mixed DNS answers are blocked", async () => {
   for (const address of [

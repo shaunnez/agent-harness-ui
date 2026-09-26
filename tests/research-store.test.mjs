@@ -5,13 +5,16 @@ import os from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
-import { createResearchRuntimeRegistry } from "../server/research/research-runtime-registry.mjs";
-import { ResearchService } from "../server/research/research-service.mjs";
-import { normalizePdfCapture, serializePdfSnapshot } from "../server/research/research-source-snapshots.mjs";
-import { ResearchStore } from "../server/research/research-store.mjs";
+import { createResearchRuntimeRegistry } from "@eversor/research-engine/research-runtime-registry.mjs";
+import { ResearchService } from "@eversor/research-engine/research-service.mjs";
+import {
+  normalizePdfCapture,
+  serializePdfSnapshot,
+} from "@eversor/research-engine/research-source-snapshots.mjs";
+import { ResearchStore } from "@eversor/research-engine/research-store.mjs";
 import { DATABASE_SCHEMA_VERSION, migrateSqliteSchema } from "../server/sqlite-storage.mjs";
 import { SqliteTaskStore } from "../server/sqlite-store.mjs";
-import { resolveResearchBudget } from "../server/research/engine/contracts/budget-policy.ts";
+import { resolveResearchBudget } from "@eversor/research-engine/engine/contracts/budget-policy.ts";
 import { runToEnd, withResearchService, withResearchStore } from "./research-test-support.mjs";
 
 function requestFor(objective, profile = "standard") {

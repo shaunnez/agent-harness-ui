@@ -10,11 +10,11 @@ import { createServer } from "node:http";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { runChatLoop } from "../server/research/api-loop/chat-loop.mjs";
-import { priceApiUsage, resolveApiModel } from "../server/research/api-loop/providers.mjs";
-import { ApiLoopResearchRuntime, apiLoopSystemPrompt } from "../server/research/api-loop/runtime.mjs";
-import { ParallelSearchProvider } from "../server/research/parallel-search-provider.mjs";
-import { assertResearchRuntime } from "../server/research/research-runtime-registry.mjs";
+import { runChatLoop } from "@eversor/research-engine/api-loop/chat-loop.mjs";
+import { priceApiUsage, resolveApiModel } from "@eversor/research-engine/api-loop/providers.mjs";
+import { ApiLoopResearchRuntime, apiLoopSystemPrompt } from "@eversor/research-engine/api-loop/runtime.mjs";
+import { ParallelSearchProvider } from "@eversor/research-engine/parallel-search-provider.mjs";
+import { assertResearchRuntime } from "@eversor/research-engine/research-runtime-registry.mjs";
 
 const SHA = "a".repeat(64);
 const ROW_ID = `${SHA}:t3:r2`;
@@ -363,7 +363,7 @@ test("Parallel search is called with the key on the host and its excerpts become
 });
 
 test("a PDF quote without a page is checked on the page the host finds it on, and only there", async () => {
-  const { checkCostBandCitations } = await import("../server/research/engine/citations.mjs");
+  const { checkCostBandCitations } = await import("@eversor/research-engine/engine/citations.mjs");
   const seen = [];
   const webTools = {
     locatePdfPage: (_sourceId, excerpt) => (excerpt === "Butt Joint $40" ? 7 : null),
@@ -426,7 +426,7 @@ test("the host checks a final answer once and hands its problems back before acc
 });
 
 test("an API-loop run without its keys fails before it starts, naming the keys", async () => {
-  const { ApiLoopResearchRuntime } = await import("../server/research/api-loop/runtime.mjs");
+  const { ApiLoopResearchRuntime } = await import("@eversor/research-engine/api-loop/runtime.mjs");
   const request = {
     id: "RSCH-KEYS",
     objective: "Concrete paving slab, per m2.",
@@ -457,7 +457,7 @@ test("a provider's per-minute rate limit is waited out, not scored as a spent pl
       { status: 200 },
     );
   };
-  const { chatOnceWithRetries } = await import("../server/research/api-loop/chat-loop.mjs");
+  const { chatOnceWithRetries } = await import("@eversor/research-engine/api-loop/chat-loop.mjs");
   const reply = await chatOnceWithRetries({
     env: { FIREWORKS_API_KEY: "test" },
     model: "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us",

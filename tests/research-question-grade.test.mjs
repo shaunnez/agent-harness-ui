@@ -3,7 +3,7 @@
 
 import assert from "node:assert/strict";
 import test from "node:test";
-import { gradeQuestion, WIDE_ESTIMATE_RATIO } from "../server/research/research-question-grade.mjs";
+import { gradeQuestion, WIDE_ESTIMATE_RATIO } from "@eversor/research-engine/research-question-grade.mjs";
 
 const checked = (low, high, basis = "qv") => ({
   basis,
