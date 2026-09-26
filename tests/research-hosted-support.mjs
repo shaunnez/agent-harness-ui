@@ -10,7 +10,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import os from "node:os";
 import path from "node:path";
-import { ApiLoopResearchRuntime } from "../server/research/api-loop/runtime.mjs";
+import { ApiLoopResearchRuntime } from "@eversor/research-engine/api-loop/runtime.mjs";
 
 export const KEY = "sk-test-opencode-key-1234567890";
 export const SHA = "b".repeat(64);

@@ -70,9 +70,11 @@ Phases 1 to 4 are about 6 to 10 working days of agent work plus review, after Ph
 3. Decide what a research project is in prod: one per PlanCheck account, or one standing project.
 4. Decide how prod scopes questions: DeepSeek on Baseten, or no scoping step.
 
-### Phase 1: cut the DeepSeek runtime free, in place (1 to 2 days, no files move)
+### Phase 1: cut the DeepSeek runtime free, in place (done)
 
-**Mostly done on 26 September 2026**, when Shaun retired every research engine but the API loop. Rather than keep the CLI runtimes on a shared base, they were deleted: `HostedResearchRuntime` (`server/research/engine/hosted-runtime.mjs`) holds the lifecycle, the shared checking code moved to `server/research/engine/`, the API loop has its own copy of its prompt (`api-loop/system-prompt.txt`, text unchanged), and scoping calls DeepSeek on the API loop's key. Re-scoring every recorded arm gives identical grades. Still to do: steps 4 and 5 below (the `src/` policy files and the boundary test).
+**Mostly done on 26 September 2026**, when Shaun retired every research engine but the API loop. Rather than keep the CLI runtimes on a shared base, they were deleted: `HostedResearchRuntime` (`server/research/engine/hosted-runtime.mjs`) holds the lifecycle, the shared checking code moved to `server/research/engine/`, the API loop has its own copy of its prompt (`api-loop/system-prompt.txt`, text unchanged), and scoping calls DeepSeek on the API loop's key. Re-scoring every recorded arm gives identical grades.
+
+**Done on 26 September 2026.** Steps 4 and 5 finished it: the research contracts (`src/domain/research.ts` and `src/research-{policies,budget-policy,runtime-contract}.ts`) moved to `server/research/engine/contracts/`, and the harness server, Frontier and tests import them from there. `tests/research-boundary.test.mjs` scans every module under `server/research/` and fails on an import that leaves it, on any npm package, on a path to a retired or delivery CLI runtime, and on `node:child_process` outside `pdftotext` and the PlanCheck token command. All tests, typecheck, lint and the build pass. Re-scoring gives the same grades before and after the move on both suites: 127 recorded results in `29-eval/results` and 45 in `31-holdout/results` (`--rescore --set` now reads the held-out questions). One 29-eval file, A6 `emergency-lighting-exit-signage`, re-scores as agreed/pass where it was saved as disputed; HEAD before the move gives the same, so the saved file predates a later scoring fix.
 
 Goal: the DeepSeek path (`api-loop`, the service, the stores and the checks) imports no CLI runtime and no harness module.
 
@@ -84,13 +86,37 @@ Goal: the DeepSeek path (`api-loop`, the service, the stores and the checks) imp
 
 Exit: all current tests pass, and re-checking the recorded eval arms, including the held-out suite, gives identical grades.
 
-### Phase 2: move into a package (about half a day)
+### Phase 2: move into a package (done)
+
+**Done on 26 September 2026.** `server/research/` moved whole, with `git mv`, to `packages/research-engine/src/`, an npm workspace named `@eversor/research-engine` with no dependencies and one export pattern (`@eversor/research-engine/<path>` → `src/<path>`). Inside the package nothing changed: its imports are relative, so no research file was edited. The harness server, Frontier, scripts and tests import it by the package name only, and the boundary test now also fails on a relative path into the package from outside or on any dependency in its manifest. The research tests stay in `tests/` for now. The harness image copies `packages/` and makes the one workspace link itself, since it carries no `node_modules`. `npm test`, `test:frontier`, `test:frontier-api`, `typecheck`, `lint`, `build` and `test:sites` pass, and both eval suites re-score identically. Docker Desktop was not running, so the image was not built; the image's file layout was reproduced by hand and the companion started from it and answered on its research routes.
 
 1. Add an npm workspace for `packages/research-engine`. Use `git mv` to keep file history.
 2. Update the imports in the harness server, the tests, the scripts and the eval paths. The comparison runtimes stay in `server/research/` and import the engine.
 3. Keep these green: `npm test`, `test:frontier`, `test:frontier-api`, `typecheck`, `lint`, `build`, `test:sites`, and the container build on main.
 
-### Phase 3: research service skeleton, still dev only (2 to 3 days)
+### Phase 3: research service skeleton, still dev only (done)
+
+**Built on 26 September 2026**, with Shaun's answers folded in: Postgres rather than a second SQLite file, a queue that paces PlanCheck's batches (20 to 100 items), and the API PlanCheck calls. `apps/research-service` (`README.md` there):
+
+- **Postgres stores in the engine** (`packages/research-engine/src/pg/`): run, question and project stores with the SQLite stores' methods, over an injected `query`/`exec`/`transaction` handle, so the engine still has no dependencies. JSON stays TEXT and keys sort in the C collation, so records and evidence fingerprints are byte-for-byte what SQLite gives. `tests/research-pg-parity.test.mjs` runs every store operation against both and requires identical results, and puts all 45 recorded held-out eval results through Postgres and the real question service: every one grades as recorded. The question service now awaits its store, so it runs on either.
+- **The service** (`apps/research-service/src/`): `pg` for Postgres (Azure Database for PostgreSQL in prod), PGlite (`pglite:<dir>`, dev only) for local runs and tests without Docker. It registers only the API loop, behind a guard that refuses any run not on a US-hosted provider (Fireworks US or Baseten); its configuration refuses OpenCode Go, an unlisted model, and starting with no client credentials. It takes the provider and search keys out of its own environment before anything starts, as the harness does.
+- **Pacing** (`engine/pacer.mjs`): runs calling the model at once start at 3, grow by one after 20 unthrottled calls, halve on a 429 (to a floor of 1, a ceiling of 6 by default), and every run holds its next call for the provider's `Retry-After`. The scoper shares it. The harness keeps its fixed cap.
+- **PlanCheck's API**: `POST /v1/batches` (up to 200 items; a resent `batchId` returns the stored batch), `GET /v1/batches/:id` and `?batchId=`, each item's grade, best band, range, unit and reasons once its question settles. Client tokens are configured as SHA-256 hashes only and compared in constant time; a client sees only its batches. An item sent again (same item id, any batch) reuses its question and starts nothing.
+- **The queue** is the batch tables, claimed with `FOR UPDATE SKIP LOCKED`; the worker asks only as many questions as the pacer has room for (run slots ÷ runs per question, plus one). Items being asked when the service stops go back to the queue. A run still queued when it stops now fails as `interrupted_before_start`, which a question may retry like a failed start (the harness gains this too); the worker retries such runs up to twice.
+- **Research projects** are the service's own table. Phase 0.3 is still open, so the service asks every batch in one standing project (`plancheck`) and keeps PlanCheck's batch reference as opaque data; one project per account can follow without a schema change.
+- **Review console routes** (the engine's `/api/research/…`, plus a projects list) answer only on a loopback listener to a loopback `Host` and origin; in the container they are off until sign-in (Phase 5).
+- **Image**: `apps/research-service/Dockerfile` (engine, service, `pg`, poppler; 399 MB) with `scripts/check-image.sh`, which fails on any `claude`, `codex` or `opencode` binary or package, harness source, orchestrator module, `.data`, React, Vite, three.js or PGlite. The first build failed that check: npm installs a named workspace's devDependencies even with `--omit=dev`, so PGlite was in the image; the build now drops them from its own copy of the manifest before `npm ci`, and the rebuilt image passes. The repo has no CI, so the check runs by hand for now.
+
+**Exit checks, 26 September 2026:**
+
+- *Grades the same as the harness*: the parity test passes on PGlite and on a real Postgres 16 server through `pg` (`RESEARCH_TEST_POSTGRES_URL`), all 45 held-out results included.
+- *The image runs*: against that Postgres 16, it applied both migrations, answered `/healthz` as `postgres`, served the token-protected batch routes, and kept the console routes off.
+- *Live, against local PlanCheck, with a synthetic tender*: two made-up items (a 90 mm partition wall in Auckland, porcelain floor tiles in Wellington), five runs each on Fireworks US with QV from PlanCheck's rate library. Both came back **Confident** in 82 seconds for $0.22 in all: $165–$190 per m² of wall and $120–$183 per m² of floor, NZD excluding GST, every priced component a found QV row. The pacer grew from 3 to 6 runs at once with no throttles. Both items had close QV rows, so this shows the path works end to end, not how the service copes with items that need the web.
+
+Still single process: runs execute inside the service, so separate worker containers stay in Phase 5, and what the pacer learns is lost on a restart.
+
+Original plan:
+
 
 1. Create `apps/research-service/index.mjs`, which:
    - mounts only the research routes
@@ -104,7 +130,19 @@ Exit: all current tests pass, and re-checking the recorded eval arms, including 
 
 Exit: the service runs locally against a dev PlanCheck with synthetic tenders, and the eval set grades the same through it as through the harness.
 
-### Phase 4: research-only Frontier build (3 to 5 days)
+### Phase 4: research-only Frontier build (built, awaiting Shaun's review)
+
+**Built on 26 September 2026.** `src/frontier/research-console/` is the console: the same 3D world showing research bases only, the research windows the harness already has (the questions list, a question with its runs, scope and review, Ask, the base dock), and a Settings window that states the service's engine and live pacing rather than offering a choice. No task workspace, New task, agent roster, Linear, Companion or harness API client is in it.
+
+- `npm run dev:research-console` serves it on 5198 against the service on 4400; `npm run build:research-console` writes `dist/research-console`, which the service now serves from `/` on loopback, beside a new `/api/research/console` route (engine, runs per question, pacing). The console talks only to the service's routes (`research-console/gateway.ts`).
+- The build checks its own module graph (`scripts/research-console/boundary.mjs`) and fails on any harness delivery view, the harness app shell, its gateways and task polling, the delivery fixtures or `src/api.ts`; `tests/frontier/research-console.test.mjs` builds it and proves the check fires. The research views' one link into the task coordinator (`errorMessage`) moved to `runtime/errors.ts`.
+- Fixture mode (`?mode=fixture`, the 31 recorded questions) stays in dev builds. The production image builds with `RESEARCH_CONSOLE_FIXTURES=off`, which swaps the fixture module for an empty one so the eval data is never read, let alone shipped (Phase 0.2 is open); `check-image.sh` fails on a console carrying it. The image (734 MB, 199 MB of it the world's assets) passes. In the container the console is off with its routes until sign-in (Phase 5).
+- Checked in the browser at 1280 × 800: live against the service with the two synthetic questions from the Phase 3 run (world with the one `plancheck` base, base dock, questions list, a question's view, Settings), and in fixture mode with both sample bases and all 31 questions. Two small fixes found on the way apply to the harness too: the base dock said "three runs each" (the default has been five since 25 September), and a run's activity list keyed rows by time and label, which collide when two QV searches land in the same millisecond.
+
+Not done: Shaun's review of the screens, which is this phase's exit. The world still draws no robots for research runs (runs are not tasks); drawing them, bound to recorded runs, is the later research-base idea.
+
+Original plan:
+
 
 1. Add `src/frontier/research-console/` (`index.html`, `main.tsx`, `ResearchConsoleApp.tsx`):
    - the world showing research bases only

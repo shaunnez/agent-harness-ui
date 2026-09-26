@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { FallbackSearchProvider } from "../server/research/fallback-search-provider.mjs";
-import { FirecrawlSearchProvider } from "../server/research/firecrawl-search-provider.mjs";
-import { ProviderCreditLedger } from "../server/research/provider-credit-ledger.mjs";
-import { ResearchProviderError } from "../server/research/research-provider-errors.mjs";
-import { SerperSearchProvider } from "../server/research/serper-search-provider.mjs";
+import { FallbackSearchProvider } from "@eversor/research-engine/fallback-search-provider.mjs";
+import { FirecrawlSearchProvider } from "@eversor/research-engine/firecrawl-search-provider.mjs";
+import { ProviderCreditLedger } from "@eversor/research-engine/provider-credit-ledger.mjs";
+import { ResearchProviderError } from "@eversor/research-engine/research-provider-errors.mjs";
+import { SerperSearchProvider } from "@eversor/research-engine/serper-search-provider.mjs";
 
 test("Firecrawl and Serper map markets without requesting provider-generated content", async () => {
   let firecrawlRequest;

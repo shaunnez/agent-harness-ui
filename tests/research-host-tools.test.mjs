@@ -15,22 +15,22 @@ import os from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
-import { connectHostTools } from "../server/research/api-loop/host-client.mjs";
-import { openHostToolBridge } from "../server/research/engine/host-tools/bridge.mjs";
-import { allowedToolName, hostToolOf } from "../server/research/engine/host-tools/definitions.mjs";
+import { connectHostTools } from "@eversor/research-engine/api-loop/host-client.mjs";
+import { openHostToolBridge } from "@eversor/research-engine/engine/host-tools/bridge.mjs";
+import { allowedToolName, hostToolOf } from "@eversor/research-engine/engine/host-tools/definitions.mjs";
 import {
   classifyToolError,
   PROVIDER_UNAVAILABLE_CODE,
   REPEATED_TOOL_ERROR_CODE,
   StrikeCounter,
-} from "../server/research/engine/host-tools/tool-errors.mjs";
-import { rowIdsIn } from "../server/research/engine/qv-rows.mjs";
-import { redactSecretsInFile, scannedNeedles } from "../server/research/engine/secret-scan.mjs";
-import { extractPdfPages } from "../server/research/research-pdf-text.mjs";
-import { createResearchRuntimeRegistry } from "../server/research/research-runtime-registry.mjs";
-import { ResearchService } from "../server/research/research-service.mjs";
-import { ResearchStore } from "../server/research/research-store.mjs";
-import { ResearchToolError, ResearchWebTools } from "../server/research/research-web-tools.mjs";
+} from "@eversor/research-engine/engine/host-tools/tool-errors.mjs";
+import { rowIdsIn } from "@eversor/research-engine/engine/qv-rows.mjs";
+import { redactSecretsInFile, scannedNeedles } from "@eversor/research-engine/engine/secret-scan.mjs";
+import { extractPdfPages } from "@eversor/research-engine/research-pdf-text.mjs";
+import { createResearchRuntimeRegistry } from "@eversor/research-engine/research-runtime-registry.mjs";
+import { ResearchService } from "@eversor/research-engine/research-service.mjs";
+import { ResearchStore } from "@eversor/research-engine/research-store.mjs";
+import { ResearchToolError, ResearchWebTools } from "@eversor/research-engine/research-web-tools.mjs";
 import { migrateSqliteSchema } from "../server/sqlite-storage.mjs";
 import {
   answerWith,

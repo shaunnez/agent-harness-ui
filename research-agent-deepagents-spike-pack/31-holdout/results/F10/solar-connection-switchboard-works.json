@@ -1,0 +1,338 @@
+{
+  "question": "solar-connection-switchboard-works",
+  "kind": "pinned",
+  "arm": "F10",
+  "status": "agreed",
+  "passes": true,
+  "passesTraced": true,
+  "consensus": {
+    "low": 6918,
+    "high": 11590
+  },
+  "range": {
+    "min": 6780,
+    "max": 12612
+  },
+  "unit": "$/ea",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.111,
+    "highRatio": 1.232,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.4249,
+  "elapsedMs": 176622,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 91668,
+      "band": {
+        "unit": "ea (one complete PV grid-connection switchboard package, one building)",
+        "low": 6200,
+        "high": 9600,
+        "centre": "Auckland",
+        "basis": "Sum of the 15 components above: QV CostBuilder rows (unreviewed) for the isolating switches, PV board proxy, RCBO proxy, cable, tray and revenue meter; two fetched vendor pages for the 63A MCCB (ECS NZ) and the export-limit device (Fronius smart meter); and named allowances for relabelling/make-safe, unmeasured modification of the existing 400A board, CT/interface sundries, the penal-rate shutdown and certification/paperwork. Excludes GST, preliminaries, margin, design/consent fees and all network and meter-rental charges. Allowances carry about 36% of the high end, so confidence is low. Nominal quantity is one package, so $/ea equals the total: $6,200-$9,600 (mid about $7,900)."
+      },
+      "dropped": true,
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 470412,
+        "outputTokens": 21615,
+        "cachedTokens": 369656,
+        "modelCalls": 11,
+        "toolCalls": 31,
+        "searchCalls": 8,
+        "estimatedCostUsd": 0.087574,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 470412,
+            "outputTokens": 21615,
+            "estimatedCostUsd": 0.087574,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 80230,
+      "band": {
+        "unit": "$/ea",
+        "low": 7530,
+        "high": 11590,
+        "centre": "Auckland",
+        "basis": "One complete PV grid-connection package for one building, serving one existing 400A TP&N main switchboard. Sum of the 13 components above: $7,531 low / $11,590 high, rounded to $7,530-$11,590. Nominal quantity is one package, so $/ea equals the total. Main cost drivers - electrician labour (QV row), the new PV board (QV row), the 4-pole Type B RCBO (QV proxy) and the meter (QV row) - are all sourced, so the band is established. Allowances carry about 18% of the low total and 26% of the high total, under a third. Confidence is low: QV publishes no PV, MCCB, Type B RCBO, export-relay or revenue-metering rows, so four devices are QV proxies with stated adjustments and the export-limit relay/CT hardware is an allowance. GST exclusive; excludes preliminaries, margin, design and consent fees, network and connection charges, meter rental, the inverter and all DC/array-side work, main switchboard replacement, asbestos/remediation, trenching, penetrations, scaffolding and EWP hire."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 9,
+        "rowsFound": 9,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 493888,
+        "outputTokens": 17879,
+        "cachedTokens": 388960,
+        "modelCalls": 12,
+        "toolCalls": 35,
+        "searchCalls": 9,
+        "estimatedCostUsd": 0.0829,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 493888,
+            "outputTokens": 17879,
+            "estimatedCostUsd": 0.0829,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 176620,
+      "band": {
+        "unit": "ea (one complete PV grid-connection switchboard package for one building)",
+        "low": 6780,
+        "high": 10240,
+        "centre": "Auckland",
+        "basis": "Sum of the fourteen distinct components above (component totals 6,780 low / 10,240 high; mid-point 8,510), GST exclusive, no preliminaries and no margin. Nominal quantity is ONE package, so the amortisation is the whole figure: $6,800 - $10,200 for the one package and $/ea is identical. Main cost drivers are all sourced: the 12-way board enclosure, the electrician hourly rate (Auckland $83.65/h) and the export meter from QV CostBuilder rows (unreviewed, caveated), and the 63A 4-pole MCCB ($336.39) and 63A 4-pole IP66 AC isolator ($103.69) from fetched Tropac NZ pages. Allowances (Type B RCBO, zero-export relay/CTs, glands and sundries, relabelling, and the certification/documentation item) carry 22% of the low total and 33% of the high total, just under the one-third threshold, so confidence is medium rather than low. Low end assumes the new MCCB and main switch go into the existing board's spare ways without modification, mid-week shutdown in a normal window, and 16 hours of electrician time; high end assumes a busbar/chassis adaptation within the existing board, a weekend shutdown at 2.0x, 24 hours of electrician time, and a certified export meter and standalone export-limit relay. Excluded and NOT priced: GST, preliminaries, margin, design fees and consent fees; Vector/network application and connection charges and any meter rental; the 30 kW inverter, PV modules, mounting, DC cabling, DC isolators and all array-side work; replacement or upgrade of the existing main switchboard and any asbestos or switchboard-remediation work; trenching, building fabric penetrations, scaffolding or EWP hire; monitoring platform subscriptions, data logger SIM or comms cabling beyond 5 m. No contingency is included: if the 15-year-old 400A board will not accept the new switchgear in the spare ways, that is a variation and should be preceded by a board inspection."
+      },
+      "checks": [
+        "web-verified",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "web-verified",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 557392,
+        "outputTokens": 22608,
+        "cachedTokens": 448880,
+        "modelCalls": 11,
+        "toolCalls": 44,
+        "searchCalls": 10,
+        "estimatedCostUsd": 0.093565,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 557392,
+            "outputTokens": 22608,
+            "estimatedCostUsd": 0.093565,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 84153,
+      "band": {
+        "unit": "$/ea (one complete PV grid-connection switchboard package, one building)",
+        "low": 7900,
+        "high": 13400,
+        "centre": "Auckland",
+        "basis": "Sum of the 14 components above: Auckland QV CostBuilder rows (unreviewed) for the boards, switchgear proxies, cable, tray and registered electrician labour, plus labelled allowances for the proprietary export-limit relay/CT set, the CoC/ESC/Vector DG paperwork and sundries. Nominal quantity is ONE package, so $/ea equals the total: $7,900 - $13,400, mid-point about $10,650 for the one package. Allowances are about 13% of the low end, so the main cost drivers are cited, not assumed. Low end assumes the existing 400A board takes the new 63A way without modification and the shutdown is worked at a 2x after-hours rate; high end carries a 4-pole MCCB premium, a genuine 4-pole Type B RCBO, a revenue-grade export meter, 28 hours of installation labour and a 2.5x weekend shutdown. GST exclusive, excludes preliminaries, margin, design/consent fees, Vector application and connection charges, meter rental, and all array-side and DC work."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 11,
+        "rowsFound": 11,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 492226,
+        "outputTokens": 20773,
+        "cachedTokens": 416046,
+        "modelCalls": 11,
+        "toolCalls": 31,
+        "searchCalls": 5,
+        "estimatedCostUsd": 0.075417,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 492226,
+            "outputTokens": 20773,
+            "estimatedCostUsd": 0.075417,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 172783,
+      "band": {
+        "unit": "$/ea (one complete PV grid-connection switchboard package for one building)",
+        "low": 6918,
+        "high": 12612,
+        "centre": "Auckland",
+        "basis": "Sum of the priced components above, Auckland, NZD, GST-exclusive, excluding preliminaries, margin, design fees and consent fees. Nominal quantity is ONE package, so $/ea equals the total: $6,918 low - $12,612 high (mid ~$9,765) for the one package; the amortisation is therefore fully auditable (nothing is divided down). Main cost drivers are all cited: the new PV board (QV t2:r8 proxy, $920-1,800), the revenue meter (QV t29:r5, $1,000-1,600) and the Type B RCBO (QV t29:r45 proxy, $760-1,600). QV electrical rows are installed rates, so no separate general installation-labour line has been added on top of them; only work no material row covers (commissioning, live-side make-safe, testing/paperwork, certification) is added. Labelled allowances total ~$1,600-3,750, i.e. about 23-30% of the band, which is under a third. Confidence is low because the two largest hardware lines rest on QV proxies for different products (a 15-way surface board for a 12-way TP&N IP44 board; a 3-pole 30mA RCD for a 4-pole Type B RCBO) and the zero-export device rests on a single Australian consumer-article figure; NZ wholesalers publish no price for it. The band is therefore a cost-plan range, not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "web-verified",
+        "allowance",
+        "allowance",
+        "allowance",
+        "web-verified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 9,
+        "rowsFound": 9,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 3,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 5
+      },
+      "usage": {
+        "inputTokens": 645475,
+        "outputTokens": 20321,
+        "cachedTokens": 547904,
+        "modelCalls": 13,
+        "toolCalls": 36,
+        "searchCalls": 10,
+        "estimatedCostUsd": 0.085416,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 645475,
+            "outputTokens": 20321,
+            "estimatedCostUsd": 0.085416,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { FirecrawlCaptureProvider } from "../server/research/firecrawl-capture-provider.mjs";
-import { ProviderCreditLedger } from "../server/research/provider-credit-ledger.mjs";
+import { FirecrawlCaptureProvider } from "@eversor/research-engine/firecrawl-capture-provider.mjs";
+import { ProviderCreditLedger } from "@eversor/research-engine/provider-credit-ledger.mjs";
 
 const PUBLIC_LOOKUP = async () => [{ address: "93.184.216.34", family: 4 }];
 

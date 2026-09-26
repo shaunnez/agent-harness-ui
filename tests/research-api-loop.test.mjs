@@ -10,11 +10,15 @@ import { createServer } from "node:http";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { runChatLoop } from "../server/research/api-loop/chat-loop.mjs";
-import { priceApiUsage, resolveApiModel } from "../server/research/api-loop/providers.mjs";
-import { ApiLoopResearchRuntime, apiLoopSystemPrompt } from "../server/research/api-loop/runtime.mjs";
-import { ParallelSearchProvider } from "../server/research/parallel-search-provider.mjs";
-import { assertResearchRuntime } from "../server/research/research-runtime-registry.mjs";
+import { runChatLoop } from "@eversor/research-engine/api-loop/chat-loop.mjs";
+import {
+  API_LOOP_KEY_VARS,
+  priceApiUsage,
+  resolveApiModel,
+} from "@eversor/research-engine/api-loop/providers.mjs";
+import { ApiLoopResearchRuntime, apiLoopSystemPrompt } from "@eversor/research-engine/api-loop/runtime.mjs";
+import { ParallelSearchProvider } from "@eversor/research-engine/parallel-search-provider.mjs";
+import { assertResearchRuntime } from "@eversor/research-engine/research-runtime-registry.mjs";
 
 const SHA = "a".repeat(64);
 const ROW_ID = `${SHA}:t3:r2`;
@@ -95,6 +99,35 @@ test("models route to their provider, DeepSeek's own API is not one, and usage i
     "deepseek-ai/DeepSeek-V4.1-Flash",
   );
   assert.throws(() => resolveApiModel("deepseek/deepseek-flash"), /names no API-loop provider/);
+  // Fireworks' US-only endpoint, keyed separately, with its model path kept whole.
+  const fireworks = resolveApiModel("fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us");
+  assert.equal(fireworks.provider.endpoint, "https://us.api.fireworks.ai/inference/v1");
+  assert.equal(fireworks.provider.keyEnv, "FIREWORKS_API_KEY");
+  assert.equal(fireworks.remoteModel, "accounts/fireworks/routers/deepseek-v4p1-flash-us");
+  assert.deepEqual(fireworks.provider.sessionHeaders, ["x-session-affinity", "x-multi-turn-session-id"]);
+  assert.equal(
+    priceApiUsage("fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us", {
+      inputTokens: 2e6,
+      cachedTokens: 1e6,
+      outputTokens: 1e6,
+    }),
+    2.259,
+  );
+  // DeepInfra, keyed separately, priced at its list rates: 1M uncached in at $0.20, 1M cached at
+  // $0.006, 1M out at $0.60.
+  const deepinfra = resolveApiModel("deepinfra/deepseek-ai/DeepSeek-V4.1-Flash");
+  assert.equal(deepinfra.provider.endpoint, "https://api.deepinfra.com/v1/openai");
+  assert.equal(deepinfra.provider.keyEnv, "DEEPINFRA_API_KEY");
+  assert.equal(deepinfra.remoteModel, "deepseek-ai/DeepSeek-V4.1-Flash");
+  assert.ok(API_LOOP_KEY_VARS.includes("DEEPINFRA_API_KEY"));
+  assert.equal(
+    priceApiUsage("deepinfra/deepseek-ai/DeepSeek-V4.1-Flash", {
+      inputTokens: 2e6,
+      cachedTokens: 1e6,
+      outputTokens: 1e6,
+    }),
+    0.806,
+  );
   // 1M uncached in at $0.15, 1M cached at $0.003, 1M out at $0.60.
   assert.equal(
     priceApiUsage("opencode-go/deepseek-v4.1-flash", {
@@ -349,7 +382,7 @@ test("Parallel search is called with the key on the host and its excerpts become
 });
 
 test("a PDF quote without a page is checked on the page the host finds it on, and only there", async () => {
-  const { checkCostBandCitations } = await import("../server/research/engine/citations.mjs");
+  const { checkCostBandCitations } = await import("@eversor/research-engine/engine/citations.mjs");
   const seen = [];
   const webTools = {
     locatePdfPage: (_sourceId, excerpt) => (excerpt === "Butt Joint $40" ? 7 : null),
@@ -412,15 +445,69 @@ test("the host checks a final answer once and hands its problems back before acc
 });
 
 test("an API-loop run without its keys fails before it starts, naming the keys", async () => {
-  const { ApiLoopResearchRuntime } = await import("../server/research/api-loop/runtime.mjs");
+  const { ApiLoopResearchRuntime } = await import("@eversor/research-engine/api-loop/runtime.mjs");
   const request = {
     id: "RSCH-KEYS",
     objective: "Concrete paving slab, per m2.",
     researchPolicy: { runtime: "api-loop", model: "baseten/deepseek-ai/DeepSeek-V4.1-Flash" },
   };
-  await assert.rejects(new ApiLoopResearchRuntime({ env: {} }).start(request), /BASETEN_API_KEY and PARALLEL_API_KEY/);
+  await assert.rejects(
+    new ApiLoopResearchRuntime({ env: {} }).start(request),
+    /BASETEN_API_KEY and PARALLEL_API_KEY/,
+  );
   await assert.rejects(
     new ApiLoopResearchRuntime({ env: { BASETEN_API_KEY: "test" } }).start(request),
     /needs PARALLEL_API_KEY in the companion's environment/,
   );
+});
+
+test("a provider's per-minute rate limit is waited out, not scored as a spent plan", async () => {
+  let calls = 0;
+  const waits = [];
+  const fetchImpl = async () => {
+    calls += 1;
+    if (calls <= 2)
+      return new Response(
+        '{"error":{"code":"invalid_request_error","message":"rate limit exceeded, please try again later"}}',
+        { status: 429, headers: calls === 2 ? { "retry-after": "2" } : {} },
+      );
+    return new Response(
+      JSON.stringify({ choices: [{ message: { content: "Done." }, finish_reason: "stop" }], usage: {} }),
+      { status: 200 },
+    );
+  };
+  const { chatOnceWithRetries } = await import("@eversor/research-engine/api-loop/chat-loop.mjs");
+  const reply = await chatOnceWithRetries({
+    env: { FIREWORKS_API_KEY: "test" },
+    model: "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us",
+    systemPrompt: "x",
+    prompt: "y",
+    timeoutMs: 600_000,
+    fetchImpl,
+    sleep: async (ms) => {
+      waits.push(ms);
+    },
+  });
+  assert.equal(reply.text, "Done.");
+  // The throttle schedule (5 s first), then the provider's own Retry-After (2 s).
+  assert.deepEqual(waits, [5_000, 2_000]);
+});
+
+test("DeepInfra calls ask for DeepSeek's thinking, which it leaves off by default; others send nothing extra", async () => {
+  const bodies = [];
+  const fetchImpl = async (_url, init) => {
+    bodies.push(JSON.parse(init.body));
+    return new Response(
+      JSON.stringify({ choices: [{ message: { content: "Done." }, finish_reason: "stop" }], usage: {} }),
+      { status: 200 },
+    );
+  };
+  const { chatOnceWithRetries } = await import("@eversor/research-engine/api-loop/chat-loop.mjs");
+  const ask = (env, model) =>
+    chatOnceWithRetries({ env, model, systemPrompt: "x", prompt: "y", timeoutMs: 60_000, fetchImpl });
+  await ask({ DEEPINFRA_API_KEY: "test" }, "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash");
+  await ask({ BASETEN_API_KEY: "test" }, "baseten/deepseek-ai/DeepSeek-V4.1-Flash");
+  assert.equal(bodies[0].reasoning_effort, "high");
+  assert.equal(bodies[0].model, "deepseek-ai/DeepSeek-V4.1-Flash");
+  assert.equal("reasoning_effort" in bodies[1], false);
 });

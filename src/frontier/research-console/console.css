@@ -1,0 +1,12 @@
+/* The research console's own touches on the shared Frontier styles. */
+.research-console .world-actions .secondary-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.research-console .checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 15px;
+}

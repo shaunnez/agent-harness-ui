@@ -4,7 +4,7 @@ import {
   DEFAULT_RESEARCH_PROVIDER_CONFIG,
   parseResearchProviderConfig,
   publicProviderConfigSnapshot,
-} from "../server/research/research-provider-contracts.mjs";
+} from "@eversor/research-engine/research-provider-contracts.mjs";
 
 test("provider defaults preserve Tavily plus local HTML and disabled PDF", () => {
   assert.deepEqual(parseResearchProviderConfig({}), DEFAULT_RESEARCH_PROVIDER_CONFIG);

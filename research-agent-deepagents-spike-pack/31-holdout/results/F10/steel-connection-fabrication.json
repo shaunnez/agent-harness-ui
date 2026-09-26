@@ -1,0 +1,316 @@
+{
+  "question": "steel-connection-fabrication",
+  "kind": "pinned",
+  "arm": "F10",
+  "status": "agreed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 244,
+    "high": 384.64
+  },
+  "range": {
+    "min": 243.37,
+    "max": 411.62
+  },
+  "unit": "per completed connection (one member end to one supporting member), Auckland, GST exclusive",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 1.127,
+    "highRatio": 1.107,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.4018,
+  "elapsedMs": 190060,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 70431,
+      "band": {
+        "unit": "per completed connection (one member end to one supporting member), Auckland, GST exclusive",
+        "low": 244,
+        "high": 372,
+        "centre": null,
+        "basis": "Sum of eleven distinct components, none counted twice: plate material/cut/fabrication (QV t2:r43) + 4 drilled holes (QV t6:r2) + 600mm shop fillet weld (QV t6:r9) + 20% small-quantity loading on the plate only (QV t2:r2) + 4 no. M20 8.8/S galvanised bolts (QV t8:r20) + blast/IZS shop primer (QV t12:r7) + site touch-up primer (QV t3:r8) + freight allowance + site erector labour (QV labour rate x stated hours) + EWP hire (QV t8:r4 x stated days) + NDT/CC2 inspection allowance. Shop detailing and CNC setup are NOT added again - they sit inside the QV plate rate's 7.5% shop-drawings allowance. TOTAL FOR 40 CONNECTIONS: low $9,757, centre $12,314, high $14,871 (the low/high totals are the per-connection ends x 40, so the amortised items - freight, EWP, inspection, small-quantity loading - are auditable at their stated totals of $120-350, $320-800, $400-1,000 and $343 respectively). Two allowances carry ~7% of the centre, so the band rests on published rates, not allowances. Excludes GST, preliminaries, margin, design/PS1/consent, the incoming members, galvanising, fire protection, site welding, temporary works, propping, crane hire, scaffolding/edge protection/traffic management and NDT remediation."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 9,
+        "rowsFound": 9,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 302882,
+        "outputTokens": 20338,
+        "cachedTokens": 229130,
+        "modelCalls": 9,
+        "toolCalls": 23,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.071859,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 302882,
+            "outputTokens": 20338,
+            "estimatedCostUsd": 0.071859,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 97450,
+      "band": {
+        "unit": "per connection (ea, one member end to one supporting member)",
+        "low": 274.27,
+        "high": 384.64,
+        "centre": null,
+        "basis": "Auckland, GST exclusive, 40 no. connections, one building, one delivery. Every component amount is already per connection (per ea): each is a cited QV rate multiplied by its per-connection quantity, with job-level costs expressed as fractions of the 40 (EWP 3-5 days / 40 = 0.075-0.125 day/ea; delivery 188.4 kg x 1/40 = 4.71 kg/ea). Nine components: plate supply/fabricate/weld (QV all-in $/kg x 4.71 kg), 4 no. M20 8.8 bolts (QV each), QV abrasive blast + IZS per m2 over 0.13 m2, QV touch-up primer, QV steel-erector and labourer hourly rates for 0.7-1.2 combined man-hours, QV EWP day rate amortised, QV cartage per kg, plus an explicitly-labelled allowance for CC2 visual + 10% MPI because no rate is published. Allowances are 4-9% of the total, so the band rests on cited rates. Totals for 40 connections: low 274.27 x 40 = $10,971; high 384.64 x 40 = $15,386; central approximately 330 x 40 = $13,200. Excludes GST, preliminaries, margin, the incoming members, hot dip galvanising, fire protection and finish coats, site welding, temporary works, propping, crane hire, scaffolding/edge protection/traffic management, and remedial work from failed NDT. QV rates are unreviewed and already embed the fabricator's own margin - no margin has been added. Largest uncertainty is the plate fabrication intensity (QV bracketed at 200-250 hrs/tonne; its 35 hrs/tonne row would cut that component to $42.86/ea)."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 8,
+        "rowsFound": 8,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 419082,
+        "outputTokens": 25533,
+        "cachedTokens": 328340,
+        "modelCalls": 10,
+        "toolCalls": 32,
+        "searchCalls": 4,
+        "estimatedCostUsd": 0.089748,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 419082,
+            "outputTokens": 25533,
+            "estimatedCostUsd": 0.089748,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 115342,
+      "band": {
+        "unit": "$/ea (per completed connection, one member end to one supporting member)",
+        "low": 243.37,
+        "high": 411.62,
+        "centre": "Auckland",
+        "basis": "Addition of 13 distinct components, all priced from QV CostBuilder rows except the NDT/inspection time (fetched NZ published rate) and two small allowances (CNC setup, site touch-up) worth under 5% of the band. Totals for the nominal 40 connections: low $9,734.80, high $16,464.80, centre $13,099.80. GST exclusive, Auckland, and excluding preliminaries, margin, design/PS1/consent fees, the incoming members, galvanising, fire protection, site welding, temporary works, crane hire, scaffolding/edge protection, and remedial work from failed NDT. QV rows are unreviewed."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "web-unsupported"
+      ],
+      "citations": {
+        "rowsCited": 10,
+        "rowsFound": 10,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 1,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 630558,
+        "outputTokens": 24655,
+        "cachedTokens": 548026,
+        "modelCalls": 15,
+        "toolCalls": 41,
+        "searchCalls": 10,
+        "estimatedCostUsd": 0.086451,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 630558,
+            "outputTokens": 24655,
+            "estimatedCostUsd": 0.086451,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 172321,
+      "band": {
+        "unit": "$/ea",
+        "low": 231.56,
+        "high": 462.8,
+        "centre": "Auckland - QV CostBuilder AKL rates, GST exclusive; per connection; total for 40 connections $9,262 (low) to $18,512 (high), centre ~$347/ea = $13,880",
+        "basis": null
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 1,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 375600,
+        "outputTokens": 28803,
+        "cachedTokens": 310018,
+        "modelCalls": 11,
+        "toolCalls": 32,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.084147,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 375600,
+            "outputTokens": 28803,
+            "estimatedCostUsd": 0.084147,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 190058,
+      "band": {
+        "unit": "$/ea (per completed connection, one member end to one supporting member, Auckland, GST exclusive)",
+        "low": 307,
+        "high": 389,
+        "centre": "Auckland",
+        "basis": "Sum of the nine components above, priced once each with no double counting. $306.89/ea low, $388.77/ea high. For the 40 connections: $12,276 low to $15,551 high. Scope is exactly as issued: bolted flexible end plate/fin plate, secondary beam to primary beam web; shop work = plate cut, drilled and welded; site work = land and bolt off an existing EWP; plus primer, touch-up, bolts, freight, detailing and CC2 inspection. Excluded as instructed: GST, preliminaries, margin, design/PS1/consent, the incoming steel members, hot dip galvanising, fire protection, site welding, temporary works, crane hire, scaffolding/edge protection/traffic management, and remedial work from failed NDT. Confidence low, not because the main drivers are unsourced but because (a) the plate fabrication intensity is the largest single element and QV offers only 35 or 200 hrs/tonne, spanning roughly $43 to $150 per plate, and (b) NDT inspection has no published NZ rate. Allowances carry about 8-14% of the total, so the band is not allowance-dominated. If the fabricator prices the fin plate as a simple bracket rather than a 'connection plate', the band should fall towards $180-240/ea."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 258465,
+        "outputTokens": 24307,
+        "cachedTokens": 205138,
+        "modelCalls": 9,
+        "toolCalls": 27,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.069596,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 258465,
+            "outputTokens": 24307,
+            "estimatedCostUsd": 0.069596,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

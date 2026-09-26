@@ -4,10 +4,10 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { createApiServer } from "../server/api.mjs";
-import { FakeResearchRuntime } from "../server/research/fake-research-runtime.mjs";
-import { createResearchRuntimeRegistry } from "../server/research/research-runtime-registry.mjs";
-import { ResearchService } from "../server/research/research-service.mjs";
-import { ResearchStore } from "../server/research/research-store.mjs";
+import { FakeResearchRuntime } from "@eversor/research-engine/fake-research-runtime.mjs";
+import { createResearchRuntimeRegistry } from "@eversor/research-engine/research-runtime-registry.mjs";
+import { ResearchService } from "@eversor/research-engine/research-service.mjs";
+import { ResearchStore } from "@eversor/research-engine/research-store.mjs";
 import { SqliteTaskStore } from "../server/sqlite-store.mjs";
 import { settle } from "./research-test-support.mjs";
 

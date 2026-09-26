@@ -1,15 +1,15 @@
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { FallbackSearchProvider } from "../server/research/fallback-search-provider.mjs";
-import { FirecrawlCaptureProvider } from "../server/research/firecrawl-capture-provider.mjs";
-import { FirecrawlSearchProvider } from "../server/research/firecrawl-search-provider.mjs";
-import { ProviderCreditLedger } from "../server/research/provider-credit-ledger.mjs";
-import { ResearchProviderError } from "../server/research/research-provider-errors.mjs";
-import { verifySnapshotEvidence } from "../server/research/research-source-snapshots.mjs";
-import { ResearchStore } from "../server/research/research-store.mjs";
-import { ResearchWebTools } from "../server/research/research-web-tools.mjs";
-import { SerperSearchProvider } from "../server/research/serper-search-provider.mjs";
+import { FallbackSearchProvider } from "@eversor/research-engine/fallback-search-provider.mjs";
+import { FirecrawlCaptureProvider } from "@eversor/research-engine/firecrawl-capture-provider.mjs";
+import { FirecrawlSearchProvider } from "@eversor/research-engine/firecrawl-search-provider.mjs";
+import { ProviderCreditLedger } from "@eversor/research-engine/provider-credit-ledger.mjs";
+import { ResearchProviderError } from "@eversor/research-engine/research-provider-errors.mjs";
+import { verifySnapshotEvidence } from "@eversor/research-engine/research-source-snapshots.mjs";
+import { ResearchStore } from "@eversor/research-engine/research-store.mjs";
+import { ResearchWebTools } from "@eversor/research-engine/research-web-tools.mjs";
+import { SerperSearchProvider } from "@eversor/research-engine/serper-search-provider.mjs";
 import { migrateSqliteSchema } from "../server/sqlite-storage.mjs";
 
 export async function runResearchProviderAcceptance({ environment, manifest }) {

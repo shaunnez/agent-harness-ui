@@ -22,26 +22,26 @@ import {
 import {
   API_LOOP_EMPTY_OUTPUT_ERROR_CODE,
   API_LOOP_PLAN_LIMIT_ERROR_CODE,
-} from "../server/research/api-loop/chat-loop.mjs";
+} from "@eversor/research-engine/api-loop/chat-loop.mjs";
 import {
   API_LOOP_RESEARCH_RUNTIME_ID,
   ApiLoopResearchRuntime,
   DEFAULT_API_LOOP_MODEL,
-} from "../server/research/api-loop/runtime.mjs";
+} from "@eversor/research-engine/api-loop/runtime.mjs";
 import {
   agreementCounts,
   agreementForRuns,
   TIGHT_HIGH_RATIO,
   TIGHT_LOW_RATIO,
-} from "../server/research/engine/agreement.mjs";
-import { parseFinalJsonFence } from "../server/research/engine/final-answer.mjs";
-import { PROVIDER_UNAVAILABLE_CODE } from "../server/research/engine/host-tools/tool-errors.mjs";
+} from "@eversor/research-engine/engine/agreement.mjs";
+import { parseFinalJsonFence } from "@eversor/research-engine/engine/final-answer.mjs";
+import { PROVIDER_UNAVAILABLE_CODE } from "@eversor/research-engine/engine/host-tools/tool-errors.mjs";
 import {
   findingsFromCostBand,
   parseCostBand,
   resolveCorpusIndexPath,
-} from "../server/research/engine/qv-recipe.mjs";
-import { ResearchProviderError } from "../server/research/research-provider-errors.mjs";
+} from "@eversor/research-engine/engine/qv-recipe.mjs";
+import { ResearchProviderError } from "@eversor/research-engine/research-provider-errors.mjs";
 import {
   drain,
   fenced,

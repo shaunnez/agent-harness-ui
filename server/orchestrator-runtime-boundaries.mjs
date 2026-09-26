@@ -1,4 +1,4 @@
-import { researchPoliciesOf } from "../src/research-policies.ts";
+import { researchPoliciesOf } from "@eversor/research-engine/engine/contracts/policies.ts";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { resolveExecutionProvider } from "./execution-providers.mjs";

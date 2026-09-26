@@ -10,7 +10,7 @@ import {
   pinnedScopeText,
   ResearchScoper,
   ScopeError,
-} from "../server/research/research-scope.mjs";
+} from "@eversor/research-engine/research-scope.mjs";
 
 export const ROOF_SCOPE = Object.freeze({
   item: "Membrane roof in place of long-run steel",

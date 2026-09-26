@@ -19,5 +19,5 @@
     "noUncheckedIndexedAccess": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src", "packages/research-engine/src/engine/contracts"]
 }

@@ -7,7 +7,7 @@ import {
   fetchValidatedSource,
   ResearchWebTools,
   verifySnapshotEvidence,
-} from "../server/research/research-web-tools.mjs";
+} from "@eversor/research-engine/research-web-tools.mjs";
 
 const BUDGET = Object.freeze({ maxToolCalls: 10, maxSearchCalls: 3 });
 const PUBLIC_LOOKUP = async () => [{ address: "93.184.216.34", family: 4 }];

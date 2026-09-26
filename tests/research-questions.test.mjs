@@ -10,14 +10,14 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { createApiServer } from "../server/api.mjs";
-import { checkCostBandCitations } from "../server/research/engine/citations.mjs";
-import { FakeResearchRuntime } from "../server/research/fake-research-runtime.mjs";
-import { unitMeasure } from "../server/research/research-question-record.mjs";
-import { ResearchQuestionService } from "../server/research/research-question-service.mjs";
-import { ResearchQuestionStore } from "../server/research/research-question-store.mjs";
-import { createResearchRuntimeRegistry } from "../server/research/research-runtime-registry.mjs";
-import { ResearchService } from "../server/research/research-service.mjs";
-import { ResearchStore } from "../server/research/research-store.mjs";
+import { checkCostBandCitations } from "@eversor/research-engine/engine/citations.mjs";
+import { FakeResearchRuntime } from "@eversor/research-engine/fake-research-runtime.mjs";
+import { unitMeasure } from "@eversor/research-engine/research-question-record.mjs";
+import { ResearchQuestionService } from "@eversor/research-engine/research-question-service.mjs";
+import { ResearchQuestionStore } from "@eversor/research-engine/research-question-store.mjs";
+import { createResearchRuntimeRegistry } from "@eversor/research-engine/research-runtime-registry.mjs";
+import { ResearchService } from "@eversor/research-engine/research-service.mjs";
+import { ResearchStore } from "@eversor/research-engine/research-store.mjs";
 import { SqliteTaskStore } from "../server/sqlite-store.mjs";
 
 const CSRF_TOKEN = "research-questions-token";
@@ -97,7 +97,7 @@ class BandedRuntime extends FakeResearchRuntime {
   }
 }
 
-async function withServer(script, body, { scoper = null } = {}) {
+async function withServer(script, body, { scoper = null, questionOptions = {} } = {}) {
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-research-questions-"));
   const store = new SqliteTaskStore(path.join(directory, "tasks.sqlite3"));
   await store.init();
@@ -115,6 +115,7 @@ async function withServer(script, body, { scoper = null } = {}) {
     runs,
     projects: async () => (await store.listProjects()).map((project) => ({ kind: "delivery", ...project })),
     scoper,
+    ...questionOptions,
   });
   const server = createApiServer({
     store,
@@ -134,15 +135,22 @@ async function withServer(script, body, { scoper = null } = {}) {
     });
     return { status: response.status, body: await response.json() };
   };
+  // Finishes every run, including the two a staged question starts when its first three disagree.
   const finish = async (question) => {
-    for (const run of question.runs) {
-      runtime.advanceToEnd(run.runId);
-      await researchService.settled(run.runId);
+    const done = new Set();
+    for (let current = question; ; ) {
+      const open = current.runs.filter((run) => !done.has(run.runId));
+      if (!open.length) return current;
+      for (const run of open) {
+        runtime.advanceToEnd(run.runId);
+        await researchService.settled(run.runId);
+        done.add(run.runId);
+      }
+      current = (await call("GET", `/api/research/questions/${question.id}`)).body.question;
     }
-    return (await call("GET", `/api/research/questions/${question.id}`)).body.question;
   };
   try {
-    return await body({ call, finish, directory, store, runtime });
+    return await body({ call, finish, directory, store, runtime, researchService, researchQuestions });
   } finally {
     await new Promise((resolve) => server.close(resolve));
     store.close();
@@ -346,7 +354,8 @@ test("a repeated external request reuses its question and starts no more runs", 
     assert.equal(second.status, 200);
     assert.equal(second.body.reused, true);
     assert.equal(second.body.question.id, first.body.question.id);
-    assert.equal((await call("GET", "/api/research/runs")).body.runs.length, 5);
+    // Five runs planned; a staged question starts three.
+    assert.equal((await call("GET", "/api/research/runs")).body.runs.length, 3);
     assert.deepEqual(first.body.question.source, {
       kind: "external",
       provider: "linear",
@@ -510,7 +519,11 @@ test("a draft scope starts nothing; an asked scope is pinned onto every run and 
       const question = asked.body.question;
       assert.equal(question.objective, objective, "the question keeps the operator's words");
       assert.equal(question.scope.centre, "Wellington");
-      assert.deepEqual(question.scopedBy, { runtime: "api-loop", model: "opencode-go/deepseek-v4.1-flash", reasoning: null });
+      assert.deepEqual(question.scopedBy, {
+        runtime: "api-loop",
+        model: "opencode-go/deepseek-v4.1-flash",
+        reasoning: null,
+      });
       assert.equal(question.scopeReviewed, true);
       for (const run of question.runs) {
         const given = runtime.objectiveOf(run.runId);
@@ -621,8 +634,9 @@ test("runs that failed to start can be retried, keeping the failed attempt on th
     runtime.start = async () => {
       throw new Error("Not logged in.");
     };
-    const asked = (await call("POST", "/api/research/questions", { projectId: project.id, objective, runs: 1 }))
-      .body.question;
+    const asked = (
+      await call("POST", "/api/research/questions", { projectId: project.id, objective, runs: 1 })
+    ).body.question;
     assert.equal(asked.retryable, true);
     assert.equal(asked.runs[0].error.code, "runtime_start_failed");
     const early = await call("POST", `/api/research/questions/${asked.id}/review`, {
@@ -678,7 +692,7 @@ test("a research project with runs still going cannot be archived", async () => 
 
 test("a database that ran main's earlier question table is carried over, review and runs included", async () => {
   const { DatabaseSync } = await import("node:sqlite");
-  const { createResearchSchema } = await import("../server/research/research-schema.mjs");
+  const { createResearchSchema } = await import("@eversor/research-engine/research-schema.mjs");
   const directory = await mkdtemp(path.join(os.tmpdir(), "agent-harness-research-migrate-"));
   try {
     const db = new DatabaseSync(path.join(directory, "research.sqlite3"));
@@ -745,4 +759,143 @@ test("a database that ran main's earlier question table is carried over, review 
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("a staged five-run question stops at three runs that agree", async () => {
+  const objective = "Concrete kerb, per metre.";
+  await withServer(
+    { [objective]: { r1: [80, 100], r2: [82, 105], r3: [78, 98] } },
+    async ({ call, finish }) => {
+      const project = await researchProject(call);
+      const asked = (await call("POST", "/api/research/questions", { projectId: project.id, objective })).body
+        .question;
+      assert.equal(asked.runsPlanned, 5);
+      assert.deepEqual(
+        asked.runs.map((run) => run.run),
+        ["r1", "r2", "r3"],
+      );
+      const done = await finish(asked);
+      assert.equal(done.status, "agreed");
+      assert.equal(done.runs.length, 3);
+      assert.deepEqual(done.staged, { firstRuns: 3, extended: false });
+      assert.equal(done.grading.grade, "confident");
+    },
+  );
+});
+
+test("a staged question whose first three disagree runs the other two and is scored as five", async () => {
+  const objective = "Timber deck, per m2.";
+  const script = {
+    [objective]: { r1: [300, 400], r2: [600, 900], r3: [310, 410], r4: [305, 405], r5: [320, 420] },
+  };
+  await withServer(script, async ({ call, runtime, researchService }) => {
+    const project = await researchProject(call);
+    const asked = (await call("POST", "/api/research/questions", { projectId: project.id, objective })).body
+      .question;
+    for (const run of asked.runs) {
+      runtime.advanceToEnd(run.runId);
+      await researchService.settled(run.runId);
+    }
+    // The first three disagree: never reported as disputed, because two more are on their way.
+    const between = (await call("GET", `/api/research/questions/${asked.id}`)).body.question;
+    assert.notEqual(between.status, "disputed");
+    assert.deepEqual(
+      between.runs.map((run) => run.run),
+      ["r1", "r2", "r3", "r4", "r5"],
+    );
+    for (const run of between.runs.slice(3)) {
+      runtime.advanceToEnd(run.runId);
+      await researchService.settled(run.runId);
+    }
+    const done = (await call("GET", `/api/research/questions/${asked.id}`)).body.question;
+    assert.equal(done.status, "agreed");
+    assert.deepEqual(done.staged, { firstRuns: 3, extended: true });
+    // The unchanged five-run rule: the furthest two are dropped.
+    assert.deepEqual(
+      done.runs.filter((run) => run.dropped).map((run) => run.run),
+      ["r2", "r5"],
+    );
+  });
+});
+
+test("a staged question stops when a first-stage run fails, and asking for all five still works", async () => {
+  const failing = "Steel lintel, each.";
+  const whole = "Brick veneer, per m2.";
+  const script = {
+    [failing]: { r1: [100, 120], r2: "fail", r3: [300, 500] },
+    [whole]: { r1: [100, 120], r2: [102, 118], r3: [99, 121], r4: [101, 119], r5: [100, 122] },
+  };
+  await withServer(script, async ({ call, finish }) => {
+    const project = await researchProject(call);
+    const ask = async (objective, extra = {}) =>
+      (await call("POST", "/api/research/questions", { projectId: project.id, objective, ...extra })).body
+        .question;
+    const failed = await finish(await ask(failing));
+    assert.equal(failed.status, "incomplete");
+    assert.equal(failed.runs.length, 3);
+    const unstaged = await ask(whole, { staged: false });
+    assert.equal(unstaged.runs.length, 5);
+    assert.equal(unstaged.staged, undefined);
+  });
+});
+
+test("a staged question that failed to start retries three runs in the next attempt's block", async () => {
+  const objective = "Gutter, per metre.";
+  await withServer(
+    { [objective]: { r1: [40, 50], r2: [41, 52], r3: [39, 49] } },
+    async ({ call, runtime, finish }) => {
+      const project = await researchProject(call);
+      const start = runtime.start.bind(runtime);
+      runtime.start = async () => {
+        throw new Error("Not logged in.");
+      };
+      const asked = (await call("POST", "/api/research/questions", { projectId: project.id, objective })).body
+        .question;
+      assert.equal(asked.retryable, true);
+      assert.equal(asked.runs.length, 3);
+      runtime.start = start;
+      const retried = (await call("POST", `/api/research/questions/${asked.id}/retry`)).body.question;
+      assert.equal(retried.runs.length, 3);
+      assert.equal(retried.priorAttempts.length, 3);
+      const done = await finish(retried);
+      assert.equal(done.status, "agreed");
+    },
+  );
+});
+
+test("an identical ask is answered by a recent finished question when reuse is on", async () => {
+  const objective = "Paint interior walls, per m2.";
+  await withServer(
+    { [objective]: { r1: [20, 30], r2: [21, 31], r3: [19, 29] } },
+    async ({ call, finish }) => {
+      const project = await researchProject(call);
+      const ask = (extra = {}) =>
+        call("POST", "/api/research/questions", { projectId: project.id, objective, ...extra });
+      const first = await finish((await ask()).body.question);
+      assert.equal(first.status, "agreed");
+      const again = await ask();
+      assert.equal(again.body.reused, true);
+      assert.equal(again.body.question.id, first.id);
+      // A different run count, or an asker who wants fresh runs, gets a new question.
+      assert.notEqual((await ask({ runs: 3 })).body.question.id, first.id);
+      assert.notEqual((await ask({ reuse: false })).body.question.id, first.id);
+      assert.equal((await call("GET", "/api/research/runs")).body.runs.length, 3 + 3 + 3);
+    },
+    { questionOptions: { reuseAnswersForMs: 60 * 60_000 } },
+  );
+});
+
+test("a question still running is never reused, and reuse is off by default", async () => {
+  const objective = "Skirting board, per metre.";
+  await withServer(
+    { [objective]: { r1: [10, 12], r2: [10, 12], r3: [10, 12] } },
+    async ({ call, finish }) => {
+      const project = await researchProject(call);
+      const ask = () => call("POST", "/api/research/questions", { projectId: project.id, objective });
+      const first = (await ask()).body.question;
+      await finish(first);
+      const second = await ask();
+      assert.notEqual(second.body.question.id, first.id);
+    },
+  );
 });

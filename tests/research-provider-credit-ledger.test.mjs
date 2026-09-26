@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ProviderCreditLedger } from "../server/research/provider-credit-ledger.mjs";
+import { ProviderCreditLedger } from "@eversor/research-engine/provider-credit-ledger.mjs";
 
 test("parallel reservations cannot exceed the dispatch ceiling", () => {
   const ledger = new ProviderCreditLedger({ provider: "firecrawl", ceiling: 10 });

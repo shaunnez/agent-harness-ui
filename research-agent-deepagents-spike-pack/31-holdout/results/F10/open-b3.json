@@ -1,0 +1,272 @@
+{
+  "question": "open-b3",
+  "kind": "open",
+  "arm": "F10",
+  "status": "disputed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": {
+    "low": 6400,
+    "high": 13100
+  },
+  "range": {
+    "min": 1600,
+    "max": 19200
+  },
+  "unit": "total for the building connection (one new six-unit light industrial building)",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": 6,
+    "highRatio": 7.385,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.4931,
+  "elapsedMs": 205439,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 77804,
+      "band": {
+        "unit": "total for the building connection (one new six-unit light industrial building)",
+        "low": 9600,
+        "high": 19200,
+        "centre": null,
+        "basis": "One component: Chorus's building-level New Property Development network contribution, scaled from Chorus's own quoted fibre-network charge of $345,600 (GST excl.) for 216 connections to 6 connections (low, $9,600) and to 12 residential-equivalents for light-industrial uplift (high, $19,200). GST exclusive, NZD. Priced as one building-level connection, not six tenant connections. Low confidence: the only published Chorus charge is a different development and Chorus confirms each site by its own quote."
+      },
+      "checks": [
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 271968,
+        "outputTokens": 12846,
+        "cachedTokens": 166578,
+        "modelCalls": 9,
+        "toolCalls": 25,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.072048,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 271968,
+            "outputTokens": 12846,
+            "estimatedCostUsd": 0.072048,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 104776,
+      "band": {
+        "unit": "total for the building connection (NZD, GST exclusive)",
+        "low": 0,
+        "high": 7944,
+        "centre": "Auckland",
+        "basis": "Chorus's charge to connect a building is not a published rate - its price list expresses the connection as time and materials at published hourly rates, less the standard contribution of $1,000 per tenancy served. Priced on the assumption the building adjoins existing Chorus fibre and only a building-level connection is required (one charge for the building, not six tenant connections). Total is the sum of the four components, floored at nil because Chorus does not levy a negative charge. Excludes internal cabling and fit-out within the building (out of scope) and excludes any network extension, which Chorus designs and quotes per development. Allowances (materials and hour estimates) carry about a third of the gross, hence low confidence; rates are from the 2011 schedule and current rates are higher, so treat the top of the band as the more likely figure if a non-standard install is triggered."
+      },
+      "dropped": true,
+      "checks": [
+        "web-unverified",
+        "web-unverified",
+        "allowance",
+        "web-unsupported"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 2,
+        "webDerived": 0,
+        "webUnsupported": 1,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 543958,
+        "outputTokens": 24509,
+        "cachedTokens": 419656,
+        "modelCalls": 13,
+        "toolCalls": 37,
+        "searchCalls": 8,
+        "estimatedCostUsd": 0.103829,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 543958,
+            "outputTokens": 24509,
+            "estimatedCostUsd": 0.103829,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 177671,
+      "band": null,
+      "dropped": true,
+      "checks": [
+        "web-verified",
+        "web-unverified",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 3,
+        "webVerified": 2,
+        "webNotFetched": 0,
+        "webExcerptRejected": 1,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 431470,
+        "outputTokens": 23873,
+        "cachedTokens": 339372,
+        "modelCalls": 11,
+        "toolCalls": 27,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.08747,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 431470,
+            "outputTokens": 23873,
+            "estimatedCostUsd": 0.08747,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 121486,
+      "band": {
+        "unit": "total, Chorus charges to bring fibre to a new six-unit light industrial building (building-level connection; excludes internal cabling and fit-out and excludes six retail tenant connections)",
+        "low": 6400,
+        "high": 13100,
+        "centre": "Auckland (Chorus wholesale/NPD charges are national, not centre-specific)",
+        "basis": "Component build-up: (1) Chorus development contribution 6 premises x $900 = $5,400 (cited, historical Chorus policy figure); (2) assessed-site uplift allowance $0-$4,200; (3) Chorus non-standard install/excess works allowance $1,000-$3,500. All GST-exclusive. Assumptions priced: charges are per premises for six units with one building-level lead-in; the site is a standard in-footprint infill with capacity at the boundary; civil works, lead-in pipe and reinstatement within the site are the developer's scope and are excluded; six separate tenant retail connection fees (Chorus charges one month's recurring fee per business connection - Price List July 2026, item 1.2, source-2 page 10) and internal reticulation are excluded. QV CostBuilder has no fibre/telecom connection rates, so no QV row is used; QV's nearest rows price internal reticulation ($11/m2) or civil trench/ducts that sit in the developer's scope. Caution: about 60% of the high end is labelled allowance, and Chorus's actual NPD charge is a bespoke portal quotation (POA) - confidence is therefore low, and the band should be treated as a cost-plan range only. An optional Chorus Fibre Project Management charge of $463.61 (Complex location, one charge for the location however many connections share it - Service Description for Fibre Project Management, January 2026, clauses 31.2-31.3) is NOT included; add it only if the building owner/RSP orders FPM."
+      },
+      "checks": [
+        "web-verified",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 2,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 1,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 801602,
+        "outputTokens": 28455,
+        "cachedTokens": 592362,
+        "modelCalls": 15,
+        "toolCalls": 38,
+        "searchCalls": 9,
+        "estimatedCostUsd": 0.150708,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 801602,
+            "outputTokens": 28455,
+            "estimatedCostUsd": 0.150708,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 205437,
+      "band": {
+        "unit": "total for the building connection (one new six-unit light industrial building, GST exclusive)",
+        "low": 1600,
+        "high": 2600,
+        "centre": null,
+        "basis": "ADDED: (1) Chorus development contribution for fibre network reticulation to the building, one building-level premises contribution of $1,600 excl GST (Chorus April 2022 New Property Development quote, 216 connections, $345,600 fibre network = $1,600 each), which is already the whole of the sourced charge and is fixed, not ranged; plus (2) a $0-$1,000 allowance for Chorus POA non-standard install/minor extra works. Low = $1,600; high = $2,600 (midpoint $2,100; $2,600 shown as the point estimate because component 1 is fixed). Note that the allowance is under a third of the low end but about 38% of the high end, so confidence is low. Basis: one new six-unit building, building-level connection only, standard reach with network capacity at/near the boundary, design/materials/supervision/civil for a standard route inside Chorus's contribution. Excluded: internal cabling and fit-out, the per-unit tenant connections, the ISP-side wholesale business new-connection charge (one month's recurring fee, paid by the retailer when a tenant orders), and any job-specific network extension. Chorus quotes every NPD job on application, so this is a cost-plan proxy, not a certified Chorus price."
+      },
+      "checks": [
+        "web-verified",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 0,
+        "rowsFound": 0,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 441695,
+        "outputTokens": 21505,
+        "cachedTokens": 359134,
+        "modelCalls": 13,
+        "toolCalls": 27,
+        "searchCalls": 6,
+        "estimatedCostUsd": 0.079094,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 441695,
+            "outputTokens": 21505,
+            "estimatedCostUsd": 0.079094,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

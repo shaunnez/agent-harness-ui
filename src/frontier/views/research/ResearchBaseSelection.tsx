@@ -42,7 +42,7 @@ export function ResearchBaseSelection({
         <div className="base-selection-copy">
           <small>Research project</small>
           <h2>{project.name}</h2>
-          <p>Costing questions, three runs each</p>
+          <p>Costing questions, five runs each by default</p>
           <dl className="base-selection-counts">
             <div>
               <dt>Questions</dt>

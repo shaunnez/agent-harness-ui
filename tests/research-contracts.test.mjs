@@ -3,25 +3,25 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { FakeResearchRuntime } from "../server/research/fake-research-runtime.mjs";
+import { FakeResearchRuntime } from "@eversor/research-engine/fake-research-runtime.mjs";
 import {
   assertResearchRuntime,
   createResearchRuntimeRegistry,
   DEFAULT_RESEARCH_RUNTIME_ID,
-} from "../server/research/research-runtime-registry.mjs";
+} from "@eversor/research-engine/research-runtime-registry.mjs";
 import {
   researchBudgetForProfile,
   researchCeilingReached,
   researchSoftOverruns,
   resolveResearchBudget,
   SPIKE_MAX_RESEARCHERS,
-} from "../src/research-budget-policy.ts";
+} from "@eversor/research-engine/engine/contracts/budget-policy.ts";
 import {
   isResearchEventType,
   isResearchProfile,
   isTerminalResearchRunState,
   RESEARCH_RUN_STATES,
-} from "../src/research-runtime-contract.ts";
+} from "@eversor/research-engine/engine/contracts/runtime-contract.ts";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -104,7 +104,7 @@ test("run state and event guards agree with the declared unions", () => {
 });
 
 test("no runtime vocabulary leaks into the public research contracts", async () => {
-  // The compile-time half of this lives in `src/research-runtime-contract.ts`, which fails
+  // The compile-time half of this lives in `packages/research-engine/src/engine/contracts/runtime-contract.ts`, which fails
   // `npm run typecheck` if a forbidden key appears on a contract type. This half catches the
   // vocabulary a type check cannot see: a comment, a string literal, an import.
   const forbidden = [
@@ -119,9 +119,9 @@ test("no runtime vocabulary leaks into the public research contracts", async () 
     "subagent",
     "recursionlimit",
   ];
-  // Only the contract file itself. `src/research-runtime-contract.ts` is exempt because its
+  // Only the contract file itself. `packages/research-engine/src/engine/contracts/runtime-contract.ts` is exempt because its
   // job is to *list* the forbidden vocabulary as a blocklist.
-  const relativePath = "src/domain/research.ts";
+  const relativePath = "packages/research-engine/src/engine/contracts/research.ts";
   const source = (await readFile(path.join(repositoryRoot, relativePath), "utf8")).toLowerCase();
   for (const term of forbidden) {
     assert.ok(

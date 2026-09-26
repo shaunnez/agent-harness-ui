@@ -1,0 +1,13 @@
+{
+  "name": "@eversor/research-engine",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The research engine: DeepSeek API loop, service, stores, checks, grading, providers and contracts. Node built-ins only.",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "exports": {
+    "./*": "./src/*"
+  }
+}

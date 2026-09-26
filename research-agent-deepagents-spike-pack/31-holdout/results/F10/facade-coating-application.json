@@ -1,0 +1,252 @@
+{
+  "question": "facade-coating-application",
+  "kind": "pinned",
+  "arm": "F10",
+  "status": "incomplete",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": null,
+  "range": null,
+  "unit": "$/m2 of coated face area (measured flat, no deduction under 0.5 m2), Auckland, GST exclusive",
+  "unitsDiffer": null,
+  "agreement": {
+    "lowRatio": null,
+    "highRatio": null,
+    "runsWithBand": 3,
+    "runsTotal": 5
+  },
+  "costUsd": 0.3218,
+  "elapsedMs": 176653,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "failed",
+      "error": {
+        "code": "provider_unavailable",
+        "message": "Fireworks (US only) is throttling (HTTP 429): {\"error\":{\"object\":\"error\",\"type\":\"invalid_request_error\",\"code\":\"invalid_request_error\",\"message\":\"rate limit exceeded, please try again later\"}}"
+      },
+      "elapsedMs": 85038,
+      "band": null,
+      "checks": [],
+      "citations": null,
+      "usage": {
+        "inputTokens": 138384,
+        "outputTokens": 16056,
+        "cachedTokens": 81084,
+        "modelCalls": 6,
+        "toolCalls": 20,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.055416,
+        "costBasis": "api_rate_estimate",
+        "partial": true,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 138384,
+            "outputTokens": 16056,
+            "estimatedCostUsd": 0.055416,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "failed",
+      "error": {
+        "code": "provider_unavailable",
+        "message": "Fireworks (US only) is throttling (HTTP 429): {\"error\":{\"object\":\"error\",\"type\":\"invalid_request_error\",\"code\":\"invalid_request_error\",\"message\":\"rate limit exceeded, please try again later\"}}"
+      },
+      "elapsedMs": 81316,
+      "band": null,
+      "checks": [],
+      "citations": null,
+      "usage": {
+        "inputTokens": 79767,
+        "outputTokens": 13505,
+        "cachedTokens": 25642,
+        "modelCalls": 4,
+        "toolCalls": 19,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.048896,
+        "costBasis": "api_rate_estimate",
+        "partial": true,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 79767,
+            "outputTokens": 13505,
+            "estimatedCostUsd": 0.048896,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 64952,
+      "band": {
+        "unit": "$/m2 of coated face area (measured flat, no deduction under 0.5 m2), Auckland, GST exclusive",
+        "low": 52.1,
+        "high": 73,
+        "centre": null,
+        "basis": "Sum of eight distinct components: QV water-blast prep row x600 m2 (with a stated +25% for the heavier 3000 psi blast), a QV three-coat exterior acrylic finish row x600 m2 (with a stated +30% for the elastomeric X-200 grade and soffit slowness), QV EWP day-hire rows x15 days, QV mobile scaffold weekly hire x3-6 tower-weeks, QV working-off-scaffolding rows x480 m2, and three labelled allowances (60 lm crack fill, EWP cartage, masking/protection/clean-up). No separate sealer line is added because the coating row already represents a full system including its sealer; the QV 'Prepare Painted Plaster' rows are deliberately not stacked on the blast row. Allowances are 8.9% of the low end and 14.3% of the high end, so the band is established from cited rates rather than judgement. Total for the 600 m2 nominal quantity: $31,240 (low) to $43,800 (high), midpoint $37,520. Spread drivers: soffit share (QV's masonry soffit rate runs ~13% above walls), blast pressure and containment, and whether the EWP is billed 15 or 21 days. Wellington/Christchurch painting rates run ~12-15% below Auckland (water blast WLG 8.0 vs AKL 9.4), so the same scope in those centres sits at the bottom of the band. This is a working estimate band for a cost plan, not a certified price; QV rows are unreviewed and the coating, prep and access lines all rest on stated proxy adjustments."
+      },
+      "checks": [
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 5,
+        "rowsFound": 5,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 196982,
+        "outputTokens": 18462,
+        "cachedTokens": 104708,
+        "modelCalls": 7,
+        "toolCalls": 19,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.075697,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 196982,
+            "outputTokens": 18462,
+            "estimatedCostUsd": 0.075697,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 147321,
+      "band": {
+        "unit": "m2 of coated face (600 m2 nominal: 480 m2 wall, 120 m2 soffit)",
+        "low": 60,
+        "high": 82.67,
+        "centre": "Auckland",
+        "basis": "Sum of cited QV CostBuilder rows (Auckland, GST exclusive, unreviewed) plus two labelled allowances for EWP transport and for masking/protection/clean-up. Preparation rests on QV t4:r19 plus the blended t4:r13/t4:r14 prepare-plaster rows; the coating system uses QV exterior applied-finish and high-build acrylic rows scaled from three coats to the two finish coats in scope. Allowances are 8-10% of the total, so the band is carried by published rates, not judgement. Total for 600 m2: $36,000 - $49,600, midpoint $42,800 ($71.34/m2). Excludes GST, preliminaries, margin and design/consent fees, per scope."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 7,
+        "rowsFound": 7,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 183332,
+        "outputTokens": 18338,
+        "cachedTokens": 123764,
+        "modelCalls": 7,
+        "toolCalls": 19,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.060928,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 183332,
+            "outputTokens": 18338,
+            "estimatedCostUsd": 0.060928,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 176651,
+      "band": {
+        "unit": "m2 of coated face area (measured flat, no deduction under 0.5 m2)",
+        "low": 44.79,
+        "high": 83.27,
+        "centre": "Auckland",
+        "basis": "Sum of ten distinct components above, all amortised over 600 m2, GST-exclusive, excluding preliminaries, margin and consent/design fees per the scope. Band $44.79-83.27/m2, midpoint $64.03/m2. Total for 600 m2: $26,874-$49,962, midpoint about $38,400. The width is driven almost entirely by the finish-coat component, where QV offers only an interior two-coat acrylic-to-masonry rate (low) and an exterior high-build acrylic 3-coat system rate (high) and nothing for exterior two-coat elastomeric over previously painted plaster. Allowances carry about 10% of the low total and 12% of the high total, so the band is established but with low confidence."
+      },
+      "checks": [
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-found",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 6,
+        "rowsFound": 6,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 4
+      },
+      "usage": {
+        "inputTokens": 444748,
+        "outputTokens": 21123,
+        "cachedTokens": 356604,
+        "modelCalls": 13,
+        "toolCalls": 31,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.080896,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 444748,
+            "outputTokens": 21123,
+            "estimatedCostUsd": 0.080896,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

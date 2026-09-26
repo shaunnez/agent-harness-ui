@@ -11,6 +11,8 @@ ARG NODE_IMAGE=node:22-bookworm-slim
 FROM ${NODE_IMAGE} AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
+# npm ci needs every workspace's manifest before it will install.
+COPY packages/research-engine/package.json ./packages/research-engine/
 RUN npm ci --no-audit --no-fund
 COPY . .
 RUN npm run build:frontier
@@ -45,10 +47,14 @@ RUN set -eux; \
     npm install -g --no-audit --no-fund "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" "@openai/codex@${CODEX_VERSION}"; \
     npm cache clean --force
 
-# The server has no npm dependencies of its own (it imports only Node built-ins and ../src), so
-# the runtime image carries source plus the built UI and no node_modules.
+# The server has no npm dependencies of its own (it imports only Node built-ins, ../src and the
+# research engine), so the runtime image carries source plus the built UI and no node_modules.
+# The one link it needs is the one npm makes for the research engine's workspace.
 WORKDIR /app
 COPY --chown=node:node package.json package-lock.json ./
+COPY --chown=node:node packages ./packages
+RUN install -d -o node -g node node_modules/@eversor \
+  && ln -s ../../packages/research-engine node_modules/@eversor/research-engine
 COPY --chown=node:node server ./server
 COPY --chown=node:node src ./src
 COPY --chown=node:node scripts ./scripts

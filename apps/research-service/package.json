@@ -1,0 +1,24 @@
+{
+  "name": "@eversor/research-service",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The research service: research routes, PlanCheck batch intake, paced DeepSeek runs and Postgres. Runs only the API loop.",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "start": "node src/index.mjs",
+    "test": "node --test test/*.test.mjs",
+    "client-token": "node src/client-token.mjs",
+    "dev": "node --env-file-if-exists=\"$HOME/.config/eversor-research.env\" --env-file-if-exists=../../.env.research.local --env-file-if-exists=.env.local src/index.mjs",
+    "check-image": "sh scripts/check-image.sh"
+  },
+  "dependencies": {
+    "@eversor/research-engine": "*",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8"
+  }
+}

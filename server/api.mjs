@@ -11,7 +11,7 @@ import { normalizeModelId, POLICY_IDS } from "./model-catalog.mjs";
 import { isResearchRepositoryPath } from "./project-policy.mjs";
 import { createProjectRoutes } from "./project-routes.mjs";
 import { RepositoryAuthorityService } from "./repository-authority.mjs";
-import { createResearchRoutes } from "./research/research-routes.mjs";
+import { createResearchRoutes } from "@eversor/research-engine/research-routes.mjs";
 import { createRetainedEvidenceRoutes } from "./retained-evidence-routes.mjs";
 import { withActionEligibility } from "./retry-admission-policy.mjs";
 import { createRuntimeSettingsRoutes } from "./runtime-settings-routes.mjs";

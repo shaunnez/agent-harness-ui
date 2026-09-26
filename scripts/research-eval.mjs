@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // The scope → pack eval (`research-agent-deepagents-spike-pack/29-EVAL-PREREGISTRATION.md`).
 //
-//   node scripts/research-eval.mjs --arm A0|A2|A3|A4|A5|A6|A7|A8|A9|A10|O5 [--only id,id] [--out <dir>]
-//   node scripts/research-eval.mjs --rescore [--out <dir>]
+//   node scripts/research-eval.mjs --arm A6|A7|A8|A9|A10|F10|D10|D10M|D10N (A0–A5 and O5 re-score only) [--only id,id] [--out <dir>]
+//   node scripts/research-eval.mjs --rescore [--out <dir>] [--set <question-set.json>]
+//   node scripts/research-eval.mjs --staged [--out <dir>] [--set <question-set.json>]   (what staged runs would have given)
 //   node scripts/research-eval.mjs --arm A4 --set <questions.json> --model <model> --out <dir>   (tuning)
 //
 // Runs every pre-registered question three times on one arm and writes one JSON file per
@@ -19,10 +20,15 @@ import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
-import { ApiLoopResearchRuntime } from "../server/research/api-loop/runtime.mjs";
-import { questionRecord } from "../server/research/research-question-record.mjs";
-import { scopedObjective } from "../server/research/research-scope.mjs";
-import { resolveResearchBudget } from "../src/research-budget-policy.ts";
+import { ApiLoopResearchRuntime } from "@eversor/research-engine/api-loop/runtime.mjs";
+import { questionRecord } from "@eversor/research-engine/research-question-record.mjs";
+import {
+  FIRST_STAGE_RUNS,
+  firstStageSettles,
+  nextStage,
+} from "@eversor/research-engine/research-question-stages.mjs";
+import { scopedObjective } from "@eversor/research-engine/research-scope.mjs";
+import { resolveResearchBudget } from "@eversor/research-engine/engine/contracts/budget-policy.ts";
 
 const PACK_DIRECTORY = fileURLToPath(new URL("../research-agent-deepagents-spike-pack/", import.meta.url));
 const EVAL_DIRECTORY = path.join(PACK_DIRECTORY, "29-eval");
@@ -110,6 +116,40 @@ export const ARMS = {
     reasoning: "high",
     runs: 5,
     retired: true,
+  },
+  // Doc 31 provider parity: A10 unchanged except the provider, DeepSeek 4.1 Flash on Fireworks'
+  // US-only endpoint. Needs FIREWORKS_API_KEY and PARALLEL_API_KEY in the environment.
+  F10: {
+    runtime: "api-loop",
+    model: "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us",
+    reasoning: null,
+    runs: 5,
+    make: (env) => new ApiLoopResearchRuntime({ env }),
+  },
+  // A10 unchanged except the provider, DeepSeek 4.1 Flash on DeepInfra. Needs DEEPINFRA_API_KEY and
+  // PARALLEL_API_KEY in the environment. A trial of the provider, not a preregistered arm.
+  D10: {
+    runtime: "api-loop",
+    model: "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash",
+    reasoning: null,
+    runs: 5,
+    make: (env) => new ApiLoopResearchRuntime({ env }),
+  },
+  // D10 with DeepInfra's `max` reasoning effort, and with thinking off: whether effort moves
+  // quality, cost or time on this provider. Trials, not preregistered arms.
+  D10M: {
+    runtime: "api-loop",
+    model: "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash",
+    reasoning: "max",
+    runs: 5,
+    make: (env) => new ApiLoopResearchRuntime({ env }),
+  },
+  D10N: {
+    runtime: "api-loop",
+    model: "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash",
+    reasoning: "off",
+    runs: 5,
+    make: (env) => new ApiLoopResearchRuntime({ env }),
   },
   // Doc 29 addendum A10: A9 with the not-a-price rule (check and prompt) and open-a3 pinned to the
   // net change.
@@ -205,8 +245,8 @@ function score(question, runs, createdAt) {
  * Re-score every recorded result with the current `questionRecord`, keeping the runs as recorded.
  * Used when the scoring rule is corrected mid-eval; the correction is recorded in doc 29.
  */
-async function rescore(out) {
-  const questions = new Map((await evalQuestions()).map((question) => [question.id, question]));
+async function rescore(out, setPath = null) {
+  const questions = new Map((await evalQuestions(setPath)).map((question) => [question.id, question]));
   for (const armId of Object.keys(ARMS)) {
     const directory = path.join(out, armId);
     const files = await readdir(directory).catch(() => []);
@@ -242,6 +282,69 @@ async function rescore(out) {
       console.log(`${armId} ${result.question}: ${after}${after === before ? "" : `  (was ${before})`}`);
     }
   }
+}
+
+/**
+ * What staged runs (`research-question-stages.mjs`) would have given on every recorded five-run
+ * result: the first three runs (r1–r3) scored alone, kept when they settle the question, else all
+ * five as recorded. Reads the results and changes nothing; costs nothing to run.
+ */
+async function stagedReport(out, setPath = null) {
+  const questions = new Map((await evalQuestions(setPath)).map((question) => [question.id, question]));
+  const rows = [];
+  for (const armId of Object.keys(ARMS)) {
+    const files = await readdir(path.join(out, armId)).catch(() => []);
+    const totals = {
+      questions: 0,
+      fivePass: 0,
+      stagedPass: 0,
+      fiveCost: 0,
+      stagedCost: 0,
+      stopped: 0,
+      changed: [],
+    };
+    for (const name of files.filter((file) => file.endsWith(".json")).sort()) {
+      const result = JSON.parse(await readFile(path.join(out, armId, name), "utf8"));
+      if (result.runs?.length !== 5) continue;
+      const runs = result.runs.map((run) => ({
+        id: `${result.question}-${run.run}`,
+        runLabel: run.run,
+        status: run.status,
+        error: run.error,
+        usage: run.usage,
+        updatedAt: new Date().toISOString(),
+        outcome: {
+          costBand:
+            run.band || run.checks.length ? { band: run.band, components: run.checks.map(() => ({})) } : null,
+          citations: run.checks.length ? { checks: run.checks } : null,
+        },
+      }));
+      const question = questions.get(result.question);
+      const five = score(question, runs, new Date().toISOString());
+      const firstThree = score(question, runs.slice(0, FIRST_STAGE_RUNS), new Date().toISOString());
+      const stops = nextStage(firstThree) === "stop" && firstStageSettles(firstThree);
+      const staged = stops ? firstThree : five;
+      const cost = (list) => list.reduce((sum, run) => sum + Number(run.usage?.estimatedCostUsd ?? 0), 0);
+      totals.questions += 1;
+      totals.fivePass += passes(five) ? 1 : 0;
+      totals.stagedPass += passes(staged) ? 1 : 0;
+      totals.fiveCost += cost(runs);
+      totals.stagedCost += cost(stops ? runs.slice(0, FIRST_STAGE_RUNS) : runs);
+      if (stops) totals.stopped += 1;
+      if (passes(five) !== passes(staged) || five.status !== staged.status)
+        totals.changed.push(
+          `${result.question} ${five.status}${passes(five) ? " PASS" : ""} → ${staged.status}${passes(staged) ? " PASS" : ""}`,
+        );
+    }
+    if (!totals.questions) continue;
+    rows.push(totals);
+    console.log(
+      `${armId}: ${totals.questions} questions; pass ${totals.fivePass} five-run, ${totals.stagedPass} staged; ` +
+        `stopped at three on ${totals.stopped}; $${totals.fiveCost.toFixed(2)} → $${totals.stagedCost.toFixed(2)}`,
+    );
+    for (const line of totals.changed) console.log(`  changed: ${line}`);
+  }
+  return rows;
 }
 
 async function runQuestion(runtime, arm, question) {
@@ -316,7 +419,10 @@ async function main() {
     const index = args.indexOf(name);
     return index === -1 ? null : args[index + 1];
   };
-  if (args.includes("--rescore")) return rescore(option("--out") ?? path.join(EVAL_DIRECTORY, "results"));
+  if (args.includes("--staged"))
+    return stagedReport(option("--out") ?? path.join(EVAL_DIRECTORY, "results"), option("--set"));
+  if (args.includes("--rescore"))
+    return rescore(option("--out") ?? path.join(EVAL_DIRECTORY, "results"), option("--set"));
   const armId = option("--arm");
   if (!ARMS[armId]) throw new Error(`Choose --arm ${Object.keys(ARMS).join("|")}.`);
   // `--model` and `--set` are for tuning outside the frozen eval: a different model string on an

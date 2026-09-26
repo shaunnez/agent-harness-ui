@@ -1,0 +1,284 @@
+{
+  "question": "glass-kitchen-splashback",
+  "kind": "pinned",
+  "arm": "F10",
+  "status": "disputed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": null,
+  "range": null,
+  "unit": null,
+  "unitsDiffer": [
+    "m2 of finished splashback face (nominal quantity 4.32 m2)",
+    "NZD per m2 of finished splashback face measured on the wall (GST exclusive, Auckland CBD)",
+    "m2 of finished splashback face, and total for the 4.32 m2 nominal quantity"
+  ],
+  "agreement": {
+    "lowRatio": null,
+    "highRatio": null,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.2527,
+  "elapsedMs": 97487,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 49344,
+      "band": {
+        "unit": "m2 of finished splashback face (nominal quantity 4.32 m2)",
+        "low": 628,
+        "high": 736,
+        "centre": null,
+        "basis": "Sourced QV splashback rate adjusted for the 6mm gauge, $600-$660/m2 over 4.32 m2 = $2,592-$2,851, plus a labelled allowance for the 3 factory cutouts of $120-$330. Sum = $2,712-$3,181, i.e. $628-$736/m2, midpoint $682/m2 ($2,947). GST exclusive, subcontract rate to a main contractor, Auckland. The band is not wide for a rate this size: one unreviewed QV row carries ~92% of the value, so the width comes mainly from whether the QV row is a supply-and-fix or supply-only composite, plus the cutout allowance."
+      },
+      "checks": [
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 268919,
+        "outputTokens": 10908,
+        "cachedTokens": 207464,
+        "modelCalls": 10,
+        "toolCalls": 26,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.049156,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 268919,
+            "outputTokens": 10908,
+            "estimatedCostUsd": 0.049156,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 82742,
+      "band": {
+        "unit": "NZD per m2 of finished splashback face measured on the wall (GST exclusive, Auckland CBD)",
+        "low": 667,
+        "high": 803,
+        "centre": "Auckland",
+        "basis": "Sum of per-m2 components: 600 + 27.78 + 27.78 + 11.58 = $667/m2 low; 690 + 27.78 + 57.88 + 27.78 = $803/m2 high; midpoint approx $735/m2. For the 4.32 m2 nominal quantity: $2,882 - $3,471, midpoint approx $3,177. Every one-off cost (delivery/handling, protection/clean-off) is stated at its job rate with the quantity given as the fraction of one job per m2 (1 ÷ 4.32 = 0.2315), so no lump sum is left sitting inside a per-m2 band. QV row 2dc5b4497e75a669b63791e1bce6bc7b6b7822720171a44ad93080bdfe1b8237:t24:r32 (Glazed Splashbacks, colourbacking on low iron toughened, AKL 600/m2) supplies about 90% of the total; an Auckland-published $40 per cut-out covers the three factory cut-outs; the two allowances are about 6% of the low end, comfortably under a third. Not added again, to avoid double counting: the silicone fixing and perimeter seal (inside the QV supply-and-fix rate) and the site template/check-measure visit (assumed inside the same rate; if a glazier charges it separately add $145-$241, i.e. about $34-$56/m2, using QV Labour Rates Glazier AKL $96.40/hr x 1.5-2.5 hr). Excludes preliminaries, margin, GST, substrate work, removal of the existing splashback, and electrical or plumbing fit-off, per the fixed scope. Confidence is low, not because the main driver is unsourced, but because (a) the QV row is an unreviewed approximate rate whose inclusions are not stated and it is 5mm, (b) it sits well above two fetched NZ pages (Superior Renovations, Auckland: low iron glass from $400/m2; Houzz guide: coloured toughened glass about $400/m2 including installation and templating, plus about $40 per cut-out), so a market band nearer $450-$620/m2 is credible, and (c) at 4.32 m2 the job is near many Auckland glaziers' minimum charge, where the fixed components dominate the rate."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 462586,
+        "outputTokens": 21907,
+        "cachedTokens": 373140,
+        "modelCalls": 12,
+        "toolCalls": 28,
+        "searchCalls": 3,
+        "estimatedCostUsd": 0.083042,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 462586,
+            "outputTokens": 21907,
+            "estimatedCostUsd": 0.083042,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 97485,
+      "band": {
+        "unit": "m2 of finished splashback face (4.32 m2 total)",
+        "low": 715,
+        "high": 856,
+        "centre": null,
+        "basis": "Sum of the four components, all amortised over the 4.32 m2 nominal quantity: glass supply and fix 600-660/m2 (QV t24:r32, gauge-adjusted), cutouts 52.08-86.81/m2, template 34.72-57.87/m2, delivery/handling 27.78-50.93/m2. Total for 4.32 m2 = $3,087 (low) to $3,696 (high); midpoint $3,391. GST exclusive, no preliminaries, no main-contractor margin, Auckland. This is materially ABOVE the presented $460-$620/m2 band because the presented build uses a $330/m2 supply-only glass rate and prices install labour separately, whereas QV's installed 5mm low-iron colourbacked splashback rate is $600/m2 on its own. Do not average the two: one of them is not like-for-like. Fixed components (template, delivery, minimum install crew) carry about $115/m2 of the midpoint, so the rate does not fall at this quantity."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 110551,
+        "outputTokens": 9064,
+        "cachedTokens": 86066,
+        "modelCalls": 7,
+        "toolCalls": 18,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.028108,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 110551,
+            "outputTokens": 9064,
+            "estimatedCostUsd": 0.028108,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 89698,
+      "band": {
+        "unit": "m2",
+        "low": 710,
+        "high": 915,
+        "centre": "Auckland",
+        "basis": "Sum of cited QV rows and labelled allowances, divided by the 4.32 m2 finished splashback face (total $3,071 to $3,952, midpoint ~$3,510; per m2 $711 low / $915 high / $813 mid). Supply-and-fix glass dominates at ~84-77% of the band. The QV splashback row is a 5mm low-iron colourbacked entry standing in for 6mm, uplifted only at the high end, and its inclusions (edgework, cut-outs, templating, delivery, silicone) are unstated - that uncertainty plus the small-job minimum charge is why the band is wide. Allowances carry 13% of the low total and 20% of the high total, under a third, so the band is established. If the QV rate is confirmed comprehensive of all the added parts, the floor drops to ~$600/m2 ($2,592 total). Note this QV-sourced band sits above the submitted $460-620/m2, which was built on a ~$330/m2 supply-only glass rate; QV prices this item as a supplied-and-fixed splashback at $600/m2."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "allowance",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 3
+      },
+      "usage": {
+        "inputTokens": 152849,
+        "outputTokens": 10815,
+        "cachedTokens": 116390,
+        "modelCalls": 8,
+        "toolCalls": 25,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.036921,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 152849,
+            "outputTokens": 10815,
+            "estimatedCostUsd": 0.036921,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 68223,
+      "band": {
+        "unit": "m2 of finished splashback face, and total for the 4.32 m2 nominal quantity",
+        "low": 655.6,
+        "high": 851.8,
+        "centre": null,
+        "basis": "Auckland, NZD, GST exclusive, subcontractor supply-and-fix, no preliminaries, no margin, no design/consent fees. Sum of the six components: LOW = $2,832.00 ($655.6/m2) reads the QV splashback row as an all-inclusive finished-splashback rate and adds only the two items plainly outside it (cut-outs, delivery). HIGH = $3,679.56 ($851.8/m2) adds polished edges, perimeter sealing and the templating visit as separately priced published rows. TOTAL for 4.32 m2: low $2,832, high $3,680, midpoint $3,256 ($754/m2). Two warnings on this band: (1) 79% of the midpoint is one UNREVIEWED QV row whose inclusions are not itemised, which is the whole reason the low and high ends diverge; (2) that row sits materially above the only market cross-checks I could fetch for a splashback of this type ($400/m2 installed including templating, Houzz NZ; $335 + GST per installed panel, Haynes Glass Auckland), so a competitive tender for a 4.32 m2 one-off is likely to come in at or below the bottom of this band. If the QV row does include edges, sealing and templating, the band is $656-$744/m2 (low $2,832, high $3,212)."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "qv-found",
+        "allowance",
+        "qv-missing",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 4,
+        "rowsFound": 3,
+        "rowsMissing": 1,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 1,
+        "webUnsupported": 0,
+        "allowances": 2
+      },
+      "usage": {
+        "inputTokens": 156568,
+        "outputTokens": 17919,
+        "cachedTokens": 107086,
+        "modelCalls": 8,
+        "toolCalls": 23,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.055485,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 156568,
+            "outputTokens": 17919,
+            "estimatedCostUsd": 0.055485,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

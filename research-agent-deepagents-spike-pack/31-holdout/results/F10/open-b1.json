@@ -1,0 +1,274 @@
+{
+  "question": "open-b1",
+  "kind": "open",
+  "arm": "F10",
+  "status": "disputed",
+  "passes": false,
+  "passesTraced": false,
+  "consensus": null,
+  "range": null,
+  "unit": null,
+  "unitsDiffer": [
+    "total (complete fence job along the rear boundary), 40 m",
+    "total 40m rear boundary",
+    "item (complete 40 m rear-boundary paling fence job, GST excl.)"
+  ],
+  "agreement": {
+    "lowRatio": null,
+    "highRatio": null,
+    "runsWithBand": 3,
+    "runsTotal": 3
+  },
+  "costUsd": 0.1384,
+  "elapsedMs": 50743,
+  "runs": [
+    {
+      "run": "r1",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 46993,
+      "band": {
+        "unit": "total (complete fence job along the rear boundary), 40 m",
+        "low": 9240,
+        "high": 11024,
+        "centre": "Auckland",
+        "basis": "Sum of one QV complete-fence supply-and-install row (AKL 196/m x 40 m) and one QV demolition proxy for taking down/removing the old fence (AKL 25.4/m2 x 72 m2). Both GST exclusive, Auckland, priced on standard H3 paling fence, unpainted, level ground, normal rear access. Main driver (the new fence, ~80% of the band) rests on a cited QV row."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 105311,
+        "outputTokens": 5050,
+        "cachedTokens": 81674,
+        "modelCalls": 8,
+        "toolCalls": 20,
+        "searchCalls": 2,
+        "estimatedCostUsd": 0.020462,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 105311,
+            "outputTokens": 5050,
+            "estimatedCostUsd": 0.020462,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r2",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 23831,
+      "band": {
+        "unit": "total 40m rear boundary",
+        "low": 8840,
+        "high": 11000,
+        "centre": "Auckland",
+        "basis": "QV AKL rate for 1.8m 150x25 H3 paling fence ($196/m, widened to $225/m high for undecided spec) x 40m, plus web-sourced old-fence removal ($25–$50/m) x 40m. GST exclusive. Fence is a cited QV rate; removal is a fetched Auckland installer range; not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "web-verified"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 1,
+        "webVerified": 1,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 0
+      },
+      "usage": {
+        "inputTokens": 105678,
+        "outputTokens": 4602,
+        "cachedTokens": 76596,
+        "modelCalls": 6,
+        "toolCalls": 15,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.02206,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 105678,
+            "outputTokens": 4602,
+            "estimatedCostUsd": 0.02206,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r3",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 50742,
+      "band": {
+        "unit": "total (complete fence job along 40 m rear boundary, GST excl.)",
+        "low": 8440,
+        "high": 9670,
+        "centre": null,
+        "basis": "QV supply-and-install paling fence rate for 40 m (main driver, sourced) plus a labelled allowance for dismantling and removal of the old fence, which QV does not publish. Single sourced rate used as the spine; band width comes mainly from the removal allowance and the +8% allowance on the fence for an undecided heavier timber/paling spec."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 115686,
+        "outputTokens": 5927,
+        "cachedTokens": 87244,
+        "modelCalls": 9,
+        "toolCalls": 19,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.024253,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 115686,
+            "outputTokens": 5927,
+            "estimatedCostUsd": 0.024253,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r4",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 35132,
+      "band": {
+        "unit": "item (complete 40 m rear-boundary paling fence job, GST excl.)",
+        "low": 9055,
+        "high": 11270,
+        "centre": "Auckland",
+        "basis": "40 m x $196-216/m (QV timber paling fence, AKL, row t16:r5, high using r6 2000 mm row as a +10% spec/stain proxy) = $7,840-$8,640, plus take down and remove old fence 72 m2 x $12.70-25.40/m2 (QV partial demolition t5:r4 timber-framed proxy at 50-100%, disposal inside the rate) = $915-$1,830, plus $300-$800 access allowance. Equates to $226-$282 per metre of fence. GST excluded. Excludes gates, stain/paint finish, retaining, consent fees and landscaping. QV rows are unreviewed cost-plan rates, not a certified price."
+      },
+      "checks": [
+        "qv-found",
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 2,
+        "rowsFound": 2,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 173837,
+        "outputTokens": 9180,
+        "cachedTokens": 125836,
+        "modelCalls": 9,
+        "toolCalls": 18,
+        "searchCalls": 0,
+        "estimatedCostUsd": 0.039257,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 173837,
+            "outputTokens": 9180,
+            "estimatedCostUsd": 0.039257,
+            "priced": true
+          }
+        }
+      }
+    },
+    {
+      "run": "r5",
+      "status": "completed",
+      "error": null,
+      "elapsedMs": 29175,
+      "band": {
+        "unit": "total job (complete fence along 40 m rear boundary)",
+        "low": 8640,
+        "high": 10240,
+        "centre": "Auckland",
+        "basis": "QV paling-fence rate 196/m (widened to 216/m for undecided spec) x 40m = 7,840-8,640, plus a labelled allowance of 800-1,600 for take-down and removal of the old fence. GST exclusive, NZD. Main cost driver (the new fence) is a cited QV row; removal is a minor share carried as an allowance - confidence medium."
+      },
+      "dropped": true,
+      "checks": [
+        "qv-found",
+        "allowance"
+      ],
+      "citations": {
+        "rowsCited": 1,
+        "rowsFound": 1,
+        "rowsMissing": 0,
+        "rowsUnpriced": 0,
+        "webCited": 0,
+        "webVerified": 0,
+        "webNotFetched": 0,
+        "webExcerptRejected": 0,
+        "webDerived": 0,
+        "webUnsupported": 0,
+        "allowances": 1
+      },
+      "usage": {
+        "inputTokens": 114705,
+        "outputTokens": 7292,
+        "cachedTokens": 73314,
+        "modelCalls": 7,
+        "toolCalls": 21,
+        "searchCalls": 1,
+        "estimatedCostUsd": 0.032411,
+        "costBasis": "api_rate_estimate",
+        "partial": false,
+        "byModel": {
+          "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us": {
+            "inputTokens": 114705,
+            "outputTokens": 7292,
+            "estimatedCostUsd": 0.032411,
+            "priced": true
+          }
+        }
+      }
+    }
+  ]
+}

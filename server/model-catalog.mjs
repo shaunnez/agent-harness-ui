@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { DEFAULT_REPAIR_LIMITS } from "../src/repair-limits.ts";
-import { DEFAULT_RESEARCH_POLICIES } from "../src/research-policies.ts";
+import { DEFAULT_RESEARCH_POLICIES } from "@eversor/research-engine/engine/contracts/policies.ts";
 import {
   DEFAULT_CODEX_MODEL,
   DEFAULT_RUNTIME_MODEL,

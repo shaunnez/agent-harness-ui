@@ -9,11 +9,11 @@ import { createConnection } from "node:net";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { checkCostBandCitations } from "../server/research/engine/citations.mjs";
-import { openHostToolSession } from "../server/research/engine/host-tools/session.mjs";
-import { classifyToolError } from "../server/research/engine/host-tools/tool-errors.mjs";
-import { expiryOf, PlanCheckTokenSource } from "../server/research/plancheck-token.mjs";
-import { formatRow, PlanCheckQvSession, planCheckQvConfig } from "../server/research/qv-plancheck.mjs";
+import { checkCostBandCitations } from "@eversor/research-engine/engine/citations.mjs";
+import { openHostToolSession } from "@eversor/research-engine/engine/host-tools/session.mjs";
+import { classifyToolError } from "@eversor/research-engine/engine/host-tools/tool-errors.mjs";
+import { expiryOf, PlanCheckTokenSource } from "@eversor/research-engine/plancheck-token.mjs";
+import { formatRow, PlanCheckQvSession, planCheckQvConfig } from "@eversor/research-engine/qv-plancheck.mjs";
 
 const SHA = "78c8fd59161b9762a39ae3343a98a487a3973500676292e0de7fc9f254e869a4";
 const PAGE = "https://costbuilder.qv.co.nz/detailed-rates/doors/doors/";

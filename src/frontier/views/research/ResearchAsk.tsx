@@ -1,8 +1,8 @@
 import { ArrowRight, GearSix, WarningCircle } from "@phosphor-icons/react";
 import { useState } from "react";
 import type { RuntimeProject, RuntimeStatus } from "../../../domain";
-import { researchPoliciesOf } from "../../../research-policies";
-import { errorMessage } from "../../runtime/coordinator";
+import { researchPoliciesOf } from "@eversor/research-engine/engine/contracts/policies.ts";
+import { errorMessage } from "../../runtime/errors";
 import {
   type ResearchEngineSnapshot,
   type ResearchGateway,
@@ -29,6 +29,7 @@ export function ResearchAsk({
   project,
   research,
   status,
+  engine: givenEngine,
   connected,
   onAsked,
   onSettings,
@@ -37,6 +38,9 @@ export function ResearchAsk({
   project: RuntimeProject;
   research: ResearchGateway | undefined;
   status: RuntimeStatus | null;
+  /** The engine the runs will use, when the caller knows it (the research console asks its
+   *  service); otherwise it is read from the harness's Settings in `status`. */
+  engine?: ResearchEngineSnapshot;
   connected: boolean;
   onAsked(questionId: string): void;
   onSettings(): void;
@@ -49,7 +53,7 @@ export function ResearchAsk({
   // The draft scope, once drafted. Editing the question drops it: a scope answers one question.
   const [draft, setDraft] = useState<ResearchScopeDraft | null>(null);
   const [scopeFailed, setScopeFailed] = useState(false);
-  const engine = researchEngineFromSettings(status);
+  const engine = givenEngine ?? researchEngineFromSettings(status);
   async function scopeIt() {
     if (!research) return;
     setBusy("scoping");

@@ -5,13 +5,16 @@ import os from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
-import { createResearchRuntimeRegistry } from "../server/research/research-runtime-registry.mjs";
-import { ResearchService } from "../server/research/research-service.mjs";
-import { normalizePdfCapture, serializePdfSnapshot } from "../server/research/research-source-snapshots.mjs";
-import { ResearchStore } from "../server/research/research-store.mjs";
+import { createResearchRuntimeRegistry } from "@eversor/research-engine/research-runtime-registry.mjs";
+import { ResearchService } from "@eversor/research-engine/research-service.mjs";
+import {
+  normalizePdfCapture,
+  serializePdfSnapshot,
+} from "@eversor/research-engine/research-source-snapshots.mjs";
+import { ResearchStore } from "@eversor/research-engine/research-store.mjs";
 import { DATABASE_SCHEMA_VERSION, migrateSqliteSchema } from "../server/sqlite-storage.mjs";
 import { SqliteTaskStore } from "../server/sqlite-store.mjs";
-import { resolveResearchBudget } from "../src/research-budget-policy.ts";
+import { resolveResearchBudget } from "@eversor/research-engine/engine/contracts/budget-policy.ts";
 import { runToEnd, withResearchService, withResearchStore } from "./research-test-support.mjs";
 
 function requestFor(objective, profile = "standard") {
@@ -116,6 +119,14 @@ test("startup marks interrupted CLI work failed while retaining terminal runs", 
       request: requestFor("Interrupted live question"),
       budget,
     });
+    await store.updateRun(interrupted.id, (draft) => {
+      draft.status = "running";
+    });
+    const waiting = await store.createRun({
+      runtimeId: "claude-cli",
+      request: requestFor("Queued live question"),
+      budget,
+    });
     const completed = await store.createRun({
       runtimeId: "claude-cli",
       request: requestFor("Completed live question"),
@@ -130,6 +141,10 @@ test("startup marks interrupted CLI work failed while retaining terminal runs", 
     assert.equal(recovered.status, "failed");
     assert.equal(recovered.error.code, "companion_interrupted");
     assert.equal(recovered.usage.partial, true);
+    // Still queued when the companion stopped: it never started, so its question may retry it.
+    const neverStarted = await store.getRun(waiting.id);
+    assert.equal(neverStarted.status, "failed");
+    assert.equal(neverStarted.error.code, "interrupted_before_start");
     assert.equal((await store.getRun(completed.id)).status, "completed");
   });
 });

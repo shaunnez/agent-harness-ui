@@ -1,4 +1,4 @@
-import { createResearchSchema } from "./research/research-schema.mjs";
+import { createResearchSchema } from "@eversor/research-engine/research-schema.mjs";
 import { decodePageCursor, encodePageCursor, normalizePageLimit } from "./task-projections.mjs";
 import { createWorkspaceHistorySchema } from "./workspace-history.mjs";
 

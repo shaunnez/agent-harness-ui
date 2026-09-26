@@ -2,7 +2,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
-import { parseResearchProviderConfig } from "../server/research/research-provider-contracts.mjs";
+import { parseResearchProviderConfig } from "@eversor/research-engine/research-provider-contracts.mjs";
 
 const manifestPath = fileURLToPath(new URL("./research-provider-acceptance-cases.json", import.meta.url));
 const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
