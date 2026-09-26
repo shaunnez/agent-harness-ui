@@ -1,4 +1,5 @@
 import path from "node:path";
+import { searchCacheKey } from "./engine/tool-cache.mjs";
 import { validateMarket } from "./research-provider-contracts.mjs";
 import { disclaimerFor, locatePassage } from "./research-quote-figures.mjs";
 import {
@@ -71,6 +72,7 @@ export class ResearchWebTools {
   #ledgers;
   #closed = false;
   #pdfExtractor;
+  #toolCache;
 
   constructor({
     runId,
@@ -97,6 +99,8 @@ export class ResearchWebTools {
     // Reads a PDF's physical pages locally (`research-pdf-text.mjs`). Absent, a PDF can only be
     // read through a capture provider, which is the behaviour every caller had before it.
     pdfExtractor = null,
+    // Searches and captures shared with other runs (`engine/tool-cache.mjs`). Null fetches afresh.
+    toolCache = null,
   }) {
     // Optional: a runtime whose model has its own search (the Claude CLI's `WebSearch`) uses
     // these tools only to retain and verify, and passes none. `web_search` then fails as a tool
@@ -140,6 +144,7 @@ export class ResearchWebTools {
     this.#maxUniqueCaptures = maxUniqueCaptures;
     this.#ledgers = providerLedgers.filter(Boolean);
     this.#pdfExtractor = pdfExtractor;
+    this.#toolCache = toolCache;
     this.#startedAtMs = Date.now();
   }
 
@@ -247,13 +252,20 @@ export class ResearchWebTools {
       throw new ResearchToolError("invalid_tool_input", error.message);
     }
     let response;
+    let cached = null;
     try {
-      response = await this.#searchProvider.search(query, {
-        market,
-        maxResults: MAX_SEARCH_RESULTS,
-        signal: this.#signal,
-        remainingMs: this.#remainingMs(),
-      });
+      const search = () =>
+        this.#searchProvider.search(query, {
+          market,
+          maxResults: MAX_SEARCH_RESULTS,
+          signal: this.#signal,
+          remainingMs: this.#remainingMs(),
+        });
+      if (this.#toolCache) {
+        const answer = await this.#toolCache.remember("search", searchCacheKey(query, market), search);
+        response = answer.value;
+        if (answer.hit) cached = answer.storedAt;
+      } else response = await search();
     } catch (error) {
       if (this.#deadlineController?.signal.aborted) throw this.#deadlineError(error?.attempt);
       throw asToolError(error, "search_failed", "Web search failed.");
@@ -285,6 +297,8 @@ export class ResearchWebTools {
       ...(response?.metadata ?? {}),
       requestedMarket: market,
       resultCount: results.length,
+      // Answered from another run's identical search, fetched at this time; nothing was spent.
+      ...(cached ? { cachedAt: cached } : {}),
     };
     this.#searchMetadata.push(metadata);
     this.#onEvent("log", { message: "Web search completed.", search: metadata });
@@ -329,26 +343,14 @@ export class ResearchWebTools {
 
   async #captureAndRetain(requestedUrl, sourceId) {
     let captured;
-    if (this.#captureProvider) {
-      try {
-        captured = await this.#captureProvider.capture(requestedUrl, {
-          maxPdfPages: this.#providerConfig.maxPdfPages,
-          signal: this.#signal,
-          remainingMs: this.#remainingMs(),
-        });
-      } catch (error) {
-        if (this.#deadlineController?.signal.aborted) throw this.#deadlineError(error?.attempt);
-        const neverFallback = [
-          "cancelled",
-          "deadline_exceeded",
-          "budget_exhausted",
-          "policy_rejected",
-        ].includes(error?.category);
-        if (neverFallback || !error?.fallbackEligible || /\.pdf(?:$|[?#])/i.test(requestedUrl))
-          throw asToolError(error, error?.category ?? "capture_failed", "Source capture failed.");
-        captured = await this.#localCapture(requestedUrl, error?.attempt ? [error.attempt] : []);
-      }
-    } else captured = await this.#localCapture(requestedUrl);
+    let cachedAt = null;
+    if (this.#toolCache) {
+      // Keyed by the URL and the page cap, which is all a capture depends on.
+      const key = `${normalizeRequestedUrl(requestedUrl)}\n${this.#providerConfig.maxPdfPages ?? ""}`;
+      const answer = await this.#toolCache.remember("capture", key, () => this.#capture(requestedUrl));
+      captured = answer.value;
+      if (answer.hit) cachedAt = answer.storedAt;
+    } else captured = await this.#capture(requestedUrl);
     if (this.#deadlineController?.signal.aborted) throw this.#deadlineError();
     if (this.#closed || this.#signal?.aborted)
       throw new ResearchToolError("research_cancelled", "The research run was cancelled.");
@@ -363,6 +365,9 @@ export class ResearchWebTools {
       ...(captured.metadata ?? {}),
       snapshotRef: snapshot.snapshotRef,
       ...(isPdf ? { snapshotFormat: PDF_SNAPSHOT_FORMAT } : {}),
+      // Captured by another run at this time and retained here from that capture: the page text,
+      // and so every quote checked against it, is exactly what that capture read.
+      ...(cachedAt ? { cachedCaptureAt: cachedAt } : {}),
     };
     const source = {
       id: sourceId,
@@ -395,6 +400,32 @@ export class ResearchWebTools {
       coverage: retained.pdf?.coverage ?? "complete",
       pages: retained.pdf ? retained.pdf.pages.map((page) => page.pageNumber) : null,
     };
+  }
+
+  /** One capture of a page, by the capture provider or on this machine. */
+  async #capture(requestedUrl) {
+    let captured;
+    if (this.#captureProvider) {
+      try {
+        captured = await this.#captureProvider.capture(requestedUrl, {
+          maxPdfPages: this.#providerConfig.maxPdfPages,
+          signal: this.#signal,
+          remainingMs: this.#remainingMs(),
+        });
+      } catch (error) {
+        if (this.#deadlineController?.signal.aborted) throw this.#deadlineError(error?.attempt);
+        const neverFallback = [
+          "cancelled",
+          "deadline_exceeded",
+          "budget_exhausted",
+          "policy_rejected",
+        ].includes(error?.category);
+        if (neverFallback || !error?.fallbackEligible || /\.pdf(?:$|[?#])/i.test(requestedUrl))
+          throw asToolError(error, error?.category ?? "capture_failed", "Source capture failed.");
+        captured = await this.#localCapture(requestedUrl, error?.attempt ? [error.attempt] : []);
+      }
+    } else captured = await this.#localCapture(requestedUrl);
+    return captured;
   }
 
   async #localCapture(url, priorAttempts = []) {
