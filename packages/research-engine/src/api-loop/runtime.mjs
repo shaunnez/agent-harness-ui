@@ -30,6 +30,7 @@ import {
   runChatLoop,
 } from "./chat-loop.mjs";
 import { connectHostTools } from "./host-client.mjs";
+import { PrefixWarmer } from "./prefix-warmer.mjs";
 import { resolveApiModel } from "./providers.mjs";
 
 export const API_LOOP_RESEARCH_RUNTIME_ID = "api-loop";
@@ -92,7 +93,13 @@ function loopTools() {
   }));
 }
 
-export function apiLoopDriver({ env = process.env, fetchImpl = globalThis.fetch, pacer = null } = {}) {
+export function apiLoopDriver({
+  env = process.env,
+  fetchImpl = globalThis.fetch,
+  pacer = null,
+  // One per runtime: a question's runs all start in the process that asked it.
+  warmer = new PrefixWarmer(),
+} = {}) {
   return Object.freeze({
     label: "API loop",
     transcript: { kind: "api-loop-transcript", name: "API loop JSON transcript" },
@@ -106,7 +113,18 @@ export function apiLoopDriver({ env = process.env, fetchImpl = globalThis.fetch,
       allowedTools: allowedTools.join(","),
       costBasis: "api_rate_estimate",
     }),
-    async call({ session, budget, model, systemPrompt, objective, signal, onEvent, onRawLine, onCeiling }) {
+    async call({
+      session,
+      budget,
+      model,
+      reasoning,
+      systemPrompt,
+      objective,
+      signal,
+      onEvent,
+      onRawLine,
+      onCeiling,
+    }) {
       resolveApiModel(model);
       if (!session?.qv)
         throw new Error(
@@ -130,6 +148,8 @@ export function apiLoopDriver({ env = process.env, fetchImpl = globalThis.fetch,
           onCeiling,
           fetchImpl,
           pacer,
+          warmer,
+          reasoning,
         });
       } finally {
         await host.close().catch(() => undefined);
@@ -150,6 +170,9 @@ export class ApiLoopResearchRuntime extends HostedResearchRuntime {
     webToolsOptions = {},
     fetchImpl = globalThis.fetch,
     pacer = null,
+    // Holds a question's later runs until the first has warmed the provider's prompt cache
+    // (`prefix-warmer.mjs`). Pass null to start every run at once, as the recorded arms did.
+    warmer = new PrefixWarmer(),
     ...options
   } = {}) {
     const searchProvider =
@@ -164,7 +187,7 @@ export class ApiLoopResearchRuntime extends HostedResearchRuntime {
       env,
       webToolsOptions: { ...webToolsOptions, ...(searchProvider ? { searchProvider } : {}) },
       pacer,
-      driver: apiLoopDriver({ env, fetchImpl, pacer }),
+      driver: apiLoopDriver({ env, fetchImpl, pacer, warmer }),
     });
     this.#env = env;
     this.#searchReady = Boolean(searchProvider);

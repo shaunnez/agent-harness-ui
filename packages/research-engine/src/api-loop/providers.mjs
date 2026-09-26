@@ -46,6 +46,13 @@ export const API_LOOP_PROVIDERS = Object.freeze({
     // thinking (A10 and F10 averaged about 2k output tokens a call, tool calls included), so ask.
     // Its prompt cache needs no session header: a repeated prefix is read from cache as it is.
     requestDefaults: Object.freeze({ reasoning_effort: "high" }),
+    // The levels a run or call may ask for instead. `off` is DeepInfra's `none`, which it
+    // honours; the scoper, one tools-less JSON call, asks for it.
+    reasoning: Object.freeze({
+      high: Object.freeze({ reasoning_effort: "high" }),
+      max: Object.freeze({ reasoning_effort: "max" }),
+      off: Object.freeze({ reasoning_effort: "none" }),
+    }),
     rates: { "deepseek-ai/DeepSeek-V4.1-Flash": { input: 0.2, output: 0.6, cacheRead: 0.006 } },
   }),
   baseten: Object.freeze({
@@ -71,6 +78,16 @@ export function resolveApiModel(model) {
         .join(" or ")}.`,
     );
   return { providerId, provider, remoteModel: text.slice(slash + 1) };
+}
+
+/**
+ * The request fields for a reasoning level on this provider. Null and "default" add nothing, so
+ * the provider's `requestDefaults` answer. A level the provider cannot set (every provider but
+ * DeepInfra thinks as it always has) also adds nothing: the call is made as before, never refused.
+ */
+export function reasoningSettings(provider, level) {
+  if (level == null || level === "default") return {};
+  return provider.reasoning?.[level] ?? {};
 }
 
 /** The API-rate estimate for a run's summed usage, or null when the model has no rate here. */
