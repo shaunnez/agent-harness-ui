@@ -594,7 +594,6 @@ function SettingsEditor({
           {section === "research" && (
             <ResearchSettings
               value={draft.researchPolicies}
-              status={editingStatus}
               busy={busy}
               onChange={(researchPolicies) => update({ ...draft, researchPolicies })}
             />

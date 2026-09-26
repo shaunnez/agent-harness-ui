@@ -1,8 +1,7 @@
-// One run's host tools, opened and closed together: the `ResearchWebTools` that does the work,
-// the socket bridge the CLI's relay calls into, and the `--mcp-config` entry that points the
-// CLI at the relay. A runtime asks for a session per run and closes it when the run ends.
+// One run's host tools, opened and closed together: the `ResearchWebTools` that does the work and
+// the socket bridge the model loop calls into. A runtime asks for a session per run and closes it
+// when the run ends.
 
-import process from "node:process";
 import { QV_TOOL_NAMES } from "../../qv-plancheck.mjs";
 import { extractPdfPages } from "../../research-pdf-text.mjs";
 import { DEFAULT_RESEARCH_SOURCE_DIRECTORY, ResearchWebTools } from "../../research-web-tools.mjs";
@@ -19,18 +18,11 @@ export async function openHostToolSession({
   captureProvider = null,
   providerLedgers = [],
   webToolsOptions = {},
-  nodeBin = process.execPath,
-  relayPath = undefined,
   emit = () => {},
   onTerminal = () => {},
   // PlanCheck's rate library (`PlanCheckQvSession`), when it answers the QV tools instead of the
-  // local capture. Its calls go through the same bridge, outside the web tools' budget, as the
-  // local capture's calls always were.
+  // local capture. Its calls go through the same bridge, outside the web tools' budget.
   qv = null,
-  // Tools answered by a handler the runtime sets once the run is under way (`setHandler`), such
-  // as the pack runtime's `request_evidence`. Exposed on the bridge from the start; a call before
-  // its handler is set is refused.
-  lateTools = [],
 }) {
   const webTools = new ResearchWebTools({
     runId,
@@ -43,7 +35,7 @@ export async function openHostToolSession({
     // PDFs are read on this machine. Pricing schedules are published as PDFs, and without this
     // the agent's only route to one was a paid capture provider.
     pdfExtractor: extractPdfPages,
-    // `tool.called` is dropped: the CLI stream already reports every tool call, with the id
+    // `tool.called` is dropped: the model loop already reports every tool call, with the id
     // that correlates it to its result, and a second copy from here would double-count them.
     // Everything else — above all `source.retrieved` with the retained snapshot — is the
     // host's own evidence and is the authoritative record of what was fetched.
@@ -53,23 +45,16 @@ export async function openHostToolSession({
     ...webToolsOptions,
   });
   const qvTools = qv ? QV_TOOL_NAMES : [];
-  const handlers = new Map();
   const invoker = {
-    invoke: async (tool, input) => {
-      if (lateTools.includes(tool)) {
-        const handler = handlers.get(tool);
-        if (!handler) throw new Error(`Tool "${tool}" is not available yet.`);
-        return { result: await handler(input) };
-      }
-      return qvTools.includes(tool) ? qv.invoke(tool, input) : webTools.invoke(tool, input);
-    },
+    invoke: async (tool, input) =>
+      qvTools.includes(tool) ? qv.invoke(tool, input) : webTools.invoke(tool, input),
   };
   let bridge;
   try {
     bridge = await openHostToolBridge({
       directory,
       webTools: invoker,
-      tools: [...tools, ...qvTools, ...lateTools],
+      tools: [...tools, ...qvTools],
       onTerminal,
       onLog: (message) => emit("log", { message }),
     });
@@ -81,14 +66,8 @@ export async function openHostToolSession({
   return {
     webTools,
     qv,
-    mcpEntry: tools.length ? { nodeBin, relayPath, socketPath: bridge.socketPath, tools: [...tools] } : null,
-    qvEntry: qv ? { nodeBin, relayPath, socketPath: bridge.socketPath, tools: [...qvTools] } : null,
-    /** A relay entry for exactly these tools, on this run's socket. */
-    entryFor: (names) => ({ nodeBin, relayPath, socketPath: bridge.socketPath, tools: [...names] }),
-    setHandler(tool, handler) {
-      if (!lateTools.includes(tool)) throw new Error(`"${tool}" was not declared when the session opened.`);
-      handlers.set(tool, handler);
-    },
+    /** The run's host-tool socket (`../../api-loop/host-client.mjs` connects to it). */
+    socketPath: bridge.socketPath,
     terminal: () => bridge.terminal(),
     /** Close the socket and settle provider accounting. Safe to call twice. */
     async close() {

@@ -90,8 +90,8 @@ export interface ResearchRequest {
 export type ResearchRunPolicy =
   | {
       source: "settings-default" | "settings-for-named-runtime";
-      runtime: "claude-cli" | "codex-cli" | "opencode-cli";
-      provider: "claude" | "codex" | "opencode";
+      runtime: "claude-cli" | "codex-cli" | "opencode-cli" | "api-loop";
+      provider: "claude" | "codex" | "opencode" | "api";
       model: string;
       reasoning: string;
     }

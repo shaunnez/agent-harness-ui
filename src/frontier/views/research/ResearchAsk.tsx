@@ -189,9 +189,9 @@ export function ResearchAsk({
           </p>
           {research?.mode === "live" ? (
             <p className="sample-note">
-              Scoping calls GPT-6 Luna on your ChatGPT plan and starts nothing. Asking starts{" "}
-              {runs === 5 ? "five runs" : runs === 3 ? "three runs" : "one run"} on your plan with the engine
-              shown. Three Claude runs measured about 2½ minutes and $4–5 of plan usage.
+              Scoping is one DeepSeek call and starts nothing. Asking starts{" "}
+              {runs === 5 ? "five runs" : runs === 3 ? "three runs" : "one run"} on the API loop. Five runs
+              measured about 10 minutes and $0.15 a question at API rates on the eval.
             </p>
           ) : (
             <p className="sample-note">

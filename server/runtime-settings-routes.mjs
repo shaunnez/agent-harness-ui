@@ -104,11 +104,13 @@ export function createRuntimeSettingsRoutes({
       );
       // Research runs have their own engine and model, never a delivery role's. Absent from the
       // request means unchanged, so a client that predates the section cannot reset it.
+      // A choice sent is checked as sent, so an invalid one is refused rather than read as the default.
+      const researchIssue =
+        input.researchPolicies === undefined ? null : researchPoliciesIssue(input.researchPolicies);
+      if (researchIssue) throw new Error(researchIssue);
       const researchPolicies = researchPoliciesOf(
         input.researchPolicies === undefined ? currentSettings : input,
       );
-      const researchIssue = researchPoliciesIssue(researchPolicies, [...known.values()], allowedModels);
-      if (researchIssue) throw new Error(researchIssue);
       const settings = await store.updateSettings((draft) => {
         draft.allowedModels = allowedModels;
         draft.defaultModel = defaultModel;

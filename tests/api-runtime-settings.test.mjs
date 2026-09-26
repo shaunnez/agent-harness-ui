@@ -218,12 +218,12 @@ test("accepts an all-Claude default matrix, the shape the settings editor's prov
   }
 });
 
-test("the research agent's engine and model save through Settings, and a mismatched model is refused", async () => {
+test("the research agent's model saves through Settings, and a delivery model or retired engine is refused", async () => {
   const { directory, origin, server } = await createServer();
   try {
     const current = (await (await fetch(`${origin}/api/settings`)).json()).settings;
-    // DeepSeek on OpenCode by default since the 24 September eval (`30-EVAL-RESULT.md`).
-    assert.equal(current.researchPolicies.agent.runtime, "opencode-cli");
+    // DeepSeek on the API loop, the only research engine since 26 September 2026.
+    assert.equal(current.researchPolicies.agent.runtime, "api-loop");
     assert.equal(current.researchPolicies.agent.model, "opencode-go/deepseek-v4.1-flash");
     const save = (researchPolicies) =>
       fetch(`${origin}/api/settings`, {
@@ -236,22 +236,32 @@ test("the research agent's engine and model save through Settings, and a mismatc
           researchPolicies,
         }),
       });
-    const codex = {
-      ...current.researchPolicies,
-      agent: { runtime: "codex-cli", provider: "codex", model: "gpt-6-sol", reasoning: "high" },
+    const baseten = {
+      agent: {
+        runtime: "api-loop",
+        provider: "api",
+        model: "baseten/deepseek-ai/DeepSeek-V4.1-Flash",
+        reasoning: "default",
+      },
     };
-    const saved = await save(codex);
+    const saved = await save(baseten);
     assert.equal(saved.status, 200);
-    assert.deepEqual((await saved.json()).settings.researchPolicies.agent, codex.agent);
+    assert.deepEqual((await saved.json()).settings.researchPolicies, baseten);
     // Delivery defaults are untouched by a research choice.
     assert.equal(
       (await (await fetch(`${origin}/api/settings`)).json()).settings.defaultModel,
       current.defaultModel,
     );
 
-    const mismatched = await save({ ...codex, agent: { ...codex.agent, model: "claude-opus-5-5" } });
+    // A delivery model, or a retired engine, is refused rather than saved as the default.
+    const mismatched = await save({ agent: { ...baseten.agent, model: "claude-opus-5-5" } });
     assert.equal(mismatched.status, 400);
-    assert.match((await mismatched.json()).error, /needs a Codex model/);
+    assert.match((await mismatched.json()).error, /API loop's research models/);
+    const retired = await save({
+      agent: { runtime: "codex-cli", provider: "codex", model: "gpt-6-sol", reasoning: "high" },
+    });
+    assert.equal(retired.status, 400);
+    assert.match((await retired.json()).error, /API loop only/);
   } finally {
     await cleanup(server, directory);
   }

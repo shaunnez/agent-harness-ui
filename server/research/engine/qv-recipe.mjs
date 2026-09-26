@@ -1,52 +1,20 @@
-// The recipe behind all 90 recorded runs: one agent, one system prompt, one local corpus tool
-// server, plus web search. Ported from `14c-run-research.sh`, `14b-mcp.json` and
-// `14d-system-prompt.txt` without changing what the model is asked or what it may reach.
+// The QV recipe's shared parts: which host tools a run gets, where the local capture lives (read
+// only to re-check recorded runs), and how the answer is read back out of the final text.
 //
-// A "recipe" is the domain-specific half of a CLI research run — the system prompt, the tool
-// server, the allowed-tool list, and how to read the answer back out of the final text. The
-// runtime itself knows none of it: keeping the two apart is what lets a second corpus be added
-// later without touching process handling, and it is why the cost-band schema below does not
-// appear in `runtime.mjs`.
-//
-// The output schema is a single ```json fence the system prompt asks for. Reading the answer
-// out of prose is not ideal, but it is what produced 28 bands across 30 scenarios, and phase 1
-// exists to reproduce that number rather than to improve on the mechanism.
+// The output schema is a single ```json fence the system prompt asks for.
 
 import path from "node:path";
 import process from "node:process";
-import { fileURLToPath } from "node:url";
-import { allowedToolName, HOST_TOOL_SERVER_NAME } from "./host-tools/definitions.mjs";
-import { parseFinalJsonFence } from "./stream.mjs";
+import { parseFinalJsonFence } from "./final-answer.mjs";
 
-export const QV_SYSTEM_PROMPT_PATH = fileURLToPath(new URL("./qv-system-prompt.txt", import.meta.url));
-export const QV_CORPUS_SERVER_PATH = fileURLToPath(new URL("./qv-corpus-server.py", import.meta.url));
-
-/** The host tools this recipe exposes: enough to retain a web page and quote it, and no
- *  more. `web_search` is absent because the CLI's own `WebSearch` already discovers pages on
- *  the subscription; `submit_finding` is absent because this recipe's answer is the final
- *  fence, and its citations are checked after the run (`citations.mjs`). */
+/** The host tools every run gets: enough to retain a web page and quote it. */
 export const QV_HOST_TOOLS = ["fetch_source", "read_source"];
-
-/** The four tools `14c-run-research.sh` lists, in its order, then the two host tools.
- *  `--allowed-tools` is the only gate on what the agent may reach: everything absent from this
- *  list is unavailable regardless of what else the operator has configured. `WebFetch` is
- *  absent on purpose — a page is read through `fetch_source`, which retains it, or not at all. */
-export const QV_ALLOWED_TOOLS = [
-  "mcp__qv__search_qv",
-  "mcp__qv__get_qv_table",
-  "mcp__qv__list_qv_sections",
-  "WebSearch",
-  ...QV_HOST_TOOLS.map(allowedToolName),
-];
-
-export const HOST_TOOL_RELAY_PATH = fileURLToPath(new URL("./host-tools/mcp-server.mjs", import.meta.url));
 
 export const QV_INDEX_ENV_VAR = "RESEARCH_QV_INDEX";
 
 /** Where the licensed local capture lives. Required, never defaulted: a run that silently
  *  searched an empty corpus would fall back to the web for everything and produce a plausible
- *  band from the wrong source of resort — the same class of failure as falling back to a fake
- *  model, and just as invisible in the output. */
+ *  band from the wrong source of resort. */
 export function resolveCorpusIndexPath(env = process.env, override = null) {
   const configured = override ?? env[QV_INDEX_ENV_VAR];
   if (!configured)
@@ -54,34 +22,6 @@ export function resolveCorpusIndexPath(env = process.env, override = null) {
       `No priced-rate capture is configured. Set ${QV_INDEX_ENV_VAR} to the indexed-items.jsonl of the local capture.`,
     );
   return path.resolve(configured);
-}
-
-/** The `--mcp-config` document. The corpus server, dependency-free, reading the capture path
- *  from argv so nothing about it is baked into the file; and, when the run has a host tool
- *  socket, the relay that reaches it. */
-export function qvMcpConfig({
-  pythonBin = "python3",
-  serverPath = QV_CORPUS_SERVER_PATH,
-  indexPath,
-  hostTools = null,
-  qvRelay = null,
-}) {
-  // PlanCheck's rate library is answered by the host, so `qv` is then the relay, with the same
-  // tool names; otherwise it is the local capture's own server.
-  const mcpServers = {
-    qv: qvRelay
-      ? {
-          command: qvRelay.nodeBin ?? process.execPath,
-          args: [qvRelay.relayPath ?? HOST_TOOL_RELAY_PATH, qvRelay.socketPath, qvRelay.tools.join(",")],
-        }
-      : { command: pythonBin, args: [serverPath, indexPath] },
-  };
-  if (hostTools)
-    mcpServers[HOST_TOOL_SERVER_NAME] = {
-      command: hostTools.nodeBin ?? process.execPath,
-      args: [hostTools.relayPath ?? HOST_TOOL_RELAY_PATH, hostTools.socketPath, hostTools.tools.join(",")],
-    };
-  return { mcpServers };
 }
 
 // --- reading the answer back ----------------------------------------------------------------

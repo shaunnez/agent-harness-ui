@@ -5,24 +5,15 @@
 // run decided for itself what was being priced. Here one cheap, tools-less call decides that once,
 // the operator can correct it, and every run is given the same pinned text.
 //
-// One call, no tools, JSON only. GPT-6 Luna on the ChatGPT plan through `codex exec`, with Haiku
-// 4.5 on the Claude subscription as the fallback when Codex cannot answer at all. Neither path
-// holds an API key: the CLIs' own auth gates run first, and their environments are built from
-// allowlists (`codex-cli/auth.mjs`, `claude-cli/auth.mjs`).
-//
+// One call, no tools, JSON only, to DeepSeek through the same chat API and key the API loop uses
+// (Shaun, 26 September 2026: research runs on the API loop alone, no Claude or Codex CLI).
+
 // The reply is parsed strictly. A scope that is not the schema is an error, never a guess: a
 // wrong scope pinned onto three runs is worse than none, because it makes them agree.
 
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
-import os from "node:os";
-import path from "node:path";
 import process from "node:process";
-import { runProcess } from "../process-runtime.mjs";
-import { assertSubscriptionAuth } from "./claude-cli/auth.mjs";
-import { buildClaudeEnvironment, classifyCall, runClaudeCall } from "./claude-cli/cli-call.mjs";
-import { EMPTY_OUTPUT_ERROR_CODE } from "./claude-cli/driver.mjs";
-import { assertChatGptAuth } from "./codex-cli/auth.mjs";
-import { classifyCodexCall, runCodexCall } from "./codex-cli/codex-call.mjs";
+import { chatOnceWithRetries } from "./api-loop/chat-loop.mjs";
+import { DEFAULT_API_LOOP_MODEL } from "./api-loop/runtime.mjs";
 
 /** The measures a band can be priced in, named as `unitMeasure` names them, so a run's band and
  *  the scope compare directly. */
@@ -36,9 +27,8 @@ export const SCOPE_MEASURES = Object.freeze([
   "per time",
 ]);
 
-export const DEFAULT_SCOPE_MODEL = "gpt-6-luna";
-export const DEFAULT_SCOPE_REASONING = "medium";
-export const FALLBACK_SCOPE_MODEL = "claude-haiku-4-5";
+/** The research agent's own model unless `RESEARCH_SCOPE_MODEL` names another API-loop model. */
+export const DEFAULT_SCOPE_MODEL = DEFAULT_API_LOOP_MODEL;
 
 const SCOPE_TIMEOUT_MS = 120_000;
 const MAX_TEXT = 400;
@@ -139,135 +129,46 @@ export function scopedObjective(objective, scope) {
 
 /**
  * The scoper. `scope({objective})` returns `{scope, scopedBy, usage}`; `scopedBy` names the
- * runtime and model that answered. Codex (Luna) first; Claude (Haiku) only when Codex could not
- * answer at all, never when it answered badly: a malformed scope is reported, not retried
- * elsewhere until something parses.
+ * runtime and model that answered. A malformed scope is reported, never retried until something
+ * parses.
  */
 export class ResearchScoper {
   #env;
-  #run;
-  #drivers;
+  #model;
+  #fetchImpl;
 
-  constructor({ env = process.env, run = runProcess, drivers = null } = {}) {
+  /** `env` holds the provider key (the companion passes the API loop's own copy). */
+  constructor({ env = process.env, model = null, fetchImpl = globalThis.fetch } = {}) {
     this.#env = env;
-    this.#run = run;
-    this.#drivers = drivers ?? [codexScopeDriver(env), claudeScopeDriver(env)];
+    this.#model = model ?? env.RESEARCH_SCOPE_MODEL ?? DEFAULT_SCOPE_MODEL;
+    this.#fetchImpl = fetchImpl;
   }
 
   async scope({ objective, signal } = {}) {
     const text = String(objective ?? "").trim();
     if (!text) throw new ScopeError("Write the question to scope.", { code: "scope_empty", statusCode: 400 });
-    const unavailable = [];
-    for (const driver of this.#drivers) {
-      let reply;
-      try {
-        reply = await driver.call({ objective: text, run: this.#run, env: this.#env, signal });
-      } catch (error) {
-        unavailable.push(`${driver.label}: ${error?.message ?? String(error)}`);
-        continue;
-      }
-      return {
-        scope: parseScope(reply.text),
-        scopedBy: { runtime: driver.runtime, model: driver.model, reasoning: driver.reasoning ?? null },
-        usage: reply.usage ?? null,
-      };
+    let reply;
+    try {
+      reply = await chatOnceWithRetries({
+        env: this.#env,
+        model: this.#model,
+        systemPrompt: SCOPE_SYSTEM_PROMPT,
+        prompt: text,
+        timeoutMs: SCOPE_TIMEOUT_MS,
+        signal,
+        fetchImpl: this.#fetchImpl,
+      });
+    } catch (error) {
+      throw new ScopeError(`The scoper could not answer: ${error?.message ?? String(error)}`, {
+        code: "scope_unavailable",
+        statusCode: 503,
+      });
     }
-    throw new ScopeError(`No scoper could answer. ${unavailable.join(" ")}`, {
-      code: "scope_unavailable",
-      statusCode: 503,
-    });
-  }
-}
-
-/** GPT-6 Luna through `codex exec`, with no tools, no web search and no shell. */
-export function codexScopeDriver(env, { binary = null } = {}) {
-  const model = env.RESEARCH_SCOPE_MODEL ?? DEFAULT_SCOPE_MODEL;
-  const reasoning = env.RESEARCH_SCOPE_REASONING ?? DEFAULT_SCOPE_REASONING;
-  return {
-    label: "Codex",
-    runtime: "codex-cli",
-    model,
-    reasoning,
-    async call({ objective, run, env: callEnv, signal }) {
-      const { binary: resolved } = await assertChatGptAuth({ binary, run });
-      return inTemporaryDirectory(async (cwd) => {
-        let text = "";
-        const call = await runCodexCall({
-          run,
-          binary: resolved,
-          env: callEnv,
-          cwd,
-          objective,
-          model,
-          reasoning,
-          systemPrompt: SCOPE_SYSTEM_PROMPT,
-          mcpConfig: null,
-          allowedTools: [],
-          timeoutMs: SCOPE_TIMEOUT_MS,
-          signal,
-          onRawLine: (line) => {
-            const parsed = safeJson(line);
-            if (parsed?.type === "item.completed" && parsed.item?.type === "agent_message")
-              text = String(parsed.item.text ?? parsed.item.content ?? "");
-          },
-        });
-        const verdict = classifyCodexCall(call);
-        if (!verdict.ok) throw new Error(verdict.error.message);
-        return { text, usage: call.usage };
-      });
-    },
-  };
-}
-
-/** Haiku 4.5 through `claude -p`, on the subscription, with an empty tool list. */
-export function claudeScopeDriver(env, { binary = null } = {}) {
-  const model = env.RESEARCH_SCOPE_FALLBACK_MODEL ?? FALLBACK_SCOPE_MODEL;
-  return {
-    label: "Claude",
-    runtime: "claude-cli",
-    model,
-    reasoning: null,
-    async call({ objective, run, env: callEnv, signal }) {
-      const { binary: resolved } = await assertSubscriptionAuth({ binary, run });
-      return inTemporaryDirectory(async (cwd) => {
-        const mcpConfigPath = path.join(cwd, "mcp.json");
-        await writeFile(mcpConfigPath, JSON.stringify({ mcpServers: {} }));
-        const call = await runClaudeCall({
-          run,
-          binary: resolved,
-          // Built from the same allowlist as a research run: no ANTHROPIC_API_KEY, no base URL.
-          env: buildClaudeEnvironment(callEnv, cwd),
-          cwd,
-          objective,
-          model,
-          systemPrompt: SCOPE_SYSTEM_PROMPT,
-          mcpConfigPath,
-          allowedTools: [],
-          timeoutMs: SCOPE_TIMEOUT_MS,
-          signal,
-        });
-        const verdict = classifyCall(call, { emptyOutputCode: EMPTY_OUTPUT_ERROR_CODE });
-        if (!verdict.ok) throw new Error(verdict.error.message);
-        return { text: String(call.resultLine?.result ?? call.finalText ?? ""), usage: call.usage };
-      });
-    },
-  };
-}
-
-async function inTemporaryDirectory(work) {
-  const directory = await mkdtemp(path.join(os.tmpdir(), "research-scope-"));
-  try {
-    return await work(directory);
-  } finally {
-    await rm(directory, { recursive: true, force: true }).catch(() => undefined);
-  }
-}
-
-function safeJson(line) {
-  try {
-    return JSON.parse(line);
-  } catch {
-    return null;
+    return {
+      scope: parseScope(reply.text),
+      scopedBy: { runtime: "api-loop", model: this.#model, reasoning: null },
+      usage: reply.usage ?? null,
+    };
   }
 }
 

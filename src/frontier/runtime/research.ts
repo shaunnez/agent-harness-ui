@@ -88,7 +88,7 @@ export interface ResearchRunRecord {
 }
 
 export interface ResearchEngineSnapshot {
-  runtime: "claude-cli" | "codex-cli" | "opencode-cli";
+  runtime: "claude-cli" | "codex-cli" | "opencode-cli" | "api-loop";
   model: string;
   reasoning: string | null;
 }
@@ -214,7 +214,8 @@ export interface ResearchScope {
 
 /** Which model drafted a scope; `operator` when the operator wrote it, `sample` in fixture mode. */
 export type ResearchScopedBy =
-  | { runtime: "codex-cli" | "claude-cli"; model: string; reasoning: string | null }
+  // Codex and Claude drafted scopes before 26 September 2026; stored scopes keep their label.
+  | { runtime: "api-loop" | "codex-cli" | "claude-cli"; model: string; reasoning: string | null }
   | { runtime: "operator" }
   | { runtime: "sample" };
 
@@ -232,7 +233,9 @@ export function scopedByLabel(scopedBy: ResearchScopedBy | null | undefined) {
       ? "GPT-6 Luna"
       : scopedBy.model === "claude-haiku-4-5"
         ? "Haiku 4.5"
-        : scopedBy.model;
+        : scopedBy.model.endsWith("deepseek-v4.1-flash") || scopedBy.model.endsWith("DeepSeek-V4.1-Flash")
+          ? "DeepSeek 4.1 Flash"
+          : scopedBy.model;
   return `Drafted by ${model}`;
 }
 
@@ -338,6 +341,7 @@ export function researchEngineLabel(engine: ResearchEngineSnapshot) {
       "gpt-6-sol": "GPT-6 Sol",
       "gpt-6-luna": "GPT-6 Luna",
       "opencode-go/deepseek-v4.1-flash": "DeepSeek 4.1 Flash",
+      "baseten/deepseek-ai/DeepSeek-V4.1-Flash": "DeepSeek 4.1 Flash",
     }[engine.model] ?? engine.model;
   const reasoning = engine.reasoning
     ? engine.reasoning === "xhigh"
@@ -349,6 +353,8 @@ export function researchEngineLabel(engine: ResearchEngineSnapshot) {
 
 export function researchEnginePlan(engine: ResearchEngineSnapshot) {
   if (engine.runtime === "opencode-cli") return "OpenCode CLI · OpenCode Go plan";
+  if (engine.runtime === "api-loop")
+    return engine.model.startsWith("baseten/") ? "API loop · Baseten API" : "API loop · OpenCode Go API";
   return engine.runtime === "codex-cli" ? "Codex CLI · ChatGPT plan" : "Claude CLI · Claude plan";
 }
 

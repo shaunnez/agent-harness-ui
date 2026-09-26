@@ -6,7 +6,7 @@
 // three-run agreement rule and nothing else: no model is asked whether its runs agree.
 
 import { createHash } from "node:crypto";
-import { agreementForRuns, TIGHT_HIGH_RATIO, TIGHT_LOW_RATIO } from "./claude-cli/agreement.mjs";
+import { agreementForRuns, TIGHT_HIGH_RATIO, TIGHT_LOW_RATIO } from "./engine/agreement.mjs";
 import { gradeQuestion } from "./research-question-grade.mjs";
 
 const ACTIVITY_PER_RUN = 80;
@@ -381,9 +381,11 @@ function provenanceNote(run, question) {
       ? "the ChatGPT plan"
       : run?.runtimeId === "opencode-cli"
         ? "the OpenCode Go plan"
-        : run?.runtimeId === "claude-cli"
-          ? "the Claude plan"
-          : `the ${run?.runtimeId ?? "unknown"} runtime`;
+        : run?.runtimeId === "api-loop"
+          ? "the API loop, on a provider API key"
+          : run?.runtimeId === "claude-cli"
+            ? "the Claude plan"
+            : `the ${run?.runtimeId ?? "unknown"} runtime`;
   const origin =
     question.source?.kind === "external"
       ? `Raised by ${question.source.provider} request ${question.source.requestId}`

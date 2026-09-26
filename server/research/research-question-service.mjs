@@ -20,7 +20,7 @@ const MAX_SOURCE_FIELD = 200;
 const EVENTS_PER_RUN = 500;
 /** What a run's own objective may hold (`ResearchService`), question and pinned scope together. */
 const MAX_RUN_OBJECTIVE_LENGTH = 4_000;
-const SCOPER_RUNTIMES = new Set(["codex-cli", "claude-cli"]);
+const SCOPER_RUNTIMES = new Set(["api-loop"]);
 
 export class ResearchQuestionService {
   #questions;
@@ -155,7 +155,8 @@ export class ResearchQuestionService {
     const current = await this.#record(question);
     if (current.status === "running" || current.status === "queued")
       throw conflict("A question can be reviewed once its runs have finished.");
-    if (current.retryable) throw conflict("Retry the runs that failed to start before reviewing this question.");
+    if (current.retryable)
+      throw conflict("Retry the runs that failed to start before reviewing this question.");
     if (String(input?.evidenceSha ?? "") !== current.evidenceSha)
       throw conflict("The evidence changed while you were reviewing. Reload it and review again.");
     this.#questions.addReview(question.id, {
@@ -279,7 +280,8 @@ function scopedByOf(value) {
   if (!value || typeof value !== "object" || !SCOPER_RUNTIMES.has(value.runtime))
     return { runtime: "operator" };
   const model = String(value.model ?? "").trim();
-  if (!/^[a-z0-9][a-z0-9.-]{0,63}$/.test(model)) return { runtime: "operator" };
+  // Provider-qualified, as the API loop names models: opencode-go/deepseek-v4.1-flash.
+  if (!/^[A-Za-z0-9][A-Za-z0-9./-]{0,79}$/.test(model)) return { runtime: "operator" };
   const reasoning = value.reasoning == null ? null : String(value.reasoning).slice(0, 20);
   return { runtime: value.runtime, model, reasoning };
 }

@@ -1,5 +1,5 @@
-// The API loop's side of a run's host-tool socket: the same one-line JSON protocol the CLIs' MCP
-// relay speaks (`../claude-cli/host-tools/bridge.mjs`), so every tool call passes the same
+// The API loop's side of a run's host-tool socket: the one-line JSON protocol the bridge speaks
+// (`../engine/host-tools/bridge.mjs`), so every tool call passes the same
 // exposure check, error classification, repeat-call strikes and terminal stop as a CLI's would.
 
 import { createConnection } from "node:net";

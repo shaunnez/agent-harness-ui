@@ -6,7 +6,7 @@
 // September): one run in three making a mistake the other two did not, which turns a question
 // the runs otherwise agree on into a dispute.
 
-import { parseCostBand } from "./claude-cli/qv-recipe.mjs";
+import { parseCostBand } from "./engine/qv-recipe.mjs";
 import { unitMeasure } from "./research-question-record.mjs";
 
 /** A band whose high end is more than this multiple of its low end is not an estimate. Replayed on

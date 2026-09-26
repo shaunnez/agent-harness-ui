@@ -349,7 +349,7 @@ test("Parallel search is called with the key on the host and its excerpts become
 });
 
 test("a PDF quote without a page is checked on the page the host finds it on, and only there", async () => {
-  const { checkCostBandCitations } = await import("../server/research/claude-cli/citations.mjs");
+  const { checkCostBandCitations } = await import("../server/research/engine/citations.mjs");
   const seen = [];
   const webTools = {
     locatePdfPage: (_sourceId, excerpt) => (excerpt === "Butt Joint $40" ? 7 : null),
@@ -409,4 +409,18 @@ test("the host checks a final answer once and hands its problems back before acc
   assert.equal(feedback.role, "user");
   assert.match(feedback.content, /1\. Too wide\./);
   assert.match(call.finalText, /"low":60/);
+});
+
+test("an API-loop run without its keys fails before it starts, naming the keys", async () => {
+  const { ApiLoopResearchRuntime } = await import("../server/research/api-loop/runtime.mjs");
+  const request = {
+    id: "RSCH-KEYS",
+    objective: "Concrete paving slab, per m2.",
+    researchPolicy: { runtime: "api-loop", model: "baseten/deepseek-ai/DeepSeek-V4.1-Flash" },
+  };
+  await assert.rejects(new ApiLoopResearchRuntime({ env: {} }).start(request), /BASETEN_API_KEY and PARALLEL_API_KEY/);
+  await assert.rejects(
+    new ApiLoopResearchRuntime({ env: { BASETEN_API_KEY: "test" } }).start(request),
+    /needs PARALLEL_API_KEY in the companion's environment/,
+  );
 });

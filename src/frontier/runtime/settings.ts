@@ -84,5 +84,5 @@ export function settingsIssue(input: SettingsInput, status: RuntimeStatus): stri
   for (const [provider, policy] of Object.entries(input.designPolicies))
     if (!valid(policy.model, policy.reasoning, policy.provider))
       return `${provider} needs an allowed provider model and supported effort.`;
-  return researchPoliciesIssue(input.researchPolicies, models, input.allowedModels);
+  return researchPoliciesIssue(input.researchPolicies);
 }
