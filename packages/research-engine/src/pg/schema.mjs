@@ -146,6 +146,54 @@ const MIGRATIONS = [
       CREATE INDEX research_questions_project_idx ON research_questions(project_id, created_at DESC, id DESC);
     `,
   },
+  {
+    version: 2,
+    name: "shared tool answers",
+    sql: `
+      -- Searches, captured pages and QV reads shared across runs (engine/tool-cache.mjs). Keyed by
+      -- a hash of what was asked; the value is the provider's answer as JSON.
+      CREATE TABLE research_tool_cache (
+        kind TEXT COLLATE "C" NOT NULL,
+        key_sha256 TEXT COLLATE "C" NOT NULL,
+        stored_at TEXT COLLATE "C" NOT NULL,
+        value_json TEXT NOT NULL,
+        PRIMARY KEY (kind, key_sha256)
+      );
+      CREATE INDEX research_tool_cache_age_idx ON research_tool_cache(stored_at);
+    `,
+  },
+  {
+    version: 3,
+    name: "staged runs and answer reuse",
+    sql: `
+      -- As in SQLite (research-schema.mjs): a staged five-run question, and the hash of what a
+      -- question asked, by which a later identical ask may be answered.
+      ALTER TABLE research_questions ADD COLUMN runs_staged INTEGER;
+      ALTER TABLE research_questions ADD COLUMN answer_key TEXT COLLATE "C";
+      CREATE INDEX research_questions_answer_idx ON research_questions(answer_key, created_at DESC);
+    `,
+  },
+  {
+    version: 4,
+    name: "shared pacing",
+    sql: `
+      -- One pacing decision across the service's workers (engine/pacer-sync.mjs). Times are epoch
+      -- milliseconds: they are compared, never shown.
+      CREATE TABLE research_pacer (
+        key TEXT COLLATE "C" PRIMARY KEY,
+        lim INTEGER NOT NULL,
+        successes INTEGER NOT NULL,
+        cooldown_until BIGINT NOT NULL,
+        halved_until BIGINT NOT NULL
+      );
+      CREATE TABLE research_pacer_workers (
+        key TEXT COLLATE "C" NOT NULL,
+        worker_id TEXT COLLATE "C" NOT NULL,
+        seen_at BIGINT NOT NULL,
+        PRIMARY KEY (key, worker_id)
+      );
+    `,
+  },
 ];
 
 /** The version the code expects. */

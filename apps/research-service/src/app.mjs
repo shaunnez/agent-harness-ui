@@ -9,12 +9,16 @@ import {
   ApiLoopResearchRuntime,
 } from "@eversor/research-engine/api-loop/runtime.mjs";
 import { AdaptivePacer } from "@eversor/research-engine/engine/pacer.mjs";
+import { PacerSync } from "@eversor/research-engine/engine/pacer-sync.mjs";
+import { ToolCache } from "@eversor/research-engine/engine/tool-cache.mjs";
+import { PgPacerStore } from "@eversor/research-engine/pg/pacer-store.mjs";
 import {
   PgResearchProjectStore,
   PgResearchQuestionStore,
 } from "@eversor/research-engine/pg/question-store.mjs";
 import { PgResearchStore } from "@eversor/research-engine/pg/research-store.mjs";
 import { migrateResearchSchema } from "@eversor/research-engine/pg/schema.mjs";
+import { PgToolCacheStore } from "@eversor/research-engine/pg/tool-cache-store.mjs";
 import { ResearchQuestionService } from "@eversor/research-engine/research-question-service.mjs";
 import { createResearchRuntimeRegistry } from "@eversor/research-engine/research-runtime-registry.mjs";
 import { ResearchScoper } from "@eversor/research-engine/research-scope.mjs";
@@ -31,12 +35,20 @@ export async function createResearchServiceApp({ config, env, runtime = null, sc
     const projects = new PgResearchProjectStore(db);
     await projects.ensure(config.project);
     const pacer = new AdaptivePacer(config.pacing);
+    // Every worker on this database shares one limit for the provider's account.
+    const pacerSync = new PacerSync({ pacer, store: new PgPacerStore(db, { key: config.provider }) });
     const runs = new PgResearchStore(db, { sourceSnapshotDirectory: config.sourceSnapshotDirectory });
+    // Every worker shares one set of searches, pages and QV reads, and a restart keeps them.
+    const toolCache = new ToolCache({
+      store: new PgToolCacheStore(db, { keepMs: config.toolCacheTtlMs }),
+      ttlMs: config.toolCacheTtlMs,
+    });
     const engine =
       runtime ??
       new ApiLoopResearchRuntime({
         env: { ...env, RESEARCH_API_LOOP_MODEL: config.model },
         pacer,
+        toolCache,
         maxConcurrentRuns: config.pacing.max,
         transcriptDirectory: config.transcriptDirectory,
         sourceSnapshotDirectory: config.sourceSnapshotDirectory,
@@ -62,8 +74,12 @@ export async function createResearchServiceApp({ config, env, runtime = null, sc
       runs,
       projects: () => projects.list(),
       scoper: scoper === undefined ? new ResearchScoper({ env, model: config.model, pacer }) : scoper,
+      // PlanCheck sends the same tender lines again; an identical line answered recently is
+      // answered by that question rather than five more runs.
+      reuseAnswersForMs: config.reuseAnswersForMs,
     });
     await research.recoverInterrupted();
+    await questions.resumeStaged();
     const batches = new BatchStore(db);
     const requeued = await batches.recover();
     if (requeued) log("batch items requeued after a restart", { items: requeued });
@@ -76,13 +92,25 @@ export async function createResearchServiceApp({ config, env, runtime = null, sc
       intervalMs: config.workerIntervalMs,
       log,
     });
-    const server = createServiceServer({ config, batches, questions, research, projects, pacer, db, log });
+    const pacing = { snapshot: () => ({ ...pacer.snapshot(), shared: pacerSync.snapshot() }) };
+    const server = createServiceServer({
+      config,
+      batches,
+      questions,
+      research,
+      projects,
+      pacer: pacing,
+      db,
+      log,
+    });
     pacer.onChange((limit) => log("pacing changed", { limit, ...pacer.snapshot() }));
 
     return {
       config,
       db,
       pacer,
+      pacerSync,
+      toolCache,
       research,
       questions,
       batches,
@@ -93,11 +121,14 @@ export async function createResearchServiceApp({ config, env, runtime = null, sc
           server.once("error", reject);
           server.listen(config.port, config.host, resolve);
         });
+        await pacerSync.sync();
+        pacerSync.start();
         worker.start();
         return server.address();
       },
       async close() {
         await worker.stop();
+        await pacerSync.stop();
         await new Promise((resolve) => server.close(() => resolve()));
         await research.shutdown();
         await db.close();

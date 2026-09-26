@@ -10,6 +10,7 @@ import { withProjectKind } from "./project-policy.mjs";
 import { startPullRequestPolling } from "./pull-request-poller.mjs";
 import { API_LOOP_KEY_VARS } from "@eversor/research-engine/api-loop/providers.mjs";
 import { ApiLoopResearchRuntime } from "@eversor/research-engine/api-loop/runtime.mjs";
+import { ToolCache } from "@eversor/research-engine/engine/tool-cache.mjs";
 import { FakeResearchRuntime } from "@eversor/research-engine/fake-research-runtime.mjs";
 import { ResearchQuestionService } from "@eversor/research-engine/research-question-service.mjs";
 import { ResearchQuestionStore } from "@eversor/research-engine/research-question-store.mjs";
@@ -109,7 +110,8 @@ const researchService = jsonStore
       settings: () => store.settings(),
       registry: createResearchRuntimeRegistry([
         new FakeResearchRuntime(),
-        new ApiLoopResearchRuntime({ env: apiLoopEnv }),
+        // A question's runs share their searches, pages and QV reads for a day, in this process.
+        new ApiLoopResearchRuntime({ env: apiLoopEnv, toolCache: new ToolCache() }),
       ]),
     });
 await researchService?.recoverInterrupted();
@@ -123,6 +125,9 @@ const researchQuestions = researchService
       scoper: new ResearchScoper({ env: apiLoopEnv }),
     })
   : null;
+// A five-run question starts three and adds two only when they disagree; one whose first three
+// finished while the companion was down gets its other two now.
+await researchQuestions?.resumeStaged();
 const configuredPullRequestPollIntervalMs = Number(process.env.AGENT_HARNESS_GITHUB_POLL_MS ?? 30_000);
 const pullRequestPollIntervalMs = Number.isFinite(configuredPullRequestPollIntervalMs)
   ? Math.max(5_000, configuredPullRequestPollIntervalMs)
