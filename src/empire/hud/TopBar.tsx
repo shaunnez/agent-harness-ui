@@ -2,28 +2,50 @@ import {
   Bread,
   Coins,
   Diamond,
+  FilmSlate,
   Gear,
   Handshake,
   ListBullets,
+  Moon,
   Mountains,
   Scroll,
+  Sun,
+  SunHorizon,
   Sword,
   Tree,
   TreeStructure,
   UsersThree,
 } from "@phosphor-icons/react";
 import type { WindowId } from "../EmpireApp";
+import { type LightMode, lightModes, worldClock } from "../map/lighting";
 import { type Campaign, ageOf, ages, formatTokens, must } from "../realm";
+import { useEffect, useState } from "react";
 
 export function TopBar({
   campaigns,
   selected,
   onOpen,
+  onReplay,
+  light,
+  onLight,
 }: {
   campaigns: Campaign[];
   selected: Campaign | null;
   onOpen: (id: WindowId) => void;
+  onReplay: () => void;
+  light: LightMode;
+  onLight: (mode: LightMode) => void;
 }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 20000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const nextLight = () => {
+    const index = lightModes.findIndex((m) => m.id === light);
+    onLight(lightModes[(index + 1) % lightModes.length]?.id ?? "auto");
+  };
+  const LightIcon = light === "night" ? Moon : light === "dusk" ? SunHorizon : Sun;
   const totals = campaigns.reduce(
     (sum, c) => ({
       input: sum.input + c.tokens.input,
@@ -101,6 +123,18 @@ export function TopBar({
         <span className="ae-age-sub">{selected ? `${selected.id} · ${age.motto}` : "Furthest campaign"}</span>
       </div>
       <nav className="ae-topnav" aria-label="Realm menus">
+        <button
+          type="button"
+          className="ae-clock"
+          onClick={nextLight}
+          title="Time of day, this browser only: Cycle (one real hour per day), Day, Dusk, Night"
+        >
+          <LightIcon weight="fill" /> <span>{worldClock(light, now)}</span>
+          <small>{lightModes.find((m) => m.id === light)?.label}</small>
+        </button>
+        <button type="button" onClick={onReplay} title="Replay a sample campaign's march (R)">
+          <FilmSlate /> <span>Replay</span>
+        </button>
         <button type="button" onClick={() => onOpen("ledger")} title="Campaign ledger (L)">
           <ListBullets /> <span>Ledger</span>
         </button>

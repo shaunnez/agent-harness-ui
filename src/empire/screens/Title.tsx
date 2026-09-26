@@ -1,4 +1,4 @@
-import { Crown, Diamond, Scroll, Sword, TreeStructure } from "@phosphor-icons/react";
+import { Crown, FilmSlate, Diamond, Scroll, Sword, TreeStructure } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import type { WindowId } from "../EmpireApp";
 
@@ -11,7 +11,15 @@ const embers = Array.from({ length: 28 }, (_, i) => ({
   },
 }));
 
-export function Title({ onEnter, onOpen }: { onEnter: () => void; onOpen: (id: WindowId) => void }) {
+export function Title({
+  onEnter,
+  onOpen,
+  onReplay,
+}: {
+  onEnter: () => void;
+  onOpen: (id: WindowId) => void;
+  onReplay: () => void;
+}) {
   const [ready, setReady] = useState(false);
   useEffect(() => {
     const timer = window.setTimeout(() => setReady(true), 300);
@@ -40,6 +48,9 @@ export function Title({ onEnter, onOpen }: { onEnter: () => void; onOpen: (id: W
         <nav className="ae-title-menu">
           <button type="button" className="is-primary" onClick={onEnter}>
             <Crown weight="fill" /> Enter the realm
+          </button>
+          <button type="button" onClick={onReplay}>
+            <FilmSlate /> Watch a campaign march
           </button>
           <button type="button" onClick={() => onOpen("muster")}>
             <Sword /> Muster armies

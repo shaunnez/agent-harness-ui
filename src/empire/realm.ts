@@ -1,7 +1,10 @@
 // The realm model: Frontier's fixture projects, tasks and policies re-read as an Age-of-Empires world.
 // Everything here is derived from the recorded sample data; nothing is invented about task state.
 import type { RolePolicyId, RuntimeTask, StageId } from "../domain.ts";
+import { projectTaskAttention } from "../../server/task-attention.mjs";
 import { fixtureProjects, makeFixtureTasks } from "../frontier/fixtures/scenarios.ts";
+import { enrichWorkflowScenarios } from "../frontier/fixtures/workflow-scenarios.ts";
+import type { Attention } from "../frontier/runtime/contracts.ts";
 import { fixtureSettings } from "../frontier/fixtures/settings.ts";
 import { policyRoles } from "../frontier/runtime/policies.ts";
 
@@ -307,6 +310,15 @@ export function unitFor(model: string | null | undefined): UnitType {
   if (id.includes("deepseek")) return must(unitTypes[3]);
   return must(unitTypes[0]);
 }
+export type UnitKindId = "villager" | "man-at-arms" | "knight" | "paladin" | "scholar" | "monk" | "envoy";
+/** The sprite a model fields on the map. */
+export function unitKindFor(model: string | null | undefined): UnitKindId {
+  const unit = unitFor(model).unit;
+  if (unit === "Knight") return "knight";
+  if (unit === "Paladin") return "paladin";
+  if (unit === "Scholar") return "scholar";
+  return "man-at-arms";
+}
 export const rankFor = (reasoning: string | null | undefined) =>
   must(ranks.find((rank) => rank.id === reasoning) ?? ranks[2]);
 
@@ -382,8 +394,15 @@ export const postureStyle: Record<Posture, { label: string; color: string; glyph
   done: { label: "Victory", color: "#7bc46b", glyph: "✦" },
 };
 
+/** Frontier's sample tasks with its richer workflow scenarios: review findings, test rows, a 12-package plan. */
+export function sampleTasks(): (RuntimeTask & { attention: Attention })[] {
+  const tasks = makeFixtureTasks() as RuntimeTask[];
+  enrichWorkflowScenarios(tasks);
+  return tasks.map((task) => ({ ...task, attention: projectTaskAttention(task) }));
+}
+
 export function makeCampaigns(kingdoms: Kingdom[]): Campaign[] {
-  return makeFixtureTasks().map((task) => {
+  return sampleTasks().map((task) => {
     const kingdom = must(kingdoms.find((item) => item.repository === task.repositoryPath) ?? kingdoms[0]);
     const runs = task.runs ?? [];
     return {

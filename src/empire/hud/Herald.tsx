@@ -12,10 +12,12 @@ interface Line {
 export function Herald({
   campaigns,
   kingdoms,
+  replayLines,
   onPick,
 }: {
   campaigns: Campaign[];
   kingdoms: Kingdom[];
+  replayLines: string[] | null;
   onPick: (id: string) => void;
 }) {
   const lines = useMemo<Line[]>(() => {
@@ -68,6 +70,16 @@ export function Herald({
     return () => window.clearTimeout(timer);
   }, [shown, lines.length]);
   const visible = lines.slice(Math.max(0, shown - 5), shown);
+  if (replayLines)
+    return (
+      <div className="ae-herald" aria-live="polite">
+        {replayLines.slice(-5).map((text) => (
+          <span key={text} className="ae-herald-line ae-herald--replay">
+            Replay · {text}
+          </span>
+        ))}
+      </div>
+    );
   return (
     <div className="ae-herald" aria-live="polite">
       {visible.map((line) => (

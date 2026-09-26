@@ -113,7 +113,8 @@ export const exploredAt = (world: World, x: number, y: number) =>
   world.explored[clampTile(y) * N + clampTile(x)] ?? 0;
 
 export const ringRadius = 8.6;
-const stageAngle = (index: number, count: number) => (135 + (index * 360) / count) * (Math.PI / 180);
+export const roadRadius = 5.3;
+export const stageAngle = (index: number, count: number) => (135 + (index * 360) / count) * (Math.PI / 180);
 export const researchStations: { kind: Placed["kind"]; name: string }[] = [
   { kind: "scope", name: "Scoping Tent" },
   { kind: "lodge", name: "Explorers' Lodge" },
@@ -218,7 +219,7 @@ export function buildWorld(kingdoms: Kingdom[]): World {
     const ring: { x: number; y: number }[] = [];
     for (let i = 0; i <= 40; i++) {
       const a = (i / 40) * Math.PI * 2;
-      ring.push({ x: ox + 0.5 + Math.cos(a) * 5.3, y: oy + 0.5 + Math.sin(a) * 5.3 });
+      ring.push({ x: ox + 0.5 + Math.cos(a) * roadRadius, y: oy + 0.5 + Math.sin(a) * roadRadius });
     }
     road(ring, 0.5);
     paths.push({ id: `ring-${kingdom.id}`, points: ring, kind: "ring" });
@@ -259,18 +260,24 @@ export function buildWorld(kingdoms: Kingdom[]): World {
       reserve(x, y, size / 2 + 1.4);
       road(
         [
-          { x: ox + 0.5 + Math.cos(a) * 5.3, y: oy + 0.5 + Math.sin(a) * 5.3 },
+          { x: ox + 0.5 + Math.cos(a) * roadRadius, y: oy + 0.5 + Math.sin(a) * roadRadius },
           { x: x - Math.cos(a) * (size / 2), y: y - Math.sin(a) * (size / 2) },
         ],
         0.35,
       );
       if (station.kind === "workshop") {
-        // Walled package yards beyond the workshop: one per work package.
-        for (let p = 0; p < 4; p++) {
-          const pa = a + (p - 1.5) * 0.22;
-          const px = ox + 0.5 + Math.cos(pa) * (ringRadius + 3.6);
-          const py = oy + 0.5 + Math.sin(pa) * (ringRadius + 3.6);
+        // Walled package yards beyond the workshop, two rows of four: one per work package.
+        for (let p = 0; p < 8; p++) {
+          const row = Math.floor(p / 4);
+          const pa = a + ((p % 4) - 1.5) * (row ? 0.19 : 0.25);
+          const px = ox + 0.5 + Math.cos(pa) * (ringRadius + 3.6 + row * 3.2);
+          const py = oy + 0.5 + Math.sin(pa) * (ringRadius + 3.6 + row * 3.2);
           plots.push({ kingdomId: kingdom.id, x: px, y: py, index: p });
+          // Yards on the shore get reclaimed land beneath them.
+          for (let yy = Math.floor(py - 1.4); yy <= py + 1.4; yy++)
+            for (let xx = Math.floor(px - 1.4); xx <= px + 1.4; xx++)
+              if (inside(xx, yy) && ["deep", "water", "shallow"].includes(tiles[idx(xx, yy)] ?? ""))
+                tiles[idx(xx, yy)] = "sand";
           paint(px, py, 0.7, "plaza");
           reserve(px, py, 1.2);
         }
@@ -340,7 +347,7 @@ export function buildWorld(kingdoms: Kingdom[]): World {
   for (const kingdom of kingdoms) {
     const o = { x: kingdom.origin.x + 0.5, y: kingdom.origin.y + 0.5 };
     const dir = Math.atan2(market.y - o.y, market.x - o.x);
-    const start = { x: o.x + Math.cos(dir) * 5.3, y: o.y + Math.sin(dir) * 5.3 };
+    const start = { x: o.x + Math.cos(dir) * roadRadius, y: o.y + Math.sin(dir) * roadRadius };
     const bend = kingdom.research
       ? { x: market.x + 4, y: o.y - 1 }
       : { x: start.x + (market.x - start.x) * 0.5, y: start.y };
@@ -364,12 +371,13 @@ export function buildWorld(kingdoms: Kingdom[]): World {
     id: "sea-lane",
     kind: "sea",
     points: [
-      { x: 72.5, y: 17 },
-      { x: 73, y: 11 },
-      { x: 74, y: 8.2 },
-      { x: 77.5, y: 12 },
-      { x: 76.5, y: 19 },
-      { x: 72.5, y: 17 },
+      { x: 76.5, y: 27 },
+      { x: 75.5, y: 18 },
+      { x: 74.6, y: 12.5 },
+      { x: 74.5, y: 11.2 },
+      { x: 77.5, y: 14 },
+      { x: 78, y: 22 },
+      { x: 76.5, y: 27 },
     ],
   });
 

@@ -1,9 +1,5 @@
-import { ArrowCounterClockwise, Gavel, SealCheck, Wrench } from "@phosphor-icons/react";
-import { useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { ArrowCounterClockwise, SealCheck, Wrench } from "@phosphor-icons/react";
 import { stageIds } from "../../domain";
-import type { UnitKind } from "../map/paint";
 import { UnitPortrait } from "../hud/Portrait";
 import {
   type Campaign,
@@ -15,13 +11,10 @@ import {
   postureStyle,
   rankFor,
   unitFor,
+  unitKindFor,
 } from "../realm";
+import { Council, Scrolls, Yards } from "./parts";
 import { Window } from "./Window";
-
-const kindOf = (model: string): UnitKind => {
-  const u = unitFor(model).unit;
-  return u === "Knight" ? "knight" : u === "Paladin" ? "paladin" : "man-at-arms";
-};
 
 export function Chronicle({
   campaign: c,
@@ -38,11 +31,7 @@ export function Chronicle({
   const banner = kingdom?.banner ?? "#999";
   const style = postureStyle[c.posture];
   const building = buildingFor(c.stage);
-  const [decrees, setDecrees] = useState<Record<string, string>>({});
   const grill = c.task.grillSession;
-  const artifacts = c.task.artifacts ?? [];
-  const [artifactId, setArtifactId] = useState(artifacts[0]?.id ?? null);
-  const artifact = artifacts.find((a) => a.id === artifactId);
   const prototype = (what: string) => notify(`${what} — prototype only: no task was changed.`);
 
   return (
@@ -165,91 +154,9 @@ export function Chronicle({
             )}
           </section>
 
-          {grill && (
-            <section className="ae-parchment">
-              <div className="ae-eyebrow">
-                <Gavel /> The Council · {grill.questions.length} question
-                {grill.questions.length === 1 ? "" : "s"}
-              </div>
-              {grill.questions.map((q) => {
-                const answer = q.answer ?? decrees[q.id];
-                return (
-                  <article key={q.id} className={`ae-council-q${answer ? " is-answered" : ""}`}>
-                    <h4>
-                      {q.id}. {q.question}
-                    </h4>
-                    <p className="ae-muted">{q.whyItMatters}</p>
-                    {answer ? (
-                      <p className="ae-decree">
-                        Decree: <b>{answer}</b> {!q.answer && <em>(this tab only)</em>}
-                      </p>
-                    ) : (
-                      <div className="ae-options">
-                        {q.options.map((o) => (
-                          <button
-                            type="button"
-                            key={o.id}
-                            className={`ae-option${o.recommended ? " is-recommended" : ""}`}
-                            onClick={() => setDecrees((d) => ({ ...d, [q.id]: o.label }))}
-                          >
-                            <b>
-                              {o.label} {o.recommended && <span className="ae-tag">Counsel recommends</span>}
-                            </b>
-                            <span>{o.description}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </article>
-                );
-              })}
-            </section>
-          )}
-
-          {c.packages.length > 0 && (
-            <section className="ae-parchment">
-              <div className="ae-eyebrow">Workshop yards · {c.packages.length} packages</div>
-              <div className="ae-yards">
-                {(c.task.workPackages ?? []).map((pkg, i, all) => (
-                  <div key={pkg.id} className={`ae-yard is-${pkg.status}`}>
-                    <b>{pkg.id}</b>
-                    <span>{pkg.title}</span>
-                    <em>{pkg.status.replaceAll("_", " ")}</em>
-                    {pkg.dependencies.length > 0 && <small>after {pkg.dependencies.join(", ")}</small>}
-                    {i < all.length - 1 && <span className="ae-yard-arrow">→</span>}
-                  </div>
-                ))}
-              </div>
-              {(c.task.workPackages ?? [])
-                .filter((p) => p.error)
-                .map((p) => (
-                  <pre key={p.id} className="ae-reason">
-                    {p.error}
-                  </pre>
-                ))}
-            </section>
-          )}
-
-          {artifact && (
-            <section className="ae-parchment ae-scroll">
-              <div className="ae-eyebrow">Scrolls</div>
-              <div className="ae-scroll-tabs">
-                {artifacts.map((a) => (
-                  <button
-                    type="button"
-                    key={a.id}
-                    className={a.id === artifactId ? "is-active" : ""}
-                    onClick={() => setArtifactId(a.id)}
-                  >
-                    {buildingFor(a.stage).name} · {a.name}
-                  </button>
-                ))}
-              </div>
-              <div className="ae-markdown">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{artifact.content}</ReactMarkdown>
-              </div>
-            </section>
-          )}
+          {grill && <Council task={c.task} />}
+          {c.packages.length > 0 && <Yards task={c.task} />}
+          <Scrolls task={c.task} />
         </div>
 
         <aside className="ae-chron-side">
@@ -262,7 +169,7 @@ export function Chronicle({
               return (
                 <div key={run.id} className="ae-report">
                   <UnitPortrait
-                    kind={kindOf(run.model ?? "")}
+                    kind={unitKindFor(run.model ?? "")}
                     team={banner}
                     size={48}
                     working={run.status === "running"}

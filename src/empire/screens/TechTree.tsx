@@ -20,7 +20,15 @@ const pos = (stage: StageId) => {
   return { x: 40 + ageIndex * COL_W, y: 70 + row * ROW_H };
 };
 
-export function TechTree({ campaign, onClose }: { campaign: Campaign | null; onClose: () => void }) {
+export function TechTree({
+  campaign,
+  onClose,
+  onReplay,
+}: {
+  campaign: Campaign | null;
+  onClose: () => void;
+  onReplay: () => void;
+}) {
   const [focus, setFocus] = useState<StageId>(campaign?.stage ?? "implement");
   const meta = buildingFor(focus);
   const policy =
@@ -49,6 +57,16 @@ export function TechTree({ campaign, onClose }: { campaign: Campaign | null; onC
       onClose={onClose}
       kicker="The whole campaign, from arrival to delivery"
       title="Tech Tree of the Realm"
+      footer={
+        <>
+          <span className="ae-muted">
+            Every campaign follows this road. The replay marches a sample campaign along it.
+          </span>
+          <button type="button" className="ae-btn is-gold" onClick={onReplay}>
+            Watch a campaign march
+          </button>
+        </>
+      }
     >
       <div className="ae-tree-wrap">
         <div className="ae-tree" style={{ width, height }}>

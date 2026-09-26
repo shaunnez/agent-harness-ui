@@ -1,5 +1,6 @@
 import { type MutableRefObject, useEffect, useRef } from "react";
 import type { Campaign, Kingdom } from "../realm";
+import type { LightMode } from "./lighting";
 import { RealmScene, type Selection } from "./scene";
 
 export function MapView({
@@ -8,19 +9,24 @@ export function MapView({
   sceneRef,
   onSelect,
   attract,
+  light,
 }: {
   kingdoms: Kingdom[];
   campaigns: Campaign[];
   sceneRef: MutableRefObject<RealmScene | null>;
   onSelect: (selection: Selection) => void;
   attract: boolean;
+  light: LightMode;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const lightRef = useRef(light);
+  lightRef.current = light;
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const scene = new RealmScene(kingdoms);
     scene.campaigns = campaigns;
+    scene.lightMode = lightRef.current;
     sceneRef.current = scene;
     scene.attach(canvas);
     return () => {

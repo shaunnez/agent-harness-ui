@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { Civ } from "../realm.ts";
-import { drawBuilding, drawUnit, type UnitKind } from "../map/paint.ts";
+import { drawBuilding } from "../map/buildings.ts";
+import { type UnitKind, drawUnit } from "../map/units.ts";
 import { iso } from "../map/draw.ts";
 import type { Placed } from "../map/world.ts";
 

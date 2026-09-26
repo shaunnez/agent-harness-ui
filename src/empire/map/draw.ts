@@ -1,6 +1,8 @@
 // Isometric drawing primitives for the Age of Agents map. Pure Canvas 2D, no sprites:
 // every building and unit is drawn from boxes, cylinders and roofs so civ palettes and
 // banner colours are real material colours rather than tints over an image.
+import { emitLight, warmLight } from "./lighting.ts";
+
 export const TW = 64;
 export const TH = 32;
 export type Ctx = CanvasRenderingContext2D;
@@ -234,6 +236,7 @@ export function windowGlow(ctx: Ctx, x: number, y: number, lit: boolean, w = 3, 
     ctx.arc(x, y - h / 2, 6, 0, Math.PI * 2);
     ctx.fill();
     ctx.globalAlpha = 1;
+    emitLight(ctx, x, y - h / 2, 26, warmLight);
   }
 }
 
@@ -249,6 +252,7 @@ export function smoke(ctx: Ctx, x: number, y: number, time: number, color = "rgb
 }
 
 export function fire(ctx: Ctx, x: number, y: number, time: number, scale = 1) {
+  emitLight(ctx, x, y - 4 * scale, 70 * scale, warmLight);
   for (let i = 0; i < 4; i++) {
     const flick = Math.sin(time * 12 + i * 2.1) * 1.5;
     ctx.fillStyle = i % 2 ? "rgba(255,190,60,0.9)" : "rgba(230,80,30,0.85)";

@@ -1,14 +1,18 @@
 import { useState } from "react";
 import { UnitPortrait } from "../hud/Portrait";
-import type { UnitKind } from "../map/paint";
-import { type Doctrine, type Kingdom, buildingFor, doctrines, makeRoster, rankFor, unitFor } from "../realm";
+import {
+  type Doctrine,
+  type Kingdom,
+  buildingFor,
+  doctrines,
+  makeRoster,
+  rankFor,
+  unitFor,
+  unitKindFor,
+} from "../realm";
 import { Window } from "./Window";
 
 const roster = makeRoster();
-const kindOf = (model: string): UnitKind => {
-  const u = unitFor(model).unit;
-  return u === "Knight" ? "knight" : u === "Paladin" ? "paladin" : "man-at-arms";
-};
 
 export function Train({
   kingdoms,
@@ -138,7 +142,11 @@ export function Train({
                   className="ae-army-slot"
                   title={`${r.label}: ${u.modelLabel} · ${p?.reasoning}`}
                 >
-                  <UnitPortrait kind={kindOf(p?.model ?? "")} team={kingdom?.banner ?? "#999"} size={46} />
+                  <UnitPortrait
+                    kind={unitKindFor(p?.model ?? "")}
+                    team={kingdom?.banner ?? "#999"}
+                    size={46}
+                  />
                   <small>{r.id === "repair" ? "Repair" : buildingFor(r.id as never).stageLabel}</small>
                   <b>
                     {u.unit} {rankFor(p?.reasoning).numeral}

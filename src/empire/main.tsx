@@ -9,6 +9,8 @@ import "@fontsource/eb-garamond/600.css";
 import "@fontsource/eb-garamond/400-italic.css";
 import { EmpireApp } from "./EmpireApp";
 import "./empire.css";
+import "./empire-hud.css";
+import "./empire-views.css";
 
 const root = document.getElementById("root");
 if (root)
