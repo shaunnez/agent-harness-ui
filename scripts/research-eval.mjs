@@ -11,8 +11,8 @@
 // the product's own `questionRecord`, so the eval scores exactly what the research window shows.
 //
 // QV comes from PlanCheck's library (`RESEARCH_QV_SOURCE=plancheck`, the default); the token
-// command and file come from the environment, never from this file. Each arm runs on the
-// operator's plans: Claude on the subscription, Codex on ChatGPT, never an API key.
+// command and file come from the environment, never from this file. Only API-loop arms can still
+// run (OPENCODE_API_KEY or BASETEN_API_KEY, and PARALLEL_API_KEY, from the environment).
 
 import { randomBytes } from "node:crypto";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
@@ -20,10 +20,6 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { ApiLoopResearchRuntime } from "../server/research/api-loop/runtime.mjs";
-import { ClaudeCliResearchRuntime } from "../server/research/claude-cli/runtime.mjs";
-import { CodexCliResearchRuntime } from "../server/research/codex-cli/runtime.mjs";
-import { OpenCodeCliResearchRuntime } from "../server/research/opencode-cli/runtime.mjs";
-import { PackResearchRuntime } from "../server/research/pack/runtime.mjs";
 import { questionRecord } from "../server/research/research-question-record.mjs";
 import { scopedObjective } from "../server/research/research-scope.mjs";
 import { resolveResearchBudget } from "../src/research-budget-policy.ts";
@@ -32,32 +28,34 @@ const PACK_DIRECTORY = fileURLToPath(new URL("../research-agent-deepagents-spike
 const EVAL_DIRECTORY = path.join(PACK_DIRECTORY, "29-eval");
 const RUNS = ["r1", "r2", "r3"];
 
-/** The frozen arms. All High; all on PlanCheck's library. */
+/** The frozen arms. All High; all on PlanCheck's library. Arms on a retired runtime (Claude CLI,
+ *  pack, Codex CLI, OpenCode CLI; retired 26 September 2026) keep their definition so their recorded
+ *  results can be re-scored, but can no longer be run. */
 export const ARMS = {
   A0: {
     runtime: "claude-cli",
     model: "claude-opus-5-5",
     reasoning: "high",
-    make: (env) => new ClaudeCliResearchRuntime({ env }),
+    retired: true,
   },
   A2: {
     runtime: "pack",
     model: "claude-opus-5-5",
     reasoning: "high",
-    make: (env) => new PackResearchRuntime({ env }),
+    retired: true,
   },
   A3: {
     runtime: "codex-cli",
     model: "gpt-6-luna",
     reasoning: "high",
-    make: (env) => new CodexCliResearchRuntime({ env }),
+    retired: true,
   },
   // Added after the frozen three (doc 29 addendum): DeepSeek 4.1 Flash on the OpenCode Go plan.
   A4: {
     runtime: "opencode-cli",
     model: "opencode-go/deepseek-v4.1-flash",
     reasoning: null,
-    make: (env) => new OpenCodeCliResearchRuntime({ env }),
+    retired: true,
   },
   // Doc 29 addendum A5: the same model after the prompt fixes (one exact continuous quote; an
   // unsourced largest component is not established; ~50 tool calls) and a 15-minute cap. A4's
@@ -66,7 +64,7 @@ export const ARMS = {
     runtime: "opencode-cli",
     model: "opencode-go/deepseek-v4.1-flash",
     reasoning: null,
-    make: (env) => new OpenCodeCliResearchRuntime({ env }),
+    retired: true,
   },
   // Doc 29 addendum A6: the same model and prompt rules as A5 through the thin API loop, with web
   // search on Parallel through the host. Needs OPENCODE_API_KEY and PARALLEL_API_KEY in the env.
@@ -111,7 +109,7 @@ export const ARMS = {
     model: "claude-opus-5-5",
     reasoning: "high",
     runs: 5,
-    make: (env) => new ClaudeCliResearchRuntime({ env }),
+    retired: true,
   },
   // Doc 29 addendum A10: A9 with the not-a-price rule (check and prompt) and open-a3 pinned to the
   // net change.
@@ -328,6 +326,10 @@ async function main() {
   const out = path.join(option("--out") ?? path.join(EVAL_DIRECTORY, "results"), armId);
   await mkdir(out, { recursive: true });
   const env = { ...process.env, RESEARCH_QV_SOURCE: process.env.RESEARCH_QV_SOURCE ?? "plancheck" };
+  if (arm.retired)
+    throw new Error(
+      `Arm ${armId} ran on the retired ${arm.runtime} runtime; its results can be re-scored only.`,
+    );
   const runtime = arm.make(env);
   for (const question of await evalQuestions(option("--set"))) {
     if (only && !only.includes(question.id)) continue;

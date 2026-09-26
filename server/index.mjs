@@ -8,14 +8,9 @@ import { createLinearWebhookServer } from "./integrations/linear-webhook.mjs";
 import { TaskOrchestrator } from "./orchestrator.mjs";
 import { withProjectKind } from "./project-policy.mjs";
 import { startPullRequestPolling } from "./pull-request-poller.mjs";
-import { ClaudeCliRolesResearchRuntime } from "./research/claude-cli/roles-runtime.mjs";
-import { ClaudeCliResearchRuntime } from "./research/claude-cli/runtime.mjs";
-import { CodexCliResearchRuntime } from "./research/codex-cli/runtime.mjs";
-import { FakeResearchRuntime } from "./research/fake-research-runtime.mjs";
 import { API_LOOP_KEY_VARS } from "./research/api-loop/providers.mjs";
 import { ApiLoopResearchRuntime } from "./research/api-loop/runtime.mjs";
-import { OpenCodeCliResearchRuntime } from "./research/opencode-cli/runtime.mjs";
-import { PackResearchRuntime } from "./research/pack/runtime.mjs";
+import { FakeResearchRuntime } from "./research/fake-research-runtime.mjs";
 import { ResearchQuestionService } from "./research/research-question-service.mjs";
 import { ResearchQuestionStore } from "./research/research-question-store.mjs";
 import { createResearchRuntimeRegistry } from "./research/research-runtime-registry.mjs";
@@ -94,19 +89,12 @@ try {
 // it only makes that runtime *selectable* by an explicit `runtimeId` on the request, it does
 // not change what an ordinary request without one gets (architecture §11 slice 2).
 //
-// `claude-cli` is registered and deliberately not made the default. It is the runtime with 28
-// cost bands behind it, but it is not the default until phase 2 has measured whether one agent
-// or four roles wins, and until it has served real reviewed work (consolidation plan, phase 4).
-// It is also the only live research engine: the Deep Agents runtime was retired on 23 September
-// 2026 and what it did well moved into `claude-cli` (host-owned tools, checked citations).
-// `codex-cli` is the same recipe and harness on the ChatGPT plan, with GPT-6 Sol by default;
-// it has no baseline of its own yet, so nothing selects it unless a request names it.
-// `opencode-cli` (DeepSeek 4.1 Flash on the OpenCode Go plan) is the Settings default since the
-// 24 September eval: 7 of 13 against Opus 5.5's 5 (`30-EVAL-RESULT.md`). A saved Settings choice
-// still wins, and a request that names a runtime still wins over both.
-// `api-loop` is the same DeepSeek with no CLI: the companion calls the chat API itself with a key
-// from its own environment (OPENCODE_API_KEY or BASETEN_API_KEY, and PARALLEL_API_KEY for search),
-// with the host's answer check. The eval's best arm (A10: 10 of 15 held-out questions).
+// `api-loop` is the only research engine (Shaun, 26 September 2026): DeepSeek 4.1 Flash with no
+// CLI, the companion calling the chat API itself with a key from its own environment
+// (OPENCODE_API_KEY or BASETEN_API_KEY, and PARALLEL_API_KEY for search), and the host checking
+// each answer. The eval's best arm (A10: 10 of 15 held-out questions against Opus 5.5's 5). The
+// Claude, Codex, OpenCode, pack and four-role research runtimes are retired; the Claude and Codex
+// CLIs still run every delivery stage. `fake` stays for tests and fixture runs.
 // The API loop's keys are taken out of this process's environment before anything is spawned, so
 // no delivery agent, CLI or repository test command started from here can inherit them. Only the
 // API-loop runtime holds them; it starts no child process.
@@ -121,12 +109,7 @@ const researchService = jsonStore
       settings: () => store.settings(),
       registry: createResearchRuntimeRegistry([
         new FakeResearchRuntime(),
-        new ClaudeCliResearchRuntime(),
-        new CodexCliResearchRuntime(),
-        new OpenCodeCliResearchRuntime(),
         new ApiLoopResearchRuntime({ env: apiLoopEnv }),
-        new ClaudeCliRolesResearchRuntime(),
-        new PackResearchRuntime(),
       ]),
     });
 await researchService?.recoverInterrupted();
@@ -137,7 +120,7 @@ const researchQuestions = researchService
       research: researchService,
       runs: researchStore,
       projects: async () => (await store.listProjects()).map(withProjectKind),
-      scoper: new ResearchScoper(),
+      scoper: new ResearchScoper({ env: apiLoopEnv }),
     })
   : null;
 const configuredPullRequestPollIntervalMs = Number(process.env.AGENT_HARNESS_GITHUB_POLL_MS ?? 30_000);

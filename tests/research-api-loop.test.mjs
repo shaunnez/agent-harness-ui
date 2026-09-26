@@ -349,7 +349,7 @@ test("Parallel search is called with the key on the host and its excerpts become
 });
 
 test("a PDF quote without a page is checked on the page the host finds it on, and only there", async () => {
-  const { checkCostBandCitations } = await import("../server/research/claude-cli/citations.mjs");
+  const { checkCostBandCitations } = await import("../server/research/engine/citations.mjs");
   const seen = [];
   const webTools = {
     locatePdfPage: (_sourceId, excerpt) => (excerpt === "Butt Joint $40" ? 7 : null),

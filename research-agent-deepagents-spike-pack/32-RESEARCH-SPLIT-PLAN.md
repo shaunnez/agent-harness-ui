@@ -72,6 +72,8 @@ Phases 1 to 4 are about 6 to 10 working days of agent work plus review, after Ph
 
 ### Phase 1: cut the DeepSeek runtime free, in place (1 to 2 days, no files move)
 
+**Mostly done on 26 September 2026**, when Shaun retired every research engine but the API loop. Rather than keep the CLI runtimes on a shared base, they were deleted: `HostedResearchRuntime` (`server/research/engine/hosted-runtime.mjs`) holds the lifecycle, the shared checking code moved to `server/research/engine/`, the API loop has its own copy of its prompt (`api-loop/system-prompt.txt`, text unchanged), and scoping calls DeepSeek on the API loop's key. Re-scoring every recorded arm gives identical grades. Still to do: steps 4 and 5 below (the `src/` policy files and the boundary test).
+
 Goal: the DeepSeek path (`api-loop`, the service, the stores and the checks) imports no CLI runtime and no harness module.
 
 1. Extract a `HostedRunRuntime` base class from `ClaudeCliResearchRuntime`. It takes the queue, host-tools session, citation and component checks, transcript scan, events, results and cancellation. The DeepSeek runtime extends it directly. The harness's CLI runtimes extend it too, so evals compare like with like.

@@ -1,9 +1,7 @@
-// The parent side of the host tools: a Unix socket the CLI's MCP relay calls back into.
-//
-// This is the property the Deep Agents design existed to guarantee, kept intact: the process
-// the model runs in holds no search credential and no general HTTP tool. The CLI spawns the
-// relay (`mcp-server.mjs`); the relay knows nothing but this socket; every fetch, snapshot and
-// excerpt check happens here, in the process that owns the run, through `ResearchWebTools`.
+// The parent side of the host tools: a Unix socket the model loop calls into
+// (`../../api-loop/host-client.mjs`). Every fetch, snapshot and excerpt check happens here, in the
+// process that owns the run, through `ResearchWebTools`, so a tool call passes the same exposure
+// check, error classification and repeat-call strikes whatever made it.
 //
 // The socket lives in the run's own `mkdtemp` directory, which is owner-only, so only this
 // user's processes can reach it and it disappears with the run.

@@ -10,7 +10,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { createApiServer } from "../server/api.mjs";
-import { checkCostBandCitations } from "../server/research/claude-cli/citations.mjs";
+import { checkCostBandCitations } from "../server/research/engine/citations.mjs";
 import { FakeResearchRuntime } from "../server/research/fake-research-runtime.mjs";
 import { unitMeasure } from "../server/research/research-question-record.mjs";
 import { ResearchQuestionService } from "../server/research/research-question-service.mjs";
@@ -471,7 +471,7 @@ function stubScoper() {
       scoper.calls += 1;
       return {
         scope: { ...PINNED },
-        scopedBy: { runtime: "codex-cli", model: "gpt-6-luna", reasoning: "medium" },
+        scopedBy: { runtime: "api-loop", model: "opencode-go/deepseek-v4.1-flash", reasoning: null },
       };
     },
   };
@@ -510,7 +510,7 @@ test("a draft scope starts nothing; an asked scope is pinned onto every run and 
       const question = asked.body.question;
       assert.equal(question.objective, objective, "the question keeps the operator's words");
       assert.equal(question.scope.centre, "Wellington");
-      assert.deepEqual(question.scopedBy, { runtime: "codex-cli", model: "gpt-6-luna", reasoning: "medium" });
+      assert.deepEqual(question.scopedBy, { runtime: "api-loop", model: "opencode-go/deepseek-v4.1-flash", reasoning: null });
       assert.equal(question.scopeReviewed, true);
       for (const run of question.runs) {
         const given = runtime.objectiveOf(run.runId);

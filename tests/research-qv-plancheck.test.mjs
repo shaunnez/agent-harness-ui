@@ -9,10 +9,9 @@ import { createConnection } from "node:net";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { checkCostBandCitations } from "../server/research/claude-cli/citations.mjs";
-import { openHostToolSession } from "../server/research/claude-cli/host-tools/session.mjs";
-import { classifyToolError } from "../server/research/claude-cli/host-tools/tool-errors.mjs";
-import { qvMcpConfig } from "../server/research/claude-cli/qv-recipe.mjs";
+import { checkCostBandCitations } from "../server/research/engine/citations.mjs";
+import { openHostToolSession } from "../server/research/engine/host-tools/session.mjs";
+import { classifyToolError } from "../server/research/engine/host-tools/tool-errors.mjs";
 import { expiryOf, PlanCheckTokenSource } from "../server/research/plancheck-token.mjs";
 import { formatRow, PlanCheckQvSession, planCheckQvConfig } from "../server/research/qv-plancheck.mjs";
 
@@ -193,14 +192,9 @@ test("the CLI reaches PlanCheck's library through the host relay, with no token 
       qv: session,
     });
     try {
-      const config = qvMcpConfig({ indexPath: null, hostTools: host.mcpEntry, qvRelay: host.qvEntry });
-      assert.equal(config.mcpServers.qv.command, process.execPath);
-      assert.deepEqual(config.mcpServers.qv.args.slice(-1), ["search_qv,get_qv_table,list_qv_sections"]);
-      assert.equal(JSON.stringify(config).includes("test-token"), false);
-
-      // What the relay would send, answered by the host bridge.
+      // A QV call on the run's socket, answered by the host bridge. The token stays on the host.
       const reply = await new Promise((resolve, reject) => {
-        const socket = createConnection(host.qvEntry.socketPath);
+        const socket = createConnection(host.socketPath);
         socket.setEncoding("utf8");
         let buffered = "";
         socket.on("data", (chunk) => {

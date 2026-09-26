@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { checkCostBandCitations } from "../server/research/claude-cli/citations.mjs";
+import { checkCostBandCitations } from "../server/research/engine/citations.mjs";
 import { unitMeasure } from "../server/research/research-question-record.mjs";
 import {
   disclaimerFor,
@@ -204,7 +204,7 @@ test("stated working is checked on both halves: the rate against the page, the a
 });
 
 test("the answer's working is read when stated, and left out when not", async () => {
-  const { parseCostBand } = await import("../server/research/claude-cli/qv-recipe.mjs");
+  const { parseCostBand } = await import("../server/research/engine/qv-recipe.mjs");
   const answer = (component) =>
     `\`\`\`json\n${JSON.stringify({ components: [component], band: { low: 1, high: 2, unit: "ea" } })}\n\`\`\``;
   const [worked] = parseCostBand(

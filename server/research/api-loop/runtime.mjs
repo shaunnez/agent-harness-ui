@@ -9,19 +9,20 @@
 // process's ~400 MB, and the only credentials are the host's own.
 //
 // Provider keys (`OPENCODE_API_KEY`, `BASETEN_API_KEY`, `PARALLEL_API_KEY`) are read from the host
-// environment and never logged; Shaun chose API keys for production workers. Not in the Settings
-// picker: it is measured first, as eval arm A6.
+// environment and never logged; Shaun chose API keys for production workers. Since 26 September
+// 2026 it is the only research engine: Shaun retired the Claude, Codex, OpenCode, pack and
+// four-role research runtimes.
 
-import { reviewAnswer } from "../research-answer-review.mjs";
+import { fileURLToPath } from "node:url";
 import {
   allowedToolName,
   QV_TOOL_DEFINITIONS,
   RELAY_TOOL_DEFINITIONS,
-} from "../claude-cli/host-tools/definitions.mjs";
-import { ClaudeCliResearchRuntime } from "../claude-cli/runtime.mjs";
-import { CODEX_SYSTEM_PROMPT_PATH } from "../codex-cli/runtime.mjs";
+} from "../engine/host-tools/definitions.mjs";
+import { HostedResearchRuntime } from "../engine/hosted-runtime.mjs";
 import { ParallelSearchProvider } from "../parallel-search-provider.mjs";
 import { QV_TOOL_NAMES } from "../qv-plancheck.mjs";
+import { reviewAnswer } from "../research-answer-review.mjs";
 import {
   API_LOOP_EMPTY_OUTPUT_ERROR_CODE,
   API_LOOP_SOFT_TOOL_CALLS,
@@ -32,6 +33,9 @@ import { connectHostTools } from "./host-client.mjs";
 import { resolveApiModel } from "./providers.mjs";
 
 export const API_LOOP_RESEARCH_RUNTIME_ID = "api-loop";
+/** The Codex recipe's prompt, copied unchanged when the Codex runtime was retired, so recorded
+ *  API-loop arms stay reproducible; `apiLoopSystemPrompt` adds this loop's rules to it. */
+export const API_LOOP_SYSTEM_PROMPT_PATH = fileURLToPath(new URL("./system-prompt.txt", import.meta.url));
 export const DEFAULT_API_LOOP_MODEL = "opencode-go/deepseek-v4.1-flash";
 
 /** Web search is a host tool here, beside the two every runtime has. */
@@ -108,7 +112,7 @@ export function apiLoopDriver({ env = process.env, fetchImpl = globalThis.fetch 
         throw new Error(
           "The API loop answers QV from PlanCheck's rate library only; set RESEARCH_QV_SOURCE=plancheck.",
         );
-      const host = await connectHostTools(session.entryFor([]).socketPath);
+      const host = await connectHostTools(session.socketPath);
       try {
         return await runChatLoop({
           env,
@@ -134,7 +138,7 @@ export function apiLoopDriver({ env = process.env, fetchImpl = globalThis.fetch 
   });
 }
 
-export class ApiLoopResearchRuntime extends ClaudeCliResearchRuntime {
+export class ApiLoopResearchRuntime extends HostedResearchRuntime {
   #env;
   #searchReady;
 
@@ -145,7 +149,7 @@ export class ApiLoopResearchRuntime extends ClaudeCliResearchRuntime {
       (env.PARALLEL_API_KEY ? new ParallelSearchProvider({ apiKey: env.PARALLEL_API_KEY }) : null);
     super({
       id: API_LOOP_RESEARCH_RUNTIME_ID,
-      systemPromptPath: CODEX_SYSTEM_PROMPT_PATH,
+      systemPromptPath: API_LOOP_SYSTEM_PROMPT_PATH,
       hostTools: API_LOOP_HOST_TOOLS,
       allowedTools: loopTools().map((tool) => tool.cliName),
       ...options,
@@ -160,7 +164,8 @@ export class ApiLoopResearchRuntime extends ClaudeCliResearchRuntime {
   /** A missing key fails the run before anything is spent, as a failed start the question can
    *  retry once the key is set, rather than as a run that dies on its first model call. */
   async start(request) {
-    const policy = request?.researchPolicy?.runtime === API_LOOP_RESEARCH_RUNTIME_ID ? request.researchPolicy : null;
+    const policy =
+      request?.researchPolicy?.runtime === API_LOOP_RESEARCH_RUNTIME_ID ? request.researchPolicy : null;
     const model = policy?.model ?? this.#env.RESEARCH_API_LOOP_MODEL ?? DEFAULT_API_LOOP_MODEL;
     const { provider } = resolveApiModel(model);
     const missing = [

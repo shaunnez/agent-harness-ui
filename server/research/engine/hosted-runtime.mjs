@@ -1,32 +1,18 @@
-// `ResearchRuntime` over the local Claude CLI, on the operator's subscription.
+// The research run lifecycle every research runtime shares, whatever answers the model calls:
+// the queue, one host-tool session per run, QV from PlanCheck's rate library, host-owned
+// `fetch_source`/`read_source`, every citation checked after the run, the transcript scanned for
+// credentials, and a provider outage kept apart from a research failure.
 //
-// This is the configuration behind all 90 recorded runs, and nothing more than it. Six flags:
+// A driver supplies the model call (`api-loop/runtime.mjs`). This was the Claude CLI runtime until
+// 26 September 2026, when Shaun retired every research engine but the API loop; the lifecycle is
+// unchanged, so recorded runs re-check the same.
 //
-//   claude -p "<objective>" --model <model> --append-system-prompt <prompt>
-//     --mcp-config <tools> --allowed-tools "<corpus tools>,WebSearch"
-//     --output-format stream-json --verbose
-//
-// One agent. No roles, no subagents, no checkpointer. Verification in the recorded runs was
-// running each scenario three times and comparing (`trio.mjs`, `agreement.mjs`), not a
-// verifier agent — whether a verifier beats that is phase 2's question, and answering it early
-// by building one here would have meant never finding out.
-//
-// What the Deep Agents runtime got right lives here now, and nowhere else:
-//
-// - Host-owned tools. The agent reads a web page only through `fetch_source`, which the
-//   parent process runs (`host-tools/`), so the page is retained and a figure quoted from it
-//   can be checked. The CLI's process tree holds no provider credential.
+// - Host-owned tools. A web page is read only through `fetch_source`, which the host runs
+//   (`host-tools/`), so the page is retained and a figure quoted from it can be checked.
 // - Checked citations. Every row id and web quote in the final answer is checked against the
-//   capture or the retained page after the run (`citations.mjs`).
+//   rows the run was shown or the retained page, after the run (`citations.mjs`).
 // - Tool errors as feedback, stopped when the model repeats the same failing call.
 // - Budget ceilings enforced while the run is live, not only reported after it.
-// - A provider outage kept apart from a research failure, so it can be scored as unassessed.
-//
-// Two things this file does that the shell script could not, both required by the contract:
-// `--output-format stream-json --verbose` in place of `json`, so `events()` has intermediate
-// lines to translate; and a concurrency cap, because eight parallel CLI spawns produced six
-// empty outputs out of seventy-two while three produced none. An empty output is a concurrency
-// symptom, not a content failure, so it is reported as retryable rather than as a bad scope.
 
 import { randomUUID } from "node:crypto";
 import { createWriteStream } from "node:fs";
@@ -34,42 +20,24 @@ import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
-import { runProcess } from "../../process-runtime.mjs";
 import { PlanCheckQvSession, planCheckQvConfig } from "../qv-plancheck.mjs";
 import { DEFAULT_RESEARCH_SOURCE_DIRECTORY } from "../research-web-tools.mjs";
 import { checkCostBandCitations } from "./citations.mjs";
-import { claudeCliDriver } from "./driver.mjs";
 import { hostToolOf } from "./host-tools/definitions.mjs";
 import { openHostToolSession } from "./host-tools/session.mjs";
-import {
-  findingsFromCostBand,
-  parseCostBand,
-  QV_ALLOWED_TOOLS,
-  QV_HOST_TOOLS,
-  QV_SYSTEM_PROMPT_PATH,
-  qvMcpConfig,
-  resolveCorpusIndexPath,
-} from "./qv-recipe.mjs";
+import { findingsFromCostBand, parseCostBand, QV_HOST_TOOLS, resolveCorpusIndexPath } from "./qv-recipe.mjs";
 import { loadQvRows } from "./qv-rows.mjs";
 import { redactSecretsInFile, scannedNeedles } from "./secret-scan.mjs";
 
-export const CLAUDE_CLI_RESEARCH_RUNTIME_ID = "claude-cli";
-
-export { DEFAULT_CLAUDE_CLI_MODEL, EMPTY_OUTPUT_ERROR_CODE } from "./driver.mjs";
-
-/** The model all 90 recorded runs used. The benchmarks pin it, because a different model is a
- *  different baseline and the comparison against `17a-top30-results.json` stops meaning anything
- *  the moment it changes. Pass `--model` to a benchmark to measure another model on purpose. */
-export const RECORDED_BASELINE_MODEL = "claude-opus-5";
-
-/** Eight parallel spawns produced 6 empty outputs out of 72; three produced none. The scopes
- *  were fine in isolation, so this is a spawn-concurrency limit rather than anything about the
- *  work, and it is enforced here rather than left to each caller to remember. */
+/** Runs at once per runtime; the rest wait in the queue as `queued`. The API loop's tuned eval
+ *  arm ran 39 at once (A7), so a caller may raise it; three is the conservative default. */
 export const DEFAULT_MAX_CONCURRENT_RUNS = 3;
 
+/** Where run transcripts go. The directory name predates the runtime's rename and is kept, so
+ *  transcripts already on disk stay where the eval records point. */
 export const DEFAULT_TRANSCRIPT_DIRECTORY = path.resolve(".data", "research-claude-cli");
 
-export class ClaudeCliResearchRuntime {
+export class HostedResearchRuntime {
   #id;
   #runs = new Map();
   #env;
@@ -82,9 +50,7 @@ export class ClaudeCliResearchRuntime {
   #systemPromptPath;
   #allowedTools;
   #corpusIndexPath;
-  #pythonBin;
   #now;
-  #run;
   #assertAuth;
   #hostTools;
   #sourceSnapshotDirectory;
@@ -93,26 +59,20 @@ export class ClaudeCliResearchRuntime {
   #driver;
 
   constructor({
-    id = CLAUDE_CLI_RESEARCH_RUNTIME_ID,
+    id,
     env = process.env,
     model = null,
     binary = null,
     maxConcurrentRuns = DEFAULT_MAX_CONCURRENT_RUNS,
     transcriptDirectory = DEFAULT_TRANSCRIPT_DIRECTORY,
-    systemPromptPath = QV_SYSTEM_PROMPT_PATH,
-    allowedTools = QV_ALLOWED_TOOLS,
+    systemPromptPath,
+    allowedTools = [],
     corpusIndexPath = null,
-    pythonBin = null,
     now = () => Date.now(),
-    // Injected so the process boundary and the auth gate can be exercised without a CLI on
-    // the machine. Nothing else in this class is swappable: the flags are the point.
-    run = runProcess,
-    // Which CLI answers: its login gate, flags and stream reader (`driver.mjs`). Everything
-    // else in this class is shared, so two CLIs run the same recipe the same way.
-    driver = claudeCliDriver,
-    assertAuth = driver.assertAuth,
-    // The host tools the agent may call. Empty turns them off, which is what reproducing the
-    // recorded baseline exactly would need: those 90 runs had no way to fetch a page.
+    // What answers the model calls: its key check, model call and verdict (`api-loop/runtime.mjs`).
+    driver,
+    assertAuth = driver?.assertAuth,
+    // The host tools the agent may call.
     hostTools = QV_HOST_TOOLS,
     sourceSnapshotDirectory = DEFAULT_RESEARCH_SOURCE_DIRECTORY,
     // Local fetching by default. A paid capture provider is opt-in, and its failures are the
@@ -121,6 +81,8 @@ export class ClaudeCliResearchRuntime {
     // For tests: `fetchImpl` and `lookup` reach `ResearchWebTools` so no test touches the network.
     webToolsOptions = {},
   } = {}) {
+    if (!id || !driver || !systemPromptPath)
+      throw new Error("A hosted research runtime needs an id, a driver and a system prompt.");
     this.#id = id;
     this.#env = env;
     this.#driver = driver;
@@ -131,9 +93,7 @@ export class ClaudeCliResearchRuntime {
     this.#systemPromptPath = systemPromptPath;
     this.#allowedTools = [...allowedTools];
     this.#corpusIndexPath = corpusIndexPath;
-    this.#pythonBin = pythonBin ?? env.RESEARCH_QV_PYTHON ?? "python3";
     this.#now = now;
-    this.#run = run;
     this.#assertAuth = assertAuth;
     this.#hostTools = [...hostTools];
     this.#sourceSnapshotDirectory = sourceSnapshotDirectory;
@@ -146,8 +106,7 @@ export class ClaudeCliResearchRuntime {
     return this.#id;
   }
 
-  /** The error code this runtime's CLI fails with when it exits cleanly having said nothing,
-   *  which is the one failure `trio.mjs` retries. */
+  /** The error code this runtime fails with when a run finishes having said nothing. */
   get emptyOutputCode() {
     return this.#driver.emptyOutputCode;
   }
@@ -158,8 +117,8 @@ export class ClaudeCliResearchRuntime {
    * a slot frees. The service already models `queued`, so nothing downstream needs to know
    * that a queue exists.
    *
-   * The subscription gate runs here, before anything is spawned, so a misconfigured machine
-   * fails on the first run rather than after the batch has been queued.
+   * The driver's key check runs here, before anything is queued, so a misconfigured machine
+   * fails on the first run as a failed start rather than after the batch has been queued.
    */
   async start(request) {
     if (this.#runs.has(request.id)) throw new Error(`Research run ${request.id} has already started.`);
@@ -214,8 +173,8 @@ export class ClaudeCliResearchRuntime {
       runtimeId: this.#id,
       status: run.state,
       startedAt: new Date(startedAtMs).toISOString(),
-      // Live, always: this runtime has no fake path. A run that cannot reach the subscription
-      // fails in `start()` above rather than resolving something that looks like an answer.
+      // Live, always: this runtime has no fake path. A run that cannot reach its provider fails
+      // in `start()` above rather than resolving something that looks like an answer.
       model: { provider: this.#id, model: run.model, live: true },
       runtimeMetadata: this.#driver.metadata({
         model: run.model,
@@ -346,7 +305,7 @@ export class ClaudeCliResearchRuntime {
   async #spawn(run, { binary, corpusIndexPath, planCheck = null, systemPrompt }) {
     if (run.closed) return;
     const request = run.request;
-    const workingDirectory = await mkdtemp(path.join(os.tmpdir(), "research-claude-cli-"));
+    const workingDirectory = await mkdtemp(path.join(os.tmpdir(), "research-run-"));
     run.workingDirectory = workingDirectory;
     // Scoped by runtime id as well as run id: phase 1 and phase 2 are run over the same
     // scenarios with the same run ids, and a shared directory would interleave two
@@ -363,11 +322,9 @@ export class ClaudeCliResearchRuntime {
     };
     try {
       const qv = planCheck ? new PlanCheckQvSession(planCheck) : null;
-      const lateTools = this.#driver.lateTools ?? [];
-      if (this.#hostTools.length || qv || lateTools.length)
+      if (this.#hostTools.length || qv)
         session = await openHostToolSession({
           qv,
-          lateTools,
           runId: request.id,
           budget: request.budget,
           context: request.context ?? [],
@@ -380,16 +337,8 @@ export class ClaudeCliResearchRuntime {
           emit: (type, data) => this.#emit(run, type, data),
           onTerminal: stop,
         });
-      const mcpConfig = qvMcpConfig({
-        pythonBin: this.#pythonBin,
-        indexPath: corpusIndexPath,
-        hostTools: session?.mcpEntry,
-        qvRelay: session?.qvEntry ?? null,
-      });
-
       run.state = "running";
       const call = await this.#driver.call({
-        run: this.#run,
         binary,
         env: this.#env,
         workingDirectory,
@@ -397,12 +346,10 @@ export class ClaudeCliResearchRuntime {
         model: run.model,
         reasoning: run.reasoning,
         systemPrompt,
-        mcpConfig,
         allowedTools: this.#allowedTools,
         budget: request.budget ?? null,
         signal: run.controller.signal,
-        // For a driver that runs more than one call (the pack runtime): the run's host session,
-        // and the same citation check the final answer gets, against the same rows and sources.
+        // The run's host session: the driver calls every tool through it.
         session,
         checkComponents: (components) =>
           this.#checkComponents(components, {

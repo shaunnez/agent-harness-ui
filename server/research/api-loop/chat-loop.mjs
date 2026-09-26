@@ -1,6 +1,6 @@
 // One research run as a plain tool-calling loop over an OpenAI-compatible chat API: ask the model,
 // run the tools it asks for through the run's host-tool socket, hand back the results, repeat
-// until it answers. Returns the shape the CLI drivers return, so `../claude-cli/runtime.mjs`
+// until it answers. Returns the shape a driver returns, so `../engine/hosted-runtime.mjs`
 // (queue, host session, citation checks, transcript scan) runs it unchanged.
 //
 // Measured on the OpenCode runs, 89% of a run is the model and 11% its tools, so the loop spends
@@ -13,9 +13,9 @@
 //   and asked once more with no tools, so a run that cannot source its main cost says so rather
 //   than searching until the deadline fails it.
 
-import { reviewMessage } from "../research-answer-review.mjs";
 import { randomUUID } from "node:crypto";
-import { isFinalAnswerText } from "../claude-cli/stream.mjs";
+import { isFinalAnswerText } from "../engine/final-answer.mjs";
+import { reviewMessage } from "../research-answer-review.mjs";
 import { priceApiUsage, resolveApiModel } from "./providers.mjs";
 
 export const API_LOOP_EMPTY_OUTPUT_ERROR_CODE = "api_loop_empty_output";
@@ -249,6 +249,46 @@ export async function runChatLoop({
       },
     },
   };
+}
+
+/** One tools-less chat call, with the loop's retries, for a caller that needs a single reply (the
+ *  scoping step). Returns `{text, usage}`; throws when the key is missing or the call fails. */
+export async function chatOnceWithRetries({
+  env,
+  model,
+  systemPrompt,
+  prompt,
+  timeoutMs,
+  signal,
+  fetchImpl = globalThis.fetch,
+  sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  now = () => Date.now(),
+}) {
+  const { provider, remoteModel } = resolveApiModel(model);
+  const apiKey = env?.[provider.keyEnv];
+  if (!apiKey)
+    throw new ApiError(`${provider.label} needs ${provider.keyEnv} in the host's environment.`, {
+      code: "missing_key",
+    });
+  const headers = provider.sessionHeader ? { [provider.sessionHeader]: `scope-${randomUUID()}` } : {};
+  const reply = await chat({
+    provider,
+    apiKey,
+    headers,
+    body: {
+      model: remoteModel,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: prompt },
+      ],
+    },
+    fetchImpl,
+    sleep,
+    signal,
+    deadline: now() + timeoutMs,
+    now,
+  });
+  return { text: String(reply.choices?.[0]?.message?.content ?? ""), usage: reply.usage ?? null };
 }
 
 async function chat({ provider, apiKey, headers, body, fetchImpl, sleep, signal, deadline, now }) {

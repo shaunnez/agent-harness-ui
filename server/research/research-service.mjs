@@ -11,7 +11,7 @@ import {
   researchSoftOverruns,
   resolveResearchBudget,
 } from "../../src/research-budget-policy.ts";
-import { RESEARCH_ENGINES, RESEARCH_ROLES_ENGINE, researchPoliciesOf } from "../../src/research-policies.ts";
+import { RESEARCH_ENGINES, researchPoliciesOf } from "../../src/research-policies.ts";
 import { isResearchProfile, readResearchModelIdentity } from "../../src/research-runtime-contract.ts";
 import { DEFAULT_RESEARCH_RUNTIME_ID } from "./research-runtime-registry.mjs";
 
@@ -282,7 +282,6 @@ export class ResearchService {
 function snapshotResearchPolicy(runtimeId, policies, named) {
   if (!policies) return null;
   const source = named ? "settings-for-named-runtime" : "settings-default";
-  if (runtimeId === RESEARCH_ROLES_ENGINE) return { source, runtime: runtimeId, roles: policies.roles };
   if (runtimeId in RESEARCH_ENGINES && policies.agent.runtime === runtimeId)
     return {
       source,

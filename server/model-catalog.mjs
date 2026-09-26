@@ -1,9 +1,9 @@
-import { DEFAULT_REPAIR_LIMITS } from "../src/repair-limits.ts";
-import { DEFAULT_RESEARCH_POLICIES, researchPoliciesOf } from "../src/research-policies.ts";
 import { readFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
+import { DEFAULT_REPAIR_LIMITS } from "../src/repair-limits.ts";
+import { DEFAULT_RESEARCH_POLICIES } from "../src/research-policies.ts";
 import {
   DEFAULT_CODEX_MODEL,
   DEFAULT_RUNTIME_MODEL,
@@ -409,12 +409,6 @@ export function withConfiguredModels(catalog, settings) {
       ...(settings?.allowedModels ?? []),
       ...Object.values(settings?.stagePolicies ?? {}).map((policy) => policy?.model),
       ...Object.values(settings?.designPolicies ?? {}).map((policy) => policy?.model),
-      ...(settings
-        ? (() => {
-            const research = researchPoliciesOf(settings);
-            return [research.agent.model, ...Object.values(research.roles).map((policy) => policy.model)];
-          })()
-        : []),
     ]
       .filter(Boolean)
       .map(normalizeModelId),
