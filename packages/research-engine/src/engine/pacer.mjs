@@ -8,7 +8,8 @@
 // does not leave the others to hit the same wall.
 //
 // The harness does not use this: its runtime keeps a fixed cap. Nothing here stores anything;
-// a restart starts from `initial` again.
+// a restart starts from `initial` again. With more than one worker, `pacer-sync.mjs` shares what
+// each has learned through Postgres, so together they stay under the provider's one limit.
 
 const DEFAULT_SUCCESSES_TO_GROW = 20;
 const DEFAULT_COOLDOWN_MS = 5_000;
@@ -24,6 +25,8 @@ export class AdaptivePacer {
   #listeners = new Set();
   #defaultCooldownMs;
   #throttles = 0;
+  // Since the last `drain()`, for `pacer-sync.mjs`.
+  #pending = { successes: 0, throttles: 0 };
 
   constructor({
     min = 1,
@@ -69,8 +72,27 @@ export class AdaptivePacer {
     return Math.max(0, this.#cooldownUntil - this.#now());
   }
 
+  /** The pacer's bounds and growth step, for a sync that works on the same terms. */
+  get settings() {
+    return { min: this.#min, max: this.#max, successesToGrow: this.#successesToGrow };
+  }
+
+  /** Successes, throttles and the hold seen since the last drain; the counts start again. */
+  drain() {
+    const drained = { ...this.#pending, cooldownUntil: this.#cooldownUntil };
+    this.#pending = { successes: 0, throttles: 0 };
+    return drained;
+  }
+
+  /** Takes a limit and hold decided across workers (`pacer-sync.mjs`) in place of this one's. */
+  adopt({ limit, cooldownUntil = 0 }) {
+    this.#cooldownUntil = Math.max(this.#cooldownUntil, Number(cooldownUntil) || 0);
+    if (Number.isFinite(limit)) this.#set(Math.floor(limit));
+  }
+
   /** A model call went through. */
   succeeded() {
+    this.#pending.successes += 1;
     this.#successes += 1;
     if (this.#successes < this.#successesToGrow) return;
     this.#successes = 0;
@@ -79,6 +101,7 @@ export class AdaptivePacer {
 
   /** The provider throttled a call. `retryAfterMs` is its `Retry-After`, when it sent one. */
   throttled(retryAfterMs = null) {
+    this.#pending.throttles += 1;
     this.#throttles += 1;
     this.#successes = 0;
     const wait = Number(retryAfterMs) > 0 ? Number(retryAfterMs) : this.#defaultCooldownMs;
