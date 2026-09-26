@@ -39,6 +39,20 @@ already raised and starts nothing.
 The review console's routes (`/api/research/…`, the same ones the harness serves) answer only when
 the service listens on loopback, and only to a loopback `Host`, until sign-in exists (Phase 5).
 
+## The review console
+
+The research-only build of Frontier (`src/frontier/research-console/`): the world with the research
+bases, the questions, a question's runs and review, Ask, and Settings (the engine and pacing, read
+only). The service serves it from `/` on loopback once built.
+
+```sh
+npm run dev:research-console        # on http://127.0.0.1:5198, against the service on 4400
+npm run build:research-console      # writes dist/research-console, served by the service
+```
+
+`?mode=fixture` shows the recorded sample questions in dev builds. The image builds the console with
+`RESEARCH_CONSOLE_FIXTURES=off`, so it carries none.
+
 ## Pacing
 
 Runs that call the model at once start at `RESEARCH_INITIAL_CONCURRENT_RUNS`, grow by one after 20

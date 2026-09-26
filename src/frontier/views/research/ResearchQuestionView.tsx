@@ -1,6 +1,6 @@
 import { ArrowSquareOut, CheckCircle, WarningCircle, XCircle } from "@phosphor-icons/react";
 import { useState } from "react";
-import { errorMessage } from "../../runtime/coordinator";
+import { errorMessage } from "../../runtime/errors";
 import { formatDuration } from "../../runtime/presentation";
 import {
   componentCounts,
@@ -482,8 +482,10 @@ function RunDetail({ run }: { run: ResearchRunRecord }) {
       <div className="research-run-detail" role="tabpanel">
         <h3>Activity · {run.run}</h3>
         <ol className="research-activity">
-          {run.activity.map((event) => (
-            <li key={`${event.at}-${event.label}`} className={`activity-${event.kind}`}>
+          {run.activity.map((event, index) => (
+            // Two tool calls can land in the same millisecond; the position keeps each row its own.
+            // biome-ignore lint/suspicious/noArrayIndexKey: the feed is append-only and never reordered.
+            <li key={`${index}-${event.at}-${event.label}`} className={`activity-${event.kind}`}>
               <time dateTime={event.at}>
                 {new Date(event.at).toLocaleTimeString([], {
                   hour: "2-digit",

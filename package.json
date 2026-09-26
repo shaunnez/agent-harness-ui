@@ -36,6 +36,8 @@
     "data:export-json": "node scripts/export-task-store-json.mjs",
     "dev:frontier": "vite --config vite.frontier.config.mjs",
     "build:frontier": "vite build --config vite.frontier.config.mjs",
+    "dev:research-console": "vite --config vite.research-console.config.mjs",
+    "build:research-console": "vite build --config vite.research-console.config.mjs",
     "test:frontier": "node --test tests/frontier/*.test.mjs",
     "test:frontier-api": "node --test tests/frontier/api/*.test.mjs",
     "dev:frontier-api": "node scripts/frontier/dev-api.mjs",

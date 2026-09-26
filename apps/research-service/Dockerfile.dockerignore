@@ -7,3 +7,8 @@
 !packages/research-engine/src/**
 !apps/research-service/package.json
 !apps/research-service/src/**
+!vite.research-console.config.mjs
+!scripts/research-console/**
+!src/frontier/**
+!public/frontier/**
+!design/mission-frontier/assets/staging/colony-v2/contract.json

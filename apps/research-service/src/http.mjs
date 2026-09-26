@@ -5,17 +5,41 @@
 //   GET  /v1/batches/:id             a batch's items and answers             (client token)
 //   GET  /v1/batches?batchId=…       the same, by PlanCheck's own batch id   (client token)
 //   /api/research/…                  the review console's routes, from the engine (loopback only)
+//   GET  /api/research/console       the engine, runs per question and pacing   (loopback only)
+//   GET  /…                          the review console itself, dist/research-console (loopback only)
 //
 // A client token is compared by its SHA-256 against the configured hashes, in constant time. A
 // client sees only its own batches. The console routes have no sign-in until Phase 5, so they
 // answer only when the service listens on loopback, and only to a request whose Host is loopback.
 
 import { timingSafeEqual } from "node:crypto";
+import { readFile, stat } from "node:fs/promises";
 import { createServer } from "node:http";
+import path from "node:path";
 import { createResearchRoutes } from "@eversor/research-engine/research-routes.mjs";
 import { describeBatch, tokenSha256, validateBatch } from "./batches.mjs";
 
 const MAX_BODY_BYTES = 1_000_000;
+const CONTENT_TYPES = {
+  ".html": "text/html; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".svg": "image/svg+xml",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".webp": "image/webp",
+  ".glb": "model/gltf-binary",
+  ".gltf": "model/gltf+json",
+  ".bin": "application/octet-stream",
+  ".wasm": "application/wasm",
+  ".woff2": "font/woff2",
+  ".woff": "font/woff",
+  ".mp3": "audio/mpeg",
+  ".mp4": "video/mp4",
+  ".ico": "image/x-icon",
+  ".txt": "text/plain; charset=utf-8",
+};
 
 export function createServiceServer({
   config,
@@ -49,9 +73,23 @@ export function createServiceServer({
         return send(response, 404, { error: "Not found." });
       if (url.pathname === "/api/research/projects" && request.method === "GET")
         return send(response, 200, { projects: await projects.list() });
+      if (url.pathname === "/api/research/console" && request.method === "GET")
+        return send(response, 200, {
+          engine: { runtime: "api-loop", model: config.model, reasoning: "default" },
+          runsPerQuestion: config.runsPerQuestion,
+          pacing: pacer.snapshot(),
+        });
       if (request.method !== "GET" && !isJson(request)) return send(response, 415, { error: "Send JSON." });
       if (await consoleRoutes(request, response, url)) return;
     }
+    if (
+      consoleRoutes &&
+      (request.method === "GET" || request.method === "HEAD") &&
+      !url.pathname.startsWith("/api/") &&
+      !url.pathname.startsWith("/v1/") &&
+      loopbackHost(request.headers.host)
+    )
+      return serveConsole(request, response, url, config.consoleDirectory);
     return send(response, 404, { error: "Not found." });
   }
 
@@ -101,6 +139,52 @@ export function createServiceServer({
       else response.end();
     });
   });
+}
+
+/**
+ * The built review console, from `directory` (dist/research-console). A path with no file
+ * extension is a route inside the app and gets index.html; a missing asset is a 404. Nothing
+ * outside the directory is reachable.
+ */
+async function serveConsole(request, response, url, directory) {
+  let relative;
+  try {
+    relative = decodeURIComponent(url.pathname).replace(/^\/+/, "");
+  } catch {
+    return send(response, 400, { error: "Bad path." });
+  }
+  const root = path.resolve(directory);
+  let file = path.resolve(root, relative || "index.html");
+  if (file !== root && !file.startsWith(root + path.sep)) return send(response, 404, { error: "Not found." });
+  let info = await stat(file).catch(() => null);
+  if (info?.isDirectory()) {
+    file = path.join(file, "index.html");
+    info = await stat(file).catch(() => null);
+  }
+  if (!info && !path.extname(file)) {
+    file = path.join(root, "index.html");
+    info = await stat(file).catch(() => null);
+  }
+  if (!info?.isFile())
+    return send(response, 404, {
+      error: relative ? "Not found." : "The review console is not built. Run npm run build:research-console.",
+    });
+  const index = path.basename(file) === "index.html";
+  response.writeHead(200, {
+    "content-type": CONTENT_TYPES[path.extname(file).toLowerCase()] ?? "application/octet-stream",
+    "content-length": info.size,
+    // Vite names built assets by content hash, so they never change under the same name.
+    "cache-control": index
+      ? "no-cache"
+      : relative.startsWith("assets/")
+        ? "public, max-age=31536000, immutable"
+        : "public, max-age=3600",
+    "x-content-type-options": "nosniff",
+    "x-frame-options": "DENY",
+    "referrer-policy": "no-referrer",
+  });
+  if (request.method === "HEAD") return response.end();
+  response.end(await readFile(file));
 }
 
 /** The client a Bearer token belongs to, or null. */

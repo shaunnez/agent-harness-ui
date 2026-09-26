@@ -130,7 +130,19 @@ Original plan:
 
 Exit: the service runs locally against a dev PlanCheck with synthetic tenders, and the eval set grades the same through it as through the harness.
 
-### Phase 4: research-only Frontier build (3 to 5 days)
+### Phase 4: research-only Frontier build (built, awaiting Shaun's review)
+
+**Built on 26 September 2026.** `src/frontier/research-console/` is the console: the same 3D world showing research bases only, the research windows the harness already has (the questions list, a question with its runs, scope and review, Ask, the base dock), and a Settings window that states the service's engine and live pacing rather than offering a choice. No task workspace, New task, agent roster, Linear, Companion or harness API client is in it.
+
+- `npm run dev:research-console` serves it on 5198 against the service on 4400; `npm run build:research-console` writes `dist/research-console`, which the service now serves from `/` on loopback, beside a new `/api/research/console` route (engine, runs per question, pacing). The console talks only to the service's routes (`research-console/gateway.ts`).
+- The build checks its own module graph (`scripts/research-console/boundary.mjs`) and fails on any harness delivery view, the harness app shell, its gateways and task polling, the delivery fixtures or `src/api.ts`; `tests/frontier/research-console.test.mjs` builds it and proves the check fires. The research views' one link into the task coordinator (`errorMessage`) moved to `runtime/errors.ts`.
+- Fixture mode (`?mode=fixture`, the 31 recorded questions) stays in dev builds. The production image builds with `RESEARCH_CONSOLE_FIXTURES=off`, which swaps the fixture module for an empty one so the eval data is never read, let alone shipped (Phase 0.2 is open); `check-image.sh` fails on a console carrying it. The image (734 MB, 199 MB of it the world's assets) passes. In the container the console is off with its routes until sign-in (Phase 5).
+- Checked in the browser at 1280 × 800: live against the service with the two synthetic questions from the Phase 3 run (world with the one `plancheck` base, base dock, questions list, a question's view, Settings), and in fixture mode with both sample bases and all 31 questions. Two small fixes found on the way apply to the harness too: the base dock said "three runs each" (the default has been five since 25 September), and a run's activity list keyed rows by time and label, which collide when two QV searches land in the same millisecond.
+
+Not done: Shaun's review of the screens, which is this phase's exit. The world still draws no robots for research runs (runs are not tasks); drawing them, bound to recorded runs, is the later research-base idea.
+
+Original plan:
+
 
 1. Add `src/frontier/research-console/` (`index.html`, `main.tsx`, `ResearchConsoleApp.tsx`):
    - the world showing research bases only

@@ -3,6 +3,7 @@
 // batch.
 
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { resolveApiModel } from "@eversor/research-engine/api-loop/providers.mjs";
 import { API_LOOP_RESEARCH_MODELS } from "@eversor/research-engine/engine/contracts/policies.ts";
 
@@ -86,6 +87,10 @@ export function loadConfig(env = process.env) {
     },
     workerIntervalMs: integer(env.RESEARCH_WORKER_INTERVAL_MS, 2_000, [], "", { min: 100 }),
     dataDirectory,
+    // The built review console; the same place relative to this file in the repo and in the image.
+    consoleDirectory: path.resolve(
+      env.RESEARCH_CONSOLE_DIR ?? fileURLToPath(new URL("../../../dist/research-console/", import.meta.url)),
+    ),
     sourceSnapshotDirectory: path.join(dataDirectory, "research-sources"),
     transcriptDirectory: path.join(dataDirectory, "research-transcripts"),
   });

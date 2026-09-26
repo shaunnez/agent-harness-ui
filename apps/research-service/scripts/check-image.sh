@@ -2,8 +2,8 @@
 # Proves a built research-service image carries research and nothing of the harness:
 #   apps/research-service/scripts/check-image.sh eversor-research-service
 # Fails on any Claude, Codex or OpenCode binary or package, any harness server or Frontier
-# source, any .data directory, the harness UI's packages, or PGlite; then starts the service's
-# config check to show the image runs.
+# source, any .data directory, the harness UI's packages, PGlite, a missing review console or one
+# carrying the sample research; then starts the service's config check to show the image runs.
 set -eu
 image="${1:?name the image to check}"
 docker run --rm --entrypoint sh "$image" -c '
@@ -13,7 +13,7 @@ docker run --rm --entrypoint sh "$image" -c '
   for binary in claude codex opencode; do
     if command -v "$binary" >/dev/null 2>&1; then bad "$binary is on the PATH"; fi
   done
-  for path in /app/server /app/src /app/scripts /app/dist /app/.data /app/tests /app/design \
+  for path in /app/server /app/src /app/scripts /app/dist/frontier /app/dist/client /app/.data /app/tests /app/design \
               /app/node_modules/@anthropic-ai /app/node_modules/@openai /app/node_modules/opencode-ai \
               /app/node_modules/react /app/node_modules/vite /app/node_modules/three \
               /app/node_modules/@electric-sql; do
@@ -25,6 +25,10 @@ docker run --rm --entrypoint sh "$image" -c '
   command -v pdftotext >/dev/null 2>&1 || bad "pdftotext is missing"
   [ -d /app/packages/research-engine/src ] || bad "the research engine is missing"
   [ -f /app/apps/research-service/src/index.mjs ] || bad "the research service is missing"
+  [ -f /app/dist/research-console/index.html ] || bad "the review console is missing"
+  if ls /app/dist/research-console/assets 2>/dev/null | grep -Eq "review-feed|codex-prompt-check"; then
+    bad "the review console carries the recorded sample questions"
+  fi
   [ "$fail" -eq 0 ] && echo "research-service image: contents OK"
   exit "$fail"
 '

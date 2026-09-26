@@ -3,7 +3,7 @@
 // POST to graded answers without a model call.
 
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -328,4 +328,55 @@ test("the review console answers on loopback only, and PlanCheck's routes need n
     assert.equal((await call("GET", "/api/research/projects", { token: null })).status, 404);
     assert.equal((await call("GET", "/healthz", { token: null })).status, 200);
   });
+});
+
+test("the service serves the built review console on loopback, and nothing outside it", async () => {
+  const consoleDir = await mkdtemp(path.join(os.tmpdir(), "research-console-dist-"));
+  await mkdir(path.join(consoleDir, "assets"));
+  await writeFile(path.join(consoleDir, "index.html"), "<title>Eversor Research</title>");
+  await writeFile(path.join(consoleDir, "assets", "app-abc123.js"), "console.log(1)");
+  const raw = (base, route, headers = {}) =>
+    new Promise((resolve, reject) => {
+      const request = http.request(`${base}${route}`, { headers }, (response) => {
+        let body = "";
+        response.on("data", (chunk) => (body += chunk));
+        response.on("end", () => resolve({ status: response.statusCode, headers: response.headers, body }));
+      });
+      request.on("error", reject);
+      request.end();
+    });
+  try {
+    await withService({ env: { RESEARCH_CONSOLE_DIR: consoleDir } }, async ({ base, call }) => {
+      const index = await raw(base, "/");
+      assert.equal(index.status, 200);
+      assert.match(index.body, /Eversor Research/);
+      assert.equal(index.headers["cache-control"], "no-cache");
+      assert.equal(index.headers["x-frame-options"], "DENY");
+      // A route inside the app gets the app; a missing asset does not.
+      assert.match((await raw(base, "/questions/RQ-001")).body, /Eversor Research/);
+      assert.equal((await raw(base, "/assets/missing.js")).status, 404);
+      const asset = await raw(base, "/assets/app-abc123.js");
+      assert.equal(asset.status, 200);
+      assert.match(asset.headers["content-type"], /text\/javascript/);
+      assert.match(asset.headers["cache-control"], /immutable/);
+      // Nothing outside the console's directory, however the path is spelled.
+      for (const outside of ["/../package.json", "/%2e%2e/package.json", "/assets/%2e%2e/%2e%2e/package.json"])
+        assert.notEqual((await raw(base, outside)).body.includes('"name"'), true, outside);
+      assert.equal((await raw(base, "/", { host: "evil.example" })).status, 404);
+
+      const info = await call("GET", "/api/research/console", { token: null });
+      assert.equal(info.status, 200);
+      assert.equal(info.body.engine.model, DEFAULT_SERVICE_MODEL);
+      assert.equal(info.body.runsPerQuestion, 3);
+      assert.equal(info.body.pacing.limit, 2);
+    });
+    await withService(
+      { env: { RESEARCH_CONSOLE_DIR: consoleDir, RESEARCH_SERVICE_HOST: "0.0.0.0" } },
+      async ({ base }) => {
+        assert.equal((await raw(base, "/")).status, 404, "no console where there is no sign-in");
+      },
+    );
+  } finally {
+    await rm(consoleDir, { recursive: true, force: true });
+  }
 });

@@ -1,6 +1,7 @@
 # The research service, alone: the research engine, the service, their production dependencies
-# (`pg`) and poppler for PDF sources. No harness, no Frontier bundle yet (Phase 4), no Claude,
-# Codex or OpenCode, and no .data. `scripts/check-image.sh` proves it after a build.
+# (`pg`), poppler for PDF sources, and the built review console (the research-only Frontier). No
+# harness, no Claude, Codex or OpenCode, no sample research and no .data.
+# `scripts/check-image.sh` proves it after a build.
 #
 # Build from the repository root, so the workspace manifests and the lockfile are in context:
 #   docker build -f apps/research-service/Dockerfile -t eversor-research-service .
@@ -21,6 +22,22 @@ RUN node -e 'const fs = require("fs"); const file = "apps/research-service/packa
   && npm ci --omit=dev --workspace @eversor/research-service --include-workspace-root=false --no-audit --no-fund \
   && npm cache clean --force
 
+# The review console, built with the recorded sample questions left out (RESEARCH_CONSOLE_FIXTURES=off):
+# the build never reads them, and its boundary check fails on any harness delivery module.
+FROM ${NODE_IMAGE} AS console
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY packages/research-engine/package.json ./packages/research-engine/
+COPY apps/research-service/package.json ./apps/research-service/
+RUN npm ci --no-audit --no-fund
+COPY vite.research-console.config.mjs ./
+COPY scripts/research-console ./scripts/research-console
+COPY packages/research-engine/src/engine/contracts ./packages/research-engine/src/engine/contracts
+COPY design/mission-frontier/assets/staging/colony-v2/contract.json ./design/mission-frontier/assets/staging/colony-v2/
+COPY public/frontier ./public/frontier
+COPY src/frontier ./src/frontier
+RUN RESEARCH_CONSOLE_FIXTURES=off npx vite build --config vite.research-console.config.mjs
+
 FROM ${NODE_IMAGE}
 RUN set -eux; \
     apt-get update; \
@@ -37,11 +54,12 @@ COPY --chown=node:node packages/research-engine/package.json ./packages/research
 COPY --chown=node:node packages/research-engine/src ./packages/research-engine/src
 COPY --chown=node:node apps/research-service/package.json ./apps/research-service/
 COPY --chown=node:node apps/research-service/src ./apps/research-service/src
+COPY --from=console --chown=node:node /app/dist/research-console ./dist/research-console
 RUN install -d -o node -g node /data
 USER node
 EXPOSE 4400
-# Listening on 0.0.0.0 inside the container turns the review console's routes off until sign-in
-# exists (Phase 5); PlanCheck's batch routes still need a client token.
+# Listening on 0.0.0.0 inside the container turns the review console and its routes off until
+# sign-in exists (Phase 5); PlanCheck's batch routes still need a client token.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
   CMD node -e "fetch('http://127.0.0.1:4400/healthz').then((r)=>process.exit(r.ok?0:1),()=>process.exit(1))"
 CMD ["node", "apps/research-service/src/index.mjs"]
