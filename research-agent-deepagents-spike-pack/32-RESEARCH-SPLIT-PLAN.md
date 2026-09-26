@@ -70,9 +70,11 @@ Phases 1 to 4 are about 6 to 10 working days of agent work plus review, after Ph
 3. Decide what a research project is in prod: one per PlanCheck account, or one standing project.
 4. Decide how prod scopes questions: DeepSeek on Baseten, or no scoping step.
 
-### Phase 1: cut the DeepSeek runtime free, in place (1 to 2 days, no files move)
+### Phase 1: cut the DeepSeek runtime free, in place (done)
 
-**Mostly done on 26 September 2026**, when Shaun retired every research engine but the API loop. Rather than keep the CLI runtimes on a shared base, they were deleted: `HostedResearchRuntime` (`server/research/engine/hosted-runtime.mjs`) holds the lifecycle, the shared checking code moved to `server/research/engine/`, the API loop has its own copy of its prompt (`api-loop/system-prompt.txt`, text unchanged), and scoping calls DeepSeek on the API loop's key. Re-scoring every recorded arm gives identical grades. Still to do: steps 4 and 5 below (the `src/` policy files and the boundary test).
+**Mostly done on 26 September 2026**, when Shaun retired every research engine but the API loop. Rather than keep the CLI runtimes on a shared base, they were deleted: `HostedResearchRuntime` (`server/research/engine/hosted-runtime.mjs`) holds the lifecycle, the shared checking code moved to `server/research/engine/`, the API loop has its own copy of its prompt (`api-loop/system-prompt.txt`, text unchanged), and scoping calls DeepSeek on the API loop's key. Re-scoring every recorded arm gives identical grades.
+
+**Done on 26 September 2026.** Steps 4 and 5 finished it: the research contracts (`src/domain/research.ts` and `src/research-{policies,budget-policy,runtime-contract}.ts`) moved to `server/research/engine/contracts/`, and the harness server, Frontier and tests import them from there. `tests/research-boundary.test.mjs` scans every module under `server/research/` and fails on an import that leaves it, on any npm package, on a path to a retired or delivery CLI runtime, and on `node:child_process` outside `pdftotext` and the PlanCheck token command. All tests, typecheck, lint and the build pass. Re-scoring gives the same grades before and after the move on both suites: 127 recorded results in `29-eval/results` and 45 in `31-holdout/results` (`--rescore --set` now reads the held-out questions). One 29-eval file, A6 `emergency-lighting-exit-signage`, re-scores as agreed/pass where it was saved as disputed; HEAD before the move gives the same, so the saved file predates a later scoring fix.
 
 Goal: the DeepSeek path (`api-loop`, the service, the stores and the checks) imports no CLI runtime and no harness module.
 

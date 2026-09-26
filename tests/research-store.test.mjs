@@ -11,7 +11,7 @@ import { normalizePdfCapture, serializePdfSnapshot } from "../server/research/re
 import { ResearchStore } from "../server/research/research-store.mjs";
 import { DATABASE_SCHEMA_VERSION, migrateSqliteSchema } from "../server/sqlite-storage.mjs";
 import { SqliteTaskStore } from "../server/sqlite-store.mjs";
-import { resolveResearchBudget } from "../src/research-budget-policy.ts";
+import { resolveResearchBudget } from "../server/research/engine/contracts/budget-policy.ts";
 import { runToEnd, withResearchService, withResearchStore } from "./research-test-support.mjs";
 
 function requestFor(objective, profile = "standard") {

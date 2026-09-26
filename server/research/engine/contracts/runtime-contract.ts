@@ -1,6 +1,6 @@
 // Runtime-checkable companions to the research contracts, plus the compile-time assertions
 // that keep those contracts neutral. `npm run typecheck` is the test: if a runtime concept is
-// added to `src/domain/research.ts`, or a state is added without being listed here, this file
+// added to `research.ts`, or a state is added without being listed here, this file
 // stops compiling.
 
 import type {
@@ -21,7 +21,7 @@ import type {
   ResearchRunStatus,
   ResearchRuntime,
   ResearchUsage,
-} from "./domain/research";
+} from "./research.ts";
 
 export const RESEARCH_PROFILES = ["quick", "standard", "deep"] as const satisfies readonly ResearchProfile[];
 

@@ -7,7 +7,7 @@
 // queued -> running -> cancelling -> cancelled works. Tests drive `advance()` directly; the
 // companion lets a short timer do it.
 
-import { emptyResearchUsage } from "../../src/research-budget-policy.ts";
+import { emptyResearchUsage } from "./engine/contracts/budget-policy.ts";
 
 /** How many sub-questions the fake planner always wants to investigate. Anything below this
  *  in `budget.maxResearchers` truncates the run, which is how the fake demonstrates that it

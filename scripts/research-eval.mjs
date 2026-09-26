@@ -2,7 +2,7 @@
 // The scope → pack eval (`research-agent-deepagents-spike-pack/29-EVAL-PREREGISTRATION.md`).
 //
 //   node scripts/research-eval.mjs --arm A6|A7|A8|A9|A10|F10 (A0–A5 and O5 re-score only) [--only id,id] [--out <dir>]
-//   node scripts/research-eval.mjs --rescore [--out <dir>]
+//   node scripts/research-eval.mjs --rescore [--out <dir>] [--set <question-set.json>]
 //   node scripts/research-eval.mjs --arm A4 --set <questions.json> --model <model> --out <dir>   (tuning)
 //
 // Runs every pre-registered question three times on one arm and writes one JSON file per
@@ -22,7 +22,7 @@ import { fileURLToPath } from "node:url";
 import { ApiLoopResearchRuntime } from "../server/research/api-loop/runtime.mjs";
 import { questionRecord } from "../server/research/research-question-record.mjs";
 import { scopedObjective } from "../server/research/research-scope.mjs";
-import { resolveResearchBudget } from "../src/research-budget-policy.ts";
+import { resolveResearchBudget } from "../server/research/engine/contracts/budget-policy.ts";
 
 const PACK_DIRECTORY = fileURLToPath(new URL("../research-agent-deepagents-spike-pack/", import.meta.url));
 const EVAL_DIRECTORY = path.join(PACK_DIRECTORY, "29-eval");
@@ -214,8 +214,8 @@ function score(question, runs, createdAt) {
  * Re-score every recorded result with the current `questionRecord`, keeping the runs as recorded.
  * Used when the scoring rule is corrected mid-eval; the correction is recorded in doc 29.
  */
-async function rescore(out) {
-  const questions = new Map((await evalQuestions()).map((question) => [question.id, question]));
+async function rescore(out, setPath = null) {
+  const questions = new Map((await evalQuestions(setPath)).map((question) => [question.id, question]));
   for (const armId of Object.keys(ARMS)) {
     const directory = path.join(out, armId);
     const files = await readdir(directory).catch(() => []);
@@ -325,7 +325,8 @@ async function main() {
     const index = args.indexOf(name);
     return index === -1 ? null : args[index + 1];
   };
-  if (args.includes("--rescore")) return rescore(option("--out") ?? path.join(EVAL_DIRECTORY, "results"));
+  if (args.includes("--rescore"))
+    return rescore(option("--out") ?? path.join(EVAL_DIRECTORY, "results"), option("--set"));
   const armId = option("--arm");
   if (!ARMS[armId]) throw new Error(`Choose --arm ${Object.keys(ARMS).join("|")}.`);
   // `--model` and `--set` are for tuning outside the frozen eval: a different model string on an

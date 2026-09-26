@@ -15,7 +15,7 @@ import {
   DEFAULT_RESEARCH_POLICIES,
   researchPoliciesIssue,
   researchPoliciesOf,
-} from "../src/research-policies.ts";
+} from "../server/research/engine/contracts/policies.ts";
 import { withResearchStore } from "./research-test-support.mjs";
 
 const BASETEN = "baseten/deepseek-ai/DeepSeek-V4.1-Flash";

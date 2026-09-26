@@ -2,7 +2,7 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { normalizeRepairLimits } from "../src/repair-limits.ts";
-import { researchPoliciesOf } from "../src/research-policies.ts";
+import { researchPoliciesOf } from "./research/engine/contracts/policies.ts";
 import { cleanupOrphanAttachmentSets } from "./attachment-storage.mjs";
 import { acquireJsonStoreLock } from "./json-store-lock.mjs";
 import {

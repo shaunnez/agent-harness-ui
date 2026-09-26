@@ -10,9 +10,9 @@ import {
   emptyResearchUsage,
   researchSoftOverruns,
   resolveResearchBudget,
-} from "../../src/research-budget-policy.ts";
-import { RESEARCH_ENGINES, researchPoliciesOf } from "../../src/research-policies.ts";
-import { isResearchProfile, readResearchModelIdentity } from "../../src/research-runtime-contract.ts";
+} from "./engine/contracts/budget-policy.ts";
+import { RESEARCH_ENGINES, researchPoliciesOf } from "./engine/contracts/policies.ts";
+import { isResearchProfile, readResearchModelIdentity } from "./engine/contracts/runtime-contract.ts";
 import { DEFAULT_RESEARCH_RUNTIME_ID } from "./research-runtime-registry.mjs";
 
 const MAX_OBJECTIVE_LENGTH = 4_000;

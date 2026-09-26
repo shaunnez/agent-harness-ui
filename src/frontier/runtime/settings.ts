@@ -4,7 +4,7 @@ import {
   researchPoliciesIssue,
   researchPoliciesOf,
   type RuntimeResearchPolicies,
-} from "../../research-policies.ts";
+} from "../../../server/research/engine/contracts/policies.ts";
 import { policyRoles } from "./policies.ts";
 import { isStrongerRepairPolicy } from "../../../server/repair-escalation-strength.mjs";
 

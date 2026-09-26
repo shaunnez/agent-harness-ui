@@ -7,7 +7,7 @@ import type {
   ResearchHardCeiling,
   ResearchProfile,
   ResearchUsage,
-} from "./domain/research";
+} from "./research.ts";
 
 /** The spike caps researchers at three regardless of profile (`03-DEEP-AGENTS-JS-SPIKE.md`).
  *  Raising it is a policy decision, not a larger number in a request body. */

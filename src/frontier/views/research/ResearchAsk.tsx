@@ -1,7 +1,7 @@
 import { ArrowRight, GearSix, WarningCircle } from "@phosphor-icons/react";
 import { useState } from "react";
 import type { RuntimeProject, RuntimeStatus } from "../../../domain";
-import { researchPoliciesOf } from "../../../research-policies";
+import { researchPoliciesOf } from "../../../../server/research/engine/contracts/policies.ts";
 import { errorMessage } from "../../runtime/coordinator";
 import {
   type ResearchEngineSnapshot,
