@@ -1,6 +1,9 @@
 // Two ways a question spends less (Shaun, 26 September: "1,2,4,5,6,7 al good go and do it").
 //
-// Staged runs. A five-run question starts three. When those three finish, each with a band, and
+// Staged runs are opt-in: a five-run question starts all five unless its ask says `staged: true`
+// (Shaun, 26 September, after the re-score below: "back to five").
+//
+// Staged runs. A staged five-run question starts three. When those three finish, each with a band, and
 // agree by the record's own rule, the question stops there. When they do anything else (disagree,
 // one priced nothing, units differ), the other two start and the question is scored exactly as
 // any five-run question is.
