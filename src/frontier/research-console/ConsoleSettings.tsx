@@ -1,30 +1,51 @@
+import { useState } from "react";
 import type { WorldPreferences } from "../app/preferences";
 import { researchEngineLabel, researchEnginePlan } from "../runtime/research";
 import type { ConsoleEngine } from "./gateway";
 
 /**
- * Settings → Research, in the console. The engine is not a choice here: the research service runs
- * DeepSeek on the US-hosted provider its configuration names, and refuses any other, so this only
- * says what it is. The world's display preferences stay in this browser.
+ * Settings → Research, in the console. The provider choice is saved on the research service;
+ * its key stays in the service environment. The world's display preferences stay in this browser.
  */
 export function ConsoleSettings({
   mode,
   engine,
+  onSelectModel,
   preferences,
   onPreferences,
 }: {
   mode: "fixture" | "live";
   engine: ConsoleEngine | null;
+  onSelectModel(model: string): Promise<void>;
   preferences: WorldPreferences;
   onPreferences(value: WorldPreferences): void;
 }) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const selected = draft ?? engine?.engine.model ?? "";
+  const configured = engine?.models.find((entry) => entry.id === selected)?.configured ?? false;
+
+  async function saveModel() {
+    setSaving(true);
+    setError(null);
+    try {
+      await onSelectModel(selected);
+      setDraft(null);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div className="overlay-body">
       <section className="workflow-card">
         <h3>Research agent</h3>
         <p className="quiet">
-          Every question runs on the research service's configured engine. It is set where the service is
-          deployed, not here, and a run on any provider outside the US is refused.
+          New questions use the selected DeepSeek provider. Questions already running keep their recorded
+          model. Provider keys stay in the research service's environment.
         </p>
         <div className="design-policy-default">
           <h4>Engine</h4>
@@ -39,6 +60,38 @@ export function ConsoleSettings({
               : null}
           </small>
         </div>
+        {mode === "live" && engine && (
+          <div className="design-policy-default">
+            <label htmlFor="research-console-model">Provider for new questions</label>
+            <select
+              id="research-console-model"
+              value={selected}
+              onChange={(event) => {
+                setDraft(event.target.value);
+                setError(null);
+              }}
+              disabled={saving}
+            >
+              {engine.models.map((entry) => (
+                <option key={entry.id} value={entry.id}>
+                  {entry.label}
+                  {entry.configured ? "" : " · key missing"}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              disabled={saving || !configured || selected === engine.engine.model}
+              onClick={() => void saveModel()}
+            >
+              {saving ? "Saving…" : "Use for new questions"}
+            </button>
+            {!configured && (
+              <small>Add this provider's API key to the service environment, then restart the service.</small>
+            )}
+            {error && <p role="alert">{error}</p>}
+          </div>
+        )}
         {mode === "live" && engine?.pacing && (
           <div className="design-policy-default">
             <h4>Pacing</h4>

@@ -312,6 +312,10 @@ export function ResearchConsoleApp() {
               <ConsoleSettings
                 mode={mode}
                 engine={engine}
+                onSelectModel={async (model) => {
+                  const next = await gateway.selectModel(model);
+                  setEngine(next);
+                }}
                 preferences={preferences}
                 onPreferences={(value) => {
                   setPreferences(value);

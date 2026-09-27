@@ -60,6 +60,16 @@ export const SERVICE_MIGRATIONS = Object.freeze({
         CREATE INDEX research_batch_items_queue_idx ON research_batch_items(status, batch_id, ordinal);
       `,
     },
+    {
+      version: 2,
+      name: "selected-model",
+      sql: `
+        CREATE TABLE research_service_settings (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          model TEXT NOT NULL
+        );
+      `,
+    },
   ],
 });
 

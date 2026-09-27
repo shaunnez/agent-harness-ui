@@ -3,7 +3,7 @@
 The research piece on its own, for production: PlanCheck sends the tender items it could not price
 from the QV catalogue, and the service researches each one with DeepSeek (the API loop, five runs,
 the host's citation checks and grading) and returns graded prices. It runs only the research
-engine (`packages/research-engine`), on a US-hosted provider, with its own Postgres. No harness
+engine (`packages/research-engine`), on an approved provider, with its own Postgres. No harness
 code, Claude, Codex or OpenCode is in it; `tests/research-boundary.test.mjs` and
 `scripts/check-image.sh` hold that. Plan: `research-agent-deepagents-spike-pack/32-RESEARCH-SPLIT-PLAN.md`, Phase 3.
 
@@ -15,9 +15,23 @@ npm run client-token -w @eversor/research-service -- plancheck          # a toke
 npm run dev:research-service
 ```
 
-`pglite:<directory>` runs Postgres inside the process, so a local run needs no Docker. The dev
-command also reads the provider keys from `~/.config/eversor-research.env` and PlanCheck's local
-rate-library settings from the harness's `.env.research.local`, when they exist.
+`pglite:<directory>` runs Postgres inside the process, so a local run needs no Docker. Put local
+service credentials in `apps/research-service/.env.local` (ignored by git, owner-only). The dev
+command also reads the existing `~/.config/eversor-research.env` and the harness's
+`.env.research.local` when they exist, for compatibility with the current local setup.
+
+To use DeepInfra, put `DEEPINFRA_API_KEY=...` in `apps/research-service/.env.local`,
+then restart the research service so it reads the key. In the research console, open **Settings →
+Research agent**, choose **DeepSeek 4.1 Flash · DeepInfra**, and press **Use for new questions**.
+The choice is stored in the research database and applies to new questions immediately, including
+PlanCheck batches. A question's runs keep their selected model through staged runs and retries.
+The UI shows whether each provider key was present when the service started; it never accepts or
+displays a key. `RESEARCH_MODEL` is the starting choice when the database has no saved selection.
+Changing a key still requires restarting the service. In Azure, set `DEEPINFRA_API_KEY` in the
+research service's environment through Key Vault, not in a repository file.
+DeepInfra uses its public `api.deepinfra.com` endpoint. DeepInfra says its data centres are US-based,
+but the service does not enforce a region-specific endpoint for it; the earlier Fireworks/Baseten
+US-only restriction was widened by Shaun's approval on 27 September 2026.
 
 ## API
 
@@ -42,8 +56,8 @@ the service listens on loopback, and only to a loopback `Host`, until sign-in ex
 ## The review console
 
 The research-only build of Frontier (`src/frontier/research-console/`): the world with the research
-bases, the questions, a question's runs and review, Ask, and Settings (the engine and pacing, read
-only). The service serves it from `/` on loopback once built.
+bases, the questions, a question's runs and review, Ask, and Settings (model selection and pacing
+status). The service serves it from `/` on loopback once built.
 
 ```sh
 npm run dev:research-console        # on http://127.0.0.1:5198, against the service on 4400

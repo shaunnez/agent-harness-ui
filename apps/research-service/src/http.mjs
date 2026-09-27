@@ -16,8 +16,10 @@ import { timingSafeEqual } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import path from "node:path";
+import { resolveApiModel } from "@eversor/research-engine/api-loop/providers.mjs";
 import { createResearchRoutes } from "@eversor/research-engine/research-routes.mjs";
 import { describeBatch, tokenSha256, validateBatch } from "./batches.mjs";
+import { approvedModel } from "./model-settings.mjs";
 
 const MAX_BODY_BYTES = 1_000_000;
 const CONTENT_TYPES = {
@@ -48,6 +50,8 @@ export function createServiceServer({
   research,
   projects,
   pacer,
+  modelSettings,
+  env,
   db,
   log = () => {},
 }) {
@@ -59,7 +63,7 @@ export function createServiceServer({
     const url = new URL(request.url ?? "/", "http://research.invalid");
     if (url.pathname === "/healthz" && request.method === "GET") {
       await db.query("SELECT 1");
-      return send(response, 200, { ok: true, database: db.kind, pacing: pacer.snapshot() });
+      return send(response, 200, { ok: true, database: db.kind, pacing: await pacer.snapshot() });
     }
 
     if (url.pathname === "/v1/batches" || url.pathname.startsWith("/v1/batches/")) {
@@ -74,11 +78,19 @@ export function createServiceServer({
       if (url.pathname === "/api/research/projects" && request.method === "GET")
         return send(response, 200, { projects: await projects.list() });
       if (url.pathname === "/api/research/console" && request.method === "GET")
-        return send(response, 200, {
-          engine: { runtime: "api-loop", model: config.model, reasoning: "default" },
-          runsPerQuestion: config.runsPerQuestion,
-          pacing: pacer.snapshot(),
-        });
+        return send(response, 200, await consoleInfo());
+      if (url.pathname === "/api/research/console/model" && request.method === "POST") {
+        if (!isJson(request)) return send(response, 415, { error: "Send JSON." });
+        const input = await readJson(request);
+        const model = approvedModel(input?.model).id;
+        const { provider } = resolveApiModel(model);
+        if (!env[provider.keyEnv])
+          return send(response, 409, {
+            error: `Set ${provider.keyEnv} in the research service's environment and restart it before selecting this model.`,
+          });
+        await modelSettings.select(model);
+        return send(response, 200, await consoleInfo());
+      }
       if (request.method !== "GET" && !isJson(request)) return send(response, 415, { error: "Send JSON." });
       if (await consoleRoutes(request, response, url)) return;
     }
@@ -91,6 +103,16 @@ export function createServiceServer({
     )
       return serveConsole(request, response, url, config.consoleDirectory);
     return send(response, 404, { error: "Not found." });
+  }
+
+  async function consoleInfo() {
+    const choice = await modelSettings.choices(env);
+    return {
+      engine: { runtime: "api-loop", model: choice.selected, reasoning: "default" },
+      models: choice.models,
+      runsPerQuestion: config.runsPerQuestion,
+      pacing: await pacer.snapshot(),
+    };
   }
 
   async function batchRoute(request, response, url, client) {

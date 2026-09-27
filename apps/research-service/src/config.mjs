@@ -10,10 +10,9 @@ import { API_LOOP_RESEARCH_MODELS } from "@eversor/research-engine/engine/contra
 /** Fireworks' US-only endpoint, under evaluation as the production provider (F10). */
 export const DEFAULT_SERVICE_MODEL = "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us";
 
-/** Providers that keep DeepSeek traffic inside the US. OpenCode Go is for testing and may route
- *  to DeepSeek's own infrastructure, so tender text never goes there; DeepSeek's own API is not a
- *  provider at all. */
-export const US_PROVIDERS = Object.freeze(["fireworks-us", "baseten"]);
+/** Providers approved for the research service. OpenCode Go remains for harness testing only;
+ * DeepSeek's own API is deliberately absent. */
+export const APPROVED_PROVIDERS = Object.freeze(["fireworks-us", "baseten", "deepinfra"]);
 
 const RUN_COUNTS = new Set([1, 3, 5]);
 
@@ -38,9 +37,9 @@ export function loadConfig(env = process.env) {
   // Settings would read an unlisted model as the default, which is OpenCode Go's; refuse it here.
   if (providerId && !API_LOOP_RESEARCH_MODELS.some((entry) => entry.id === model))
     problems.push(`RESEARCH_MODEL ${model} is not one of the API loop's research models.`);
-  if (providerId && !US_PROVIDERS.includes(providerId))
+  if (providerId && !APPROVED_PROVIDERS.includes(providerId))
     problems.push(
-      `RESEARCH_MODEL uses ${providerId}. The research service sends tender text, so it runs only on a US-hosted provider: ${US_PROVIDERS.join(" or ")}.`,
+      `RESEARCH_MODEL uses ${providerId}. The research service runs only on approved providers: ${APPROVED_PROVIDERS.join(" or ")}.`,
     );
 
   const clients = parseClients(env.RESEARCH_SERVICE_CLIENTS ?? "", problems);

@@ -11,7 +11,7 @@ import {
   researchSoftOverruns,
   resolveResearchBudget,
 } from "./engine/contracts/budget-policy.ts";
-import { RESEARCH_ENGINES, researchPoliciesOf } from "./engine/contracts/policies.ts";
+import { RESEARCH_ENGINES, researchPoliciesIssue, researchPoliciesOf } from "./engine/contracts/policies.ts";
 import { isResearchProfile, readResearchModelIdentity } from "./engine/contracts/runtime-contract.ts";
 import { DEFAULT_RESEARCH_RUNTIME_ID } from "./research-runtime-registry.mjs";
 
@@ -53,15 +53,34 @@ export class ResearchService {
     return this.#registry.ids();
   }
 
+  /** The choice a new question should pin before it scopes or starts any runs. */
+  async currentPolicy() {
+    return this.#settings ? { ...researchPoliciesOf(await this.#settings()).agent } : null;
+  }
+
   async createRun(input) {
     const request = this.#validate(input);
-    const policies = this.#settings ? researchPoliciesOf(await this.#settings()) : null;
+    const policies =
+      input.researchPolicy === undefined && this.#settings
+        ? researchPoliciesOf(await this.#settings())
+        : null;
     // A request that names a runtime still wins; one that names none gets the Settings choice.
-    const runtimeId = String(input.runtimeId ?? policies?.agent.runtime ?? DEFAULT_RESEARCH_RUNTIME_ID);
+    const runtimeId = String(
+      input.runtimeId ??
+        input.researchPolicy?.runtime ??
+        policies?.agent.runtime ??
+        DEFAULT_RESEARCH_RUNTIME_ID,
+    );
     const runtime = this.#registry.resolve(runtimeId);
     // Snapshotted into the stored request, so a finished run always says what answered it and a
     // later change in Settings never rewrites it.
-    const researchPolicy = snapshotResearchPolicy(runtimeId, policies, input.runtimeId != null);
+    let researchPolicy = snapshotResearchPolicy(runtimeId, policies, input.runtimeId != null);
+    if (input.researchPolicy !== undefined) {
+      const issue = researchPoliciesIssue({ agent: input.researchPolicy });
+      if (issue || input.researchPolicy.runtime !== runtimeId)
+        throw badRequest(issue ?? "The pinned research policy names another runtime.");
+      researchPolicy = { ...input.researchPolicy, source: "question-snapshot" };
+    }
     if (researchPolicy) request.researchPolicy = researchPolicy;
     const record = await this.#store.createRun({
       runtimeId,

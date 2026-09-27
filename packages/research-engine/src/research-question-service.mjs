@@ -106,7 +106,8 @@ export class ResearchQuestionService {
       if (reusable(record, { now: this.#now(), maxAgeMs: this.#reuseForMs }))
         return { question: record, reused: true };
     }
-    const scope = await this.#scopeFor(input, objective, source);
+    const researchPolicy = await this.#research.currentPolicy?.();
+    const scope = await this.#scopeFor(input, objective, source, researchPolicy);
     const runObjective = scopedObjective(objective, scope?.scope ?? null);
     if (runObjective.length > MAX_RUN_OBJECTIVE_LENGTH)
       throw badRequest("The question and its scope are too long together. Shorten one of them.");
@@ -133,6 +134,7 @@ export class ResearchQuestionService {
       profile,
       labels: staged ? FIRST_STAGE_RUNS : runs,
       firstOrdinal: 1,
+      researchPolicy,
     });
     // A run that settled before the last one was attached could not see the whole first stage.
     await this.#advance(question.id);
@@ -151,13 +153,17 @@ export class ResearchQuestionService {
     }
   }
 
-  async #startRuns(question, { objective, profile, labels, firstOrdinal, runtimeId, from = 1 }) {
+  async #startRuns(
+    question,
+    { objective, profile, labels, firstOrdinal, runtimeId, researchPolicy, from = 1 },
+  ) {
     for (let index = 0; index < labels; index += 1) {
       const label = `r${from + index}`;
       const run = await this.#research.createRun({
         objective,
         profile,
         ...(runtimeId ? { runtimeId } : {}),
+        ...(researchPolicy ? { researchPolicy } : {}),
         metadata: { questionId: question.id, run: label },
       });
       await this.#questions.attachRun(question.id, run.id, label, firstOrdinal + index);
@@ -188,6 +194,7 @@ export class ResearchQuestionService {
       objective: first.request.objective,
       profile: first.request.profile ?? question.profile,
       runtimeId: first.runtimeId,
+      researchPolicy: first.request.researchPolicy,
       labels: question.runsPlanned - FIRST_STAGE_RUNS,
       firstOrdinal: block * question.runsPlanned + FIRST_STAGE_RUNS + 1,
       from: FIRST_STAGE_RUNS + 1,
@@ -225,6 +232,7 @@ export class ResearchQuestionService {
         objective: failed.request.objective,
         profile: failed.request.profile ?? question.profile,
         runtimeId: failed.runtimeId,
+        ...(failed.request.researchPolicy ? { researchPolicy: failed.request.researchPolicy } : {}),
         metadata: { questionId: question.id, run: label },
       });
       await this.#questions.attachRun(question.id, run.id, label, next + index);
@@ -285,7 +293,7 @@ export class ResearchQuestionService {
    * edited), or, for an external request with none, one drafted now, because nobody is there to
    * scope it. A manual question sent without a scope is asked unscoped, as before.
    */
-  async #scopeFor(input, objective, source) {
+  async #scopeFor(input, objective, source, researchPolicy) {
     if (input.scope != null) {
       let scope;
       try {
@@ -296,7 +304,7 @@ export class ResearchQuestionService {
       return { scope, scopedBy: scopedByOf(input.scopedBy), reviewed: true };
     }
     if (source.kind !== "external" || !this.#scoper) return null;
-    const drafted = await this.#scoper.scope({ objective });
+    const drafted = await this.#scoper.scope({ objective, model: researchPolicy?.model });
     return { scope: drafted.scope, scopedBy: drafted.scopedBy, reviewed: false };
   }
 

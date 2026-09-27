@@ -8,9 +8,10 @@ import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { createResearchServiceApp, usOnly } from "../src/app.mjs";
+import { approvedOnly, createResearchServiceApp } from "../src/app.mjs";
 import { tokenSha256, validateBatch } from "../src/batches.mjs";
 import { DEFAULT_SERVICE_MODEL, loadConfig } from "../src/config.mjs";
+import { ModelRouter } from "../src/model-router.mjs";
 
 const TOKEN = "rsk_test-token-for-plancheck-000000";
 const OTHER_TOKEN = "rsk_test-token-for-someone-else-000";
@@ -105,7 +106,7 @@ async function withService(options, operation) {
   const runtime = options.runtime ?? new StubApiLoop();
   const app = await createResearchServiceApp({
     config,
-    env: {},
+    env: options.providerEnv ?? {},
     runtime,
     scoper: null,
     log: (m, f) => process.env.DEBUG_SERVICE && console.log("LOG", m, JSON.stringify(f)),
@@ -155,10 +156,14 @@ const batch = (batchId, ids) => ({
   })),
 });
 
-test("the service refuses a provider that is not US-hosted, an unlisted model, and no clients", () => {
+test("the service accepts approved providers and refuses unapproved models and missing clients", () => {
   assert.throws(
     () => loadConfig(baseEnv({ RESEARCH_MODEL: "opencode-go/deepseek-v4.1-flash" })),
-    /US-hosted provider/,
+    /approved providers/,
+  );
+  assert.equal(
+    loadConfig(baseEnv({ RESEARCH_MODEL: "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash" })).provider,
+    "deepinfra",
   );
   assert.throws(
     () => loadConfig(baseEnv({ RESEARCH_MODEL: "fireworks-us/some-other-model" })),
@@ -175,15 +180,105 @@ test("the service refuses a provider that is not US-hosted, an unlisted model, a
 });
 
 test("a run on any other model is refused where it starts, too", async () => {
-  const guarded = usOnly(new StubApiLoop());
+  const guarded = approvedOnly(new StubApiLoop());
   await assert.rejects(
     guarded.start({
       id: "RSCH-001",
       researchPolicy: { runtime: "api-loop", model: "opencode-go/deepseek-v4.1-flash" },
     }),
-    /runs only on fireworks-us or baseten/,
+    /runs only on fireworks-us or baseten or deepinfra/,
   );
   await assert.rejects(guarded.start({ id: "RSCH-002" }), /no model/);
+});
+
+test("the console selects a configured provider immediately for new questions", async () => {
+  const deepinfra = "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash";
+  await withService({ providerEnv: { DEEPINFRA_API_KEY: "test-key" } }, async ({ call, runtime }) => {
+    const before = await call("GET", "/api/research/console", { token: null });
+    assert.equal(before.body.engine.model, DEFAULT_SERVICE_MODEL);
+    assert.equal(before.body.models.find((entry) => entry.id === deepinfra).configured, true);
+    const first = await call("POST", "/api/research/questions", {
+      token: null,
+      body: { projectId: "plancheck", objective: "First distinct price question", runs: 1 },
+    });
+    assert.equal(first.status, 201);
+    assert.equal(runtime.models[0], DEFAULT_SERVICE_MODEL);
+
+    const selected = await call("POST", "/api/research/console/model", {
+      token: null,
+      body: { model: deepinfra },
+    });
+    assert.equal(selected.status, 200);
+    assert.equal(selected.body.engine.model, deepinfra);
+    assert.equal((await call("GET", "/api/research/console", { token: null })).body.engine.model, deepinfra);
+    const second = await call("POST", "/api/research/questions", {
+      token: null,
+      body: { projectId: "plancheck", objective: "Second distinct price question", runs: 1 },
+    });
+    assert.equal(second.status, 201);
+    assert.deepEqual(runtime.models, [DEFAULT_SERVICE_MODEL, deepinfra]);
+    assert.equal(
+      (
+        await call("POST", "/api/research/console/model", {
+          token: null,
+          body: { model: "opencode-go/deepseek-v4.1-flash" },
+        })
+      ).status,
+      400,
+    );
+  });
+  await withService({}, async ({ call }) => {
+    assert.equal(
+      (await call("POST", "/api/research/console/model", { token: null, body: { model: deepinfra } })).status,
+      409,
+    );
+  });
+});
+
+test("runs already underway stay on their provider when the selected model changes", async () => {
+  const fireworks = new StubApiLoop({ holdMs: 150 });
+  const deepinfra = new StubApiLoop({ holdMs: 150 });
+  const router = new ModelRouter(
+    new Map([
+      ["fireworks-us", fireworks],
+      ["deepinfra", deepinfra],
+    ]),
+  );
+  await withService(
+    { runtime: router, providerEnv: { DEEPINFRA_API_KEY: "test-key" } },
+    async ({ call, app }) => {
+      const first = await call("POST", "/api/research/questions", {
+        token: null,
+        body: { projectId: "plancheck", objective: "First provider run", runs: 1 },
+      });
+      assert.equal(first.status, 201);
+      await call("POST", "/api/research/console/model", {
+        token: null,
+        body: { model: "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash" },
+      });
+      const second = await call("POST", "/api/research/questions", {
+        token: null,
+        body: { projectId: "plancheck", objective: "Second provider run", runs: 1 },
+      });
+      assert.equal(second.status, 201);
+      await Promise.all([
+        app.research.settled(first.body.question.runs[0].runId),
+        app.research.settled(second.body.question.runs[0].runId),
+      ]);
+      assert.deepEqual(fireworks.models, [DEFAULT_SERVICE_MODEL]);
+      assert.deepEqual(deepinfra.models, ["deepinfra/deepseek-ai/DeepSeek-V4.1-Flash"]);
+      assert.equal(
+        (await call("GET", `/api/research/questions/${first.body.question.id}`, { token: null })).body
+          .question.status,
+        "single_run",
+      );
+      assert.equal(
+        (await call("GET", `/api/research/questions/${second.body.question.id}`, { token: null })).body
+          .question.status,
+        "single_run",
+      );
+    },
+  );
 });
 
 test("a batch's items are checked before anything is stored", () => {

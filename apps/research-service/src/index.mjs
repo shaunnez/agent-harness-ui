@@ -26,12 +26,13 @@ for (const name of [...API_LOOP_KEY_VARS, "PARALLEL_API_KEY"]) delete process.en
 
 const app = await createResearchServiceApp({ config, env, log });
 const address = await app.listen();
+const selectedModel = await app.modelSettings.selected();
 log("research service listening", {
   host: address.address,
   port: address.port,
   database: app.db.kind,
-  model: config.model,
-  pacing: app.pacer.snapshot(),
+  model: selectedModel,
+  pacing: await app.pacing.snapshot(),
   console: config.consoleEnabled ? "loopback" : "off",
   clients: config.clients.map((client) => client.name),
 });

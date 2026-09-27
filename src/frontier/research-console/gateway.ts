@@ -13,6 +13,7 @@ export const FIXTURES_AVAILABLE = __RESEARCH_CONSOLE_FIXTURES__;
 /** What the service says about how it researches. */
 export interface ConsoleEngine {
   engine: ResearchEngineSnapshot;
+  models: { id: string; label: string; configured: boolean }[];
   runsPerQuestion: number;
   pacing: { limit: number; min: number; max: number; throttles: number; coolingDownMs: number } | null;
 }
@@ -21,6 +22,7 @@ export interface ConsoleGateway {
   readonly mode: "fixture" | "live";
   projects(): Promise<RuntimeProject[]>;
   engine(): Promise<ConsoleEngine>;
+  selectModel(model: string): Promise<ConsoleEngine>;
   readonly research: ResearchGateway;
 }
 
@@ -30,6 +32,7 @@ const FIXTURE_ENGINE: ConsoleEngine = {
     model: "fireworks-us/accounts/fireworks/routers/deepseek-v4p1-flash-us",
     reasoning: "default",
   },
+  models: [],
   runsPerQuestion: 5,
   pacing: null,
 };
@@ -41,6 +44,7 @@ export function consoleGateway(mode: "fixture" | "live"): ConsoleGateway {
     mode: "live",
     projects: liveProjects,
     engine: () => read<ConsoleEngine>("/api/research/console"),
+    selectModel: (model) => write<ConsoleEngine>("/api/research/console/model", { model }),
     research: liveResearch,
   };
 }
@@ -56,6 +60,9 @@ function fixtureGateway(): ConsoleGateway {
     mode: "fixture",
     projects: async () => structuredClone((await fixtures).researchFixtureProjects),
     engine: async () => FIXTURE_ENGINE,
+    selectModel: async () => {
+      throw new Error("Sample research does not change the service model.");
+    },
     research: {
       mode: "fixture",
       available: async () => (await recorded()).available(),
